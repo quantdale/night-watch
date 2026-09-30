@@ -553,6 +553,23 @@ test.describe('validation lane state', () => {
     expect(correctionPairingViolations(REPO_ROOT, commit, 'config/document-role-corrections.v1.json')).toEqual([]);
   });
 
+  test('R3-17: correction paths are normalised before the duplicate check', () => {
+    const doc = (pathValue: string) => JSON.stringify({
+      schemaVersion: 'nightwatch.document-role-corrections.v1',
+      corrections: [
+        { id: 'C-1', path: 'docs/CURRENT_STATE.md', oldLineSha256: `sha256:${'a'.repeat(24)}`, oldLineExcerpt: 'x', reason: 'one' },
+        { id: 'C-2', path: pathValue, oldLineSha256: `sha256:${'a'.repeat(24)}`, oldLineExcerpt: 'x', reason: 'two' },
+      ],
+    });
+    const parsed = parseDocumentRoleCorrections(JSON.parse(doc('./docs/CURRENT_STATE.md')));
+    expect(parsed.ok).toBe(false);
+    expect(parsed.errors.join(' ')).toContain('CORRECTION_DIGEST_DUPLICATE:C-2');
+    // A genuinely different archive is not a duplicate.
+    const other = parseDocumentRoleCorrections(JSON.parse(doc('docs/OTHER.md')));
+    expect(other.ok).toBe(true);
+    expect(other.corrections[1]?.path).toBe('docs/OTHER.md');
+  });
+
   test('VB-02: artifactPaths is a declared structural key — adding or editing it is never values-only', () => {
     const binding = (artifactPaths: string[]) => JSON.stringify({
       schemaVersion: 'nightwatch.release-evidence.v1',

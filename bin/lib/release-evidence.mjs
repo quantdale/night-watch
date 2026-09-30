@@ -239,7 +239,12 @@ export function parseDocumentRoleCorrections(record) {
       errors.push(`CORRECTION_ID_INVALID:${String(item.id)}`);
       ok = false;
     }
-    if (typeof item.path !== 'string' || item.path === '' || item.path.includes('..')) {
+    // R3-17 / corrections task 8.16: normalise the path before the duplicate
+    // check, so `./docs/x.md` and `docs/x.md` are one archive, not two.
+    const normalizedPath = typeof item.path === 'string'
+      ? item.path.replace(/^\.\//, '').replace(/\/{2,}/g, '/')
+      : '';
+    if (typeof item.path !== 'string' || item.path === '' || item.path.includes('..') || normalizedPath === '') {
       errors.push(`CORRECTION_PATH_INVALID:${String(item.path)}`);
       ok = false;
     }
@@ -260,11 +265,12 @@ export function parseDocumentRoleCorrections(record) {
     seen.add(item.id);
     // RV-01 / corrections task 7.1: two entries exempting the SAME archive line
     // (same path, same digest) are one exemption stated twice — the second
-    // could outlive the removal that justified the first.
-    const digestKey = `${item.path}\u0000${item.oldLineSha256}`;
+    // could outlive the removal that justified the first. R3-17: the path is
+    // the NORMALISED one, so an alias cannot dodge the duplicate check.
+    const digestKey = `${normalizedPath}\u0000${item.oldLineSha256}`;
     if (seenDigests.has(digestKey)) errors.push(`CORRECTION_DIGEST_DUPLICATE:${item.id}`);
     seenDigests.add(digestKey);
-    corrections.push({ id: item.id, path: item.path, oldLineSha256: item.oldLineSha256, oldLineExcerpt: item.oldLineExcerpt, reason: item.reason });
+    corrections.push({ id: item.id, path: normalizedPath, oldLineSha256: item.oldLineSha256, oldLineExcerpt: item.oldLineExcerpt, reason: item.reason });
   }
   return { ok: errors.length === 0, errors, corrections };
 }

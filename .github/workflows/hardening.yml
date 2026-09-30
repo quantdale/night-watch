@@ -30,6 +30,8 @@ jobs:
       - name: Install without lifecycle scripts
         run: npm ci --ignore-scripts
       - name: Execute authoritative quality gate
+        env:
+          NIGHTWATCH_PUSH_BEFORE: ${{ github.event.before }}
         run: npm run gate:ci
       - name: Upload SHA-bound runner topology receipt
         if: always()

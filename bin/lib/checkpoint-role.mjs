@@ -116,7 +116,10 @@ export function correctionPairingViolations(root, commit, correctionsFile) {
   const before = hasParent ? blobAt(root, `${commit}^`, correctionsFile) : null;
   const after = blobAt(root, commit, correctionsFile);
   const appended = appendedCorrectionEntries(before, after);
-  if (appended === null || appended.length === 0) return [];
+  // R3-17 / corrections task 8.16: an unparsable side is a violation, never an
+  // empty pairing result (the previous `[]` let a broken registry pass).
+  if (appended === null) return [{ code: 'CORRECTION_FILE_UNPARSEABLE', correctionsFile }];
+  if (appended.length === 0) return [];
   /** @type {Map<string, Set<string> | null>} */
   const removedByArchive = new Map();
   const violations = [];

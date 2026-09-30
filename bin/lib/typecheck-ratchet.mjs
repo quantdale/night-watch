@@ -43,10 +43,16 @@
  * with `@ts-` + `nocheck`).
  */
 const ANY_TYPE_NAME = ['a', 'ny'].join('');
-const WIDENING_TAGS = '(?:param|type|returns?|arg|argument|typedef|property|prop|template|callback|this)';
+// R3-17 / corrections task 8.16: the tag vocabulary includes the widening
+// forms that were still uncounted (@satisfies/@enum/@yields).
+const WIDENING_TAGS = '(?:param|type|returns?|arg|argument|typedef|property|prop|template|callback|this|satisfies|enum|yields)';
 const JSDOC_ANY_PATTERN = new RegExp(`@${WIDENING_TAGS}\\s*\\{[^}]*\\b${ANY_TYPE_NAME}\\b[^}]*\\}`, 'g');
-const JSDOC_WILDCARD_PATTERN = new RegExp(`@${WIDENING_TAGS}\\s*\\{\\s*(?:\\*|\\?|Object)\\s*\\}`, 'g');
-const DECLARATION_ANY_PATTERN = new RegExp(`(?::|<|,|\\||=>|\\bas\\b|\\bextends\\b)\\s*${ANY_TYPE_NAME}\\b`, 'g');
+// `{*}`/`{?}`/`{Object}`/`{Function}` AND any generic/array form that still
+// carries a wildcard (`{Array<*>}`, `{Object<string,*>}`).
+const JSDOC_WILDCARD_PATTERN = new RegExp(`@${WIDENING_TAGS}\\s*\\{[^}]*(?:\\*|\\?|\\bObject\\b|\\bFunction\\b)[^}]*\\}`, 'g');
+// Declaration positions: the widening forms also include `= any`, `& any`,
+// `[any,`, `readonly any[]` and `keyof any`.
+const DECLARATION_ANY_PATTERN = new RegExp(`(?::|<|,|\\||=>|\\bas\\b|\\bextends\\b|=|&|\\[|\\breadonly\\s+|\\bkeyof\\s+)\\s*${ANY_TYPE_NAME}\\b`, 'g');
 
 /**
  * Count the diagnostic-silencing widening annotations across the supplied

@@ -3277,8 +3277,10 @@ test.describe('G19 / G21 probes exercise their contracts (VD-04)', () => {
   test('G21: the real pre-flight refuses each synthetic non-VALID artefact with its own code and no effect', () => {
     const exercised = exercisePreflightRefusal(capabilityLifecycleModule);
     expect(exercised.failures).toEqual([]);
-    expect(exercised.states).toEqual(['MISSING', 'UNKNOWN_AGE', 'UNREADABLE']);
-    expect(exercised.refused).toBe(3);
+    // R3-17 / corrections task 8.16: EXPIRED and WRONG_ENVIRONMENT join the
+    // exercised closed vocabulary.
+    expect(exercised.states).toEqual(['MISSING', 'UNKNOWN_AGE', 'UNREADABLE', 'EXPIRED', 'WRONG_ENVIRONMENT']);
+    expect(exercised.refused).toBe(5);
   });
 
   test('G21: a pre-flight that admits an artefact, refuses with the wrong code, or acts before refusing fails the exercise', () => {

@@ -20,6 +20,7 @@
  */
 
 import fs from 'node:fs';
+import { createHash } from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
 
@@ -129,10 +130,38 @@ export function exercisePreflightRefusal(lifecycle) {
     const malformed = path.join(directory, 'malformed.storage-state.json');
     fs.writeFileSync(malformed, JSON.stringify({ cookies: [], origins: [] }), { mode: 0o600 });
     fs.writeFileSync(lifecycle.authLifecycleRecordPath(malformed), '{ not a lifecycle record', { mode: 0o600 });
+    // R3-17 / corrections task 8.16: EXPIRED and WRONG_ENVIRONMENT are part of
+    // the pre-flight's closed state vocabulary and are exercised too.
+    const expired = path.join(directory, 'expired.storage-state.json');
+    fs.writeFileSync(expired, JSON.stringify({ cookies: [], origins: [] }), { mode: 0o600 });
+    const wrongEnvironment = path.join(directory, 'wrong-environment.storage-state.json');
+    fs.writeFileSync(wrongEnvironment, JSON.stringify({ cookies: [], origins: [] }), { mode: 0o600 });
+    const digestOf = (file) => `sha256:${createHash('sha256').update(fs.readFileSync(file)).digest('hex').slice(0, 24)}`;
+    const lifecycleRecord = (file, environment, captureInstant, validityWindowMs) => JSON.stringify({
+      schemaVersion: 'nightwatch.auth-capability-record.v1',
+      captureInstant,
+      environment,
+      origin: 'http://127.0.0.1:9',
+      earliestCookieExpiry: null,
+      validityWindowMs,
+      artefactDigest: digestOf(file),
+    });
+    fs.writeFileSync(
+      lifecycle.authLifecycleRecordPath(expired),
+      lifecycleRecord(expired, 'local', new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(), 60 * 60 * 1000),
+      { mode: 0o600 },
+    );
+    fs.writeFileSync(
+      lifecycle.authLifecycleRecordPath(wrongEnvironment),
+      lifecycleRecord(wrongEnvironment, 'next', new Date().toISOString(), 24 * 60 * 60 * 1000),
+      { mode: 0o600 },
+    );
     const cases = [
       { state: 'MISSING', artefactPath: path.join(directory, 'absent.storage-state.json') },
       { state: 'UNKNOWN_AGE', artefactPath: present },
       { state: 'UNREADABLE', artefactPath: malformed },
+      { state: 'EXPIRED', artefactPath: expired },
+      { state: 'WRONG_ENVIRONMENT', artefactPath: wrongEnvironment },
     ];
     const listing = () => fs.readdirSync(directory).sort().join('\n');
     for (const item of cases) {

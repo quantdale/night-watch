@@ -708,6 +708,13 @@ export function resolveArchiveDiffBase() {
   if (remote.status !== 0) return headSha;
   const remoteSha = (remote.stdout ?? '').trim();
   if (!/^[0-9a-f]{40}$/.test(remoteSha)) return headSha;
+  // R3-17 / corrections task 8.16: on a push, the workflow supplies the exact
+  // pre-push tip, so the per-commit pairing inspects the PUSHED commits rather
+  // than the empty merge-base range CI otherwise sees.
+  const pushBefore = process.env['NIGHTWATCH_PUSH_BEFORE'] ?? '';
+  if (/^[0-9a-f]{40}$/i.test(pushBefore) && pushBefore !== '0'.repeat(40) && gitResult(['merge-base', '--is-ancestor', pushBefore, headSha]).status === 0) {
+    return pushBefore;
+  }
   const mergeBase = gitResult(['merge-base', headSha, remoteSha]);
   const mergeBaseSha = (mergeBase.stdout ?? '').trim();
   return mergeBase.status === 0 && /^[0-9a-f]{40}$/.test(mergeBaseSha) ? mergeBaseSha : headSha;

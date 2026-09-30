@@ -813,6 +813,10 @@ function checkIntegrationReadiness(root, self, policy, warnings) {
     // tip its work is integrated, so a base that trails the remote is history,
     // not a reconciliation to do — reporting STALE there was a false alarm.
     else if (headSha !== null && headSha === remoteMain) baseState = 'INTEGRATED_CURRENT';
+    // R3-17 / corrections task 8.16: a session HEAD that CONTAINS the remote
+    // tip has integrated the remote's work too; the base trailing is history,
+    // not a reconciliation to do.
+    else if (headSha !== null && git(root, ['merge-base', '--is-ancestor', remoteMain, headSha]).ok) baseState = 'INTEGRATED_CURRENT';
     else if (git(root, ['merge-base', '--is-ancestor', baseSha, remoteMain]).ok) baseState = 'STALE';
     else baseState = 'DIVERGED';
   } else if (remoteMain !== null && headSha !== null && self === null) {

@@ -5423,6 +5423,16 @@ non-equivalent HC-180, the vitest test counts, the skip-count cross-check and th
 DEV-launcher short-circuit rule are all covered by focused tests and probes
 HC-189..HC-200 in the probe campaign. Decision 4 is DECIDED (keep refusal + global cap).
 
+
+
+**Note (2026-09-30, R3-17 / corrections task 8.16 — appended).** The INTENT of
+`SIBLING_IDENTITY_ABSENT` in `gate:clean` is recorded here: a real sibling root
+that RESOLVES but cannot be read is a host-capability ABSENCE, not identity
+DRIFT (task 7.8). It is deliberately NON-PASS for the clean gate's sibling
+measurement — the gate cannot prove the real root's identity without reading it,
+so it never presents ABSENT as a pass; the distinction from DRIFT exists so the
+operator sees "this host cannot measure the sibling" rather than "the sibling
+changed", which have different remedies.
 **Correction (2026-09-30, R3-15 / corrections task 8.14 — appended, never rewritten).**
 Decision 4's closing sentence above misstates the owner's answer. The owner was
 asked, VERBATIM:
