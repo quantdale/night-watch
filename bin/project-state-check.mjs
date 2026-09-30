@@ -32,7 +32,7 @@ import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
 import { loadTypeScriptModule as loadRuntimeTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
 import { evidenceLaneDisagreements, loadReleaseEvidenceBindings, resolveEvidenceShaForSubject, verifyPersistedReceipt } from './lib/release-evidence.mjs';
 import { ACCESSIBILITY_RECORD_PATH, parseAccessibilityCertificationRecord } from './lib/accessibility-record.mjs';
-import { UI_HARNESS_RECEIPT_PATH, UI_HARNESS_TYPES_PATH, evaluateUiHarnessReceipt, extractApiErrorKinds } from './lib/ui-harness-receipt.mjs';
+import { UI_HARNESS_FILE, UI_HARNESS_RECEIPT_PATH, UI_HARNESS_TYPES_PATH, evaluateUiHarnessReceipt, extractApiErrorKinds } from './lib/ui-harness-receipt.mjs';
 import { evidenceArtifactExistsAtSha } from './lib/evidence-artifact.mjs';
 import { exerciseConfigurationContract, exercisePreflightRefusal } from './lib/release-probe-exercises.mjs';
 import { bindTreeProbe, receiptBindingRelation, receiptNotAtCheckpoint, resolveProbeBinding } from './lib/probe-binding.mjs';
@@ -788,11 +788,16 @@ function probeUiErrorTaxonomy(root, certifiedCheckpointSha) {
     };
   }
   let expectedKinds = null;
+  let harnessSourceAtS = null;
   if (typeof certifiedCheckpointSha === 'string' && HEX40.test(certifiedCheckpointSha)) {
     const typesAtCheckpoint = gitReadOnly(root, ['show', `${certifiedCheckpointSha}:${UI_HARNESS_TYPES_PATH}`]);
     expectedKinds = typeof typesAtCheckpoint === 'string' ? extractApiErrorKinds(typesAtCheckpoint) : null;
+    // R3-06 / corrections task 8.5: the harness source committed AT S, for the
+    // digest and test-count cross-check.
+    const harnessAtCheckpoint = gitReadOnly(root, ['show', `${certifiedCheckpointSha}:ui/control-center/${UI_HARNESS_FILE}`]);
+    harnessSourceAtS = typeof harnessAtCheckpoint === 'string' ? harnessAtCheckpoint : null;
   }
-  const evaluated = evaluateUiHarnessReceipt(raw, { certifiedCheckpointSha, expectedKinds });
+  const evaluated = evaluateUiHarnessReceipt(raw, { certifiedCheckpointSha, expectedKinds, harnessSourceAtS });
   if (!evaluated.ok || evaluated.summary === null) {
     return { state: 'UNMET', detail: `UI-harness execution receipt rejected: ${evaluated.errors.slice(0, 3).join('; ')}` };
   }
@@ -880,7 +885,22 @@ function probeYieldCampaignResult(root, certifiedCheckpointSha) {
   } catch {
     entries = [];
   }
-  const runs = entries.filter((entry) => entry.startsWith('nightwatch-')).sort().reverse().slice(0, YIELD_RUN_SCAN_LIMIT);
+  // R3-06 / corrections task 8.5: newest-by-TIME, not lexicographic — a run id
+  // is a name, and a hand-chosen name must not outrank a newer execution.
+  const runs = entries
+    .filter((entry) => entry.startsWith('nightwatch-'))
+    .map((entry) => {
+      let mtimeMs = 0;
+      try {
+        mtimeMs = fs.statSync(path.join(root, 'artifacts', entry)).mtimeMs;
+      } catch {
+        mtimeMs = 0;
+      }
+      return { entry, mtimeMs };
+    })
+    .sort((left, right) => (right.mtimeMs - left.mtimeMs) || (left.entry < right.entry ? 1 : -1))
+    .slice(0, YIELD_RUN_SCAN_LIMIT)
+    .map((run) => run.entry);
   if (runs.length === 0) {
     return { state: 'UNMET', detail: 'no yield-campaign receipt: no artifacts/nightwatch-* run exists on this host (the receipt is host-local; a fresh clone has none)' };
   }

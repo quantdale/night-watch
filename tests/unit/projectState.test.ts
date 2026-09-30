@@ -57,6 +57,7 @@ import {
   buildUiHarnessReceipt,
   evaluateUiHarnessReceipt,
   extractApiErrorKinds,
+  uiHarnessReceiptDigest,
 } from '../../bin/lib/ui-harness-receipt.mjs';
 import { exerciseConfigurationContract, exercisePreflightRefusal } from '../../bin/lib/release-probe-exercises.mjs';
 import * as environmentSurfaceModule from '../../src/core/config/environmentSurface';
@@ -2783,12 +2784,18 @@ test.describe('UI-harness execution receipt (VD-02)', () => {
     };
   }
 
-  function receiptOf(input: { file?: unknown; head?: string | null; clean?: boolean | null; types?: string | null } = {}) {
+  // R3-06: the harness content that executed, hashed into the receipt and
+  // cross-checked at S. Six leaf tests match the six synthetic harness tests.
+  const harnessSource = ['describe("synthetic harness", () => {', ...Array.from({ length: 6 }, (_, index) => `  it("synthetic ${index}", () => {});`), '});'].join('\n');
+  const context = { certifiedCheckpointSha: S, expectedKinds: KINDS, harnessSourceAtS: harnessSource };
+
+  function receiptOf(input: { file?: unknown; head?: string | null; clean?: boolean | null; types?: string | null; harness?: string | null } = {}) {
     return buildUiHarnessReceipt({
       files: [input.file ?? vitestFile()],
       headSha: input.head === undefined ? S : input.head,
       treeClean: input.clean === undefined ? true : input.clean,
       typesSource: input.types === undefined ? typesSource : input.types,
+      harnessSource: input.harness === undefined ? harnessSource : input.harness,
       executedAt: '2026-09-30T00:00:00.000Z',
     });
   }
@@ -2800,23 +2807,40 @@ test.describe('UI-harness execution receipt (VD-02)', () => {
   });
 
   test('a complete clean-tree receipt bound to S certifies', () => {
-    const evaluated = evaluateUiHarnessReceipt(receiptOf(), { certifiedCheckpointSha: S, expectedKinds: KINDS });
+    const evaluated = evaluateUiHarnessReceipt(receiptOf(), context);
     expect(evaluated.errors).toEqual([]);
     expect(evaluated).toMatchObject({ ok: true, relation: 'BOUND', summary: { sha: S, kinds: 5 } });
   });
 
   test('a receipt bound to another commit is valid but not bound to S', () => {
-    const evaluated = evaluateUiHarnessReceipt(receiptOf({ head: OTHER }), { certifiedCheckpointSha: S, expectedKinds: KINDS });
+    const evaluated = evaluateUiHarnessReceipt(receiptOf({ head: OTHER }), context);
     expect(evaluated).toMatchObject({ ok: true, relation: 'BOUND_TO_OTHER' });
   });
 
+  // R3-06 / corrections task 8.5: forgery is detected at read.
+  test('a hand-written receipt, a wrong harness digest, a wrong test count and a missing source are all rejected', () => {
+    const forged = { ...receiptOf(), receiptDigest: 'sha256:' + '0'.repeat(24) };
+    expect(evaluateUiHarnessReceipt(forged, context).errors).toContain('UI_HARNESS_RECEIPT_DIGEST_MISMATCH');
+    // A receipt built over DIFFERENT harness content than S.
+    const otherSource = harnessSource.replace('synthetic 0', 'synthetic other');
+    const otherReceipt = receiptOf({ harness: otherSource });
+    expect(evaluateUiHarnessReceipt(otherReceipt, context).errors).toContain('UI_HARNESS_RECEIPT_HARNESS_DIGEST_MISMATCH');
+    // A receipt whose harness test count disagrees with S's source, with the
+    // digest re-derived so ONLY the count is inconsistent.
+    const valid = receiptOf() as { harness: { tests: unknown[] } };
+    const trimmed = { ...valid, harness: { ...valid.harness, tests: valid.harness.tests.slice(0, 5) } } as Record<string, unknown>;
+    const countReceipt = { ...trimmed, receiptDigest: uiHarnessReceiptDigest(trimmed) };
+    expect(evaluateUiHarnessReceipt(countReceipt, context).errors.join('|')).toContain('UI_HARNESS_RECEIPT_HARNESS_TEST_COUNT_MISMATCH');
+    expect(evaluateUiHarnessReceipt(receiptOf(), { ...context, harnessSourceAtS: null }).errors).toContain('UI_HARNESS_RECEIPT_HARNESS_SOURCE_UNAVAILABLE');
+  });
+
   test('the harness file not running produces no receipt at all', () => {
-    expect(buildUiHarnessReceipt({ files: [{ filepath: '/repo/ui/control-center/src/other.test.tsx', tasks: [] }], headSha: S, treeClean: true, typesSource, executedAt: 'x' })).toBeNull();
+    expect(buildUiHarnessReceipt({ files: [{ filepath: '/repo/ui/control-center/src/other.test.tsx', tasks: [] }], headSha: S, treeClean: true, typesSource, harnessSource, executedAt: 'x' })).toBeNull();
   });
 
   test('every way an execution can fail to prove the taxonomy is rejected', () => {
     const rejected = (input: Parameters<typeof receiptOf>[0], code: string, kinds: readonly string[] | null = KINDS) => {
-      const evaluated = evaluateUiHarnessReceipt(receiptOf(input), { certifiedCheckpointSha: S, expectedKinds: kinds });
+      const evaluated = evaluateUiHarnessReceipt(receiptOf(input), { ...context, expectedKinds: kinds });
       expect(evaluated.ok, code).toBe(false);
       expect(evaluated.errors.join('|'), code).toContain(code);
     };
@@ -2830,8 +2854,8 @@ test.describe('UI-harness execution receipt (VD-02)', () => {
     rejected({ types: null }, 'UI_HARNESS_RECEIPT_KINDS_MISSING');
     rejected({}, 'UI_HARNESS_RECEIPT_KINDS_DRIFT', [...KINDS, 'EXTRA']);
     rejected({}, 'UI_HARNESS_RECEIPT_EXPECTED_KINDS_UNAVAILABLE', null);
-    expect(evaluateUiHarnessReceipt(null, { certifiedCheckpointSha: S, expectedKinds: KINDS }).errors).toEqual(['UI_HARNESS_RECEIPT_UNAVAILABLE']);
-    expect(evaluateUiHarnessReceipt({ ...receiptOf(), schemaVersion: 'nightwatch.other.v1' }, { certifiedCheckpointSha: S, expectedKinds: KINDS }).errors.join('|')).toContain('UI_HARNESS_RECEIPT_SCHEMA_UNSUPPORTED');
+    expect(evaluateUiHarnessReceipt(null, context).errors).toEqual(['UI_HARNESS_RECEIPT_UNAVAILABLE']);
+    expect(evaluateUiHarnessReceipt({ ...receiptOf(), schemaVersion: 'nightwatch.other.v1' }, context).errors.join('|')).toContain('UI_HARNESS_RECEIPT_SCHEMA_UNSUPPORTED');
   });
 });
 
@@ -2856,6 +2880,8 @@ test.describe('yield-campaign receipt (VD-03 / CF-03)', () => {
     siblingChange?: boolean;
     siblings?: number;
     manifestSha?: string | null;
+    terminationReason?: string;
+    reasonerIdentity?: { kind: string; identityDigest: string | null; printCliDigest: string | null } | null;
   } = {}) {
     const sha = overrides.sha === undefined ? S : overrides.sha;
     const observation = { repository: sibling.repository, headSha: sibling.headSha, statusDigest: sibling.statusDigest, diffDigest: sibling.diffDigest };
@@ -2865,7 +2891,8 @@ test.describe('yield-campaign receipt (VD-03 / CF-03)', () => {
       campaignId: 'synthetic-yield',
       generatedAt: '2026-09-30T00:00:00.000Z',
       result: {
-        terminationReason: 'COMPLETE_NO_FINDING',
+        terminationReason: overrides.terminationReason ?? 'COMPLETE_NO_FINDING',
+        terminationCounts: { [overrides.terminationReason ?? 'COMPLETE_NO_FINDING']: 1 },
         providerAttribution: {
           terminationClass: overrides.termination ?? 'VALID_PROVIDER_RUN',
           totalCalls: overrides.completedCalls ?? 3,
@@ -2882,6 +2909,10 @@ test.describe('yield-campaign receipt (VD-03 / CF-03)', () => {
       leakScan: { result: overrides.leak ?? 'CLEAN', findings: overrides.leak === 'LEAKS_FOUND' ? 1 : 0, scannedChars: 10 },
       ...(sha === null ? {} : { nightwatchIdentity: { sha, treeClean: overrides.clean ?? true } }),
       ...(overrides.kind === null ? {} : { campaignKind: (overrides.kind ?? 'PRINT_CLI_PROVIDER') as never }),
+      // R3-06 / corrections task 8.5: the recorded reasoner identity.
+      reasonerIdentity: overrides.reasonerIdentity === undefined
+        ? { kind: 'PRINT_CLI_PROVIDER', identityDigest: `rid:sha256:${'a'.repeat(24)}`, printCliDigest: `sha256:${'b'.repeat(24)}` } as never
+        : overrides.reasonerIdentity as never,
     });
     const manifest = { runId: 'run-1', product: overrides.product ?? 'campaign', nightwatchSha: overrides.manifestSha === undefined ? sha : overrides.manifestSha };
     return { manifest, summary: { passed: overrides.passed ?? true }, receipt };
@@ -2916,6 +2947,22 @@ test.describe('yield-campaign receipt (VD-03 / CF-03)', () => {
     rejected({ siblingChange: true }, 'YIELD_RECEIPT_SIBLING_IDENTITY_CHANGED');
     rejected({ siblings: 0 }, 'YIELD_RECEIPT_NO_SIBLING_OBSERVATION');
     rejected({ leak: 'LEAKS_FOUND' }, 'YIELD_RECEIPT_LEAK_SCAN_NOT_CLEAN');
+    // R3-06 / corrections task 8.5: a non-completed campaign is never a yield
+    // result, whatever its provider attribution says.
+    rejected({ terminationReason: 'PAUSED' }, 'YIELD_RECEIPT_CAMPAIGN_NOT_COMPLETED:PAUSED');
+    rejected({ terminationReason: 'BUDGET_EXHAUSTED' }, 'YIELD_RECEIPT_CAMPAIGN_NOT_COMPLETED:BUDGET_EXHAUSTED');
+    rejected({ terminationReason: 'REASONER_FAILURE' }, 'YIELD_RECEIPT_CAMPAIGN_NOT_COMPLETED:REASONER_FAILURE');
+    rejected({ reasonerIdentity: null }, 'YIELD_RECEIPT_REASONER_IDENTITY_ABSENT');
+    // A completed campaign still needs its per-case reasons.
+    const full = evidence();
+    const { caseTerminationCounts: _omitCounts, ...receiptWithoutCases } = full.receipt as Record<string, unknown>;
+    void _omitCounts;
+    expect(evaluateYieldCampaignEvidence({ ...full, receipt: receiptWithoutCases }, S).errors).toContain('YIELD_RECEIPT_NO_COMPLETED_CASE');
+    rejected({ reasonerIdentity: { kind: 'CUSTOM_REASONER_SCRIPT', identityDigest: `rid:sha256:${'a'.repeat(24)}`, printCliDigest: null } }, 'YIELD_RECEIPT_REASONER_NOT_PROVIDER:CUSTOM_REASONER_SCRIPT');
+    // A null identity digest passes schema validation (legacy tolerance) and
+    // is refused by the G12 evaluator; a malformed digest is refused earlier.
+    rejected({ reasonerIdentity: { kind: 'PRINT_CLI_PROVIDER', identityDigest: null, printCliDigest: null } }, 'YIELD_RECEIPT_REASONER_IDENTITY_INVALID');
+    rejected({ reasonerIdentity: { kind: 'PRINT_CLI_PROVIDER', identityDigest: 'not-a-digest', printCliDigest: null } }, 'YIELD_RECEIPT_INVALID:reasonerIdentity.identityDigest');
     expect(evaluateYieldCampaignEvidence({ manifest: null, summary: null, receipt: null }, S).errors).toEqual(['YIELD_RECEIPT_RUN_ARTIFACTS_MISSING']);
     expect(evaluateYieldCampaignEvidence({ manifest: {}, summary: {}, receipt: { schemaVersion: 'x' } }, S).errors[0]).toContain('YIELD_RECEIPT_INVALID');
   });
@@ -2927,10 +2974,16 @@ test.describe('yield-campaign receipt (VD-03 / CF-03)', () => {
     delete legacy.nightwatchSha;
     delete legacy.nightwatchTreeClean;
     delete legacy.campaignKind;
+    delete legacy.campaignTermination;
+    delete legacy.reasonerIdentity;
+    delete legacy.caseTerminationCounts;
     expect(validateProductRunReceipt(legacy).ok).toBe(true);
     expect(validateProductRunReceipt({ ...receipt, nightwatchSha: 'short' }).errors).toContain('nightwatchSha');
     expect(validateProductRunReceipt({ ...receipt, nightwatchTreeClean: 'yes' }).errors).toContain('nightwatchTreeClean');
     expect(validateProductRunReceipt({ ...receipt, campaignKind: 'OTHER' }).errors).toContain('campaignKind');
+    expect(validateProductRunReceipt({ ...receipt, campaignTermination: 'MAYBE' }).errors).toContain('campaignTermination');
+    expect(validateProductRunReceipt({ ...receipt, reasonerIdentity: { kind: 'OTHER', identityDigest: null, printCliDigest: null } }).errors).toContain('reasonerIdentity.kind');
+    expect(validateProductRunReceipt({ ...receipt, reasonerIdentity: { kind: 'PRINT_CLI_PROVIDER', identityDigest: 'bad', printCliDigest: null } }).errors).toContain('reasonerIdentity.identityDigest');
   });
 });
 
@@ -3010,6 +3063,7 @@ test.describe('accessibility certification record (G20 / R2-51)', () => {
   const validRecord = {
     schemaVersion: 'nightwatch.accessibility-certification.v1',
     nightwatchSha: sha,
+    treeClean: true,
     updatedAt: '2026-09-26T00:00:00.000Z',
     sections: {
       certification: { ...passSection, views: 8 },
@@ -3028,6 +3082,7 @@ test.describe('accessibility certification record (G20 / R2-51)', () => {
     expect(parseAccessibilityCertificationRecord(null).errors).toEqual(['ACCESSIBILITY_RECORD_UNAVAILABLE']);
     expect(parseAccessibilityCertificationRecord({ ...validRecord, schemaVersion: 'nightwatch.other.v1' }).errors)
       .toContain('ACCESSIBILITY_RECORD_SCHEMA_UNSUPPORTED:nightwatch.other.v1');
+    expect(parseAccessibilityCertificationRecord({ ...validRecord, treeClean: false }).errors).toContain('ACCESSIBILITY_RECORD_TREE_NOT_CLEAN');
     expect(parseAccessibilityCertificationRecord({ ...validRecord, nightwatchSha: 'short' }).errors)
       .toContain('ACCESSIBILITY_RECORD_SHA_INVALID');
     expect(parseAccessibilityCertificationRecord({ ...validRecord, sections: null }).errors)

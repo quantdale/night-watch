@@ -49,6 +49,9 @@ export function parseAccessibilityCertificationRecord(raw) {
   if (typeof record.nightwatchSha !== 'string' || !SHA_RE.test(record.nightwatchSha)) {
     errors.push('ACCESSIBILITY_RECORD_SHA_INVALID');
   }
+  // R3-06 / corrections task 8.5: a record written over a dirty tree proves
+  // nothing about the committed SHA it names.
+  if (record.treeClean !== true) errors.push('ACCESSIBILITY_RECORD_TREE_NOT_CLEAN');
   const sections = record.sections;
   if (sections === null || typeof sections !== 'object' || Array.isArray(sections)) {
     errors.push('ACCESSIBILITY_RECORD_SECTIONS_MISSING');

@@ -50,9 +50,10 @@ const DURATIONS = new Map([
  *   before: readonly unknown[],
  *   nightwatchIdentity: { sha: string, treeClean: boolean } | null,
  *   campaignKind: string,
+ *   reasonerIdentity: { kind: string, identityDigest: string | null, printCliDigest: string | null } | null,
  * }} input
  */
-async function emitCampaignReceipt({ root, receiptMod, campaignId, result, repositoryIds, before, nightwatchIdentity, campaignKind }) {
+async function emitCampaignReceipt({ root, receiptMod, campaignId, result, repositoryIds, before, nightwatchIdentity, campaignKind, reasonerIdentity = null }) {
   try {
     const emitted = await receiptMod.emitProductRunReceipt({
       root,
@@ -62,6 +63,7 @@ async function emitCampaignReceipt({ root, receiptMod, campaignId, result, repos
       before,
       ...(nightwatchIdentity === null ? {} : { nightwatchIdentity }),
       campaignKind,
+      ...(reasonerIdentity === null ? {} : { reasonerIdentity }),
     });
     console.log(
       JSON.stringify(
@@ -214,6 +216,7 @@ function resolveReasonerIdentity(reasonerMod, configured, options = {}) {
     reasonerIdentity: {
       path: identity.executablePath,
       digest: identity.executableDigest,
+      adapterPath: identity.adapterPath,
       adapterDigest: identity.adapterDigest,
       printCliDigest: identity.printCliDigest,
       printArgsDigest: identity.printArgsDigest,
@@ -385,8 +388,6 @@ if (command === 'status') {
         // it went through the provider print adapter (a yield campaign) or a
         // custom reasoner script (the smoke/test path).
         const nightwatchIdentityBefore = readNightwatchIdentity();
-        const scriptConfigured = typeof campaignEnvironment().NIGHTWATCH_REASONER_SCRIPT === 'string' && campaignEnvironment().NIGHTWATCH_REASONER_SCRIPT.length > 0;
-        const campaignKind = !scriptConfigured && Boolean(campaignEnvironment().NIGHTWATCH_PRINT_CLI) ? 'PRINT_CLI_PROVIDER' : 'CUSTOM_REASONER_SCRIPT';
         const approvedRepositories = repositoryIds ?? [];
         const siblingsBefore = await receiptMod.observeSiblings(approvedRepositories);
         try {
@@ -396,6 +397,17 @@ if (command === 'status') {
             provider: providerLabel,
             model: modelLabel,
           });
+          // R3-06 / corrections task 8.5: the campaign kind is derived from the
+          // RESOLVED adapter identity, never from an environment flag — a
+          // custom script cannot present itself as the provider print adapter.
+          const campaignKind = reasonerIdentity.adapterPath !== null && reasonerIdentity.adapterPath === path.join(root, 'bin/nightwatch-reasoner-print.mjs')
+            ? 'PRINT_CLI_PROVIDER'
+            : 'CUSTOM_REASONER_SCRIPT';
+          const recordedReasonerIdentity = {
+            kind: campaignKind,
+            identityDigest: reasonerIdentity.identityDigest,
+            printCliDigest: reasonerIdentity.printCliDigest,
+          };
           const result = await mod.runLocalCliCampaign({
             pauseSignal: pause.signal,
             campaignId: typeof flags.id === 'string' && flags.id.length > 0 ? flags.id : `local-${Date.now()}`,
@@ -436,6 +448,7 @@ if (command === 'status') {
             // at BOTH ends; a moved HEAD keeps the start SHA but is not clean.
             nightwatchIdentity: bindRunIdentity(nightwatchIdentityBefore, readNightwatchIdentity()),
             campaignKind,
+            reasonerIdentity: recordedReasonerIdentity,
           });
         } catch (error) {
           fail(2, error instanceof Error ? error.message : 'LOCAL_CAMPAIGN_FAILED');
@@ -565,6 +578,15 @@ if (command === 'status') {
           provider: providerLabel,
           model: modelLabel,
         });
+        // R3-06: the resume records the same identity-derived kind.
+        const campaignKind = reasonerIdentity.adapterPath !== null && reasonerIdentity.adapterPath === path.join(root, 'bin/nightwatch-reasoner-print.mjs')
+          ? 'PRINT_CLI_PROVIDER'
+          : 'CUSTOM_REASONER_SCRIPT';
+        const recordedReasonerIdentity = {
+          kind: campaignKind,
+          identityDigest: reasonerIdentity.identityDigest,
+          printCliDigest: reasonerIdentity.printCliDigest,
+        };
         // M7 (8.1): the resume reads the same validated merge.
         // ceilingName is required input but resume runs under the checkpoint's
         // own stored budget policy; the multi-investigation progress (next
@@ -601,6 +623,8 @@ if (command === 'status') {
           result,
           repositoryIds: approvedRepositories,
           before: siblingsBefore,
+          campaignKind,
+          reasonerIdentity: recordedReasonerIdentity,
         });
       } catch (error) {
         fail(2, error instanceof Error ? error.message : 'LOCAL_CAMPAIGN_RESUME_FAILED');

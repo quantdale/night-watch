@@ -98,6 +98,13 @@ function gitHeadSha(): string {
   return /^[0-9a-f]{40}$/.test(sha) ? sha : '0'.repeat(40);
 }
 
+// R3-06 / corrections task 8.5: the record carries whether the tree was clean
+// when it was written, exactly like the other SHA-bound receipts.
+function gitTreeClean(): boolean {
+  const result = spawnSync('git', ['status', '--porcelain'], { cwd: process.cwd(), encoding: 'utf8' });
+  return result.status === 0 && (result.stdout ?? '').trim() === '';
+}
+
 function writeRecordSection(section: string, status: 'RUNNING' | 'PASS' | 'FAIL', details: Record<string, unknown> = {}): void {
   let stored: { sections?: Record<string, unknown> } = {};
   try {
@@ -108,6 +115,7 @@ function writeRecordSection(section: string, status: 'RUNNING' | 'PASS' | 'FAIL'
   const record = {
     schemaVersion: RECORD_SCHEMA,
     nightwatchSha: gitHeadSha(),
+    treeClean: gitTreeClean(),
     updatedAt: new Date().toISOString(),
     sections: { ...(stored.sections ?? {}), [section]: { status, executedAt: new Date().toISOString(), ...details } },
   };

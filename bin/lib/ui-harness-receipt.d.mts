@@ -3,18 +3,22 @@ export declare const UI_HARNESS_RECEIPT_PATH: string;
 export declare const UI_HARNESS_FILE: string;
 export declare const UI_HARNESS_SUITE: string;
 export declare const UI_HARNESS_TYPES_PATH: string;
+export declare const UI_HARNESS_WRITER_LANE: string;
 export declare const UI_HARNESS_REQUIRED_TESTS: readonly { readonly suite: string; readonly titlePrefix: string }[];
 export declare function extractApiErrorKinds(typesSource: string): string[] | null;
+export declare function countHarnessTests(source: string | null): number | null;
+export declare function uiHarnessReceiptDigest(body: Record<string, unknown>): string;
 export declare function buildUiHarnessReceipt(input: {
   readonly files: ReadonlyArray<unknown>;
   readonly headSha: string | null;
   readonly treeClean: boolean | null;
   readonly typesSource: string | null;
+  readonly harnessSource: string | null;
   readonly executedAt: string;
 }): Record<string, unknown> | null;
 export declare function evaluateUiHarnessReceipt(
   raw: unknown,
-  context: { readonly certifiedCheckpointSha: string | null; readonly expectedKinds: readonly string[] | null },
+  context: { readonly certifiedCheckpointSha: string | null; readonly expectedKinds: readonly string[] | null; readonly harnessSourceAtS?: string | null },
 ): {
   readonly ok: boolean;
   readonly errors: string[];

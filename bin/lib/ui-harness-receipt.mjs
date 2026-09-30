@@ -21,7 +21,11 @@
  * Pure: no filesystem, process, network or clock authority.
  */
 
+import { createHash } from 'node:crypto';
+
 export const UI_HARNESS_RECEIPT_SCHEMA = 'nightwatch.ui-harness-receipt.v1';
+/** The env marker the UI_CONTROL_CENTER quality-gate group sets for its child. */
+export const UI_HARNESS_WRITER_LANE = 'ui-gate';
 export const UI_HARNESS_RECEIPT_PATH = 'artifacts/receipts/ui-harness-receipt.v1.json';
 /** The harness file, relative to ui/control-center. */
 export const UI_HARNESS_FILE = 'src/contractRender.test.tsx';
@@ -95,11 +99,47 @@ function flatten(tasks, suitePath, out) {
 }
 
 /**
+ * R3-06 / corrections task 8.5 — the number of leaf tests the harness source
+ * declares. The receipt's recorded harness test count must equal this at S, so
+ * a hand-written receipt cannot claim tests the committed harness never had.
+ * @param {string | null} source
+ * @returns {number | null} null when the source is unavailable
+ */
+export function countHarnessTests(source) {
+  if (typeof source !== 'string' || source === '') return null;
+  const matches = source.match(/^\s*(?:it|test)\(/gm);
+  return matches === null ? 0 : matches.length;
+}
+
+/**
+ * The receipt's own content digest: sha256 over the canonical receipt body
+ * (sorted keys) without the digest field. Verified at read.
+ * @param {Record<string, unknown>} body
+ * @returns {string}
+ */
+export function uiHarnessReceiptDigest(body) {
+  const clone = { ...body };
+  delete clone.receiptDigest;
+  return `sha256:${createHash('sha256').update(canonicalJson(clone)).digest('hex').slice(0, 24)}`;
+}
+
+/**
+ * @param {unknown} value
+ * @returns {string}
+ */
+function canonicalJson(value) {
+  if (value === null || typeof value !== 'object') return JSON.stringify(value) ?? 'null';
+  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(',')}]`;
+  return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(/** @type {Record<string, unknown>} */ (value)[key])}`).join(',')}}`;
+}
+
+/**
  * @param {{
  *   files: ReadonlyArray<unknown>,
  *   headSha: string | null,
  *   treeClean: boolean | null,
  *   typesSource: string | null,
+ *   harnessSource: string | null,
  *   executedAt: string,
  * }} input
  * @returns {Record<string, unknown> | null} null when the harness file did not run
@@ -128,15 +168,20 @@ export function buildUiHarnessReceipt(input) {
     }
   }
   if (!harnessRan) return null;
-  return {
+  const harnessSource = typeof input.harnessSource === 'string' && input.harnessSource !== '' ? input.harnessSource : null;
+  const body = {
     schemaVersion: UI_HARNESS_RECEIPT_SCHEMA,
     nightwatchSha: typeof input.headSha === 'string' && SHA_RE.test(input.headSha) ? input.headSha.toLowerCase() : null,
     treeClean: input.treeClean === true,
     executedAt: input.executedAt,
     harness: { file: UI_HARNESS_FILE, tests: harnessTests },
+    // R3-06 / corrections task 8.5: the receipt is tied to the harness CONTENT
+    // that executed, not merely to its path.
+    harnessDigest: harnessSource === null ? null : `sha256:${createHash('sha256').update(harnessSource).digest('hex').slice(0, 24)}`,
     suiteTotals,
     apiErrorKinds: input.typesSource === null ? null : extractApiErrorKinds(input.typesSource),
   };
+  return { ...body, receiptDigest: uiHarnessReceiptDigest(body) };
 }
 
 /**
@@ -144,7 +189,11 @@ export function buildUiHarnessReceipt(input) {
  * checkpoint and the ApiErrorKind member list committed AT that checkpoint.
  *
  * @param {unknown} raw
- * @param {{ certifiedCheckpointSha: string | null, expectedKinds: readonly string[] | null }} context
+ * @param {{
+ *   certifiedCheckpointSha: string | null,
+ *   expectedKinds: readonly string[] | null,
+ *   harnessSourceAtS?: string | null,
+ * }} context
  * @returns {{
  *   ok: boolean,
  *   errors: string[],
@@ -160,6 +209,13 @@ export function evaluateUiHarnessReceipt(raw, context) {
     return { ok: false, errors: ['UI_HARNESS_RECEIPT_UNAVAILABLE'], relation: 'INVALID', summary: null };
   }
   if (record.schemaVersion !== UI_HARNESS_RECEIPT_SCHEMA) errors.push(`UI_HARNESS_RECEIPT_SCHEMA_UNSUPPORTED:${String(record.schemaVersion)}`);
+  // R3-06 / corrections task 8.5: the content digest is re-derived at read;
+  // a hand-written receipt that edits any recorded field fails here.
+  if (typeof record.receiptDigest !== 'string') {
+    errors.push('UI_HARNESS_RECEIPT_DIGEST_MISSING');
+  } else if (record.receiptDigest !== uiHarnessReceiptDigest(record)) {
+    errors.push('UI_HARNESS_RECEIPT_DIGEST_MISMATCH');
+  }
   const recordedSha = record.nightwatchSha;
   if (typeof recordedSha !== 'string' || !SHA_RE.test(recordedSha)) errors.push('UI_HARNESS_RECEIPT_SHA_INVALID');
   if (record.treeClean !== true) errors.push('UI_HARNESS_RECEIPT_TREE_NOT_CLEAN');
@@ -194,6 +250,22 @@ export function evaluateUiHarnessReceipt(raw, context) {
     errors.push('UI_HARNESS_RECEIPT_TOTALS_INVALID');
   } else if (totals.failed !== 0) {
     errors.push(`UI_HARNESS_RECEIPT_SUITE_FAILED:${String(totals.failed)}`);
+  } else if (tests.length > 0 && totalTests < tests.length) {
+    // R3-06: the suite totals must at least cover the harness tests they claim.
+    errors.push(`UI_HARNESS_RECEIPT_TOTALS_LT_HARNESS:${totalTests}:${tests.length}`);
+  }
+  // R3-06 / corrections task 8.5: the harness digest and the test count are
+  // cross-checked against the harness source committed AT S.
+  const harnessSourceAtS = typeof context.harnessSourceAtS === 'string' && context.harnessSourceAtS !== '' ? context.harnessSourceAtS : null;
+  if (harnessSourceAtS === null) {
+    errors.push('UI_HARNESS_RECEIPT_HARNESS_SOURCE_UNAVAILABLE');
+  } else {
+    const expectedHarnessDigest = `sha256:${createHash('sha256').update(harnessSourceAtS).digest('hex').slice(0, 24)}`;
+    if (record.harnessDigest !== expectedHarnessDigest) errors.push('UI_HARNESS_RECEIPT_HARNESS_DIGEST_MISMATCH');
+    const expectedCount = countHarnessTests(harnessSourceAtS);
+    if (expectedCount !== null && tests.length !== expectedCount) {
+      errors.push(`UI_HARNESS_RECEIPT_HARNESS_TEST_COUNT_MISMATCH:${tests.length}:${expectedCount}`);
+    }
   }
   const recordedKinds = Array.isArray(record.apiErrorKinds) ? record.apiErrorKinds : [];
   const expectedKinds = context.expectedKinds;

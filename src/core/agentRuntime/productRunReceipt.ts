@@ -55,6 +55,44 @@ export interface ProductRunSiblingIdentity {
 export const CAMPAIGN_KINDS = ['PRINT_CLI_PROVIDER', 'CUSTOM_REASONER_SCRIPT'] as const;
 export type CampaignKind = (typeof CAMPAIGN_KINDS)[number];
 
+/**
+ * R3-06 / corrections task 8.5 — the campaign-level termination class. G12
+ * accepts only COMPLETED_SUCCESSFULLY; a PAUSED, budget-exhausted, reasoner-
+ * failed, cancelled, safety-blocked or no-progress run is never a yield
+ * result even when its provider attribution is VALID_PROVIDER_RUN.
+ */
+export const CAMPAIGN_TERMINATIONS = [
+  'COMPLETED_SUCCESSFULLY',
+  'PAUSED',
+  'BUDGET_EXHAUSTED',
+  'REASONER_FAILURE',
+  'CANCELLED',
+  'SAFETY_BLOCKED',
+  'NO_PROGRESS',
+  'UNKNOWN',
+] as const;
+export type CampaignTermination = (typeof CAMPAIGN_TERMINATIONS)[number];
+
+/** Map an agent termination reason to the campaign-level class. */
+export function campaignTerminationOf(reason: unknown): CampaignTermination {
+  if (reason === 'COMPLETE_WITH_FINDING' || reason === 'COMPLETE_NO_FINDING') return 'COMPLETED_SUCCESSFULLY';
+  if (typeof reason === 'string' && (CAMPAIGN_TERMINATIONS as readonly string[]).includes(reason)) {
+    return reason as CampaignTermination;
+  }
+  return 'UNKNOWN';
+}
+
+/**
+ * R3-06 / corrections task 8.5 — the recorded reasoner identity. `kind` is
+ * derived from the RESOLVED adapter (a print-adapter path), never from an
+ * environment flag; the identity digest is the runtime's own `rid:` digest.
+ */
+export interface ProductRunReasonerIdentity {
+  readonly kind: CampaignKind;
+  readonly identityDigest: string | null;
+  readonly printCliDigest: string | null;
+}
+
 /** The Nightwatch repository identity a run executed at (design D3 binding). */
 export interface ProductRunNightwatchIdentity {
   readonly sha: string;
@@ -94,6 +132,12 @@ export interface ProductRunReceipt {
   readonly nightwatchTreeClean?: boolean;
   /** CF-03: provider print adapter vs custom reasoner script. */
   readonly campaignKind?: CampaignKind;
+  /** R3-06: the campaign-level termination class (absent on legacy receipts). */
+  readonly campaignTermination?: CampaignTermination;
+  /** R3-06: the resolved reasoner identity the run executed with. */
+  readonly reasonerIdentity?: ProductRunReasonerIdentity | null;
+  /** R3-06: per-reason termination counts, so a campaign's cases are named. */
+  readonly caseTerminationCounts?: Readonly<Record<string, number>>;
 }
 
 export interface ProductRunReceiptInput {
@@ -101,6 +145,7 @@ export interface ProductRunReceiptInput {
   readonly campaignId: string;
   readonly result: {
     readonly terminationReason: string;
+    readonly terminationCounts?: Readonly<Record<string, number>> | undefined;
     readonly providerAttribution: ProviderFailureAttribution;
     readonly persistedFindings: readonly { readonly dossierId: string }[];
     readonly reproductionCount: number;
@@ -118,6 +163,8 @@ export interface ProductRunReceiptInput {
   readonly nightwatchIdentity?: ProductRunNightwatchIdentity;
   /** CF-03: provider print adapter vs custom reasoner script. */
   readonly campaignKind?: CampaignKind;
+  /** R3-06: the resolved reasoner identity (from the runtime, not the env). */
+  readonly reasonerIdentity?: ProductRunReasonerIdentity | null;
 }
 
 export interface EmittedProductRunReceipt {
@@ -175,6 +222,7 @@ export function buildProductRunReceipt(input: {
   readonly leakScan: ProductRunReceipt['leakScan'];
   readonly nightwatchIdentity?: ProductRunNightwatchIdentity;
   readonly campaignKind?: CampaignKind;
+  readonly reasonerIdentity?: ProductRunReasonerIdentity | null;
 }): ProductRunReceipt {
   const before = input.before.map(identityOf);
   const after = input.after.map(identityOf);
@@ -204,6 +252,15 @@ export function buildProductRunReceipt(input: {
       ? {}
       : { nightwatchSha: input.nightwatchIdentity.sha, nightwatchTreeClean: input.nightwatchIdentity.treeClean }),
     ...(input.campaignKind === undefined ? {} : { campaignKind: input.campaignKind }),
+    campaignTermination: campaignTerminationOf(input.result.terminationReason),
+    ...(input.reasonerIdentity === undefined ? {} : { reasonerIdentity: input.reasonerIdentity }),
+    caseTerminationCounts: Object.freeze(
+      Object.fromEntries(
+        Object.entries(input.result.terminationCounts ?? {})
+          .filter(([, count]) => typeof count === 'number' && Number.isInteger(count) && count >= 0)
+          .sort(([left], [right]) => left.localeCompare(right)),
+      ),
+    ),
   });
 }
 
@@ -227,6 +284,20 @@ export function validateProductRunReceipt(value: unknown): ValidateProductRunRec
     && record.terminationClass !== 'PROVIDER_BLOCKED_BEFORE_SOURCE_ACTION'
     && record.terminationClass !== 'PROVIDER_DEGRADED') {
     errors.push('terminationClass');
+  }
+  if (record.campaignTermination !== undefined
+    && !(CAMPAIGN_TERMINATIONS as readonly string[]).includes(record.campaignTermination as string)) {
+    errors.push('campaignTermination');
+  }
+  if (record.reasonerIdentity !== undefined && record.reasonerIdentity !== null) {
+    const identity = record.reasonerIdentity as Record<string, unknown>;
+    if (!(CAMPAIGN_KINDS as readonly string[]).includes(identity.kind as string)) errors.push('reasonerIdentity.kind');
+    if (identity.identityDigest !== null && (typeof identity.identityDigest !== 'string' || !/^rid:sha256:[0-9a-f]{24,64}$/.test(identity.identityDigest))) {
+      errors.push('reasonerIdentity.identityDigest');
+    }
+    if (identity.printCliDigest !== null && (typeof identity.printCliDigest !== 'string' || !/^sha256:[0-9a-f]{24,64}$/.test(identity.printCliDigest))) {
+      errors.push('reasonerIdentity.printCliDigest');
+    }
   }
   const health = record.providerHealth;
   if (typeof health !== 'object' || health === null) {
@@ -351,6 +422,26 @@ export function evaluateYieldCampaignEvidence(
   if (evidence.manifest.product !== 'campaign') errors.push('YIELD_RECEIPT_NOT_A_CAMPAIGN_RUN');
   if (evidence.summary.passed !== true) errors.push('YIELD_RECEIPT_RUN_NOT_PASSED');
   if (receipt.campaignKind !== 'PRINT_CLI_PROVIDER') errors.push(`YIELD_RECEIPT_NOT_A_PROVIDER_CAMPAIGN:${receipt.campaignKind ?? 'ABSENT'}`);
+  // R3-06 / corrections task 8.5: a terminated-successfully campaign, proven
+  // by the RECORDED reasoner identity (a print-adapter kind plus its runtime
+  // identity digest), not by an environment flag.
+  if (receipt.campaignTermination !== 'COMPLETED_SUCCESSFULLY') {
+    errors.push(`YIELD_RECEIPT_CAMPAIGN_NOT_COMPLETED:${receipt.campaignTermination ?? 'ABSENT'}`);
+  } else {
+    // R3-06 / corrections task 8.5: a completed campaign must name its
+    // per-case reasons — at least one case must have completed.
+    const counts = receipt.caseTerminationCounts ?? {};
+    const completedCases = (counts['COMPLETE_WITH_FINDING'] ?? 0) + (counts['COMPLETE_NO_FINDING'] ?? 0);
+    if (completedCases < 1) errors.push('YIELD_RECEIPT_NO_COMPLETED_CASE');
+  }
+  const reasoner = receipt.reasonerIdentity;
+  if (reasoner === undefined || reasoner === null) {
+    errors.push('YIELD_RECEIPT_REASONER_IDENTITY_ABSENT');
+  } else if (reasoner.kind !== 'PRINT_CLI_PROVIDER') {
+    errors.push(`YIELD_RECEIPT_REASONER_NOT_PROVIDER:${reasoner.kind}`);
+  } else if (typeof reasoner.identityDigest !== 'string' || !/^rid:sha256:[0-9a-f]{24,64}$/.test(reasoner.identityDigest)) {
+    errors.push('YIELD_RECEIPT_REASONER_IDENTITY_INVALID');
+  }
   const manifestSha = evidence.manifest.nightwatchSha;
   if (typeof manifestSha !== 'string' || !/^[0-9a-f]{40}$/i.test(manifestSha)) errors.push('YIELD_RECEIPT_SHA_ABSENT');
   else if (receipt.nightwatchSha === undefined || receipt.nightwatchSha !== manifestSha.toLowerCase()) errors.push('YIELD_RECEIPT_SHA_DISAGREES');
@@ -433,6 +524,7 @@ export async function emitProductRunReceipt(input: ProductRunReceiptInput): Prom
     leakScan,
     ...(input.nightwatchIdentity === undefined ? {} : { nightwatchIdentity: input.nightwatchIdentity }),
     ...(input.campaignKind === undefined ? {} : { campaignKind: input.campaignKind }),
+    ...(input.reasonerIdentity === undefined ? {} : { reasonerIdentity: input.reasonerIdentity }),
   });
   const validation = validateProductRunReceipt(receipt);
   if (!validation.ok) {

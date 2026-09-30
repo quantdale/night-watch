@@ -13,8 +13,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
+  UI_HARNESS_FILE,
   UI_HARNESS_RECEIPT_PATH,
   UI_HARNESS_TYPES_PATH,
+  UI_HARNESS_WRITER_LANE,
   buildUiHarnessReceipt,
 } from '../../../bin/lib/ui-harness-receipt.mjs';
 
@@ -30,6 +32,11 @@ function git(args) {
 export default class ReceiptReporter {
   onFinished(files = []) {
     try {
+      // R3-06 / corrections task 8.5: only the UI_CONTROL_CENTER gate group
+      // writes the G18 receipt. The quality gate sets NIGHTWATCH_TIMING_LANE
+      // for its child (commandKey UI_GATE -> 'ui-gate'); a plain local vitest
+      // run writes nothing, so a developer's run cannot forge gate evidence.
+      if (process.env.NIGHTWATCH_TIMING_LANE !== UI_HARNESS_WRITER_LANE) return;
       const head = git(['rev-parse', 'HEAD']);
       const porcelain = git(['status', '--porcelain']);
       let typesSource = null;
@@ -38,11 +45,20 @@ export default class ReceiptReporter {
       } catch {
         typesSource = null;
       }
+      // The harness CONTENT that executed, hashed into the receipt and later
+      // compared with the same file committed at S.
+      let harnessSource = null;
+      try {
+        harnessSource = fs.readFileSync(path.join(repositoryRoot, 'ui/control-center', UI_HARNESS_FILE), 'utf8');
+      } catch {
+        harnessSource = null;
+      }
       const receipt = buildUiHarnessReceipt({
         files,
         headSha: head === null ? null : head.trim(),
         treeClean: porcelain === null ? null : porcelain.trim() === '',
         typesSource,
+        harnessSource,
         executedAt: new Date().toISOString(),
       });
       if (receipt === null) return;
