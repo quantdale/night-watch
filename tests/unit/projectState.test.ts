@@ -47,6 +47,8 @@ import {
   receiptNotAtCheckpoint,
   resolveProbeBinding,
 } from '../../bin/lib/probe-binding.mjs';
+import { classifyCheckpointRange } from '../../bin/lib/checkpoint-range.mjs';
+import { checkpointRoleViolations } from '../../bin/lib/checkpoint-role.mjs';
 import {
   UI_HARNESS_FILE,
   UI_HARNESS_REQUIRED_TESTS,
@@ -501,15 +503,20 @@ function makeFixture(options: FixtureOptions = {}): Fixture {
       : activeTaskStatus === 'IN_PROGRESS'
         ? 'IMPLEMENTATION_COMPLETE_OPERATIONAL_ACCEPTANCE_PENDING'
         : 'PROJECT_COMPLETE_LOCAL_CLEAN_CERTIFIED';
+    // R3-04 / corrections task 8.3: DISCOVER_FROM_GIT is no longer a
+    // certification checkpoint, so the fixture names the real synthetic
+    // sources commit unless a test overrides the anchor explicitly.
+    const blockOptions = { ...(block ?? {}) };
     fs.writeFileSync(path.join(root, 'docs/CURRENT_STATE.md'), renderBlock(catalogState, {
       liveTaskId: ACTIVE_TASK_ID,
       livePhase: 'test',
       liveTaskStatus: activeTaskStatus,
-      liveProjectCompletionStatus: block?.projectCompletionStatus ?? defaultProjectStatus,
+      liveProjectCompletionStatus: blockOptions.projectCompletionStatus ?? defaultProjectStatus,
       liveVerdictEffect: options.verdictEffect === null ? 'PRESERVE' : options.verdictEffect ?? 'PRESERVE',
       liveNextActionState: activeTaskStatus === 'COMPLETE' || activeTaskStatus === 'BLOCKED' ? 'STOP' : 'CONTINUE',
       liveCompletionClaim: activeTaskStatus === 'COMPLETE' ? 'COMPLETE' : 'NONE',
-      ...(block ?? {}),
+      ...blockOptions,
+      lastSubstantiveImplementationSha: blockOptions.lastSubstantiveImplementationSha ?? sha,
     }));
   }
   fs.writeFileSync(path.join(root, 'AGENTS.md'), '# Agent contract\n');
@@ -2250,6 +2257,10 @@ test.describe('F-12 project:check release certification', () => {
       });
       git(fixture.root, ['add', '--all']);
       git(fixture.root, ['commit', '--quiet', '--no-gpg-sign', '-m', 'stale evidence probe']);
+      // R3-04 / corrections task 8.3: the anchor is a real commit; bind it to
+      // the probe commit so the evidence stays an ancestor of it.
+      const probe = git(fixture.root, ['rev-parse', 'HEAD']);
+      rewriteBlockFor(fixture.root, { LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: probe });
       const result = run(fixture.root);
       expect(result.status).not.toBe(0);
       expect(result.stderr).toContain('PROJECT_STATE_STALE_EVIDENCE: completion-ledger-truth');
@@ -2485,6 +2496,17 @@ test.describe('release probe wiring (M4 task 5.1, corrected by VD-01..VD-05)', (
     'authenticated-capability-lifecycle-check',
     'yield-campaign-result',
     'accessibility-certification',
+    // R3-04 / corrections task 8.3: the nine working-tree probes are bound
+    // through the same checkpoint relation.
+    'validation-lane-state',
+    'ci-block-record',
+    'ledger-agreement',
+    'operator-cli-sweep',
+    'documentation-currency-rules',
+    'workspace-claims',
+    'dependency-advisory-lane',
+    'cli-implementation-contract',
+    'structural-rule-registry',
   ] as const;
 
   test('every registered release check is implemented and resolves to probe output on the real tree', () => {
@@ -2563,7 +2585,14 @@ test.describe('probe-at-checkpoint binding (VD-01)', () => {
 
   test('a working-tree probe is bound only at HEAD == S with a clean tree', () => {
     expect(resolveProbeBinding({ certifiedCheckpointSha: S, headSha: S, treeClean: true })).toMatchObject({ atCheckpoint: true, reasonCode: null });
-    expect(resolveProbeBinding({ certifiedCheckpointSha: S, headSha: OTHER, treeClean: true })).toMatchObject({ atCheckpoint: false, reasonCode: 'HEAD_NOT_CHECKPOINT' });
+    expect(resolveProbeBinding({ certifiedCheckpointSha: S, headSha: OTHER, treeClean: true })).toMatchObject({ atCheckpoint: false, reasonCode: 'DOCUMENTARY_RANGE_UNKNOWN' });
+    expect(resolveProbeBinding({ certifiedCheckpointSha: S, headSha: OTHER, treeClean: true, documentaryDescendant: false })).toMatchObject({ atCheckpoint: false, reasonCode: 'HEAD_NOT_CHECKPOINT' });
+    // R3-03 / corrections task 8.3: a DOCUMENTARY descendant (S an ancestor of
+    // HEAD, S..HEAD documentation-only, tree clean) IS at the checkpoint — the
+    // relaxation that makes certification satisfiable without weakening it.
+    expect(resolveProbeBinding({ certifiedCheckpointSha: S, headSha: OTHER, treeClean: true, documentaryDescendant: true })).toMatchObject({ atCheckpoint: true, reasonCode: null, documentaryDescendant: true });
+    expect(resolveProbeBinding({ certifiedCheckpointSha: S, headSha: OTHER, treeClean: false, documentaryDescendant: true })).toMatchObject({ atCheckpoint: false, reasonCode: 'TREE_DIRTY' });
+    expect(resolveProbeBinding({ certifiedCheckpointSha: S, headSha: OTHER, treeClean: null, documentaryDescendant: true })).toMatchObject({ atCheckpoint: false, reasonCode: 'TREE_STATE_UNKNOWN' });
     expect(resolveProbeBinding({ certifiedCheckpointSha: S, headSha: S, treeClean: false })).toMatchObject({ atCheckpoint: false, reasonCode: 'TREE_DIRTY' });
     expect(resolveProbeBinding({ certifiedCheckpointSha: S, headSha: S, treeClean: null })).toMatchObject({ atCheckpoint: false, reasonCode: 'TREE_STATE_UNKNOWN' });
     expect(resolveProbeBinding({ certifiedCheckpointSha: null, headSha: S, treeClean: true })).toMatchObject({ atCheckpoint: false, reasonCode: 'CHECKPOINT_UNRESOLVED' });
@@ -2615,6 +2644,69 @@ test.describe('probe-at-checkpoint binding (VD-01)', () => {
 });
 
 // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// R3-03 / corrections task 8.3 — the checkpoint range classifier.
+// ---------------------------------------------------------------------------
+
+test.describe('checkpoint range classification (R3-03)', () => {
+  const S = 'a'.repeat(40);
+  const H = 'b'.repeat(40);
+  const base = {
+    certifiedCheckpointSha: S,
+    headSha: H,
+    isAncestor: () => true,
+    changedFiles: () => ['docs/CURRENT_STATE.md'],
+    checkpointRoleViolations: () => [],
+  };
+
+  test('S == HEAD is SAME; an unprovable range is UNKNOWN; a non-ancestor is UNRELATED', () => {
+    expect(classifyCheckpointRange({ ...base, headSha: S })).toBe('SAME');
+    expect(classifyCheckpointRange({ ...base, isAncestor: null })).toBe('UNKNOWN');
+    expect(classifyCheckpointRange({ ...base, changedFiles: null })).toBe('UNKNOWN');
+    expect(classifyCheckpointRange({ ...base, isAncestor: () => false })).toBe('UNRELATED');
+    expect(classifyCheckpointRange({ ...base, certifiedCheckpointSha: null })).toBe('UNKNOWN');
+    expect(classifyCheckpointRange({ ...base, checkpointRoleViolations: () => ['src/x.ts'] })).toBe('SUBSTANTIVE_DESCENDANT');
+    expect(classifyCheckpointRange({ ...base, checkpointRoleViolations: () => null })).toBe('UNKNOWN');
+    expect(classifyCheckpointRange({ ...base, changedFiles: () => [] })).toBe('DOCUMENTARY_DESCENDANT');
+  });
+
+  test('a real git fixture: S, a documentary descendant and a substantive descendant', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-checkpoint-range-'));
+    const runGit = (args: string[]): string => git(root, args);
+    try {
+      runGit(['init', '--quiet', '-b', 'main']);
+      fs.writeFileSync(path.join(root, 'src.ts'), 'export const x = 1;\n');
+      runGit(['add', '--all']);
+      runGit(['commit', '--quiet', '--no-gpg-sign', '-m', 'substantive S']);
+      const s = runGit(['rev-parse', 'HEAD']);
+      fs.mkdirSync(path.join(root, 'docs'), { recursive: true });
+      fs.writeFileSync(path.join(root, 'docs/CURRENT_STATE.md'), 'docs\n');
+      runGit(['add', '--all']);
+      runGit(['commit', '--quiet', '--no-gpg-sign', '-m', 'documentary descendant']);
+      const docsHead = runGit(['rev-parse', 'HEAD']);
+      const wired = (headSha: string) => classifyCheckpointRange({
+        certifiedCheckpointSha: s,
+        headSha,
+        isAncestor: (ancestor, descendant) => {
+          const result = spawnSync('git', ['-C', root, 'merge-base', '--is-ancestor', ancestor, descendant], { cwd: root, env: gitEnv(root), encoding: 'utf8' });
+          return result.status === 0;
+        },
+        changedFiles: (from, to) => runGit(['diff', '--name-only', `${from}..${to}`]).split('\n').filter(Boolean),
+        checkpointRoleViolations: (files) => checkpointRoleViolations(root, files, { kind: 'range', from: s, to: headSha }),
+      });
+      expect(wired(docsHead)).toBe('DOCUMENTARY_DESCENDANT');
+      fs.writeFileSync(path.join(root, 'src.ts'), 'export const x = 2;\n');
+      runGit(['add', '--all']);
+      runGit(['commit', '--quiet', '--no-gpg-sign', '-m', 'substantive descendant']);
+      const substantiveHead = runGit(['rev-parse', 'HEAD']);
+      expect(wired(substantiveHead)).toBe('SUBSTANTIVE_DESCENDANT');
+      expect(wired(s)).toBe('SAME');
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+});
+
 // VD-02 / corrections task 4.2 — G18 consumes a UI-harness EXECUTION receipt.
 // ---------------------------------------------------------------------------
 

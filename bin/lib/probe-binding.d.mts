@@ -2,6 +2,7 @@ export interface ProbeBindingInput {
   readonly certifiedCheckpointSha: string | null;
   readonly headSha: string | null;
   readonly treeClean: boolean | null;
+  readonly documentaryDescendant?: boolean | null;
 }
 export interface ProbeBinding {
   readonly atCheckpoint: boolean;
@@ -9,6 +10,7 @@ export interface ProbeBinding {
   readonly certifiedCheckpointSha: string | null;
   readonly headSha: string | null;
   readonly treeClean: boolean | null;
+  readonly documentaryDescendant: boolean;
 }
 export interface ProbeOutput {
   readonly state: string;

@@ -24,6 +24,7 @@ const SHA_RE = /^[0-9a-f]{40}$/i;
  *   certifiedCheckpointSha: string | null,
  *   headSha: string | null,
  *   treeClean: boolean | null,
+ *   documentaryDescendant?: boolean | null,
  * }} ProbeBindingInput
  */
 
@@ -34,6 +35,7 @@ const SHA_RE = /^[0-9a-f]{40}$/i;
  *   certifiedCheckpointSha: string | null,
  *   headSha: string | null,
  *   treeClean: boolean | null,
+ *   documentaryDescendant: boolean,
  * }} ProbeBinding
  */
 
@@ -51,14 +53,22 @@ export function resolveProbeBinding(input) {
     : null;
   const head = typeof input.headSha === 'string' && SHA_RE.test(input.headSha) ? input.headSha.toLowerCase() : null;
   const treeClean = typeof input.treeClean === 'boolean' ? input.treeClean : null;
+  // R3-03 / corrections task 8.3: a HEAD that is not S is admissible ONLY as a
+  // DOCUMENTARY descendant (S is its ancestor and the whole range S..HEAD is
+  // documentation-only), proven by the caller through classifyCheckpointRange.
+  // `false` means a substantive descendant was proven; `null`/absent means the
+  // range could not be classified, which fails closed the same way.
+  const documentaryDescendant = input.documentaryDescendant === true;
   /** @type {string | null} */
   let reasonCode = null;
   if (certified === null) reasonCode = 'CHECKPOINT_UNRESOLVED';
   else if (head === null) reasonCode = 'HEAD_UNRESOLVED';
-  else if (head !== certified) reasonCode = 'HEAD_NOT_CHECKPOINT';
+  else if (head !== certified && input.documentaryDescendant !== true && input.documentaryDescendant !== false) {
+    reasonCode = 'DOCUMENTARY_RANGE_UNKNOWN';
+  } else if (head !== certified && input.documentaryDescendant === false) reasonCode = 'HEAD_NOT_CHECKPOINT';
   else if (treeClean === null) reasonCode = 'TREE_STATE_UNKNOWN';
   else if (treeClean === false) reasonCode = 'TREE_DIRTY';
-  return { atCheckpoint: reasonCode === null, reasonCode, certifiedCheckpointSha: certified, headSha: head, treeClean };
+  return { atCheckpoint: reasonCode === null, reasonCode, certifiedCheckpointSha: certified, headSha: head, treeClean, documentaryDescendant };
 }
 
 /**
@@ -69,7 +79,8 @@ export function resolveProbeBinding(input) {
  */
 export function describeProbeBinding(binding) {
   const short = (/** @type {string | null} */ sha) => (sha === null ? 'NONE' : sha.slice(0, 8));
-  return `${binding.reasonCode ?? 'AT_CHECKPOINT'}: HEAD ${short(binding.headSha)} vs certified checkpoint ${short(binding.certifiedCheckpointSha)}, tree ${binding.treeClean === null ? 'UNKNOWN' : binding.treeClean ? 'clean' : 'dirty'}`;
+  const range = binding.documentaryDescendant ? ' (documentary descendant)' : '';
+  return `${binding.reasonCode ?? 'AT_CHECKPOINT'}: HEAD ${short(binding.headSha)} vs certified checkpoint ${short(binding.certifiedCheckpointSha)}${range}, tree ${binding.treeClean === null ? 'UNKNOWN' : binding.treeClean ? 'clean' : 'dirty'}`;
 }
 
 /**

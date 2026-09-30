@@ -36,6 +36,7 @@ import { UI_HARNESS_RECEIPT_PATH, UI_HARNESS_TYPES_PATH, evaluateUiHarnessReceip
 import { evidenceArtifactExistsAtSha } from './lib/evidence-artifact.mjs';
 import { exerciseConfigurationContract, exercisePreflightRefusal } from './lib/release-probe-exercises.mjs';
 import { bindTreeProbe, receiptBindingRelation, receiptNotAtCheckpoint, resolveProbeBinding } from './lib/probe-binding.mjs';
+import { classifyCheckpointRange } from './lib/checkpoint-range.mjs';
 import { classifyCertificationDemotion } from './lib/certification-demotion.mjs';
 import { collectCiBlockStale, validateCiBlockRecord } from './lib/ci-block-record.mjs';
 import { checkpointRoleViolations } from './lib/checkpoint-role.mjs';
@@ -993,27 +994,52 @@ function collectReleaseCheckOutputs(root, blockFields, agentText, substantiveSha
   const isAncestor = (ancestor, descendant) => gitReadOnly(root, ['merge-base', '--is-ancestor', ancestor, descendant]) !== null;
   const lane = probeLaneState(root, substantiveSha, isAncestor, today);
   const rules = probeRuleRegistry(root);
-  // VD-01 / design D3: the three facts that decide whether a working-tree
-  // measurement is bound to the certified checkpoint. Read once per evaluation.
+  // VD-01 / design D3 + R3-03 / corrections task 8.3: the facts that decide
+  // whether a working-tree measurement is bound to the certified checkpoint.
+  // HEAD == S with a clean tree is the primary case; HEAD != S is admissible
+  // ONLY as a DOCUMENTARY descendant, proven by the whole-range classifier
+  // below (S an ancestor of HEAD and S..HEAD documentation-only). Read once
+  // per evaluation; every unknown or unprovable range fails closed.
   const headOutput = gitReadOnly(root, ['rev-parse', 'HEAD']);
   const porcelainOutput = gitReadOnly(root, ['status', '--porcelain']);
+  const headSha = headOutput === null ? null : headOutput.trim();
+  const rangeClass = classifyCheckpointRange({
+    certifiedCheckpointSha: substantiveSha,
+    headSha,
+    isAncestor,
+    changedFiles: (from, to) => {
+      const output = gitReadOnly(root, ['diff', '--name-only', `${from}..${to}`]);
+      return output === null ? null : output.split('\n').map((line) => line.trim()).filter((line) => line !== '');
+    },
+    checkpointRoleViolations: (files) => {
+      try {
+        return checkpointRoleViolations(root, files, { kind: 'range', from: substantiveSha, to: headSha ?? substantiveSha });
+      } catch {
+        return null;
+      }
+    },
+  });
   const binding = resolveProbeBinding({
     certifiedCheckpointSha: substantiveSha,
-    headSha: headOutput === null ? null : headOutput.trim(),
+    headSha,
     treeClean: porcelainOutput === null ? null : porcelainOutput.trim() === '',
+    documentaryDescendant: rangeClass === 'DOCUMENTARY_DESCENDANT',
   });
   return {
     laneCounts: lane.counts,
     outputs: {
-      'validation-lane-state': lane.output,
-      'ci-block-record': probeCiBlockRecord(root, blockFields),
-      'ledger-agreement': probeLedgerAgreement(agentText),
-      'operator-cli-sweep': probeOperatorCli(root),
-      'documentation-currency-rules': probeDocumentationCurrency(root, rules.names),
-      'workspace-claims': probeWorkspaceClaims(agentText),
-      'dependency-advisory-lane': probeDependencyAdvisory(root, today),
-      'cli-implementation-contract': probeCliContract(root),
-      'structural-rule-registry': rules.output,
+      // R3-04 / corrections task 8.3: EVERY working-tree probe is bound through
+      // the same checkpoint relation — a measurement taken at a substantive
+      // descendant (or an unclassifiable range) is not a measurement of S.
+      'validation-lane-state': bindTreeProbe(binding, lane.output),
+      'ci-block-record': bindTreeProbe(binding, probeCiBlockRecord(root, blockFields)),
+      'ledger-agreement': bindTreeProbe(binding, probeLedgerAgreement(agentText)),
+      'operator-cli-sweep': bindTreeProbe(binding, probeOperatorCli(root)),
+      'documentation-currency-rules': bindTreeProbe(binding, probeDocumentationCurrency(root, rules.names)),
+      'workspace-claims': bindTreeProbe(binding, probeWorkspaceClaims(agentText)),
+      'dependency-advisory-lane': bindTreeProbe(binding, probeDependencyAdvisory(root, today)),
+      'cli-implementation-contract': bindTreeProbe(binding, probeCliContract(root)),
+      'structural-rule-registry': bindTreeProbe(binding, rules.output),
       'accessibility-certification': probeAccessibility(root, substantiveSha),
       'yield-campaign-result': probeYieldCampaignResult(root, substantiveSha),
       'dead-architecture-closure-check': bindTreeProbe(binding, probeDeadArchitectureClosure(root)),
@@ -1059,6 +1085,7 @@ function main() {
   const cli = defineOperatorCli(CLI_METADATA);
   if (cli.stop) return;
   const root = parseArgs(process.argv.slice(2));
+  /** @type {string[]} */
   const errors = [];
   // The release certification needs the parsed block and the agent-state
   // output after section 3, so both are carried out of their local scopes.
@@ -1518,8 +1545,17 @@ function main() {
           /** @type {string | null} */
           let certifiedCheckpointSha = null;
           if (HEX40.test(substantiveSha ?? '')) certifiedCheckpointSha = substantiveSha;
-          else if (substantiveSha === 'DISCOVER_FROM_GIT') certifiedCheckpointSha = liveHeadSha;
-          else fail(errors, 'PROJECT_STATE_CERTIFIED_CHECKPOINT_UNRESOLVED');
+          else if (substantiveSha === 'DISCOVER_FROM_GIT') {
+            // R3-04 / corrections task 8.3: DISCOVER_FROM_GIT is authority for
+            // the SNAPSHOT (LIVE_HEAD_SHA), never for the certification
+            // checkpoint. Resolving it to the live HEAD let the tracked
+            // document certify whatever commit happened to contain it. It
+            // resolves to no checkpoint here, and a claimed advance that rests
+            // on it fails closed.
+            if (definition.advanceStatuses.includes(blockFields.get('PROJECT_COMPLETION_STATUS') ?? '')) {
+              fail(errors, 'PROJECT_STATE_LAST_SUBSTANTIVE_DISCOVER_INVALID');
+            }
+          } else fail(errors, 'PROJECT_STATE_CERTIFIED_CHECKPOINT_UNRESOLVED');
           const collected = collectReleaseCheckOutputs(root, blockFields, agentText, certifiedCheckpointSha, today);
           const external = collectExternalTrack(root);
           // NW-AUD-010: one captured evaluation snapshot; HEAD is resolved
