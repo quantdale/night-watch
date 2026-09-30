@@ -129,6 +129,10 @@ export function checkDevLauncherMetadataShortCircuit() {
     let shortCircuitAt = -1;
     if (ownParser.has(file)) {
       const parser = ownParser.get(file);
+      if (parser === undefined) {
+        fail(`DEV_LAUNCHER_PARSER_PERMISSIVE ${file} has no declared own-parser contract`);
+        continue;
+      }
       if (!code.includes(String(parser.permissive))) fail(`DEV_LAUNCHER_PARSER_PERMISSIVE ${file} is a declared own-parser launcher but no longer refuses unrecognised flags (${String(parser.permissive)} is missing)`);
       shortCircuitAt = code.indexOf(String(parser.shortCircuit), guardEnd);
       if (shortCircuitAt < 0) fail(`DEV_LAUNCHER_NO_SHORT_CIRCUIT ${file} no longer reaches its help/metadata dispatch statement (${String(parser.shortCircuit)} is missing after the DEV guard)`);
