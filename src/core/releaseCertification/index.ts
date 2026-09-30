@@ -771,7 +771,7 @@ export function renderReleaseVerdictText(verdict: ReleaseVerdict): string {
     `externalTrack ${verdict.externalTrack.id} state=${verdict.externalTrack.state}`,
   ];
   for (const condition of verdict.conditions) {
-    lines.push(`  ${String(condition.order).padStart(2, '0')} ${condition.id} state=${condition.state} evidenceSha=${condition.resolvedEvidenceSha ?? 'NONE'} detail=${condition.detail}`);
+    lines.push(`  ${String(condition.order).padStart(2, '0')} ${condition.id} state=${condition.state} check=${condition.checkState} evidenceSha=${condition.resolvedEvidenceSha ?? 'NONE'} detail=${condition.detail}`);
   }
   return `${lines.join('\n')}\n`;
 }

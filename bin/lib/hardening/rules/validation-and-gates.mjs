@@ -39,6 +39,9 @@ import {
   RELEASE_EVIDENCE_SCHEMA,
   guardHoldsForChange,
 } from '../../release-evidence.mjs';
+import { bindTreeProbe, receiptBindingRelation, resolveProbeBinding } from '../../probe-binding.mjs';
+import { classifyCheckpointRange } from '../../checkpoint-range.mjs';
+import { buildUiHarnessReceipt, evaluateUiHarnessReceipt, UI_HARNESS_REQUIRED_TESTS, UI_HARNESS_SUITE } from '../../ui-harness-receipt.mjs';
 
 export function checkTypecheckCoverage() {
   let config;
@@ -735,8 +738,98 @@ function verifyD3ProbeBinding(collectorSource, collectorBody) {
       fail(`RELEASE_PROBE_NOT_CHECKPOINT_BOUND: ${call[1]} for ${id} never resolves NOT_AT_CHECKPOINT for a receipt bound to another commit`);
     }
   }
+  // R3-04 / R3-07 / corrections task 8.6: EVERY other working-tree output is
+  // bound through bindTreeProbe; an unwrapped probe is a measurement of the
+  // working tree presented as a measurement of S.
+  for (const match of collectorBody.matchAll(/^\s*'([a-z0-9-]+)':\s*(.+?),\s*$/gm)) {
+    const id = match[1];
+    const expression = (match[2] ?? '').trim();
+    if (id === undefined || receiptBound.includes(id)) continue;
+    if (!/^bindTreeProbe\(binding,\s*[A-Za-z0-9_.()\[\]' ,]+?\)$/.test(expression)) {
+      fail(`RELEASE_PROBE_NOT_CHECKPOINT_BOUND: ${id} is not bound through bindTreeProbe(binding, ...) (found: ${expression})`);
+    }
+  }
+  // The binding facts and the three receipt relations are exact expressions; a
+  // flipped comparison or a hard-coded fact cannot survive them.
+  /** @type {Array<[string, string]>} */
+  const relationAnchors = [
+    ["headSha,\n    treeClean: porcelainOutput === null ? null : porcelainOutput.trim() === '',", 'the binding facts read from Git, not hard-coded'],
+    ["if (evaluated.relation !== 'BOUND') {", 'the G18 receipt relation comparison'],
+    ["if (evaluated.relation === 'BOUND') {", 'the G12 receipt relation comparison'],
+    ["if (receiptBindingRelation(certifiedCheckpointSha, parsed.summary.sha) !== 'BOUND') {", 'the G20 record relation comparison'],
+  ];
+  for (const [needle, what] of relationAnchors) {
+    if (!collectorSource.includes(needle)) {
+      fail(`RELEASE_PROBE_NOT_CHECKPOINT_BOUND: bin/project-state-check.mjs no longer carries ${what} (${needle}); a flipped relation or a hard-coded fact re-opens the D3 hole`);
+    }
+  }
+  verifyD3ProbeBehaviour();
   if (!/resolveProbeBinding\(\{\s*certifiedCheckpointSha:\s*substantiveSha,/.test(collectorBody)) {
     fail('RELEASE_PROBE_NOT_CHECKPOINT_BOUND: the probe binding must be derived from the certified checkpoint (certifiedCheckpointSha: substantiveSha)');
+  }
+}
+
+
+/**
+ * R3-07 / corrections task 8.6 — the D3 clause is BEHAVIOURAL: the shared
+ * predicates are executed on fixtures, so a mutant that makes the binding
+ * accept a non-checkpoint measurement, or that inverts a receipt relation, is
+ * detected by what the code DOES, not by what it says.
+ */
+function verifyD3ProbeBehaviour() {
+  const S = 'a'.repeat(40);
+  const OTHER = 'b'.repeat(40);
+  const met = { state: 'MET', detail: 'fixture measurement' };
+  const away = resolveProbeBinding({ certifiedCheckpointSha: S, headSha: OTHER, treeClean: true, documentaryDescendant: false });
+  if (bindTreeProbe(away, met).state !== 'NOT_AT_CHECKPOINT') {
+    fail('RELEASE_PROBE_NOT_CHECKPOINT_BOUND: bindTreeProbe no longer demotes a MET measurement taken away from the certified checkpoint');
+  }
+  const documentary = resolveProbeBinding({ certifiedCheckpointSha: S, headSha: OTHER, treeClean: true, documentaryDescendant: true });
+  if (bindTreeProbe(documentary, met).state !== 'MET') {
+    fail('RELEASE_PROBE_NOT_CHECKPOINT_BOUND: a documentary descendant of S must keep a MET measurement (R3-03)');
+  }
+  const dirty = resolveProbeBinding({ certifiedCheckpointSha: S, headSha: OTHER, treeClean: false, documentaryDescendant: true });
+  if (bindTreeProbe(dirty, met).state !== 'NOT_AT_CHECKPOINT') {
+    fail('RELEASE_PROBE_NOT_CHECKPOINT_BOUND: a dirty tree must never be at the certified checkpoint');
+  }
+  if (classifyCheckpointRange({ certifiedCheckpointSha: S, headSha: OTHER, isAncestor: () => true, changedFiles: () => ['docs/CURRENT_STATE.md'], checkpointRoleViolations: () => ['docs/CURRENT_STATE.md'] }) !== 'SUBSTANTIVE_DESCENDANT') {
+    fail('RELEASE_PROBE_NOT_CHECKPOINT_BOUND: classifyCheckpointRange no longer refuses a substantive descendant');
+  }
+  if (classifyCheckpointRange({ certifiedCheckpointSha: S, headSha: OTHER, isAncestor: () => false, changedFiles: () => [], checkpointRoleViolations: () => [] }) !== 'UNRELATED') {
+    fail('RELEASE_PROBE_NOT_CHECKPOINT_BOUND: classifyCheckpointRange no longer refuses an unrelated history');
+  }
+  if (receiptBindingRelation(S, S) !== 'BOUND' || receiptBindingRelation(S, OTHER) !== 'BOUND_TO_OTHER') {
+    fail('RELEASE_PROBE_NOT_CHECKPOINT_BOUND: receiptBindingRelation no longer distinguishes BOUND from BOUND_TO_OTHER');
+  }
+  const kinds = ['NETWORK', 'HTTP', 'INVALID_RESPONSE', 'TIMEOUT', 'ABORTED'];
+  const typesSource = `export const API_ERROR_KINDS = [${kinds.map((kind) => `'${kind}'`).join(', ')}] as const;`;
+  const harnessSource = ['describe("fixture", () => {', ...Array.from({ length: 6 }, (_, index) => `  it("fixture ${index}", () => {});`), '});'].join('\n');
+  const harnessSuite = UI_HARNESS_REQUIRED_TESTS.filter((entry) => entry.suite === UI_HARNESS_SUITE);
+  const otherSuite = UI_HARNESS_REQUIRED_TESTS.filter((entry) => entry.suite !== UI_HARNESS_SUITE);
+  const vitestFile = {
+    filepath: '/repo/ui/control-center/src/contractRender.test.tsx',
+    tasks: [
+      {
+        type: 'suite',
+        name: UI_HARNESS_SUITE,
+        tasks: [
+          ...harnessSuite.map((entry) => ({ type: 'test', name: `${entry.titlePrefix} (fixture)`, result: { state: 'pass' } })),
+          { type: 'test', name: 'offers retry only for NETWORK, TIMEOUT, 408 and 429', result: { state: 'pass' } },
+        ],
+      },
+      {
+        type: 'suite',
+        name: 'control center render truth',
+        tasks: otherSuite.map((entry) => ({ type: 'test', name: `${entry.titlePrefix} (fixture)`, result: { state: 'pass' } })),
+      },
+    ],
+  };
+  const build = (/** @type {string} */ sha) => buildUiHarnessReceipt({ files: [vitestFile], headSha: sha, treeClean: true, typesSource, harnessSource, executedAt: '2026-09-30T00:00:00.000Z' });
+  const context = { certifiedCheckpointSha: S, expectedKinds: kinds, harnessSourceAtS: harnessSource };
+  const bound = evaluateUiHarnessReceipt(build(S), context);
+  const other = evaluateUiHarnessReceipt(build(OTHER), context);
+  if (bound.relation !== 'BOUND' || other.relation !== 'BOUND_TO_OTHER') {
+    fail(`RELEASE_PROBE_NOT_CHECKPOINT_BOUND: evaluateUiHarnessReceipt no longer binds by the receipt SHA (got ${bound.relation}/${other.relation})`);
   }
 }
 

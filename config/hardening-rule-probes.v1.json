@@ -1952,6 +1952,46 @@
             "replace": "    certifiedCheckpointSha: null,\n    headSha,\n    treeClean:"
           }
         ]
+      },
+      {
+        "id": "HC-202",
+        "ops": [
+          {
+            "file": "bin/project-state-check.mjs",
+            "search": "    headSha,\n    treeClean: porcelainOutput === null ? null : porcelainOutput.trim() === '',",
+            "replace": "    headSha: substantiveSha,\n    treeClean: true,"
+          }
+        ]
+      },
+      {
+        "id": "HC-203",
+        "ops": [
+          {
+            "file": "bin/project-state-check.mjs",
+            "search": "    if (evaluated.relation === 'BOUND') {",
+            "replace": "    if (evaluated.relation !== 'BOUND') {"
+          }
+        ]
+      },
+      {
+        "id": "HC-204",
+        "ops": [
+          {
+            "file": "bin/project-state-check.mjs",
+            "search": "  if (receiptBindingRelation(certifiedCheckpointSha, parsed.summary.sha) !== 'BOUND') {",
+            "replace": "  if (false) {"
+          }
+        ]
+      },
+      {
+        "id": "HC-205",
+        "ops": [
+          {
+            "file": "bin/project-state-check.mjs",
+            "search": "  if (evaluated.relation !== 'BOUND') {",
+            "replace": "  if (false) {"
+          }
+        ]
       }
     ],
     "checkSiblingRootResolution": [

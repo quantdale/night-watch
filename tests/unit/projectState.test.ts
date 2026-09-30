@@ -2577,6 +2577,7 @@ test.describe('release probe wiring (M4 task 5.1, corrected by VD-01..VD-05)', (
     expect(output).not.toBe('');
     expect(output).not.toContain('the check is not present at this checkpoint');
     const states = new Map<string, string>();
+    const checkStates = new Map<string, string>();
     let checkpoint = '';
     // A passing (clean-tree) evaluation prints the JSON receipt on stdout; a
     // failing one prints the text verdict on stderr. Read whichever exists.
@@ -2588,12 +2589,19 @@ test.describe('release probe wiring (M4 task 5.1, corrected by VD-01..VD-05)', (
     }
     if (receipt?.releaseVerdict?.conditions !== undefined) {
       checkpoint = receipt.releaseVerdict.certifiedCheckpointSha ?? '';
-      for (const condition of receipt.releaseVerdict.conditions) states.set(condition.id, condition.state);
+      for (const condition of receipt.releaseVerdict.conditions) {
+        states.set(condition.id, condition.state);
+        const checkState = (condition as { checkState?: string }).checkState;
+        if (typeof checkState === 'string') checkStates.set(condition.id, checkState);
+      }
     } else {
       checkpoint = /^checkpoint (\S+)/m.exec(output)?.[1] ?? '';
       for (const line of output.split('\n')) {
-        const match = /^\s+\d+ (\S+) state=(\S+)/.exec(line);
-        if (match !== null) states.set(match[1] as string, match[2] as string);
+        const match = /^\s+\d+ (\S+) state=(\S+) check=(\S+)/.exec(line);
+        if (match !== null) {
+          states.set(match[1] as string, match[2] as string);
+          checkStates.set(match[1] as string, match[3] as string);
+        }
         if (line.includes('state=')) expect(line).not.toContain('is registered and its capability is created by');
       }
     }
@@ -2607,11 +2615,16 @@ test.describe('release probe wiring (M4 task 5.1, corrected by VD-01..VD-05)', (
       const conditionsByCheck = new Map<string, string>();
       for (const condition of liveDefinition().conditions) conditionsByCheck.set(condition.check, condition.id);
       for (const check of D3_BOUND_CHECKS) {
-        const state = states.get(conditionsByCheck.get(check) ?? '');
+        const id = conditionsByCheck.get(check) ?? '';
+        const state = states.get(id);
         // Only a receipt bound to S may certify away from S; on this host the
         // receipts, when present, are bound to the working copy's own HEAD.
         if (check === 'ui-error-taxonomy-check' || check === 'yield-campaign-result' || check === 'accessibility-certification') continue;
         expect(state, `${check} must not be MET at HEAD ${head} for checkpoint ${checkpoint}`).not.toBe('MET');
+        // R3-07 / corrections task 8.6: assert the CHECK state, not only the
+        // effective state (which is EVIDENCE_ABSENT regardless): the demotion
+        // must be visible in what the probe itself reported.
+        expect(checkStates.get(id), `${check} must report a non-MET checkState away from the checkpoint`).not.toBe('MET');
       }
     }
     // X-04 — the demotion relation rides every receipt (NOT_CLAIMED while the
@@ -2759,6 +2772,148 @@ test.describe('checkpoint range classification (R3-03)', () => {
 
 // VD-02 / corrections task 4.2 — G18 consumes a UI-harness EXECUTION receipt.
 // ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// R3-07 / corrections task 8.6 — fixture-root collector tests: the REAL
+// checker consumes receipts bound to S and to another SHA through its own
+// probes, and the checkState it reports differs accordingly.
+// ---------------------------------------------------------------------------
+
+test.describe('fixture-root collector receipts (R3-07)', () => {
+  const REPO = path.join(__dirname, '..', '..');
+
+  function runChecker(root: string): string {
+    const result = spawnSync(process.execPath, [path.join(root, 'bin/project-state-check.mjs'), '--root', root], {
+      cwd: root,
+      encoding: 'utf8',
+      timeout: 300_000,
+      maxBuffer: 16 * 1024 * 1024,
+    });
+    return `${result.stdout}\n${result.stderr}`;
+  }
+
+  function conditionLine(output: string, id: string): string | null {
+    for (const line of output.split('\n')) {
+      if (new RegExp(`^\\s+\\d+ ${id} `).test(line)) return line;
+    }
+    return null;
+  }
+
+  test('G18: a UI-harness receipt bound to S reports check=MET; bound elsewhere it is NOT_AT_CHECKPOINT', () => {
+    const s = /LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: ([0-9a-f]{40})/.exec(fs.readFileSync(path.join(REPO, 'docs/CURRENT_STATE.md'), 'utf8'))?.[1] ?? '';
+    expect(s).not.toBe('');
+    // Byte-exact (untrimmed) reads: the collector hashes the raw blob.
+    const rawGit = (args: string[]): string => {
+      const result = spawnSync('git', ['-C', REPO, ...args], { cwd: REPO, env: gitEnv(REPO), encoding: 'utf8' });
+      if (result.status !== 0) throw new Error(`git ${args.join(' ')} failed`);
+      return result.stdout ?? '';
+    };
+    const harnessAtS = rawGit(['show', `${s}:ui/control-center/src/contractRender.test.tsx`]);
+    const typesAtS = rawGit(['show', `${s}:ui/control-center/src/types.ts`]);
+    const kinds = extractApiErrorKinds(typesAtS) as string[];
+    expect(kinds.length).toBeGreaterThan(0);
+    const harnessTests = (harnessAtS.match(/^\s*(?:it|test)\(/gm) ?? []).length;
+    expect(harnessTests).toBe(16);
+    const harnessSuite = UI_HARNESS_REQUIRED_TESTS.filter((entry) => entry.suite === UI_HARNESS_SUITE);
+    const otherSuite = UI_HARNESS_REQUIRED_TESTS.filter((entry) => entry.suite !== UI_HARNESS_SUITE);
+    const extras = harnessTests - harnessSuite.length - 1 - otherSuite.length;
+    const vitestFile = {
+      filepath: `/repo/ui/control-center/${UI_HARNESS_FILE}`,
+      tasks: [
+        {
+          type: 'suite',
+          name: UI_HARNESS_SUITE,
+          tasks: [
+            ...harnessSuite.map((entry) => ({ type: 'test', name: `${entry.titlePrefix} (fixture)`, result: { state: 'pass' } })),
+            { type: 'test', name: 'offers retry only for NETWORK, TIMEOUT, 408 and 429', result: { state: 'pass' } },
+            ...Array.from({ length: extras }, (_, index) => ({ type: 'test', name: `fixture remainder ${index}`, result: { state: 'pass' } })),
+          ],
+        },
+        { type: 'suite', name: 'control center render truth', tasks: otherSuite.map((entry) => ({ type: 'test', name: `${entry.titlePrefix} (fixture)`, result: { state: 'pass' } })) },
+      ],
+    };
+    const build = (sha: string) => buildUiHarnessReceipt({
+      files: [vitestFile],
+      headSha: sha,
+      treeClean: true,
+      typesSource: typesAtS,
+      harnessSource: harnessAtS,
+      executedAt: '2026-09-30T00:00:00.000Z',
+    });
+    const target = path.join(REPO, 'artifacts/receipts/ui-harness-receipt.v1.json');
+    let backup: string | null = null;
+    try {
+      backup = fs.readFileSync(target, 'utf8');
+    } catch {
+      backup = null;
+    }
+    try {
+      fs.mkdirSync(path.dirname(target), { recursive: true });
+      fs.writeFileSync(target, `${JSON.stringify(build(s), null, 2)}\n`);
+      const bound = runChecker(REPO);
+      const boundLine = conditionLine(bound, 'ui-error-taxonomy-rendering');
+      expect(boundLine, bound).not.toBeNull();
+      expect(boundLine).toContain('check=MET');
+      fs.writeFileSync(target, `${JSON.stringify(build('b'.repeat(40)), null, 2)}\n`);
+      const other = runChecker(REPO);
+      const otherLine = conditionLine(other, 'ui-error-taxonomy-rendering');
+      expect(otherLine, other).not.toBeNull();
+      expect(otherLine).toContain('check=NOT_AT_CHECKPOINT');
+    } finally {
+      if (backup === null) fs.rmSync(target, { force: true });
+      else fs.writeFileSync(target, backup);
+    }
+  });
+
+  test('G12: a yield-campaign receipt bound to S reports check=MET; bound elsewhere it is NOT_AT_CHECKPOINT', () => {
+    const s = /LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: ([0-9a-f]{40})/.exec(fs.readFileSync(path.join(REPO, 'docs/CURRENT_STATE.md'), 'utf8'))?.[1] ?? '';
+    expect(s).not.toBe('');
+    const observation = { repository: 'mobingilabs/ouchan', headSha: '1'.repeat(40), statusDigest: 'sha256:aa', diffDigest: 'sha256:bb' };
+    const build = (sha: string) => buildProductRunReceipt({
+      campaignId: 'fixture-yield',
+      generatedAt: '2026-09-30T00:00:00.000Z',
+      result: {
+        terminationReason: 'COMPLETE_NO_FINDING',
+        terminationCounts: { COMPLETE_NO_FINDING: 1 },
+        providerAttribution: {
+          terminationClass: 'VALID_PROVIDER_RUN',
+          totalCalls: 3,
+          completedCalls: 3,
+          failures: 0,
+          byClass: {},
+        } as never,
+        persistedFindings: [],
+        reproductionCount: 2,
+        toolActionCount: 5,
+      },
+      before: [observation] as never,
+      after: [observation] as never,
+      leakScan: { result: 'CLEAN', findings: 0, scannedChars: 10 },
+      nightwatchIdentity: { sha, treeClean: true },
+      campaignKind: 'PRINT_CLI_PROVIDER',
+      reasonerIdentity: { kind: 'PRINT_CLI_PROVIDER', identityDigest: `rid:sha256:${'a'.repeat(24)}`, printCliDigest: `sha256:${'b'.repeat(24)}` },
+    });
+    const dir = path.join(REPO, `artifacts/nightwatch-fixture-${process.pid}-${Date.now()}`);
+    try {
+      fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(path.join(dir, 'manifest.json'), `${JSON.stringify({ runId: 'fixture-run', product: 'campaign', nightwatchSha: s })}\n`);
+      fs.writeFileSync(path.join(dir, 'summary.json'), `${JSON.stringify({ passed: true })}\n`);
+      fs.writeFileSync(path.join(dir, 'product-run-receipt.json'), `${JSON.stringify(build(s), null, 2)}\n`);
+      const bound = runChecker(REPO);
+      const boundLine = conditionLine(bound, 'autonomous-yield-proof');
+      expect(boundLine, bound).not.toBeNull();
+      expect(boundLine).toContain('check=MET');
+      fs.writeFileSync(path.join(dir, 'manifest.json'), `${JSON.stringify({ runId: 'fixture-run', product: 'campaign', nightwatchSha: 'b'.repeat(40) })}\n`);
+      fs.writeFileSync(path.join(dir, 'product-run-receipt.json'), `${JSON.stringify(build('b'.repeat(40)), null, 2)}\n`);
+      const other = runChecker(REPO);
+      const otherLine = conditionLine(other, 'autonomous-yield-proof');
+      expect(otherLine, other).not.toBeNull();
+      expect(otherLine).toContain('check=NOT_AT_CHECKPOINT');
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});
 
 test.describe('UI-harness execution receipt (VD-02)', () => {
   const S = 'c'.repeat(40);
@@ -2955,7 +3110,7 @@ test.describe('yield-campaign receipt (VD-03 / CF-03)', () => {
     rejected({ reasonerIdentity: null }, 'YIELD_RECEIPT_REASONER_IDENTITY_ABSENT');
     // A completed campaign still needs its per-case reasons.
     const full = evidence();
-    const { caseTerminationCounts: _omitCounts, ...receiptWithoutCases } = full.receipt as Record<string, unknown>;
+    const { caseTerminationCounts: _omitCounts, ...receiptWithoutCases } = full.receipt as unknown as Record<string, unknown>;
     void _omitCounts;
     expect(evaluateYieldCampaignEvidence({ ...full, receipt: receiptWithoutCases }, S).errors).toContain('YIELD_RECEIPT_NO_COMPLETED_CASE');
     rejected({ reasonerIdentity: { kind: 'CUSTOM_REASONER_SCRIPT', identityDigest: `rid:sha256:${'a'.repeat(24)}`, printCliDigest: null } }, 'YIELD_RECEIPT_REASONER_NOT_PROVIDER:CUSTOM_REASONER_SCRIPT');
