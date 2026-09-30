@@ -283,18 +283,20 @@ function makeFixture(options: FixtureOptions = {}): Fixture {
     fs.mkdirSync(path.dirname(path.join(root, relativePath)), { recursive: true });
     fs.copyFileSync(path.join(ROOT, relativePath), path.join(root, relativePath));
   }
+  // R3-10 / corrections task 8.9: the task-ID ledger's bootstrap must contain
+  // the change's tasks.md. The tasks baseline is its own commit, the ledger
+  // (part of the implementation baseline) names it, and the implementation
+  // commit carries both so no config change lands AFTER the anchor.
+  const ledgerRouteCampaignId = options.routeCampaignId ?? options.promptCampaignId ?? CAMPAIGN_ID;
+  writeFile(root, `openspec/changes/${ledgerRouteCampaignId}/tasks.md`, '# Synthetic tasks.md\n');
+  git(root, ['add', '--all']);
+  git(root, ['commit', '--quiet', '--no-gpg-sign', '-m', 'synthetic tasks baseline']);
+  const tasksBaselineSha = git(root, ['rev-parse', 'HEAD']);
+  writeFile(root, 'config/task-id-ledger.v1.json', `${JSON.stringify({ schemaVersion: 'nightwatch.task-id-ledger.v1', changes: [{ changeId: CAMPAIGN_ID, bootstrapSha: tasksBaselineSha }] })}\n`);
   writeFile(root, 'bin/synthetic-implementation.mjs', 'export const syntheticImplementation = true;\n');
   git(root, ['add', '--all']);
   git(root, ['commit', '--quiet', '--no-gpg-sign', '-m', 'synthetic implementation']);
   const implementationSha = git(root, ['rev-parse', 'HEAD']);
-  // Part of the implementation baseline. R3-10 / corrections task 8.9: every
-  // active change must have a stable task-ID ledger entry; the synthetic
-  // campaign's baseline is the implementation commit (its tasks.md carries no
-  // numbered IDs, so only the entry itself is exercised).
-  writeFile(root, 'config/task-id-ledger.v1.json', `${JSON.stringify({ schemaVersion: 'nightwatch.task-id-ledger.v1', changes: [{ changeId: CAMPAIGN_ID, bootstrapSha: implementationSha }] })}\n`);
-  git(root, ['add', '--all']);
-  git(root, ['commit', '--quiet', '--no-gpg-sign', '-m', 'synthetic task-ID ledger']);
-  const implementationShaWithLedger = git(root, ['rev-parse', 'HEAD']);
 
   const status = options.status ?? 'IN_PROGRESS';
   const promptCampaignId = options.promptCampaignId ?? CAMPAIGN_ID;
@@ -333,7 +335,7 @@ function makeFixture(options: FixtureOptions = {}): Fixture {
   return {
     root,
     baseSha,
-    implementationSha: implementationShaWithLedger,
+    implementationSha,
     unrelatedSha,
     headSha,
     cleanup: () => fs.rmSync(root, { recursive: true, force: true }),

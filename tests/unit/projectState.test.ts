@@ -2903,7 +2903,12 @@ test.describe('fixture-root collector receipts (R3-07)', () => {
    */
   function conditionCheckState(output: string, id: string): string | null {
     try {
-      const parsed = JSON.parse(output) as { releaseVerdict?: { conditions?: Array<{ id: string; state: string; checkState?: string }> } };
+      // The checker prints the JSON receipt on stdout and its ATTENTION notes
+      // on stderr; the combined capture therefore needs the first complete
+      // object, not the whole string.
+      const start = output.indexOf('{');
+      const end = output.lastIndexOf('}');
+      const parsed = JSON.parse(output.slice(start, end + 1)) as { releaseVerdict?: { conditions?: Array<{ id: string; state: string; checkState?: string }> } };
       const condition = parsed.releaseVerdict?.conditions?.find((entry) => entry.id === id);
       if (condition !== undefined) return condition.checkState ?? null;
     } catch {
