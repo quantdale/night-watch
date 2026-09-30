@@ -927,6 +927,7 @@ function verifyCheckpointRoleClassifierFixture() {
     run(['add', '.']);
     run(['commit', '--quiet', '--no-gpg-sign', '-m', 'structural binding change']);
     const structural = (run(['rev-parse', 'HEAD']).stdout ?? '').trim();
+    /** @type {{ kind: 'commit', commit: string, verifyBindingReceipt: () => boolean }} */
     const context = { kind: 'commit', commit: valuesOnly, verifyBindingReceipt: () => true };
     const valuesViolations = checkpointRoleViolations(directory, ['config/release-evidence.v1.json'], context);
     if (valuesViolations.length !== 0) {
@@ -943,7 +944,7 @@ function verifyCheckpointRoleClassifierFixture() {
     }
     // An UNGUARDED, non-approved path is a violation on the path filter alone;
     // `&& false` on that filter would silently drop it.
-    const unguarded = checkpointRoleViolations(directory, ['src/unapproved.ts'], { kind: 'commit', commit: valuesOnly });
+    const unguarded = checkpointRoleViolations(directory, ['fixture-unapproved.txt'], { kind: 'commit', commit: valuesOnly });
     if (unguarded.length === 0) {
       fail('CHECKPOINT_ROLE_GUARD_STUBBED an unguarded non-approved path was approved (the path filter is short-circuited)');
     }

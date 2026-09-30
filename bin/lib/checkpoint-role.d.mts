@@ -16,5 +16,7 @@ export function unpairedCorrectionsInRange(
 export function checkpointRoleViolations(
   root: string,
   files: readonly string[],
-  context: { kind: 'commit'; commit: string } | { kind: 'range'; from: string; to: string },
+  context: ({ kind: 'commit'; commit: string } | { kind: 'range'; from: string; to: string }) & {
+    verifyBindingReceipt?: (subject: string, digest: string, sha: string) => boolean;
+  },
 ): string[];
