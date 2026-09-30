@@ -193,16 +193,28 @@ function evaluateSkipReport(skipReportPath) {
   } catch {
     // Missing or malformed policy is classified by the pure fail-closed evaluator.
   }
-  const evaluated = evaluateSemanticSkipIdentityReport({
+  return evaluateSemanticSkipIdentityReport({
     report,
     canonicalSkipIdentities: policy.canonicalSkipIdentities,
     expectedSkipPolicy: policy.expectedSkipPolicy,
   });
-  const vc01Failure = vc01ExecutionFailure(report);
-  if (evaluated.result === 'PASS' && vc01Failure !== null) {
-    return { ...evaluated, result: vc01Failure, skipped: evaluated.skipped ?? 0, undeclared: evaluated.undeclared ?? [] };
+}
+
+/**
+ * R3-13: the VC-01 per-test proof is a CAMPAIGN-level judgement — the four
+ * tests live in one shard, so each shard's own report cannot carry them all.
+ * The union of the shards' executed-security records is checked once.
+ * @param {ReadonlyArray<unknown>} reports
+ * @returns {string | null}
+ */
+function vc01CampaignFailure(reports) {
+  const executedSecurity = [];
+  for (const report of reports) {
+    if (report === null || typeof report !== 'object' || Array.isArray(report)) continue;
+    const entries = /** @type {Record<string, unknown>} */ (report).executedSecurity;
+    if (Array.isArray(entries)) executedSecurity.push(...entries);
   }
-  return evaluated;
+  return vc01ExecutionFailure({ executedSecurity });
 }
 
 function parseCampaignOutput(output, status, maxFailedLocations) {
@@ -239,12 +251,21 @@ function runInvocation(fileList, outputDir, lane, project) {
     let output = '';
     child.stdout.on('data', (chunk) => { output += chunk; });
     child.stderr.on('data', (chunk) => { output += chunk; });
+    const securityExecutions = () => {
+      try {
+        const parsed = JSON.parse(fs.readFileSync(skipReportPath, 'utf8'));
+        return Array.isArray(parsed?.executedSecurity) ? parsed.executedSecurity : [];
+      } catch {
+        return [];
+      }
+    };
     child.on('error', () => resolve({
       output,
       status: 1,
       errorCode: 'SPAWN_ERROR',
       wallMs: Date.now() - startedAt,
       skipPolicy: evaluateSkipReport(skipReportPath),
+      securityExecutions: securityExecutions(),
     }));
     child.on('close', (code) => resolve({
       output,
@@ -252,6 +273,7 @@ function runInvocation(fileList, outputDir, lane, project) {
       errorCode: null,
       wallMs: Date.now() - startedAt,
       skipPolicy: evaluateSkipReport(skipReportPath),
+      securityExecutions: securityExecutions(),
     }));
   });
 }
@@ -292,12 +314,15 @@ try {
     // RV-15: the list reporter's skipped count and the identity report's length
     // observe the same run and must agree.
     const skipCountResult = skipPolicy.result === 'PASS' ? skipCountDisagreement(counts.skipped, skipPolicy.skipped) : null;
-    const passed = result.status === 0 && skipPolicy.result === 'PASS' && skipCountResult === null;
+    const vc01Failure = skipPolicy.result === 'PASS' && skipCountResult === null
+      ? vc01CampaignFailure([{ executedSecurity: result.securityExecutions ?? [] }])
+      : null;
+    const passed = result.status === 0 && skipPolicy.result === 'PASS' && skipCountResult === null && vc01Failure === null;
     const receipt = {
       schemaVersion: SCHEMA_VERSION,
       fileCount: files.length,
       ...counts,
-      skipPolicy: skipCountResult === null ? skipPolicy : { ...skipPolicy, result: skipCountResult },
+      skipPolicy: vc01Failure !== null ? { ...skipPolicy, result: vc01Failure } : skipCountResult === null ? skipPolicy : { ...skipPolicy, result: skipCountResult },
       shardCount: 1,
       deepContainmentLane: deepLane,
       result: passed ? 'PASS' : result.errorCode === 'ETIMEDOUT' ? 'TIMEOUT' : 'TEST_FAILURE',
@@ -344,14 +369,19 @@ try {
       const shardSkipDisagreement = parsed
         .map((entry) => (entry.result.skipPolicy.result === 'PASS' ? skipCountDisagreement(entry.counts.skipped, entry.result.skipPolicy.skipped) : null))
         .find((code) => code !== null) ?? null;
-      const failed = shardSkipDisagreement !== null || parsed.some((entry) => entry.result.status !== 0
+      const skipPolicies = parsed.map((entry) => entry.result.skipPolicy);
+      const firstSkipFailure = skipPolicies.find((entry) => entry.result !== 'PASS');
+      // R3-13: the VC-01 per-test proof is judged over the UNION of the shard
+      // reports; no single shard runs all four security tests.
+      const vc01Failure = firstSkipFailure === undefined && shardSkipDisagreement === null
+        ? vc01CampaignFailure(parsed.map((entry) => ({ executedSecurity: entry.result.securityExecutions ?? [] })))
+        : null;
+      const failed = shardSkipDisagreement !== null || vc01Failure !== null || parsed.some((entry) => entry.result.status !== 0
         || entry.result.skipPolicy.result !== 'PASS'
         || (entry.counts.failed ?? 0) > 0
         || (entry.counts.didNotRun ?? 0) > 0);
-      const skipPolicies = parsed.map((entry) => entry.result.skipPolicy);
-      const firstSkipFailure = skipPolicies.find((entry) => entry.result !== 'PASS');
       const skipPolicy = {
-        result: firstSkipFailure?.result ?? shardSkipDisagreement ?? 'PASS',
+        result: firstSkipFailure?.result ?? shardSkipDisagreement ?? vc01Failure ?? 'PASS',
         skipped: skipPolicies.reduce((sum, entry) => sum + (entry.skipped ?? 0), 0),
         undeclared: skipPolicies.reduce((sum, entry) => sum + (entry.undeclared?.length ?? 0), 0),
       };
