@@ -226,3 +226,30 @@ was edited, the edit is the correction named here.
 | R3-15 | medium | D-149 Decision 4 misstates the owner's answer. The chosen option (transcript 2026-09-30T01:22:10Z) was "Keep refuse + global cap … Add the refusal count to the run summary"; D-149 says "no source change" and defers the count; the cited STATE deferral entry does not exist | `docs/DECISIONS.md` D-149; child STATE | 8.14 |
 | R3-16 | low | Record errors: the false CF-04 attribution to run 36537649045 survives in child STATE:34-36/259-261/789-791, ACTIVE_TASK:25-27 and the 3.12 note; RV-11's pruning is credited to `3ef6183c` (actually `6c7d6f76`); 7.14's task text was reworded (forbidden); 7.14 was ticked before its owner step (revert to private); the 4.4 annotation still says 7.11 is open; the M5 DONE notes overstate ("every probe", "structural", "can never qualify") | as cited | 8.15 |
 | R3-17 | low | Minor gaps: the duplicate-correction check does not normalise paths (`./docs/...` alias passes); the annotation counter still misses `{Array<*>}`, `{Object<string,*>}`, `{Function}`, `@satisfies/@enum/@yields {any}` and `.d.mts` `type X = any`, `& any`, `[any,`, `readonly any[]`, `keyof any`; the working-tree pairing range is empty in CI once pushed; `correctionPairingViolations` returns `[]` on an unparsable file; WORKSPACE_BASE_STALE fires when the remote is an ancestor of HEAD; gate:clean's SIBLING_IDENTITY_ABSENT is still non-PASS (intent unrecorded); the G21 exercise omits EXPIRED and WRONG_ENVIRONMENT | as cited | 8.16 |
+
+## Corrections (2026-09-30, review 3, task 8.15 — appended)
+
+R3-16's record errors are corrected here and by annotation where they survive
+(history is not rewritten):
+
+1. **CF-04's proof run.** The correct proof is run **36552500573**, where
+   SYNTHETIC_CAMPAIGN passed with skipPolicy 40/0. Run **36537649045** is the
+   FLAKE-002 failure, where SYNTHETIC was NOT_RUN. The false attribution
+   survives in the child STATE, ACTIVE_TASK and the 3.12 note; each carries a
+   dated correction annotation.
+2. **RV-11's pruning credit.** The c08/c09 stale-topology-declaration pruning
+   landed in **`6c7d6f76`**, not `3ef6183c` (which is the twins/skip-site work).
+3. **7.14's task text was reworded** after introduction. That is forbidden by
+   the review-2 rules; the rewording is disclosed by annotation, not undone
+   (the current text is the operative one).
+4. **7.14's tick** was made before its owner step. It is annotated
+   "owner step pending (parent 15.x)": the repository is still temporarily
+   public and the owner reverts it at the parent close-out.
+5. **The 4.4 annotation.** R3-16 reported that it still said 7.11 was open;
+   the surviving text was re-checked and no such statement remains (7.11 is
+   ticked in group 7). No further annotation was needed.
+6. **The M5 DONE notes overstate.** "Every probe", the "structural"
+   `implemented` clause and "can never qualify" are narrowed by annotation:
+   the nine working-tree probes were bound later (8.3), the D3 clause became
+   behavioural (8.6), and G12 gained the completion/identity/per-case-reason
+   requirements (8.5).

@@ -8,7 +8,7 @@ Status: IN_PROGRESS
 TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1
 TASK_GROUPS_COMPLETE: 1,2,3,4,5
 TASK_GROUP_NEXT: 8
-TASK_NEXT_ID: 8.15
+TASK_NEXT_ID: 8.16
 TASK_GROUP_DEFERRED: 6.2,6.3,6.4,7.15
 Task directory: .agent/tasks/nightwatch-final-completion-corrections-v1
 Starting SHA: 1d47e2eef1ef029560ace12e31571624602eab0b
@@ -42,7 +42,7 @@ transient (STALE_SESSION after a harness restart) was recovered by the
 sanctioned `claim --adopt` (`sess-66344fe137d7`). Tasks 3.1 and 3.12 ticked;
 M4 (VC-01..VC-11 + CF-04/CF-05) CLOSED.
 Previous checkpoint: 2026-09-29 — second exact-head CI cycle: the CF-04 fix
-landed as `491b5ef9` and is PROVEN in CI (run 36537649045:
+landed as `491b5ef9` and is PROVEN in CI (run 36537649045: [CORRECTED 2026-09-30 (R3-16): the CF-04 proof is run 36552500573; 36537649045 is the FLAKE-002 failure where SYNTHETIC was NOT_RUN.]
 SYNTHETIC_CAMPAIGN skipPolicy PASS, 14 declared / 0 undeclared). That run
 then failed SEMANTIC_COMPATIBILITY 1/2177 at `observerSemanticLedger.test.ts:138`
 (FLAKE-002: the 550-fetch cap fixture's blind 10 ms pacing loses to the 4-read

@@ -9,7 +9,7 @@ Status: IN_PROGRESS
 TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1
 TASK_GROUPS_COMPLETE: 1,2,3,4,5
 TASK_GROUP_NEXT: 8
-TASK_NEXT_ID: 8.15
+TASK_NEXT_ID: 8.16
 TASK_GROUP_DEFERRED: 6.2,6.3,6.4,7.15
 Starting SHA: 1d47e2eef1ef029560ace12e31571624602eab0b
 Last validated implementation SHA: b9306626e5386c371a2e7357a6432cfd2784acb1
@@ -60,7 +60,7 @@ selects changes vs origin/main), so the group gates ran with
 `--base=491b5ef9` naming the tip's parent. Tasks 3.1 (VC-01 CI proof) and
 3.12 ticked; M4 (VC-01..VC-11 + CF-04/CF-05) CLOSED.
 Previous checkpoint: 2026-09-29 — CF-05/FLAKE-002: the second exact-head CI
-attempt (run 36537649045 at `491b5ef9`) proved the CF-04 fix (SYNTHETIC
+attempt (run 36537649045 at `491b5ef9`) proved the CF-04 fix (SYNTHETIC [CORRECTED 2026-09-30 (R3-16): CF-04's proof is run 36552500573; run 36537649045 is the FLAKE-002 failure where SYNTHETIC was NOT_RUN.]
 skipPolicy PASS 14/0) and failed 1/2177 at observerSemanticLedger:138,
 fixed per D-147 with the event-driven drain-signal pacing (no source/gate
 text touched).
