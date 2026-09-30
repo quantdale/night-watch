@@ -5,11 +5,12 @@ CHILD OF: nightwatch-final-product-completion-v1
 
 ## Purpose
 
-Close the corrective change's 39 tasks so the parent campaign
+Close the corrective change's 73 tasks so the parent campaign
 `nightwatch-final-product-completion-v1` resumes at M9 task 10.2 (remainder:
 59/76 declared) from sound foundations. The audit's 29 open findings (21
 STILL_PRESENT + 5 CHANGED + 2 COMPLETED_LATER residual items + VE-01 repo
-side) and 3 follow-on defects (CF-01..CF-03) each end with a fix plus
+side), 3 follow-on defects (CF-01..CF-03), review-2's 20 findings (RV-01..RV-20)
+and review-3's 17 findings (R3-01..R3-17) each end with a fix plus
 regression/probe where the task requires one.
 
 ## Starting State
@@ -30,12 +31,13 @@ regression/probe where the task requires one.
 
 ## Scope
 
-The corrective change's tasks 1.1-6.4 only: certification anchors (VB-*),
+The corrective change's tasks 1.1-8.16: certification anchors (VB-*),
 validation spine (VC-*), release probes (VD-* + CF-*), ledger/continuity
-truth (VA-*), and hygiene/close-out (VE-01 + 6.x). Nightwatch source/tests/
-hardening/schemas/config, synthetic fixtures, OpenSpec and task continuity
-records, local bounded child processes, and C-00 integration from this
-session only.
+truth (VA-*), hygiene/close-out (VE-01 + 6.x), review-2 corrections
+(7.1-7.15) and review-3 corrections (8.1-8.16).
+Nightwatch source/tests/?hardening/schemas/config, synthetic fixtures, OpenSpec
+and task continuity records, local bounded child processes, and C-00
+integration from this session only.
 
 ## Non-Goals
 
@@ -130,13 +132,16 @@ and evidence and needs no code change.
   gate:milestone PASS at the tip (base `491b5ef9`). CF-04 and CF-05 were
   found at the CI gate and fixed within this milestone.
 
-### M5 — Release probes (group 4, tasks 4.1-4.6)
+### M5 — Release probes (group 4, tasks 4.1-4.9)
 
 - Objective: close VD-01..VD-05 + CF-01..CF-03 (probe-at-checkpoint, G18
   UI-harness receipt, G12 yield-campaign receipt bound to S, G21/G19 refusal
   exercises, honesty-rule tests, and re-derive the M4-M9 probe results).
 - Acceptance criteria: focused suites + `gate:dev` + `gate:milestone` PASS.
-- **Status:** NOT_STARTED — next (group 4).
+- **Status:** COMPLETE — the last commit (`b9306626`) carries `gate:dev`
+  (5790/0) and `gate:milestone` (12 steps, probe campaign 192/192 DETECTED)
+  and exact-head CI run 36639792380 (15/15 groups GREEN, receipt
+  `receipt:sha256:f568ced6b6b9cf56a97d44b7`).
 
 ### M6 — Ledger and continuity truth (group 5, tasks 5.1-5.6)
 
@@ -144,7 +149,33 @@ and evidence and needs no code change.
   honesty + TASK_AHEAD_OF_PROJECT_BASELINE, ledger error at terminal,
   INTEGRATED_CURRENT, parent continuity sync).
 - Acceptance criteria: focused suites + `gate:dev` + `gate:milestone` PASS.
-- **Status:** NOT_STARTED
+- **Status:** IMPLEMENTED, CI PENDING — implemented in `c9bcff69`; the group's
+  ticks carry `(implemented; CI pending)` until the step-4 integration and
+  exact-head CI observation.
+
+### M6.5 — Review-2 corrections (group 7, tasks 7.1-7.15)
+
+- Objective: close RV-01..RV-20 (corrections pairing, receipt re-binds,
+  lane artifacts, guard integrity, topology certifying, ledger and record
+  corrections, Prettier neutralisation).
+- Acceptance criteria: focused suites + `gate:dev` + `gate:milestone` +
+  `hardening:rules` PASS; exact-head CI green before 6.2.
+- **Status:** IMPLEMENTED, CI PENDING — 7.1-7.14 implemented across
+  `31f9ec44`..`8445e7bb` on the unintegrated commits; 7.15 (group close-out)
+  remains open and follows group 8.
+
+### M6.6 — Review-3 corrections (group 8, tasks 8.1-8.16)
+
+- Objective: close R3-01..R3-17 (gate:dev diagnosis, continuity sync checker,
+  satisfiable certification binding, verified receipt digests, receipt
+  content digests, behavioural D3 honesty, lane-artifact wiring,
+  PROVEN_DEGRADED non-certifying, ledger gaps, behavioural classifier
+  dispatch, DEV-launcher anchor, skip identities, file-relative Prettier,
+  D-149 Decision 4, record corrections, minor gaps).
+- Acceptance criteria: each task's regression and probe green; full gate set
+  and exact-head CI green at the close-out tip.
+- **Status:** OPEN — recorded 2026-09-30; executes after the step-4
+  integration. 8.1's diagnosis is complete and recorded as FLAKE-003 (OPEN).
 
 ### M7 — Hygiene and close-out (group 6, tasks 6.2-6.4)
 
@@ -190,10 +221,11 @@ remainder, 10.3-10.6, M10-M14) stays in the parent campaign.
 
 ## Completion Criteria
 
-- Every one of the 31 audit findings has exactly one disposition with
+- Every one of the 29 audit findings has exactly one disposition with
   evidence (fix + regression/probe where the task requires one, or
-  COMPLETED_LATER with its SHA), and CF-01..CF-03 are closed.
-- The 39 tasks in `tasks.md` are ticked with DONE notes.
+  COMPLETED_LATER with its SHA), and CF-01..CF-03, RV-01..RV-20 and
+  R3-01..R3-17 are closed or honestly recorded.
+- The 73 tasks in `tasks.md` are ticked with DONE notes.
 - Focused suites + `gate:dev` + `gate:milestone` + `hardening:rules` +
   `openspec validate --strict` all PASS at the close-out checkpoint; the
   full 6.2 command set is green.

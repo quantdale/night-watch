@@ -118,6 +118,85 @@ appending a dated correction, never by silently rewriting history.
 
 ---
 
+---
+
+## FLAKE-003 — full-lane browser-journey, monitor-liveness and smoke timing under host contention
+
+- **Filed:** 2026-09-30 (corrections campaign, review-3 task 8.1 / R3-01).
+- **Surfaces:** the `gate:dev` affected-shards lane, 9 of 5824 tests:
+  1. `tests/unit/authCaptureStages.test.ts:254` — "unknown and production
+     destinations retain distinct fatal HUMAN_WAIT reasons": recorded
+     `PROXY_LIVENESS_FAILED` / `127.0.0.1` instead of `UNKNOWN_DESTINATION` /
+     `unknown.synthetic.invalid`.
+  2. `tests/unit/authCaptureStages.test.ts:186` — "ENTER without an approved
+     authenticated Ripple landing rejects before state write": resolved
+     `HUMAN_WAIT` / `SAFETY_MONITOR_FAILED` instead of
+     `POST_LOGIN_VERIFICATION` / `POST_LOGIN_NOT_CONFIRMED`.
+  3. `tests/unit/authCaptureStages.test.ts:328` — "successful capture
+     atomically replaces an existing external state after validation":
+     `AuthCaptureStageError: HUMAN_WAIT: SAFETY_MONITOR_FAILED`.
+  4. `scenarios/ripple/local.smoke.ts:55` — "ripple passive local journey":
+     `Test timeout of 120000ms exceeded`.
+  5. `tests/smoke/negative.smoke.ts:29` — "policy blocks production hosts;
+     oracles flag page problems": `expect(received).toBe(expected)`, expected
+     true, received false.
+  6. `tests/smoke/proxy.smoke.ts:241` — "allowed ws works through the proxy and
+     denied WebSocket reaches no sink": expected `"open"`, received
+     `"timeout"`.
+  7. `tests/unit/observerSemanticLedger.test.ts` — the FLAKE-002 surface family
+     (file identity `a48606376219d663f694`); no error context survived, the
+     shard receipt records the failure at that file.
+  8. `tests/unit/phase5Api.test.ts` — file identity
+     `36401fbb08132162e260`; no error context survived.
+  9. `tests/smoke/passive-run.smoke.ts:40` — "passive fixture run produces
+     complete redacted evidence": `expect(received).toBe(expected)`, expected
+     false, received true.
+
+- **Observed failure mode:** `npm run gate:dev` at the clean `0f4b911b` tree
+  (2026-09-30, launched 11:38Z) returned `TEST_FAILURE` with the
+  affected-shards step at **2871.5 s** against a historical 561.1 s
+  (5.1x slower), 5815 passed / 9 failed / 33 skipped. The per-shard receipts:
+  shard-1 planned 2748 / passed 2723 / failed 8 / skipped 17; shard-2 planned
+  2700 / passed 2683 / failed 1 / skipped 16; exclusive 409 passed; serial 20
+  passed. The same commit's `gate:milestone` run at 02:14Z the same day passed
+  5824/0 — the same tests on the same tree, with no test-file or source change
+  between the two observations.
+- **Mechanism:** every failing surface is a wall-clock/liveness bound on
+  browser or loopback timing (`SAFETY_MONITOR_FAILED` and
+  `PROXY_LIVENESS_FAILED` are monitor-liveness outcomes; the journey and the
+  proxy smoke test hold fixed navigation/WebSocket timeouts; the two smoke
+  assertions read one-shot page state). Under host-wide contention the
+  shard took 5.1x its historical wall time; a fixed bound crossed, the monitor
+  reported liveness failure instead of the semantic outcome, and the smoke
+  tests' one-shot reads raced. No mechanism was established that is specific
+  to `0f4b911b`: none of the 15 unintegrated commits touched any failing
+  test file or its source (`git diff --name-only origin/main..HEAD` grep over
+  `smoke|authCapture|local.smoke|passive-run` is empty).
+- **Reproduction attempts (honest outcomes):**
+  - **Isolation: NOT REPRODUCED.** All 7 failing files / 40 tests pass in one
+    run at the same committed tree (`npx playwright test <the 7 files>
+    --workers=1 --retries=0`, 40 passed, 1.4 min).
+  - **Bounded artificial load: NOT REPRODUCED.** With 16 CPU spinners
+    (load average 18.3), the unit subset plus `negative.smoke.ts` (32 tests)
+    passed in 1.2 min.
+  - **Full-suite reproduction: OBSERVED ONCE.** The failure appears only in
+    the whole-lane shard context on a host simultaneously running several
+    other heavy agent processes; the historical `0f4b911b` single failure
+    (1/5824, never identified) is consistent with this class.
+- **Status: OPEN.** No fix is shipped: the failing bounds are deliberate
+  (a 120 s journey timeout, a liveness monitor) and lowering them or widening
+  them would change covered behaviour, not a defect. The honest disposition is
+  an OPEN entry that names the class, the exact identities, and the
+  reproduction evidence.
+- **Residual risk:** any full-lane run on a host under comparable contention
+  can fail these surfaces again; the CI-hosted exact-head observation (no
+  co-tenant agent load) is the authoritative gate for those runs.
+- **Remedy if it recurs on an otherwise idle host:** treat the named bound as
+  too tight for the environment and fix the specific surface (event-driven
+  settle for the smoke assertions, an explicit liveness deadline for the
+  monitor reasons) rather than raising every timeout.
+
+
 ## Corrections and status register (2026-09-30, corrections task 7.11 / RV-13)
 
 Appended, never rewritten: the entries above stay as filed. Two of their
@@ -140,6 +219,7 @@ statements are corrected here, and every entry now carries an explicit status.
 | --- | --- | --- |
 | FLAKE-001 | `CLOSED_UNREPRODUCED` | Mechanism established (a handler-passage latency bound); 11 loaded local runs at a 2 s bound all passed; the shipped bound is `20_000` ms and is empirical. Residual risk: an event-loop stall above 20 s flakes again. Remedy if it recurs: wait on the observer's own completion signal (the drain FLAKE-002 already uses) instead of a wall-clock bound. |
 | FLAKE-002 | `CLOSED_FIXED` (residual risk named below) | Fixed by event-driven pacing on the observer's `activeRequests()` drain signal (D-147). The test then passed in exact-head CI at `3c9c1a06` (run 36552500573), at `eef9c00e`/`fae2f8f6` (runs 36630587780, 36632405948) and at `b9306626` (run 36639792380) — four consecutive green observations, none of them a reproduction of the failure. |
+| FLAKE-003 | `OPEN` | Full-lane browser-journey, monitor-liveness and smoke timing under host contention: 9/5824 at `0f4b911b` with the shard 5.1x slower; all 40 tests in the failing files pass in isolation and under bounded artificial load; the same commit passed `gate:milestone` 5824/0. Exact identities in the entry. |
 
 ### Corrections
 

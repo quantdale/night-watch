@@ -7,12 +7,28 @@ Phase: COMPLETION_CORRECTIONS_V1
 CHILD OF: nightwatch-final-product-completion-v1
 Status: IN_PROGRESS
 Starting SHA: 1d47e2eef1ef029560ace12e31571624602eab0b
-Last validated implementation SHA: 3c9c1a0671068c8de6bafb54c62f9cd107fed78a
-Last substantive checkpoint SHA: 3c9c1a0671068c8de6bafb54c62f9cd107fed78a
+Last validated implementation SHA: b9306626e5386c371a2e7357a6432cfd2784acb1
+Last substantive checkpoint SHA: b9306626e5386c371a2e7357a6432cfd2784acb1
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-final-completion-corr-c45f0e9d
-Last checkpoint: 2026-09-29 — M4 COMPLETE. Exact-head CI run 36552500573 at
+Last checkpoint: 2026-09-30 — REVIEW-3 RECORD AND FLAKE-003 (R3-01/R3-02).
+`origin/main` = `b9306626`; the session branch carries 15 unintegrated commits
+(`c9bcff69`..`0f4b911b`: group 5 + tasks 7.1-7.14) plus this record. M5 is
+CLOSED at `b9306626` (the last commit with full local gates AND observed
+exact-head CI: run 36639792380, 15/15 groups). Group 5 (5.1-5.6) and tasks
+7.1-7.14 are IMPLEMENTED; their ticks are annotated `(implemented; CI
+pending)` pending the step-4 integration and exact-head CI observation.
+Review-3 (audit.md "Review 3") and its group 8 (tasks.md) were appended
+verbatim; no existing task ID or text changed. The re-run of `gate:dev` at
+`0f4b911b` FAILED 9/5824 on a host under 5.1x lane slowdown (2871.5s shard):
+shard-1 8 failed / shard-2 1 failed; all nine identities and the isolation
+and bounded-load non-reproductions are recorded as FLAKE-003 (status OPEN)
+in `docs/FLAKE-LEDGER.md`. The same commit passed `gate:milestone` 5824/0 at
+02:14Z the same day and all 40 tests in the failing files pass in isolation;
+no failing surface was touched by the 15 commits. Anchors advanced to
+`b9306626` (R3-02).
+Previous checkpoint: 2026-09-29 — M4 COMPLETE. Exact-head CI run 36552500573 at
 `3c9c1a06` (the CF-05/FLAKE-002 paced-fixture fix) is GREEN: all 15 groups
 PASS (SEMANTIC_COMPATIBILITY 2177/2163/14/0 with skipPolicy PASS 14/0;
 SYNTHETIC_CAMPAIGN 1966/1926/40/0 with skipPolicy PASS 40/0 — the CF-04
@@ -39,27 +55,34 @@ text touched).
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 1d47e2eef1ef029560ace12e31571624602eab0b
-LAST_VALIDATED_IMPLEMENTATION_SHA: 3c9c1a0671068c8de6bafb54c62f9cd107fed78a
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 3c9c1a0671068c8de6bafb54c62f9cd107fed78a
+LAST_VALIDATED_IMPLEMENTATION_SHA: b9306626e5386c371a2e7357a6432cfd2784acb1
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: b9306626e5386c371a2e7357a6432cfd2784acb1
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 PHASE_COMPLETION_CORRECTIONS_V1_STATUS: IN_PROGRESS
 
 ## Objective
 
-Close the corrective change's 39 tasks (phases 1-6), re-verifying every
-audit finding at the parent base `1d47e2ee`, so the parent campaign resumes
-from sound foundations at M9 task 10.2 (remainder: 59/76 declared).
+Close the corrective change's 73 tasks (groups 1-8: the original 42 plus the
+15 review-2 tasks 7.1-7.15 and the 16 review-3 tasks 8.1-8.16 enumerated by
+RESUME_PROMPT_3 §3), re-verifying every audit finding at the parent base
+`1d47e2ee`, so the parent campaign resumes from sound foundations at M9 task
+10.2 (remainder: 59/76 declared).
 
 ## Current Milestone
 
-Milestone ID: M5
+Milestone ID: M6 (group 5) with group 7 (review-2 corrections) implemented;
+group 8 (review-3 corrections) is next after the step-4 integration.
 
 M1 (bootstrap + Phase 1 preconditions), M2 (task 6.1 formatter policy,
 landed FIRST per RESUME_PROMPT §2), M3 (certification anchors, tasks
-2.1-2.8), and M4 (validation spine, tasks 3.1-3.12 incl. the CF-04/CF-05
-CI-gate fixes) are COMPLETE. M5 release probes (tasks 4.1-4.6,
-VD-01..VD-05 + CF-01..CF-03) is next.
+2.1-2.8), M4 (validation spine, tasks 3.1-3.12 incl. the CF-04/CF-05
+CI-gate fixes) and M5 (release probes, tasks 4.1-4.9) are COMPLETE. M5's
+last commit `b9306626` carries the full local gates AND exact-head CI run
+36639792380 (15/15 groups GREEN). Group 5 (5.1-5.6) and group 7 (7.1-7.14)
+are IMPLEMENTED on the unintegrated commits (`c9bcff69`..`0f4b911b`) with
+their ticks annotated `(implemented; CI pending)`; group 8 (8.1-8.16) is
+recorded and open, and group 7's close-out (7.15) follows it.
 
 ## Completed Milestones
 
@@ -89,6 +112,17 @@ VD-01..VD-05 + CF-01..CF-03) is next.
 
 ## Work In Progress
 
+- **REVIEW-3 RECORD (this checkpoint).** The R3-01 gate:dev investigation is
+  complete: the historical failure was never identified; the re-run at the
+  same clean commit produced 9/5824 under 5.1x host contention, all identities
+  are published in FLAKE-003 (`docs/FLAKE-LEDGER.md`, status OPEN), and all 40
+  tests in the failing files pass in isolation and under bounded artificial
+  load. Review-3's findings table and group 8 tasks were appended verbatim to
+  `audit.md` / `tasks.md`; the child STATE/PLAN/ACTIVE_TASK prose is being
+  synced in the same commit; the 29 unintegrated ticks (4.1-4.9, 5.1-5.6,
+  7.1-7.14) carry `(implemented; CI pending)`. Next: commit, strict-validate,
+  integrate `0f4b911b` + this record, observe exact-head CI, then drop the
+  annotations and execute group 8 in order.
 - **M2 (task 6.1) COMPLETE** — the repository formatter policy landed FIRST
   per RESUME_PROMPT §2: `biome.json` (formatter + organize-imports + linter
   off), `.editorconfig` pinning the normalizers off and declaring only the
@@ -282,16 +316,22 @@ typecheck PASS, hardening:check PASS, typecheck:bin PASS (1559 / 14 of 76 /
 
 ## Exact Next Action
 
-Start M5 (release-probe corrections, tasks 4.1-4.6): implement task 4.1
-(probe-at-checkpoint: every release probe resolves MET only at the certified
-checkpoint — HEAD == S with a clean tree, or a receipt bound to S; otherwise
-NOT_AT_CHECKPOINT — and re-derive the M4-M9 probe results per CF-01..CF-03),
-then 4.2 (G18 UI-harness execution receipt), 4.3 (G12 yield-campaign receipt
-bound to S; W13 historical only), 4.4 (G21 synthetic non-VALID refusal
-exercise; G19 effective-configuration rendering), 4.5 (structural
-`implemented` honesty rule + mutation probe), then 4.6's focused +
-`gate:milestone` PASS and commit. Then group 5 (5.1-5.6) and group 6
-(6.2-6.4).
+RESUME_PROMPT_3 §1 step 4, then group 8 in order. Concretely: commit this
+instrumentation (Review 3 + group 8 + FLAKE-003 + the STATE/PLAN/ACTIVE_TASK
+sync), strict-validate (`openspec validate --all --strict`) and the
+continuity checks, then `node bin/nightwatch-session.mjs integrate
+--expect-session sess-66344fe137d7 --expect-head <HEAD>` and observe
+exact-head CI at the pushed tip with `gh`. When it is GREEN, record the run ID
+here and drop the `(implemented; CI pending)` annotations. Then execute group
+8 in order: 8.2 (sync + ticked-group-vs-milestone checker), 8.3 (satisfiable
+certification binding), 8.4 (verified receipt digests), 8.5 (receipt content
+digests and termination checks), 8.6 (behavioural D3 honesty), 8.7 (lane
+artifact wiring), 8.8 (PROVEN_DEGRADED non-certifying), 8.9 (ledger gaps),
+8.10 (behavioural classifier dispatch), 8.11 (DEV-launcher anchor), 8.12 (skip
+identities + VC-01 CI per-test proof), 8.13 (file-relative Prettier), 8.14
+(D-149 Decision 4), 8.15 (record corrections), 8.16 (minor gaps), each with
+its regression and probe. Then 7.15, then group 6 (6.2-6.4), then route to the
+parent at "M9 task 10.2 remainder".
 
 ## Files Changed
 
@@ -336,6 +376,24 @@ exercise; G19 effective-configuration rendering), 4.5 (structural
 
 ## Validation Ledger
 
+- 2026-09-30 — REVIEW-3 / R3-01 gate:dev investigation at `0f4b911b`.
+  `npm run gate:dev` on the clean `0f4b911b` tree (launched 11:38Z) returned
+  TEST_FAILURE: 5815 passed / 9 failed / 33 skipped; affected-shards 2871.5s
+  vs the historical 561.1s (5.1x host contention); shard-1 planned 2748 /
+  passed 2723 / failed 8 / skipped 17, shard-2 2700/2683/1/16, exclusive
+  409/0, serial 20/0. Failure identities (file hashes decoded from
+  `.last-run.json`): authCaptureStages (3: :186 POST_LOGIN_NOT_CONFIRMED ->
+  HUMAN_WAIT/SAFETY_MONITOR_FAILED, :254 UNKNOWN_DESTINATION ->
+  PROXY_LIVENESS_FAILED, :328 SAFETY_MONITOR_FAILED), local.smoke (:55 120s
+  timeout), negative.smoke (:29 policy-block assertion), proxy.smoke (:241
+  WebSocket open -> timeout), observerSemanticLedger (FLAKE-002 family),
+  phase5Api, passive-run.smoke (:40). Reproduction attempts: all 40 tests in
+  the 7 failing files PASS in isolation at the same tree (40/40, 1.4 min);
+  with 16 CPU spinners and load average 18.3 the unit subset + negative smoke
+  PASS (32/32, 1.2 min); the failure reproduces only in the whole-lane shard
+  context. None of the 15 unintegrated commits touches a failing file. The
+  same commit passed `gate:milestone` 5824/0 at 02:14Z the same day. Recorded
+  as FLAKE-003 (`docs/FLAKE-LEDGER.md`, status OPEN) per RESUME_PROMPT_3 §1.1.
 - 2026-09-30 — POST-M4 CI REGRESSION AND REPAIR (owner-directed hand-over).
   Exact-head CI run 36596242188 at the M4 close-out commit `88f8eaf7` FAILED
   HARDENING_PROBES (all later groups NOT_RUN); the M4 close-out did not

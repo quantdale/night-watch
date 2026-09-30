@@ -7,8 +7,19 @@ CHILD OF: nightwatch-final-product-completion-v1
 Status: IN_PROGRESS
 Task directory: .agent/tasks/nightwatch-final-completion-corrections-v1
 Starting SHA: 1d47e2eef1ef029560ace12e31571624602eab0b
-Last validated implementation SHA: 3c9c1a0671068c8de6bafb54c62f9cd107fed78a
-Last checkpoint: 2026-09-29 — M4 COMPLETE. Exact-head CI run 36552500573 at
+Last validated implementation SHA: b9306626e5386c371a2e7357a6432cfd2784acb1
+Last checkpoint: 2026-09-30 — REVIEW-3 RECORD AND FLAKE-003. `origin/main` =
+`b9306626` (M5 CLOSED: full local gates and exact-head CI run 36639792380,
+15/15 groups). The session branch carries 15 unintegrated commits
+(`c9bcff69`..`0f4b911b`: group 5 + tasks 7.1-7.14) plus this record; every
+unintegrated tick is annotated `(implemented; CI pending)`. Review-3's
+findings table and group 8 tasks were appended verbatim to `audit.md` and
+`tasks.md`; the R3-01 gate:dev re-run at `0f4b911b` produced FLAKE-003
+(9/5824 under 5.1x host contention; all failing files pass in isolation and
+under bounded load; status OPEN in `docs/FLAKE-LEDGER.md`). Anchors advanced
+to `b9306626`. Next: commit, integrate, observe exact-head CI, drop the
+annotations, then execute group 8 (8.2-8.16) and 7.15.
+Previous checkpoint: 2026-09-29 — M4 COMPLETE. Exact-head CI run 36552500573 at
 `3c9c1a06` (the CF-05/FLAKE-002 paced-fixture fix) is GREEN: all 15 groups
 PASS, SEMANTIC_COMPATIBILITY 2177/2163/14/0 (skipPolicy PASS 14/0),
 SYNTHETIC_CAMPAIGN 1966/1926/40/0 (skipPolicy PASS 40/0), TOPOLOGY PASS
@@ -60,10 +71,14 @@ sibling-checkout-gated skip identities undeclared) fixed at `491b5ef9` with
 4 exact declarations + a source-bound regression; VC-01 CI-execution half
 PROVEN at `2b5d8178` (zero skip sites in both security suites; receipt
 1966/1926/40/0 failed 0).
-Current milestone: M5 Release probes (group 4, tasks 4.1-4.6: VD-01..VD-05 +
-CF-01..CF-03). M1-M4 are COMPLETE (M4 closed 2026-09-29: exact-head CI run
-36552500573 green at `3c9c1a06` with the SHA-bound runner-topology artifact;
-gate:dev + gate:milestone PASS at the tip).
+Current milestone: M6 group 5 (ledger and continuity truth, 5.1-5.6) and
+group 7 (review-2 corrections, 7.1-7.14) are IMPLEMENTED on the unintegrated
+commits; group 8 (review-3 corrections, 8.1-8.16) is next after the step-4
+integration. M5 (release probes, 4.1-4.9) is CLOSED at `b9306626` (full local
+gates + exact-head CI run 36639792380, 15/15 groups). M1-M4 are COMPLETE
+(M4 closed 2026-09-29: exact-head CI run 36552500573 green at `3c9c1a06`
+with the SHA-bound runner-topology artifact; gate:dev + gate:milestone PASS
+at the tip).
 M1, M2, and M3 are COMPLETE. Tasks 3.2 (VC-02 skip-identity enforcement),
 3.3 (VC-03 truthful topology classification, PATH-based Bubblewrap,
 bounded gate-receipt details, SHA-pinned CI artifact), and 3.4 (VC-04
@@ -114,18 +129,20 @@ focused, hardening/typecheck/universe PASS; the dead
 `SHARD_CHILD_ENVIRONMENT_IDS` export is removed.
 `gate:milestone` PASSED at the clean checkpoint `8b24e11e` (12/12 steps,
 5769 passed / 0 failed shards; OVER_TARGET disclosed as telemetry).
-Next action: start M5 (release-probe corrections): implement task 4.1
-(probe-at-checkpoint: every release probe resolves MET only at the certified
-checkpoint — HEAD == S with a clean tree, or a receipt bound to S; otherwise
-NOT_AT_CHECKPOINT), then 4.2-4.5, then 4.6's focused + gate:milestone PASS
-and commit. Then group 5 (5.1-5.6) and group 6 (6.2-6.4).
+Next action: RESUME_PROMPT_3 §1 step 4 — commit this instrumentation, then
+`node bin/nightwatch-session.mjs integrate --expect-session
+sess-66344fe137d7 --expect-head <HEAD>` and observe exact-head CI at the
+pushed tip with `gh`. When GREEN, record the run ID in STATE and drop the
+`(implemented; CI pending)` annotations. Then execute group 8 in order
+(8.2-8.16, each with its regression and probe), then 7.15, then group 6
+(6.2-6.4), then route to the parent at "M9 task 10.2 remainder".
 
 Authorization class: COMPLETION_CORRECTIONS_V1
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 1d47e2eef1ef029560ace12e31571624602eab0b
-LAST_VALIDATED_IMPLEMENTATION_SHA: 3c9c1a0671068c8de6bafb54c62f9cd107fed78a
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 3c9c1a0671068c8de6bafb54c62f9cd107fed78a
+LAST_VALIDATED_IMPLEMENTATION_SHA: b9306626e5386c371a2e7357a6432cfd2784acb1
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: b9306626e5386c371a2e7357a6432cfd2784acb1
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 PHASE_COMPLETION_CORRECTIONS_V1_STATUS: IN_PROGRESS
@@ -133,7 +150,8 @@ PHASE_COMPLETION_CORRECTIONS_V1_STATUS: IN_PROGRESS
 ## Mission
 
 Close the corrective change `nightwatch-final-completion-corrections-v1`
-(39 tasks) so the parent campaign `nightwatch-final-product-completion-v1`
+(73 tasks: the original 42 plus review-2's 7.1-7.15 and review-3's
+8.1-8.16) so the parent campaign `nightwatch-final-product-completion-v1`
 resumes from sound foundations at M9 task 10.2 (remainder: 59/76 declared).
 
 ## Read order
@@ -164,9 +182,11 @@ EXTERNAL CONTACT AUTHORIZED (OD-3, CHILD SUBSET ONLY):
   tasks and are NOT granted to this child.
 
 CURRENT STATUS:
-  IN_PROGRESS — M4 COMPLETE (exact-head CI 36552500573 green at `3c9c1a06`
-  + runner-topology artifact; gate:dev/milestone PASS at the tip); M5
-  (release probes 4.1-4.6) is next.
+  IN_PROGRESS — REVIEW-3 RECORDED. M5 CLOSED at `b9306626` (exact-head CI
+  36639792380, 15/15 groups). Group 5 and 7.1-7.14 are implemented on the 15
+  unintegrated commits, ticks annotated `(implemented; CI pending)`, pending
+  the step-4 integration and exact-head CI observation. Group 8 (8.1-8.16)
+  is open; 8.1's gate:dev investigation is recorded as FLAKE-003 (OPEN).
 
 ALPHAUS DEV / NEXT / PRODUCTION CONTACT:   NOT AUTHORIZED
 AUTHENTICATED ALPHAUS RUNTIME:             NOT AUTHORIZED
