@@ -283,14 +283,18 @@ function makeFixture(options: FixtureOptions = {}): Fixture {
     fs.mkdirSync(path.dirname(path.join(root, relativePath)), { recursive: true });
     fs.copyFileSync(path.join(ROOT, relativePath), path.join(root, relativePath));
   }
-  // Part of the implementation baseline (a config file added later would be a
-  // substantive change after it). A repository with an active change must carry the stable task-ID ledger
-  // (corrections task 5.2); a synthetic one with nothing to guard is empty.
-  writeFile(root, 'config/task-id-ledger.v1.json', `${JSON.stringify({ schemaVersion: 'nightwatch.task-id-ledger.v1', changes: [] })}\n`);
   writeFile(root, 'bin/synthetic-implementation.mjs', 'export const syntheticImplementation = true;\n');
   git(root, ['add', '--all']);
   git(root, ['commit', '--quiet', '--no-gpg-sign', '-m', 'synthetic implementation']);
   const implementationSha = git(root, ['rev-parse', 'HEAD']);
+  // Part of the implementation baseline. R3-10 / corrections task 8.9: every
+  // active change must have a stable task-ID ledger entry; the synthetic
+  // campaign's baseline is the implementation commit (its tasks.md carries no
+  // numbered IDs, so only the entry itself is exercised).
+  writeFile(root, 'config/task-id-ledger.v1.json', `${JSON.stringify({ schemaVersion: 'nightwatch.task-id-ledger.v1', changes: [{ changeId: CAMPAIGN_ID, bootstrapSha: implementationSha }] })}\n`);
+  git(root, ['add', '--all']);
+  git(root, ['commit', '--quiet', '--no-gpg-sign', '-m', 'synthetic task-ID ledger']);
+  const implementationShaWithLedger = git(root, ['rev-parse', 'HEAD']);
 
   const status = options.status ?? 'IN_PROGRESS';
   const promptCampaignId = options.promptCampaignId ?? CAMPAIGN_ID;
@@ -329,7 +333,7 @@ function makeFixture(options: FixtureOptions = {}): Fixture {
   return {
     root,
     baseSha,
-    implementationSha,
+    implementationSha: implementationShaWithLedger,
     unrelatedSha,
     headSha,
     cleanup: () => fs.rmSync(root, { recursive: true, force: true }),

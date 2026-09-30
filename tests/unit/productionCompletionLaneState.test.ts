@@ -161,7 +161,9 @@ test.describe('validation lane state', () => {
       git(['add', '--all']);
       git(['commit', '--quiet', '--no-gpg-sign', '-m', 'values-only']);
       const valuesOnly = git(['rev-parse', 'HEAD']).stdout!.trim();
-      expect(checkpointRoleViolations(root, ['config/release-evidence.v1.json'], { kind: 'commit', commit: valuesOnly })).toEqual([]);
+      // R3-05 / 8.4: a re-bind is documentary only with a VERIFIED receipt.
+      expect(checkpointRoleViolations(root, ['config/release-evidence.v1.json'], { kind: 'commit', commit: valuesOnly, verifyBindingReceipt: () => true })).toEqual([]);
+      expect(checkpointRoleViolations(root, ['config/release-evidence.v1.json'], { kind: 'commit', commit: valuesOnly })).toEqual(['config/release-evidence.v1.json']);
 
       // (b) NULL: erasing the evidence value is substantive.
       write('config/release-evidence.v1.json', binding(null));
@@ -250,7 +252,7 @@ test.describe('validation lane state', () => {
       const visibleWithM = git(['diff-tree', '--root', '--no-commit-id', '--name-only', '--no-renames', '-m', '-r', mergedValues]).stdout;
       expect(visibleWithM).toContain('config/release-evidence.v1.json');
       expect(git(['diff-tree', '--root', '--no-commit-id', '--name-only', '--no-renames', '-r', mergedValues]).stdout).not.toContain('config/release-evidence.v1.json');
-      expect(checkpointRoleViolations(root, ['config/release-evidence.v1.json'], { kind: 'commit', commit: mergedValues })).toEqual([]);
+      expect(checkpointRoleViolations(root, ['config/release-evidence.v1.json'], { kind: 'commit', commit: mergedValues, verifyBindingReceipt: () => true })).toEqual([]);
       // The STRUCTURAL merge is classified with the guarded path (per-parent
       // guard fails against the first parent): the exact hole VB-06 closes.
       // Reset the guarded file to its merge-base value first (ours == base
@@ -573,7 +575,7 @@ test.describe('validation lane state', () => {
   test('VB-02: artifactPaths is a declared structural key — adding or editing it is never values-only', () => {
     const binding = (artifactPaths: string[]) => JSON.stringify({
       schemaVersion: 'nightwatch.release-evidence.v1',
-      bindings: [{ subject: 'root-compile', evidenceSha: SHA_A, receiptDigest: null, observedAt: null, executor: null, artifactPaths }],
+      bindings: [{ subject: 'root-compile', evidenceSha: SHA_A, receiptDigest: null, observedAt: null, executor: null, artifactPaths, certifying: true }],
     });
     expect(isValuesOnlyBindingChange(binding([]), binding(['config/report.json']))).toEqual({
       valuesOnly: false,

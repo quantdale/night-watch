@@ -1654,11 +1654,19 @@ function writeGroupLedger(root: string, options: { readonly tasks?: string; read
   const change = path.join(root, 'openspec', 'changes', 'phase-test');
   fs.mkdirSync(change, { recursive: true });
   fs.writeFileSync(path.join(change, 'tasks.md'), options.tasks ?? GROUP_LEDGER_TASKS);
+  // R3-10 / corrections task 8.9: the change must carry a resolvable task-ID
+  // ledger entry, so the tasks.md is committed first and its commit is the
+  // bootstrap the ledger names.
+  git(root, ['add', '--all']);
+  git(root, ['commit', '--quiet', '--no-gpg-sign', '-m', 'synthetic group tasks']);
+  const bootstrap = git(root, ['rev-parse', 'HEAD']);
   fs.mkdirSync(path.join(root, 'config'), { recursive: true });
   fs.writeFileSync(
     path.join(root, 'config', 'task-id-ledger.v1.json'),
-    `${JSON.stringify({ schemaVersion: 'nightwatch.task-id-ledger.v1', changes: [] }, null, 2)}\n`,
+    `${JSON.stringify({ schemaVersion: 'nightwatch.task-id-ledger.v1', changes: [{ changeId: 'phase-test', bootstrapSha: bootstrap }] }, null, 2)}\n`,
   );
+  git(root, ['add', '--all']);
+  git(root, ['commit', '--quiet', '--no-gpg-sign', '-m', 'synthetic task-ID ledger']);
   const stateFile = path.join(root, '.agent', 'tasks', 'phase-test', 'STATE.md');
   fs.appendFileSync(
     stateFile,

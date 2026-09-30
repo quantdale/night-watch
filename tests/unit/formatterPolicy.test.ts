@@ -287,12 +287,18 @@ test.describe('corpus proofs over the tracked tree', () => {
 const PRETTIER_PROBE = "const x = 'a'\nconst y   =   1;\n";
 const PRETTIER_ENTRY = path.join(os.homedir(), '.pi-lens', 'tools', 'node_modules', 'prettier', 'bin', 'prettier.cjs');
 
-test('prettier: every path is ignored and no Prettier configuration exists', () => {
+test('prettier: every path is ignored and the only configuration is the per-file pragma gate', () => {
   const ignore = fs.readFileSync(path.join(REPO_ROOT, '.prettierignore'), 'utf8');
   const patterns = ignore.split('\n').map((line) => line.trim()).filter((line) => line !== '' && !line.startsWith('#'));
   expect(patterns, '.prettierignore must ignore everything with a single `*`').toEqual(['*']);
   const tracked = trackedFiles();
-  for (const configuration of ['.prettierrc', '.prettierrc.json', '.prettierrc.yaml', '.prettierrc.yml', '.prettierrc.js', '.prettierrc.cjs', '.prettierrc.mjs', 'prettier.config.js', 'prettier.config.cjs', 'prettier.config.mjs']) {
+  // R3-14 / corrections task 8.13: `.prettierrc` is the FILE-RELATIVE
+  // neutralisation (requirePragma), so it must exist; every OTHER Prettier
+  // configuration form stays absent.
+  expect(tracked).toContain('.prettierrc');
+  const config = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, '.prettierrc'), 'utf8')) as Record<string, unknown>;
+  expect(config.requirePragma).toBe(true);
+  for (const configuration of ['.prettierrc.json', '.prettierrc.yaml', '.prettierrc.yml', '.prettierrc.js', '.prettierrc.cjs', '.prettierrc.mjs', 'prettier.config.js', 'prettier.config.cjs', 'prettier.config.mjs']) {
     expect(tracked, `${configuration} must not exist: Prettier is not a repository tool`).not.toContain(configuration);
   }
   expect(tracked).toContain('.prettierignore');

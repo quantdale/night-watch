@@ -2896,6 +2896,25 @@ test.describe('fixture-root collector receipts (R3-07)', () => {
     return null;
   }
 
+  /**
+   * R3-07 fixture-root collector reads: a CLEAN tree makes project:check print
+   * the JSON receipt; a dirty one prints the text verdict. Both are parsed so
+   * the checkState assertion holds either way.
+   */
+  function conditionCheckState(output: string, id: string): string | null {
+    try {
+      const parsed = JSON.parse(output) as { releaseVerdict?: { conditions?: Array<{ id: string; state: string; checkState?: string }> } };
+      const condition = parsed.releaseVerdict?.conditions?.find((entry) => entry.id === id);
+      if (condition !== undefined) return condition.checkState ?? null;
+    } catch {
+      // Not a JSON receipt; fall through to the text verdict.
+    }
+    const line = conditionLine(output, id);
+    if (line === null) return null;
+    const match = /state=(\S+) check=(\S+)/.exec(line);
+    return match === null ? null : match[2] as string;
+  }
+
   test('G18: a UI-harness receipt bound to S reports check=MET; bound elsewhere it is NOT_AT_CHECKPOINT', () => {
     const s = /LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: ([0-9a-f]{40})/.exec(fs.readFileSync(path.join(REPO, 'docs/CURRENT_STATE.md'), 'utf8'))?.[1] ?? '';
     expect(s).not.toBe('');
@@ -2948,14 +2967,10 @@ test.describe('fixture-root collector receipts (R3-07)', () => {
       fs.mkdirSync(path.dirname(target), { recursive: true });
       fs.writeFileSync(target, `${JSON.stringify(build(s), null, 2)}\n`);
       const bound = runChecker(REPO);
-      const boundLine = conditionLine(bound, 'ui-error-taxonomy-rendering');
-      expect(boundLine, bound).not.toBeNull();
-      expect(boundLine).toContain('check=MET');
+      expect(conditionCheckState(bound, 'ui-error-taxonomy-rendering'), bound).toBe('MET');
       fs.writeFileSync(target, `${JSON.stringify(build('b'.repeat(40)), null, 2)}\n`);
       const other = runChecker(REPO);
-      const otherLine = conditionLine(other, 'ui-error-taxonomy-rendering');
-      expect(otherLine, other).not.toBeNull();
-      expect(otherLine).toContain('check=NOT_AT_CHECKPOINT');
+      expect(conditionCheckState(other, 'ui-error-taxonomy-rendering'), other).toBe('NOT_AT_CHECKPOINT');
     } finally {
       if (backup === null) fs.rmSync(target, { force: true });
       else fs.writeFileSync(target, backup);
@@ -2997,15 +3012,11 @@ test.describe('fixture-root collector receipts (R3-07)', () => {
       fs.writeFileSync(path.join(dir, 'summary.json'), `${JSON.stringify({ passed: true })}\n`);
       fs.writeFileSync(path.join(dir, 'product-run-receipt.json'), `${JSON.stringify(build(s), null, 2)}\n`);
       const bound = runChecker(REPO);
-      const boundLine = conditionLine(bound, 'autonomous-yield-proof');
-      expect(boundLine, bound).not.toBeNull();
-      expect(boundLine).toContain('check=MET');
+      expect(conditionCheckState(bound, 'autonomous-yield-proof'), bound).toBe('MET');
       fs.writeFileSync(path.join(dir, 'manifest.json'), `${JSON.stringify({ runId: 'fixture-run', product: 'campaign', nightwatchSha: 'b'.repeat(40) })}\n`);
       fs.writeFileSync(path.join(dir, 'product-run-receipt.json'), `${JSON.stringify(build('b'.repeat(40)), null, 2)}\n`);
       const other = runChecker(REPO);
-      const otherLine = conditionLine(other, 'autonomous-yield-proof');
-      expect(otherLine, other).not.toBeNull();
-      expect(otherLine).toContain('check=NOT_AT_CHECKPOINT');
+      expect(conditionCheckState(other, 'autonomous-yield-proof'), other).toBe('NOT_AT_CHECKPOINT');
     } finally {
       fs.rmSync(dir, { recursive: true, force: true });
     }
