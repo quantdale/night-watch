@@ -149,9 +149,8 @@ and evidence and needs no code change.
   honesty + TASK_AHEAD_OF_PROJECT_BASELINE, ledger error at terminal,
   INTEGRATED_CURRENT, parent continuity sync).
 - Acceptance criteria: focused suites + `gate:dev` + `gate:milestone` PASS.
-- **Status:** IMPLEMENTED, CI PENDING — implemented in `c9bcff69`; the group's
-  ticks carry `(implemented; CI pending)` until the step-4 integration and
-  exact-head CI observation.
+- **Status:** COMPLETE — implemented in `c9bcff69`; exact-head CI run
+  36717972936 at the integrated tip `f887e76b` is GREEN (15/15 groups).
 
 ### M6.5 — Review-2 corrections (group 7, tasks 7.1-7.15)
 
@@ -160,9 +159,9 @@ and evidence and needs no code change.
   corrections, Prettier neutralisation).
 - Acceptance criteria: focused suites + `gate:dev` + `gate:milestone` +
   `hardening:rules` PASS; exact-head CI green before 6.2.
-- **Status:** IMPLEMENTED, CI PENDING — 7.1-7.14 implemented across
-  `31f9ec44`..`8445e7bb` on the unintegrated commits; 7.15 (group close-out)
-  remains open and follows group 8.
+- **Status:** IMPLEMENTED, CI OBSERVED — 7.1-7.14 implemented across
+  `31f9ec44`..`8445e7bb` and observed green in exact-head CI run 36717972936 at
+  `f887e76b`; 7.15 (group close-out) remains open and follows group 8.
 
 ### M6.6 — Review-3 corrections (group 8, tasks 8.1-8.16)
 
@@ -174,8 +173,10 @@ and evidence and needs no code change.
   D-149 Decision 4, record corrections, minor gaps).
 - Acceptance criteria: each task's regression and probe green; full gate set
   and exact-head CI green at the close-out tip.
-- **Status:** OPEN — recorded 2026-09-30; executes after the step-4
-  integration. 8.1's diagnosis is complete and recorded as FLAKE-003 (OPEN).
+- **Status:** IN_PROGRESS — recorded 2026-09-30; the step-4 integration and
+  exact-head CI observation are complete (run 36717972936 GREEN at `f887e76b`).
+  8.1's diagnosis is recorded as FLAKE-003 (OPEN); 8.2 and 8.3 are implemented
+  in the working tree.
 
 ### M7 — Hygiene and close-out (group 6, tasks 6.2-6.4)
 

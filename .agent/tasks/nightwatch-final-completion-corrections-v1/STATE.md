@@ -6,19 +6,31 @@ Task ID: nightwatch-final-completion-corrections-v1
 Phase: COMPLETION_CORRECTIONS_V1
 CHILD OF: nightwatch-final-product-completion-v1
 Status: IN_PROGRESS
+TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1
+TASK_GROUPS_COMPLETE: 1,2,3,4,5
+TASK_GROUP_NEXT: 8
+TASK_NEXT_ID: 8.2
+TASK_GROUP_DEFERRED: 6.2,6.3,6.4,7.15
 Starting SHA: 1d47e2eef1ef029560ace12e31571624602eab0b
 Last validated implementation SHA: b9306626e5386c371a2e7357a6432cfd2784acb1
 Last substantive checkpoint SHA: b9306626e5386c371a2e7357a6432cfd2784acb1
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-final-completion-corr-c45f0e9d
-Last checkpoint: 2026-09-30 — REVIEW-3 RECORD AND FLAKE-003 (R3-01/R3-02).
+Last checkpoint: 2026-09-30 — REVIEW-3 RECORD, EXACT-HEAD CI GREEN, FLAKE-003
+(R3-01/R3-02). Exact-head CI run **36717972936** at `f887e76b` is GREEN: all
+15 groups PASS (receipt `receipt:sha256:8f950c44ba4687fce72e6797`; SEMANTIC
+2202/2188/14/0 skipPolicy 14/0; SYNTHETIC 1972/1932/40/0 skipPolicy 40/0;
+OWNER 91; UI 105/105; TOPOLOGY `topologyGitHead=f887e76b`, receipt
+`topology-receipt:sha256:99428e6b1644a7ff2c506015`,
+PROVEN_DEGRADED/BWRAP_UNAVAILABLE_DEGRADED, topologyCertifying=false). The
+`(implemented; CI pending)` annotations are therefore dropped.
 `origin/main` = `b9306626`; the session branch carries 15 unintegrated commits
 (`c9bcff69`..`0f4b911b`: group 5 + tasks 7.1-7.14) plus this record. M5 is
 CLOSED at `b9306626` (the last commit with full local gates AND observed
 exact-head CI: run 36639792380, 15/15 groups). Group 5 (5.1-5.6) and tasks
-7.1-7.14 are IMPLEMENTED; their ticks are annotated `(implemented; CI
-pending)` pending the step-4 integration and exact-head CI observation.
+7.1-7.14 are IMPLEMENTED and CI-OBSERVED at `f887e76b` (run 36717972936);
+their ticks carry no pending annotation.
 Review-3 (audit.md "Review 3") and its group 8 (tasks.md) were appended
 verbatim; no existing task ID or text changed. The re-run of `gate:dev` at
 `0f4b911b` FAILED 9/5824 on a host under 5.1x lane slowdown (2871.5s shard):
@@ -330,7 +342,7 @@ artifact wiring), 8.8 (PROVEN_DEGRADED non-certifying), 8.9 (ledger gaps),
 8.10 (behavioural classifier dispatch), 8.11 (DEV-launcher anchor), 8.12 (skip
 identities + VC-01 CI per-test proof), 8.13 (file-relative Prettier), 8.14
 (D-149 Decision 4), 8.15 (record corrections), 8.16 (minor gaps), each with
-its regression and probe. Then 7.15, then group 6 (6.2-6.4), then route to the
+its regression and probe. Then 7.15, then 6.2, 6.3, 6.4, then route to the
 parent at "M9 task 10.2 remainder".
 
 ## Files Changed

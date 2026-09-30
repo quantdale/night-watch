@@ -5,14 +5,22 @@ Phase: COMPLETION_CORRECTIONS_V1
 Title: Corrective campaign (child of the terminal campaign)
 CHILD OF: nightwatch-final-product-completion-v1
 Status: IN_PROGRESS
+TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1
+TASK_GROUPS_COMPLETE: 1,2,3,4,5
+TASK_GROUP_NEXT: 8
+TASK_NEXT_ID: 8.2
+TASK_GROUP_DEFERRED: 6.2,6.3,6.4,7.15
 Task directory: .agent/tasks/nightwatch-final-completion-corrections-v1
 Starting SHA: 1d47e2eef1ef029560ace12e31571624602eab0b
 Last validated implementation SHA: b9306626e5386c371a2e7357a6432cfd2784acb1
-Last checkpoint: 2026-09-30 — REVIEW-3 RECORD AND FLAKE-003. `origin/main` =
-`b9306626` (M5 CLOSED: full local gates and exact-head CI run 36639792380,
-15/15 groups). The session branch carries 15 unintegrated commits
-(`c9bcff69`..`0f4b911b`: group 5 + tasks 7.1-7.14) plus this record; every
-unintegrated tick is annotated `(implemented; CI pending)`. Review-3's
+Last checkpoint: 2026-09-30 — REVIEW-3 RECORD, EXACT-HEAD CI GREEN, FLAKE-003.
+`origin/main` = `f887e76b` after the step-4 integration; exact-head CI run
+**36717972936** at `f887e76b` is GREEN (15/15 groups,
+receipt `receipt:sha256:8f950c44ba4687fce72e6797`). M5 is CLOSED at
+`b9306626` (run 36639792380); group 5 and 7.1-7.14 are now CI-OBSERVED and
+their `(implemented; CI pending)` annotations are dropped. Group 8 is the
+active work: 8.1 is diagnosed (FLAKE-003, OPEN), 8.2 and 8.3 are implemented
+in the working tree. Review-3's
 findings table and group 8 tasks were appended verbatim to `audit.md` and
 `tasks.md`; the R3-01 gate:dev re-run at `0f4b911b` produced FLAKE-003
 (9/5824 under 5.1x host contention; all failing files pass in isolation and
