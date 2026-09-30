@@ -316,19 +316,55 @@ test.describe('stable task-ID ledger (VA-01 / task 5.2)', () => {
     expect(taskIdLedgerViolations(bootstrap, '- [x] — DONE first\n- [x] 1.2 second\n- [x] 2.1 third')).toEqual(['1.1']);
   });
 
-  test('inspectTaskIdLedger fails a stripped ID by name, warns on an unreadable baseline, skips an archived change', () => {
+  test('inspectTaskIdLedger fails a stripped ID by name, fails an unreadable baseline, skips an archived change', () => {
     const root = fixtureRoot();
     writeChange(root, 'c-one', '- [x] 1.1 first\n- [x] 2.1 third');
     ledger(root, [{ changeId: 'c-one', bootstrapSha: sha }]);
     const stripped = inspectTaskIdLedger(root, () => bootstrap);
     expect(stripped.errors.join(' ')).toContain('LEDGER_TASK_ID_STRIPPED: change c-one lost stable task id 1.2');
+    // R3-10 / corrections task 8.9: an unresolvable baseline FAILS.
     const unreadable = inspectTaskIdLedger(root, () => null);
-    expect(unreadable.errors).toEqual([]);
-    expect(unreadable.warnings.join(' ')).toContain('LEDGER_TASK_ID_BASELINE_UNRESOLVABLE');
+    expect(unreadable.errors.join(' ')).toContain('LEDGER_TASK_ID_BASELINE_UNRESOLVABLE');
     ledger(root, [{ changeId: 'c-archived', bootstrapSha: sha }]);
     const archived = inspectTaskIdLedger(root, () => bootstrap);
-    expect(archived.errors).toEqual([]);
+    expect(archived.errors.join(' ')).toContain('LEDGER_TASK_ID_LEDGER_ENTRY_MISSING: active change c-one');
     expect(archived.info.join(' ')).toContain('LEDGER_TASK_ID_CHANGE_NOT_ACTIVE');
+  });
+
+  test('R3-10: rewording, striking an in-scope ID and a missing entry are all errors', () => {
+    const root = fixtureRoot();
+    writeChange(root, 'c-one', '- [x] 1.1 a REWORDED task\n- [ ] 1.2 second\n- [ ] 2.1 third');
+    ledger(root, [{ changeId: 'c-one', bootstrapSha: sha }]);
+    const reworded = inspectTaskIdLedger(root, () => bootstrap);
+    expect(reworded.errors.join(' ')).toContain('LEDGER_TASK_ID_REWORDED: change c-one task 1.1');
+    // An appended annotation is allowed.
+    writeChange(root, 'c-one', '- [x] 1.1 first — DONE (annotation)\n- [ ] 1.2 second\n- [ ] 2.1 third');
+    expect(inspectTaskIdLedger(root, () => bootstrap).errors).toEqual([]);
+    // Striking an ID that was in scope at bootstrap is an error; one struck at
+    // bootstrap is the legitimate declared-not-in-scope convention.
+    writeChange(root, 'c-one', '- [ ] ~~1.1 first~~ — SUPERSEDED — by another change\n- [ ] 1.2 second\n- [ ] 2.1 third');
+    expect(inspectTaskIdLedger(root, () => bootstrap).errors.join(' ')).toContain('LEDGER_TASK_ID_STRUCK: change c-one strikes task id 1.1');
+    const struckBootstrap = ['- [ ] ~~1.1 first~~ — SUPERSEDED — by another change', '- [ ] 1.2 second'].join('\n');
+    writeChange(root, 'c-one', struckBootstrap);
+    expect(inspectTaskIdLedger(root, () => struckBootstrap).errors).toEqual([]);
+    // An active change with no ledger entry fails.
+    writeChange(root, 'c-two', '- [ ] 2.1 second change');
+    expect(inspectTaskIdLedger(root, () => bootstrap).errors.join(' ')).toContain('LEDGER_TASK_ID_LEDGER_ENTRY_MISSING: active change c-two');
+  });
+
+  test('R3-10: the legacy ceiling is down-only against origin/main', () => {
+    const root = fixtureRoot();
+    writeChange(root, 'c-legacy', '- [ ] ~~a~~\n- [ ] ~~b~~');
+    writeTask(root, 'c-legacy', 'COMPLETE');
+    fs.mkdirSync(path.join(root, 'config'), { recursive: true });
+    fs.writeFileSync(path.join(root, 'config', 'ledger-legacy-drain.v1.json'), JSON.stringify({ schemaVersion: 'nightwatch.ledger-legacy-drain.v1', ceilings: { 'c-legacy': 2 } }));
+    const history = JSON.stringify({ schemaVersion: 'nightwatch.ledger-legacy-drain.v1', ceilings: { 'c-legacy': 2 } });
+    const reader = () => history;
+    expect(inspectLedgerAgreement(root, reader).errors).toEqual([]);
+    fs.writeFileSync(path.join(root, 'config', 'ledger-legacy-drain.v1.json'), JSON.stringify({ schemaVersion: 'nightwatch.ledger-legacy-drain.v1', ceilings: { 'c-legacy': 3 } }));
+    expect(inspectLedgerAgreement(root, reader).errors.join(' ')).toContain('LEDGER_LEGACY_DRAIN_CEILING_RAISED: change c-legacy raised its legacy ceiling 2 -> 3');
+    fs.writeFileSync(path.join(root, 'config', 'ledger-legacy-drain.v1.json'), JSON.stringify({ schemaVersion: 'nightwatch.ledger-legacy-drain.v1', ceilings: { 'c-new': 1 } }));
+    expect(inspectLedgerAgreement(root, reader).errors.join(' ')).toContain('LEDGER_LEGACY_DRAIN_CEILING_ADDED: change c-new gained a legacy ceiling 1');
   });
 
   test('a missing, malformed or invalid ledger fails closed', () => {

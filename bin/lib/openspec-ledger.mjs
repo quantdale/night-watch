@@ -253,7 +253,7 @@ function loadLegacyDrainCeilings(root) {
  * records rather than missing campaigns); a legacy v1 pairing is reported as
  * legacy and never inferred terminal. Read-only: never rewrites a ledger.
  */
-export function inspectLedgerAgreement(root) {
+export function inspectLedgerAgreement(root, readBlobAtCommit = null) {
   const errors = [];
   const warnings = [];
   const info = [];
@@ -261,6 +261,34 @@ export function inspectLedgerAgreement(root) {
   const archivedIds = new Set(listArchivedChangeIds(root));
   const legacyDrain = loadLegacyDrainCeilings(root);
   errors.push(...legacyDrain.errors);
+  // R3-10 / corrections task 8.9: the legacy ceiling is DOWN-ONLY against
+  // history. A ceiling raised, or a new changeId added, after origin/main is a
+  // relaxation of the ratchet; only lowering (or removal) is admissible.
+  if (readBlobAtCommit !== null && legacyDrain.ceilings.size > 0) {
+    const historical = readBlobAtCommit('origin/main', LEGACY_DRAIN_PATH);
+    if (historical === null || historical === undefined) {
+      warnings.push('LEDGER_LEGACY_DRAIN_HISTORY_UNRESOLVED: origin/main does not expose the legacy drain ceilings; the down-only check was not evaluated');
+    } else {
+      let parsed = null;
+      try {
+        parsed = JSON.parse(historical);
+      } catch {
+        parsed = null;
+      }
+      if (parsed === null || typeof parsed !== 'object' || parsed.ceilings === null || typeof parsed.ceilings !== 'object' || Array.isArray(parsed.ceilings)) {
+        warnings.push('LEDGER_LEGACY_DRAIN_HISTORY_UNRESOLVED: the origin/main legacy drain file is unreadable; the down-only check was not evaluated');
+      } else {
+        for (const [changeId, ceiling] of legacyDrain.ceilings) {
+          const previous = parsed.ceilings[changeId];
+          if (previous === undefined) {
+            errors.push(`LEDGER_LEGACY_DRAIN_CEILING_ADDED: change ${changeId} gained a legacy ceiling ${ceiling} after origin/main; the ratchet only turns down`);
+          } else if (typeof previous === 'number' && ceiling > previous) {
+            errors.push(`LEDGER_LEGACY_DRAIN_CEILING_RAISED: change ${changeId} raised its legacy ceiling ${previous} -> ${ceiling}; the ratchet only turns down`);
+          }
+        }
+      }
+    }
+  }
   for (const changeId of changeIds) {
     const text = readFileIfPresent(path.join(root, 'openspec', 'changes', changeId, 'tasks.md')) ?? '';
     const { open, done, declaredNotInScope, undispositioned } = parseLedgerTasks(text);
@@ -364,6 +392,80 @@ export const TASK_ID_LEDGER_SCHEMA = 'nightwatch.task-id-ledger.v1';
 const TASK_LINE_ID_RE = /^\s*-\s*\[[ xX]\]\s*(?:~~)?(\d+\.\d+[a-z]?)\s/;
 
 /** The ordered, de-duplicated stable IDs that open a task line in `tasksText`. */
+/**
+ * R3-10 / corrections task 8.9 — the bounded legacy reword exemption. These
+ * IDs were reworded before the reword rule existed, during their campaigns'
+ * normal evolution; they are inert (the exemption covers only the exact
+ * change:ID pair, never a stripped ID and never a new rewording). A future
+ * change may add an ANNOTATION (a bracketed segment or an appended DONE note)
+ * but must preserve the original task text as a prefix.
+ */
+export const LEGACY_REWORD_EXEMPTIONS = Object.freeze([
+  'nightwatch-credential-use-binding-successor-v1:3.3',
+  'nightwatch-credential-use-binding-successor-v1:4.1',
+  'nightwatch-final-completion-corrections-v1:2.7',
+  'nightwatch-production-completion-programme-v1:13.1',
+  'nightwatch-production-completion-programme-v1:21.8',
+  'nightwatch-shard-temp-isolation-v1:2.2',
+  'nightwatch-shard-temp-isolation-v1:2.3',
+  'nightwatch-shard-temp-isolation-v1:3.2',
+]);
+
+/**
+ * R3-10 / corrections task 8.9 — the bounded legacy strike exemption. These
+ * IDs were struck (declared not in scope) after their bootstrap, before the
+ * strike rule existed; each is recorded exactly, so a FUTURE strike of an
+ * in-scope ID fails. The exemptions cover only the strike check.
+ */
+export const LEGACY_STRIKE_EXEMPTIONS = Object.freeze([
+  'nightwatch-child-process-census-indirection-v1:3.3',
+  'nightwatch-child-process-census-indirection-v1:4.1',
+  'nightwatch-child-process-census-indirection-v1:4.2',
+  'nightwatch-exhaustive-repository-audit-proposals-v1:11.7',
+  'nightwatch-proxy-event-firewall-v1:3.3',
+  'nightwatch-proxy-event-firewall-v1:4.1',
+  'nightwatch-proxy-event-firewall-v1:4.2',
+  'nightwatch-real-source-expectation-authority-integrity-v1:2.6',
+  'nightwatch-run-evidence-transaction-successor-v1:3.3',
+  'nightwatch-run-evidence-transaction-successor-v1:4.1',
+  'nightwatch-run-evidence-transaction-successor-v1:4.2',
+  'nightwatch-semantic-receipt-acceptance-integrity-v1:2.6',
+  'nightwatch-shard-certification-integrity-v1:4.1',
+  'nightwatch-shard-certification-integrity-v1:4.2',
+  'nightwatch-shard-certification-integrity-v1:4.3',
+]);
+
+/** The struck-ID form: a checkbox whose ID is crossed out. */
+const STRUCK_TASK_ID_RE = /^\s*-\s*\[[ xX]\]\s*~~\s*(\d+\.\d+[a-z]?)/;
+
+/**
+ * The task text per ID, with the checkbox/ID prefix removed.
+ * @param {string} tasksText
+ * @returns {Map<string, string>}
+ */
+export function taskTextsById(tasksText) {
+  const byId = new Map();
+  for (const line of String(tasksText ?? '').split(/\r?\n/)) {
+    const match = TASK_LINE_ID_RE.exec(line);
+    if (match === null) continue;
+    if (!byId.has(match[1])) byId.set(match[1], line.slice(match[0].length).trim());
+  }
+  return byId;
+}
+
+/**
+ * The annotation-normalized task text: bracketed segments are annotations
+ * (removed), unicode dashes are normalized, whitespace collapsed.
+ * @param {string} text
+ */
+export function normalizeTaskText(text) {
+  return String(text ?? '')
+    .replace(/\[[^\]]*\]/g, '')
+    .replace(/[\u2013\u2014]/g, '-')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 export function collectTaskIds(tasksText) {
   const ids = [];
   const seen = new Set();
@@ -435,12 +537,59 @@ export function inspectTaskIdLedger(root, readBlobAtCommit) {
     }
     const baseline = readBlobAtCommit(sha, relative);
     if (baseline === null || baseline === undefined) {
-      warnings.push(`LEDGER_TASK_ID_BASELINE_UNRESOLVABLE: bootstrap ${sha.slice(0, 8)} of change ${changeId} cannot be read (shallow checkout?); stable IDs were not verified`);
+      // R3-10 / corrections task 8.9: an unresolvable bootstrap FAILS — a
+      // warning let a shallow or rewritten checkout disable the guard.
+      errors.push(`LEDGER_TASK_ID_BASELINE_UNRESOLVABLE: bootstrap ${sha.slice(0, 8)} of change ${changeId} cannot be read; stable IDs cannot be verified`);
       continue;
     }
     const missing = taskIdLedgerViolations(baseline, current);
     if (missing.length > 0) {
       errors.push(`LEDGER_TASK_ID_STRIPPED: change ${changeId} lost stable task id${missing.length === 1 ? '' : 's'} ${missing.slice(0, 12).join(', ')}${missing.length > 12 ? ` (+${missing.length - 12} more)` : ''} present at bootstrap ${sha.slice(0, 8)}`);
+    }
+    // R3-10 / corrections task 8.9: an ID that was IN SCOPE at bootstrap may
+    // not be struck out later — that silently converts open work into a
+    // declared-not-in-scope strike. The strike convention is legitimate only
+    // when the ID was already struck at bootstrap.
+    const struckAtBootstrap = new Set();
+    for (const line of baseline.split(/\r?\n/)) {
+      const struck = STRUCK_TASK_ID_RE.exec(line);
+      if (struck !== null) struckAtBootstrap.add(struck[1]);
+    }
+    for (const line of current.split(/\r?\n/)) {
+      const struck = STRUCK_TASK_ID_RE.exec(line);
+      if (struck !== null && !struckAtBootstrap.has(struck[1]) && !LEGACY_STRIKE_EXEMPTIONS.includes(`${changeId}:${struck[1]}`)) {
+        errors.push(`LEDGER_TASK_ID_STRUCK: change ${changeId} strikes task id ${struck[1]}, which was in scope at bootstrap ${sha.slice(0, 8)}; striking it silently declares it out of scope`);
+      }
+    }
+    // R3-10: rewording or swapping the text under a stable ID is detected by
+    // comparing the annotation-normalized text with the bootstrap text; only
+    // the bounded legacy exemptions may differ. A TERMINAL change's wording is
+    // historical record (its campaign is closed), so the guard applies to the
+    // changes still in flight — exactly where a reword can hide work.
+    const stateText = readFileIfPresent(path.join(root, '.agent', 'tasks', changeId, 'STATE.md'));
+    const stateStatus = stateText === null ? null : /^Status:\s*(\S+)/m.exec(stateText)?.[1] ?? null;
+    const terminal = normalizeTaskStatus(stateStatus) === 'COMPLETE';
+    if (!terminal) {
+      const baselineTexts = taskTextsById(baseline);
+      const currentTexts = taskTextsById(current);
+      for (const [id, baselineText] of baselineTexts) {
+        const currentText = currentTexts.get(id);
+        if (currentText === undefined) continue; // already reported as stripped
+        if (LEGACY_REWORD_EXEMPTIONS.includes(`${changeId}:${id}`)) continue;
+        const expected = normalizeTaskText(baselineText);
+        const actual = normalizeTaskText(currentText);
+        if (expected !== '' && !actual.startsWith(expected)) {
+          errors.push(`LEDGER_TASK_ID_REWORDED: change ${changeId} task ${id} no longer preserves its bootstrap text (annotations are allowed; rewording is not)`);
+        }
+      }
+    }
+  }
+  // R3-10: EVERY active change must carry a ledger entry, not only the listed
+  // ones — an unlisted change's IDs would otherwise be silently unguarded.
+  const listed = new Set(record.changes.map((entry) => (typeof entry?.changeId === 'string' ? entry.changeId : '')).filter((id) => id !== ''));
+  for (const changeId of listActiveChangeIds(root)) {
+    if (!listed.has(changeId)) {
+      errors.push(`LEDGER_TASK_ID_LEDGER_ENTRY_MISSING: active change ${changeId} has no task-ID ledger entry; its stable IDs are unguarded`);
     }
   }
   return { errors, warnings, info };

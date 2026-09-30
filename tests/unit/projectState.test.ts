@@ -1512,6 +1512,8 @@ test.describe('project-state truth checker (nightwatch.project-state.v2)', () =>
 // ---------------------------------------------------------------------------
 
 interface BaselineFixtureOptions {
+  /** R3-10: the continuity task status the fixture presents. */
+  readonly taskStatus?: 'IN_PROGRESS' | 'COMPLETE';
   /** What the commits between the project baseline and the task anchor touch. */
   readonly intervening: 'IMPLEMENTATION' | 'DOCS_ONLY';
   /** Which SHA the project block records as the substantive baseline. */
@@ -1567,10 +1569,15 @@ function makeBaselineFixture(options: BaselineFixtureOptions): Fixture {
     ? 'not-a-valid-sha'
     : options.ci === 'STALE' ? staleSha : currentSha;
 
+  if (options.taskStatus === 'COMPLETE') {
+    for (const relative of ['.agent/ACTIVE_TASK.md', `.agent/tasks/${ACTIVE_TASK_ID}/STATE.md`]) {
+      replaceFile(root, relative, (text) => text.replace(/^Status: IN_PROGRESS$/m, 'Status: COMPLETE'));
+    }
+  }
   fs.writeFileSync(path.join(root, 'docs/CURRENT_STATE.md'), renderBlock('ONE', {
     liveTaskId: ACTIVE_TASK_ID,
     livePhase: 'test',
-    liveTaskStatus: 'IN_PROGRESS',
+    liveTaskStatus: options.taskStatus === 'COMPLETE' ? 'COMPLETE' : 'IN_PROGRESS',
     liveProjectCompletionStatus: 'IMPLEMENTATION_COMPLETE_OPERATIONAL_ACCEPTANCE_PENDING',
     projectCompletionStatus: 'IMPLEMENTATION_COMPLETE_OPERATIONAL_ACCEPTANCE_PENDING',
     liveVerdictEffect: 'PRESERVE',
@@ -1671,6 +1678,21 @@ test.describe('C-10.5 A10 — cross-authority baseline invariant', () => {
       const result = run(fixture.root);
       expect(result.status).not.toBe(0);
       expect(errorsOf(result)).toContain('PROJECT_STATE_SUBSTANTIVE_BASELINE_STALE');
+    } finally {
+      fixture.cleanup();
+    }
+  });
+
+  test('A10.12 a non-IN_PROGRESS task with an in-history anchor is STALE, not ATTENTION (R3-10)', () => {
+    // R3-10: the A10 fixtures lost this pin. The ATTENTION classification is
+    // only for a task IN FLIGHT; a COMPLETE/BLOCKED task whose baseline lags a
+    // later implementation is a stale anchor and fails.
+    const fixture = makeBaselineFixture({ intervening: 'IMPLEMENTATION', substantive: 'STALE', ci: 'CURRENT', taskStatus: 'COMPLETE' });
+    try {
+      const result = run(fixture.root);
+      expect(result.status).not.toBe(0);
+      expect(errorsOf(result)).toContain('PROJECT_STATE_SUBSTANTIVE_BASELINE_STALE');
+      expect(result.stderr).not.toContain('ATTENTION: TASK_AHEAD_OF_PROJECT_BASELINE');
     } finally {
       fixture.cleanup();
     }

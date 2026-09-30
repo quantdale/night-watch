@@ -48,7 +48,14 @@ export function classifyBlocker(blockerText: string | null | undefined): OpenWor
 export function listActiveChangeIds(root: string): readonly string[];
 export function listArchivedChangeIds(root: string): readonly string[];
 export function collectOpenWorkInput(root: string): readonly OpenWorkInputEntry[];
-export function inspectLedgerAgreement(root: string): LedgerAgreementDiagnostics;
+export function inspectLedgerAgreement(
+  root: string,
+  readBlobAtCommit?: ((sha: string, relativePath: string) => string | null) | null,
+): LedgerAgreementDiagnostics;
+export declare const LEGACY_REWORD_EXEMPTIONS: readonly string[];
+export declare const LEGACY_STRIKE_EXEMPTIONS: readonly string[];
+export declare function taskTextsById(tasksText: string): Map<string, string>;
+export declare function normalizeTaskText(text: string): string;
 
 export const TASK_ID_LEDGER_PATH: string;
 export const TASK_ID_LEDGER_SCHEMA: 'nightwatch.task-id-ledger.v1';

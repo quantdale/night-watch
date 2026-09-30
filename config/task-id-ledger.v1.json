@@ -9,6 +9,270 @@
     {
       "changeId": "nightwatch-final-completion-corrections-v1",
       "bootstrapSha": "3ce396c67584b52017eeb03d7c0529f8e1e63670"
+    },
+    {
+      "changeId": "nightwatch-agent-tool-fixture-fallback-integrity-v1",
+      "bootstrapSha": "2afc54dec00fd21731889532d3606e4e2628e7ff"
+    },
+    {
+      "changeId": "nightwatch-auth-capability-bundle-transaction-integrity-v1",
+      "bootstrapSha": "ca79e8ad09d1429f3bfb4b3857772ee71a226626"
+    },
+    {
+      "changeId": "nightwatch-authenticated-evidence-minimization-integrity-v1",
+      "bootstrapSha": "a3805b5d76930a72e3583fc5dc1544264c22efeb"
+    },
+    {
+      "changeId": "nightwatch-autonomous-bug-hunting-programme-v1",
+      "bootstrapSha": "bd9be1b2a93107388b868cf2febc87bc84a8a428"
+    },
+    {
+      "changeId": "nightwatch-autonomous-yield-proof-w11-v1",
+      "bootstrapSha": "eeceec8efe276dd931ebb26c0838f726d953fac9"
+    },
+    {
+      "changeId": "nightwatch-browser-context-guard-transaction-integrity-v1",
+      "bootstrapSha": "a3401ddc7121a564b5528085f64ec1f834fce254"
+    },
+    {
+      "changeId": "nightwatch-browser-response-acquisition-integrity-v1",
+      "bootstrapSha": "8a82f3301f4f8ce94bcff57123edfd82ae1a6ae4"
+    },
+    {
+      "changeId": "nightwatch-campaign-resume-reasoner-identity-binding-v1",
+      "bootstrapSha": "2afc54dec00fd21731889532d3606e4e2628e7ff"
+    },
+    {
+      "changeId": "nightwatch-canonical-promotion-transaction-serialization-v1",
+      "bootstrapSha": "585e9ac42e7f205c964114a551ddbccc0a85e237"
+    },
+    {
+      "changeId": "nightwatch-certification-closure-and-validation-integrity-v1",
+      "bootstrapSha": "a02b6315c089baeb74ccc5c526a556c9764be46a"
+    },
+    {
+      "changeId": "nightwatch-change-intelligence-source-generation-integrity-v1",
+      "bootstrapSha": "0443cd9157697052de2ebb6f33592e5214a00f9f"
+    },
+    {
+      "changeId": "nightwatch-change-shadow-offline-runtime-integrity-v1",
+      "bootstrapSha": "544550a4aced82edbf313fbef468932a361cda40"
+    },
+    {
+      "changeId": "nightwatch-child-process-boundary-totality-v1",
+      "bootstrapSha": "17113587e34b9b238f26f9304283f3a8cc4da341"
+    },
+    {
+      "changeId": "nightwatch-child-process-census-indirection-v1",
+      "bootstrapSha": "c6b2dd1e99bffbf75324c5a6c5e518a7c065ecb3"
+    },
+    {
+      "changeId": "nightwatch-ci-action-supply-chain-integrity-v1",
+      "bootstrapSha": "a749884bab3621e1e3761b04b225e26537413160"
+    },
+    {
+      "changeId": "nightwatch-configuration-layer-authority-integrity-v1",
+      "bootstrapSha": "17113587e34b9b238f26f9304283f3a8cc4da341"
+    },
+    {
+      "changeId": "nightwatch-continuity-live-waypoint-binding-v1",
+      "bootstrapSha": "cda596326b73bcce8f955e2af6dd62b478f66659"
+    },
+    {
+      "changeId": "nightwatch-control-center-design-system-v1",
+      "bootstrapSha": "c7a2c091973d6e9748301ed1ab17924f86964de8"
+    },
+    {
+      "changeId": "nightwatch-control-center-finding-status-projection-integrity-v1",
+      "bootstrapSha": "2afc54dec00fd21731889532d3606e4e2628e7ff"
+    },
+    {
+      "changeId": "nightwatch-credential-use-binding-successor-v1",
+      "bootstrapSha": "c1670abedee07c8b5d36ad2de5ee4419f5859ac8"
+    },
+    {
+      "changeId": "nightwatch-dev-credential-use-binding-v1",
+      "bootstrapSha": "326c083f6d74bd5e0fbda51007f5cfab781106a3"
+    },
+    {
+      "changeId": "nightwatch-durable-artifact-validation-bounds-v1",
+      "bootstrapSha": "8a82f3301f4f8ce94bcff57123edfd82ae1a6ae4"
+    },
+    {
+      "changeId": "nightwatch-exact-runtime-toolchain-identity-v1",
+      "bootstrapSha": "269dd1b21d573aeb3ea17719a498e4de733bb64e"
+    },
+    {
+      "changeId": "nightwatch-exhaustive-repository-audit-proposals-v1",
+      "bootstrapSha": "ab584e906a77c8e90bb68e5dda322c40175699f2"
+    },
+    {
+      "changeId": "nightwatch-exploration-observed-postcondition-integrity-v1",
+      "bootstrapSha": "a3401ddc7121a564b5528085f64ec1f834fce254"
+    },
+    {
+      "changeId": "nightwatch-investigation-resume-budget-arithmetic-integrity-v1",
+      "bootstrapSha": "2afc54dec00fd21731889532d3606e4e2628e7ff"
+    },
+    {
+      "changeId": "nightwatch-l6-qualification-proof-integrity-v1",
+      "bootstrapSha": "aa894d75c65362c2aa70e8d054c19de95ba0a552"
+    },
+    {
+      "changeId": "nightwatch-live-source-test-hermeticity-v1",
+      "bootstrapSha": "dec468aac910ad0fa2ad88f7787f4432ad0eebde"
+    },
+    {
+      "changeId": "nightwatch-local-finding-admission-grounding-integrity-v1",
+      "bootstrapSha": "2afc54dec00fd21731889532d3606e4e2628e7ff"
+    },
+    {
+      "changeId": "nightwatch-local-report-publication-integrity-v1",
+      "bootstrapSha": "fdf1ccfcaad6ea51ee3b557679862f7f761451e6"
+    },
+    {
+      "changeId": "nightwatch-phase5-relay-invocation-authority-v1",
+      "bootstrapSha": "a3401ddc7121a564b5528085f64ec1f834fce254"
+    },
+    {
+      "changeId": "nightwatch-phase6-owner-scope-quarantine-integrity-v1",
+      "bootstrapSha": "8a82f3301f4f8ce94bcff57123edfd82ae1a6ae4"
+    },
+    {
+      "changeId": "nightwatch-priority-audit-remediation-sequence-v1",
+      "bootstrapSha": "b2823c99b4c14a27addbb0f6c97d839ffc4d3b05"
+    },
+    {
+      "changeId": "nightwatch-private-payload-screening-structural-integrity-v1",
+      "bootstrapSha": "a3805b5d76930a72e3583fc5dc1544264c22efeb"
+    },
+    {
+      "changeId": "nightwatch-production-budget-reservation-lifecycle-integrity-v1",
+      "bootstrapSha": "8a82f3301f4f8ce94bcff57123edfd82ae1a6ae4"
+    },
+    {
+      "changeId": "nightwatch-production-completion-programme-v1",
+      "bootstrapSha": "fe6226ad6168979a947bde9d74503fd9005c4586"
+    },
+    {
+      "changeId": "nightwatch-production-observability-system-map-master-plan-v1",
+      "bootstrapSha": "5383428710076ad8c645a86d7d282409d3642ba8"
+    },
+    {
+      "changeId": "nightwatch-production-observation-receipt-integrity-v1",
+      "bootstrapSha": "8a82f3301f4f8ce94bcff57123edfd82ae1a6ae4"
+    },
+    {
+      "changeId": "nightwatch-production-persistence-lifecycle-integrity-v1",
+      "bootstrapSha": "a3401ddc7121a564b5528085f64ec1f834fce254"
+    },
+    {
+      "changeId": "nightwatch-protocol-dossier-readiness-integrity-v1",
+      "bootstrapSha": "8a82f3301f4f8ce94bcff57123edfd82ae1a6ae4"
+    },
+    {
+      "changeId": "nightwatch-provider-resilient-current-yield-w13-v1",
+      "bootstrapSha": "a95004a0c4a23fe53b0259c0dec29da5e3eb4555"
+    },
+    {
+      "changeId": "nightwatch-proxy-event-firewall-v1",
+      "bootstrapSha": "d5175a7d676cbff5584b887363ceaa1d7d7b879f"
+    },
+    {
+      "changeId": "nightwatch-proxy-evidence-effect-ordering-v1",
+      "bootstrapSha": "326c083f6d74bd5e0fbda51007f5cfab781106a3"
+    },
+    {
+      "changeId": "nightwatch-proxy-runtime-instance-attestation-v1",
+      "bootstrapSha": "ca79e8ad09d1429f3bfb4b3857772ee71a226626"
+    },
+    {
+      "changeId": "nightwatch-published-spec-baseline-integrity-v1",
+      "bootstrapSha": "cda596326b73bcce8f955e2af6dd62b478f66659"
+    },
+    {
+      "changeId": "nightwatch-real-source-expectation-authority-integrity-v1",
+      "bootstrapSha": "2449ea129f47155d94a80d4a18d213460eefbe59"
+    },
+    {
+      "changeId": "nightwatch-release-evidence-lineage-integrity-v1",
+      "bootstrapSha": "7bb435f1f5a0f6ee7de255923b3aa2accfd568d0"
+    },
+    {
+      "changeId": "nightwatch-replay-context-provenance-integrity-v1",
+      "bootstrapSha": "a3401ddc7121a564b5528085f64ec1f834fce254"
+    },
+    {
+      "changeId": "nightwatch-retention-crash-consistent-receipts-v1",
+      "bootstrapSha": "b747bf6a6258a85572498b4261515a6b06c5d4d2"
+    },
+    {
+      "changeId": "nightwatch-run-evidence-bundle-transaction-integrity-v1",
+      "bootstrapSha": "a3401ddc7121a564b5528085f64ec1f834fce254"
+    },
+    {
+      "changeId": "nightwatch-run-evidence-transaction-successor-v1",
+      "bootstrapSha": "fa83f0b857b7f7df15f03c2740ad6daa1f75ff05"
+    },
+    {
+      "changeId": "nightwatch-schema-preservation-integrity-v1",
+      "bootstrapSha": "17113587e34b9b238f26f9304283f3a8cc4da341"
+    },
+    {
+      "changeId": "nightwatch-semantic-coverage-evidence-authority-v1",
+      "bootstrapSha": "26c2f36a0c71f4711865bb4eb0b600ba0cae89e5"
+    },
+    {
+      "changeId": "nightwatch-semantic-gap-ledger-integrity-v1",
+      "bootstrapSha": "26c2f36a0c71f4711865bb4eb0b600ba0cae89e5"
+    },
+    {
+      "changeId": "nightwatch-semantic-partial-observation-soundness-v1",
+      "bootstrapSha": "26c2f36a0c71f4711865bb4eb0b600ba0cae89e5"
+    },
+    {
+      "changeId": "nightwatch-semantic-receipt-acceptance-integrity-v1",
+      "bootstrapSha": "2449ea129f47155d94a80d4a18d213460eefbe59"
+    },
+    {
+      "changeId": "nightwatch-semantic-request-admission-integrity-v1",
+      "bootstrapSha": "326c083f6d74bd5e0fbda51007f5cfab781106a3"
+    },
+    {
+      "changeId": "nightwatch-semantic-source-analyzer-proof-soundness-v1",
+      "bootstrapSha": "26c2f36a0c71f4711865bb4eb0b600ba0cae89e5"
+    },
+    {
+      "changeId": "nightwatch-session-mutation-authority-binding-v1",
+      "bootstrapSha": "7ecfbb4602095058fe6b5629ad8631b44f25cf40"
+    },
+    {
+      "changeId": "nightwatch-shard-certification-integrity-v1",
+      "bootstrapSha": "7bacfb68e33122e6d90b1cf311e7d727bb51167e"
+    },
+    {
+      "changeId": "nightwatch-shard-temp-isolation-v1",
+      "bootstrapSha": "2ccdf29f7e936b2e5c6f2f58d709da7b11d95d75"
+    },
+    {
+      "changeId": "nightwatch-source-snapshot-transaction-integrity-v1",
+      "bootstrapSha": "2449ea129f47155d94a80d4a18d213460eefbe59"
+    },
+    {
+      "changeId": "nightwatch-successor-campaign-engine-v1",
+      "bootstrapSha": "7bacfb68e33122e6d90b1cf311e7d727bb51167e"
+    },
+    {
+      "changeId": "nightwatch-test-infrastructure-performance-v1",
+      "bootstrapSha": "175535070d877b32c678c847abead17c8fc17d3d"
+    },
+    {
+      "changeId": "nightwatch-triage-evidence-contract-integrity-v1",
+      "bootstrapSha": "8a82f3301f4f8ce94bcff57123edfd82ae1a6ae4"
+    },
+    {
+      "changeId": "nightwatch-validation-classification-and-skip-truth-v1",
+      "bootstrapSha": "cda596326b73bcce8f955e2af6dd62b478f66659"
     }
   ]
 }

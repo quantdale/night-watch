@@ -1254,7 +1254,10 @@ export function validate(root, auditMode = false) {
 
   // F-01 completion-ledger truth: a terminal task must not leave unchecked
   // non-declared boxes, and change/task orphans are named rather than skipped.
-  const ledger = inspectLedgerAgreement(root);
+  const ledger = inspectLedgerAgreement(root, (sha, relativePath) => {
+    const shown = gitSpawn(root, ['show', `${sha}:${relativePath}`]);
+    return shown.status === 0 && typeof shown.stdout === 'string' ? shown.stdout : null;
+  });
   errors.push(...ledger.errors);
   warnings.push(...ledger.warnings);
   for (const line of ledger.info) console.log(`[agent-ledger] ${line}`);
