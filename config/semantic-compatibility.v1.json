@@ -784,6 +784,14 @@
           "a non-proven binding does not attempt a method binding at all"
         ],
         "reasonToken": "LIVE_SOURCE_UNAVAILABLE"
+      },
+      {
+        "file": "tests/unit/formatterPolicy.test.ts",
+        "titlePath": [
+          "Prettier neutralisation (R3-14)",
+          "a Prettier run leaves an unmarked probe untouched and formats a pragma-marked one"
+        ],
+        "reasonToken": "PRETTIER_BINARY_ABSENT"
       }
     ]
   },
