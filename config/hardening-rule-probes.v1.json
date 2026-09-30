@@ -1948,8 +1948,8 @@
         "ops": [
           {
             "file": "bin/project-state-check.mjs",
-            "search": "    certifiedCheckpointSha: substantiveSha,\n    headSha: headOutput",
-            "replace": "    certifiedCheckpointSha: null,\n    headSha: headOutput"
+            "search": "    certifiedCheckpointSha: substantiveSha,\n    headSha,\n    treeClean:",
+            "replace": "    certifiedCheckpointSha: null,\n    headSha,\n    treeClean:"
           }
         ]
       }
@@ -2216,7 +2216,7 @@
         "ops": [
           {
             "file": "bin/lib/release-evidence.mjs",
-            "search": "if (guard === 'VALUES_ONLY_BINDINGS') return isValuesOnlyBindingChange(beforeText, afterText).valuesOnly;",
+            "search": "if (guard === 'VALUES_ONLY_BINDINGS') return isValuesOnlyBindingChange(beforeText, afterText, options).valuesOnly;",
             "replace": "if (guard === 'VALUES_ONLY_BINDINGS') return true;"
           }
         ]
