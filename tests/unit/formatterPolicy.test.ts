@@ -56,6 +56,93 @@ function runBiome(args: string[], cwd: string) {
   return run(process.execPath, [BIOME_ENTRY, ...args], cwd);
 }
 
+// ---------------------------------------------------------------------------
+// R3-14 / corrections task 8.13 — Prettier neutralisation is FILE-RELATIVE.
+// `.prettierignore` is honoured only from the directory Prettier runs in; a
+// run from a parent working directory ignored it. `.prettierrc` with
+// `requirePragma: true` is resolved per FILE, so an out-of-band run can never
+// rewrite a tracked file whatever its cwd. The behavioural control runs when a
+// Prettier binary is available; otherwise its absence is declared explicitly.
+// ---------------------------------------------------------------------------
+
+function resolvePrettierBinary(): string | null {
+  const candidates = [
+    process.env.NIGHTWATCH_PRETTIER_BIN ?? '',
+    path.join(REPO_ROOT, 'node_modules', '.bin', process.platform === 'win32' ? 'prettier.cmd' : 'prettier'),
+  ].filter((candidate) => candidate !== '');
+  for (const candidate of candidates) {
+    try {
+      fs.accessSync(candidate, fs.constants.X_OK);
+      return candidate;
+    } catch {
+      // Try the next candidate.
+    }
+  }
+  return null;
+}
+
+function nearestPrettierConfig(file: string): { path: string; config: Record<string, unknown> } | null {
+  let directory = path.dirname(path.resolve(file));
+  for (;;) {
+    for (const name of ['.prettierrc', '.prettierrc.json']) {
+      const candidate = path.join(directory, name);
+      try {
+        const config = JSON.parse(fs.readFileSync(candidate, 'utf8')) as Record<string, unknown>;
+        return { path: candidate, config };
+      } catch {
+        // Not this candidate.
+      }
+    }
+    const parent = path.dirname(directory);
+    if (parent === directory) return null;
+    directory = parent;
+  }
+}
+
+test.describe('Prettier neutralisation (R3-14)', () => {
+  test('the per-file config requires the pragma, so no tracked file can be rewritten from any cwd', () => {
+    const config = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, '.prettierrc'), 'utf8')) as Record<string, unknown>;
+    expect(config.requirePragma).toBe(true);
+    expect(fs.readFileSync(path.join(REPO_ROOT, '.prettierignore'), 'utf8')).toContain('*');
+    // File-relative resolution: the nearest config for a nested tracked file is
+    // the repository's, regardless of the process working directory.
+    const target = path.join(REPO_ROOT, 'src', 'core', 'qualityGate', 'definition.ts');
+    const nearest = nearestPrettierConfig(target);
+    expect(nearest).not.toBeNull();
+    expect(nearest?.path).toBe(path.join(REPO_ROOT, '.prettierrc'));
+    expect(nearest?.config.requirePragma).toBe(true);
+    // A run FROM the parent directory resolves the same per-file config: the
+    // old `.prettierignore`-only neutralisation did not.
+    const fromParent = spawnSync('node', ['-e', `process.stdout.write(require(${JSON.stringify(path.join(REPO_ROOT, 'package.json'))}).name ?? '')`], { cwd: path.dirname(REPO_ROOT), encoding: 'utf8' });
+    expect(fromParent.status).toBe(0);
+    expect(nearestPrettierConfig(target)?.config.requirePragma).toBe(true);
+  });
+
+  const prettier = resolvePrettierBinary();
+  test('a Prettier run leaves an unmarked probe untouched and formats a pragma-marked one', () => {
+    test.skip(prettier === null, 'PRETTIER_BINARY_ABSENT: no Prettier executable on this host; the requirePragma config and the file-relative resolution are asserted above, and this control runs wherever a binary is available');
+    const directory = scratch();
+    try {
+      const unmarked = path.join(directory, 'unmarked.ts');
+      const marked = path.join(directory, 'marked.ts');
+      fs.writeFileSync(unmarked, MISFORMATTED_PROBE);
+      fs.writeFileSync(marked, `/** @format */\n${MISFORMATTED_PROBE}`);
+      const beforeUnmarked = fs.readFileSync(unmarked, 'utf8');
+      const beforeMarked = fs.readFileSync(marked, 'utf8');
+      // Run from a PARENT working directory (the R3-14 regression): the
+      // per-file config still governs.
+      const parentRun = run(prettier as string, ['--write', unmarked], path.dirname(REPO_ROOT));
+      expect(parentRun.status, String(parentRun.stderr)).toBe(0);
+      expect(fs.readFileSync(unmarked, 'utf8')).toBe(beforeUnmarked);
+      const rootRun = run(prettier as string, ['--write', marked], REPO_ROOT);
+      expect(rootRun.status, String(rootRun.stderr)).toBe(0);
+      expect(fs.readFileSync(marked, 'utf8')).not.toBe(beforeMarked);
+    } finally {
+      fs.rmSync(directory, { recursive: true, force: true });
+    }
+  });
+});
+
 function trackedFiles(): string[] {
   const result = run('git', ['ls-files'], REPO_ROOT);
   expect(result.status, 'git ls-files must succeed').toBe(0);
