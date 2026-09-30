@@ -60,6 +60,9 @@ function ruleRoot(files: Readonly<Record<string, string>>): string {
   fs.mkdirSync(path.join(directory, 'bin'), { recursive: true });
   fs.copyFileSync(path.join(ROOT, 'bin/hardening-check.mjs'), path.join(directory, 'bin/hardening-check.mjs'));
   fs.copyFileSync(path.join(ROOT, 'bin/child-environment.mjs'), path.join(directory, 'bin/child-environment.mjs'));
+  // The rule modules reach the commit-role classifier (bin/lib/checkpoint-role.mjs), which
+  // imports the continuity protocol from bin/ itself.
+  fs.copyFileSync(path.join(ROOT, 'bin/agent-continuity-protocol.mjs'), path.join(directory, 'bin/agent-continuity-protocol.mjs'));
   fs.cpSync(path.join(ROOT, 'bin/lib'), path.join(directory, 'bin/lib'), { recursive: true });
   fs.mkdirSync(path.join(directory, 'config'), { recursive: true });
   fs.copyFileSync(path.join(ROOT, 'config/hardening-rule-probes.v1.json'), path.join(directory, 'config/hardening-rule-probes.v1.json'));
@@ -98,9 +101,10 @@ test.describe('G16.5 — a TOTALITY rule reports EVERY failing occurrence', () =
     const rules = listedRules();
     const undeclared = rules.filter((rule) => !allowed.has(rule.quantifier));
     expect(undeclared.map((rule) => rule.name)).toEqual([]);
-    // M8 (9.12) registered the M8 guard totality rule.
-    expect(rules).toHaveLength(91);
-    expect(rules.filter((rule) => rule.quantifier === 'TOTALITY')).toHaveLength(68);
+    // M8 (9.12) registered the M8 guard totality rule; corrections task 7.13
+    // (RV-18) added checkDevLauncherMetadataShortCircuit (TOTALITY).
+    expect(rules).toHaveLength(92);
+    expect(rules.filter((rule) => rule.quantifier === 'TOTALITY')).toHaveLength(69);
     expect(rules.filter((rule) => rule.quantifier === 'EXISTENCE')).toHaveLength(23);
     for (const rule of rules) {
       expect(rule.subject.trim().length, `${rule.name} has no recorded subject`).toBeGreaterThanOrEqual(8);
