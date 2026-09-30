@@ -111,8 +111,15 @@ export function checkDevLauncherMetadataShortCircuit() {
   }
   // Launchers whose own parser (not defineOperatorCli) handles the exempted
   // flags, each with the token that proves the parser refuses everything else.
-  const ownParser = new Map([['bin/phase23-dev.mjs', "fail('FLAGS_REQUIRE_EQUALS')"]]);
-  const effect = /\b(?:spawnSync|spawn|execFileSync|execFile|execSync|fetch|chromium|launchPersistentContext)\s*[.(]|\b(?:http|https|net)\.(?:request|get|connect)\b|new WebSocket\b/;
+  // R3-12 / corrections task 8.11: an own-parser launcher names BOTH the token
+  // that proves it refuses unrecognised flags AND the dispatch statement that
+  // short-circuits help/metadata — anchoring on the parsed field (args.help in
+  // parseArgs) instead of the dispatch left the whole top level unguarded.
+  const ownParser = new Map([['bin/phase23-dev.mjs', {
+    permissive: "fail('FLAGS_REQUIRE_EQUALS')",
+    shortCircuit: 'if (args.help || args._.length === 0) help();',
+  }]]);
+  const effect = /\b(?:spawnSync|spawn|execFileSync|execFile|execSync|fork|fetch|chromium|launchPersistentContext)\s*[.(]|\bfs\.(?:writeFile|writeFileSync|appendFile|appendFileSync|mkdir|mkdirSync|rm|rmSync|rename|renameSync|copyFile|copyFileSync|createWriteStream|open|openSync)\s*\(|\bimport\s*\(|\b(?:http|https|net)\.(?:request|get|connect)\b|new WebSocket\b/;
   const launchers = gitFiles().filter((file) => /^bin\/[^/]+\.mjs$/.test(file) && read(file).includes('guardDevLane('));
   if (launchers.length === 0) fail('DEV_LAUNCHER_SHORT_CIRCUIT_VACUOUS no launcher calls guardDevLane(; the rule found nothing to check');
   for (const file of launchers) {
@@ -121,8 +128,10 @@ export function checkDevLauncherMetadataShortCircuit() {
     const guardEnd = code.indexOf('\n', guardAt);
     let shortCircuitAt = -1;
     if (ownParser.has(file)) {
-      if (!code.includes(String(ownParser.get(file)))) fail(`DEV_LAUNCHER_PARSER_PERMISSIVE ${file} is a declared own-parser launcher but no longer refuses unrecognised flags (${String(ownParser.get(file))} is missing)`);
-      shortCircuitAt = code.indexOf('args.help', guardEnd);
+      const parser = ownParser.get(file);
+      if (!code.includes(String(parser.permissive))) fail(`DEV_LAUNCHER_PARSER_PERMISSIVE ${file} is a declared own-parser launcher but no longer refuses unrecognised flags (${String(parser.permissive)} is missing)`);
+      shortCircuitAt = code.indexOf(String(parser.shortCircuit), guardEnd);
+      if (shortCircuitAt < 0) fail(`DEV_LAUNCHER_NO_SHORT_CIRCUIT ${file} no longer reaches its help/metadata dispatch statement (${String(parser.shortCircuit)} is missing after the DEV guard)`);
     } else {
       const cliAt = code.indexOf('defineOperatorCli(', guardEnd);
       shortCircuitAt = cliAt < 0 ? -1 : code.indexOf('.stop', cliAt);
@@ -136,11 +145,20 @@ export function checkDevLauncherMetadataShortCircuit() {
     // the next col-0 line; declarations (function/class/import/export/comment)
     // are skipped, because they do not execute here.
     const region = code.slice(guardEnd, shortCircuitAt);
+    // R3-12: a top-level call to a LOCALLY defined function may have effects;
+    // it is flagged unless it is a declaration or the dispatch itself.
+    const localNames = new Set([
+      ...[...code.matchAll(/^(?:async\s+)?function\s+([A-Za-z_$][\w$]*)\s*\(/gm)].map((match) => String(match[1])),
+      ...[...code.matchAll(/^const\s+([A-Za-z_$][\w$]*)\s*=\s*(?:async\s*)?\(/gm)].map((match) => String(match[1])),
+    ]);
+    const localCall = localNames.size === 0
+      ? null
+      : new RegExp(`^(?:await\\s+)?(?:${[...localNames].map((name) => name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})\\s*\\(`);
     const statements = region.split(/\n(?=\S)/);
     for (const statement of statements) {
       const trimmed = statement.trim();
-      if (trimmed === '' || /^(?:async\s+function|function|class|import|export|\/\/|\/\*|\}|\))/.test(trimmed)) continue;
-      if (effect.test(trimmed)) {
+      if (trimmed === '' || /^(?:async\s+function|function|class|import|export|\/\/|\/\*|\}|\)|if\b|try\b|for\b|while\b|switch\b|do\b|catch\b|finally\b|else\b|return\b|throw\b)/.test(trimmed)) continue;
+      if (effect.test(trimmed) || (localCall !== null && localCall.test(trimmed))) {
         fail(`DEV_LAUNCHER_EFFECT_BEFORE_SHORT_CIRCUIT ${file} performs an effect at top level between its DEV guard and the help/metadata short-circuit: ${trimmed.split('\n')[0]?.slice(0, 100)}`);
       }
     }
