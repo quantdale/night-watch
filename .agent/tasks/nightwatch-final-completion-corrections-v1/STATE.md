@@ -389,6 +389,15 @@ parent at "M9 task 10.2 remainder".
 
 ## Validation Ledger
 
+- 2026-10-01 — TASK 7.15 EXACT-HEAD CI GREEN. Run **36790169165** at
+  `027367d9` is GREEN: all 15 groups PASS (receipt
+  `receipt:sha256:ca9b52e35d67a31cece53fb6`; SEMANTIC 2227/2213/14/0 skipPolicy
+  14/0; SYNTHETIC 1972/1932/40/0 skipPolicy 40/0; OWNER 91; TOPOLOGY
+  `topologyGitHead=027367d9`, receipt `topology-receipt:sha256:bd0126ff7a2579f6656279a8`,
+  PROVEN_DEGRADED, topologyCertifying=false). The first push (`673e2ddb`) was
+  red at SYNTHETIC_CAMPAIGN because the VC-01 per-test proof was applied per
+  shard; repaired forward (`027367d9`) by judging it over the union of the
+  shard reports. 7.15 is COMPLETE; group 6 (6.2-6.4) is next.
 - 2026-10-01 — TASK 7.15 GROUP CLOSE-OUT (local half). Focused suites: 462
   passed / 1 declared skip (`formatterPolicy` PRETTIER_BINARY_ABSENT, added to
   the canonical skip identities). `hardening:rules`: 209/209 probes DETECTED,
