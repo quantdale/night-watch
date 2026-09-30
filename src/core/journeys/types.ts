@@ -142,6 +142,8 @@ export interface JourneyEvidence {
   observationSettlement?: JourneyObservationSettlement;
   /** Bounded categorical reasons for incomplete response-body capture. */
   captureFailureCodes?: readonly JourneyCaptureFailureCode[];
+  /** D-149 Decision 4: per-code counts of capture failures (the refusal count). */
+  captureFailureCounts?: Readonly<Partial<Record<JourneyCaptureFailureCode, number>>>;
   /** Optional safe digest of the environment inputs used by the observation. */
   environmentInputDigest?: string;
 }

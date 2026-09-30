@@ -5422,3 +5422,28 @@ twins, the behavioural acquisition test, the flake-ledger status register, the
 non-equivalent HC-180, the vitest test counts, the skip-count cross-check and the
 DEV-launcher short-circuit rule are all covered by focused tests and probes
 HC-189..HC-200 in the probe campaign. Decision 4 is DECIDED (keep refusal + global cap).
+
+**Correction (2026-09-30, R3-15 / corrections task 8.14 — appended, never rewritten).**
+Decision 4's closing sentence above misstates the owner's answer. The owner was
+asked, VERBATIM:
+
+> "Body-read acquisition (networkObserver): when more than 4 JSON response
+> bodies are being read at once, should the 5th read still be REFUSED (capture
+> marked incomplete, BODY_READ_ACQUISITION_BOUND), or should it be QUEUED? And
+> should the cap of 4 stay global across all pages/contexts, or become
+> per-observer?"
+
+and answered VERBATIM: **"Keep refuse + global cap (Recommended)"** — the option
+whose own description reads "No source change. Fail-closed, smallest change.
+**Add the refusal count to the run summary so lost oracle coverage is visible.**
+The behavioural test already proves the refusal."
+
+Provenance: owner Q&A at `2026-09-30T01:22:10.912Z` in session
+`ce1b48f7-1fba-48ca-b7a5-3ef19d31dd05` (the review-2 implementer session; the
+answer is recorded in that session's transcript). The refusal and the global cap
+stay, and the refusal COUNT is part of the chosen option — not a deferral. The
+chosen follow-up IS implemented: the observer exposes `captureFailureCounts()`
+(per-code counts, `BODY_READ_ACQUISITION_BOUND` included), the journey evidence
+carries `captureFailureCounts` into the recorded run summary, and the observer
+refusal test asserts the count is at least 1. This appended correction governs;
+the earlier sentence is preserved as the historical record.

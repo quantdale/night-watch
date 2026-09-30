@@ -181,6 +181,8 @@ test.describe('observer body-read refusal — behaviour (R3-13)', () => {
       await expect.poll(() => observer.pendingResponseHandlers(), { timeout: 20_000 }).toBe(0);
       expect(observer.captureStatus?.()).toBe('INCOMPLETE');
       expect(observer.captureFailureCodes?.()).toContain('BODY_READ_ACQUISITION_BOUND');
+      // D-149 Decision 4: the refusal COUNT is surfaced (the owner chose it).
+      expect(observer.captureFailureCounts?.()['BODY_READ_ACQUISITION_BOUND'] ?? 0).toBeGreaterThanOrEqual(1);
     } finally {
       await context.close();
       await new Promise<void>((resolve) => server.close(() => resolve()));

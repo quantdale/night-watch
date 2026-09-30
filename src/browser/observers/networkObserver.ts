@@ -191,6 +191,8 @@ export interface NetworkObserver {
   captureStatus?(): 'COMPLETE' | 'INCOMPLETE' | 'UNKNOWN';
   /** Bounded categorical diagnostics for intentional known-read capture. */
   captureFailureCodes?(): readonly JourneyCaptureFailureCode[];
+  /** D-149 Decision 4: per-code counts, so the refusal count is visible. */
+  captureFailureCounts?(): Readonly<Partial<Record<JourneyCaptureFailureCode, number>>>;
   lastActivityAt(): number;
   /** URLs aborted by policy (deny or telemetry) — raw, unredacted. */
   blockedUrls(): Set<string>;
@@ -335,6 +337,9 @@ export function createNetworkObserver(opts: {
   let captureAttempted = false;
   let captureIncomplete = false;
   const captureFailureCodeSet = new Set<JourneyCaptureFailureCode>();
+  // D-149 Decision 4 (owner decision 2026-09-30): the refusal stays; its COUNT
+  // is surfaced so the lost oracle coverage is visible in the run summary.
+  const captureFailureCounts = new Map<JourneyCaptureFailureCode, number>();
   let journeyIntent: { stepId: string; actionType: string } | null = null;
   let journeyObservationStart = 0;
   // NW-AUD-020: causal generations are THE authority lifetime. The journey
@@ -1186,6 +1191,7 @@ export function createNetworkObserver(opts: {
       let responseCaptureFailureCode: JourneyCaptureFailureCode | undefined;
       const noteCaptureFailure = (code: JourneyCaptureFailureCode): void => {
         responseCaptureFailureCode ??= code;
+        captureFailureCounts.set(code, (captureFailureCounts.get(code) ?? 0) + 1);
         if (captureRelevant) recordCaptureFailure(code);
       };
       if (contentType !== undefined && /(json|ndjson|stream)/i.test(contentType)) {
@@ -1685,6 +1691,7 @@ export function createNetworkObserver(opts: {
     pendingUrlCount: () => pendingUrls.size,
     activeJourneyRequests: () => activeJourneyRequestCount,
     captureStatus: () => captureIncomplete ? 'INCOMPLETE' : captureAttempted ? 'COMPLETE' : 'UNKNOWN',
+    captureFailureCounts: () => Object.freeze(Object.fromEntries(captureFailureCounts)),
     captureFailureCodes: () => [...captureFailureCodeSet].sort(),
     lastActivityAt: () => lastActivity,
     blockedUrls: () => blockedUrls,

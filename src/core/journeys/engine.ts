@@ -455,6 +455,7 @@ export async function runDeclarativeJourney(
       captureStatus: ctx.network.captureStatus?.() ?? 'UNKNOWN',
       observationSettlement: 'NOT_APPLICABLE',
       captureFailureCodes: ctx.network.captureFailureCodes?.() ?? [],
+      captureFailureCounts: ctx.network.captureFailureCounts?.() ?? {},
     };
     ctx.recorder.addManifestEntry('journeyEvidence', { journeyId: evidence.journeyId, contractSourceSha: evidence.contractSourceSha, passed: false, authValid: false, failureAttribution: evidence.failureAttribution, evidenceSchemaVersion: evidence.evidenceSchemaVersion, contractVersion: evidence.contractVersion, contractDigest: evidence.contractDigest, oracleVersion: evidence.oracleVersion, captureStatus: evidence.captureStatus, observationSettlement: evidence.observationSettlement, captureFailureCodes: evidence.captureFailureCodes });
     return evidence;
