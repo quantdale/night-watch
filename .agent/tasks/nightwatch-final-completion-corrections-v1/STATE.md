@@ -9,7 +9,7 @@ Status: IN_PROGRESS
 TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1
 TASK_GROUPS_COMPLETE: 1,2,3,4,5
 TASK_GROUP_NEXT: 8
-TASK_NEXT_ID: 8.8
+TASK_NEXT_ID: 8.9
 TASK_GROUP_DEFERRED: 6.2,6.3,6.4,7.15
 Starting SHA: 1d47e2eef1ef029560ace12e31571624602eab0b
 Last validated implementation SHA: b9306626e5386c371a2e7357a6432cfd2784acb1
@@ -388,6 +388,16 @@ parent at "M9 task 10.2 remainder".
 
 ## Validation Ledger
 
+- 2026-09-30 — R3-09 / task 8.8 TOPOLOGY CERTIFICATION RECORD. The exact-head
+  CI runs observed by this campaign (`36639792380` at `b9306626` and
+  `36717972936` at `f887e76b`) carry `runnerTopologyClass=PROVEN_DEGRADED`
+  (envelope `BWRAP_UNAVAILABLE_DEGRADED`, unexercised `[chrome]`) and therefore
+  `topologyCertifying=false`. Under task 8.8 they are recorded evidence, NOT
+  certification: the release condition `exact-head-ci-authority` refuses an
+  EXECUTED_PASS whose topology receipt for the same SHA is not certifying, and
+  the quality-gate TOPOLOGY group requires the receipt's `gitHead` to equal its
+  own HEAD and the certifying flag to be recorded. A PROVEN runner envelope is
+  required before those runs can certify.
 - 2026-09-30 — REVIEW-3 / R3-01 gate:dev investigation at `0f4b911b`.
   `npm run gate:dev` on the clean `0f4b911b` tree (launched 11:38Z) returned
   TEST_FAILURE: 5815 passed / 9 failed / 33 skipped; affected-shards 2871.5s

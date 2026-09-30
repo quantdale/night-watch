@@ -217,6 +217,15 @@ export function checkPhase23QualityGate() {
   if (!/"gate:ui"\s*:\s*"npm ci --ignore-scripts --prefix ui\/control-center/.test(packageJson)) fail('package.json gate:ui must install UI dependencies with --ignore-scripts');
   if (!/modes\s*=\s*new Set\(\['local', 'ci', 'clean', 'predev'\]\)/.test(runnerCode)) fail('quality-gate runner must use a fixed mode allowlist');
   if (!/commandKey === 'HANDOFF_CHECK'/.test(runnerCode) || !/planner-handoff-check\.mjs/.test(runnerCode)) fail('quality-gate runner must own exactly one fixed handoff checker command');
+  // R3-09 / corrections task 8.8: the TOPOLOGY group binds the receipt to its
+  // own HEAD and records the certifying flag; PROVEN_DEGRADED must never pass
+  // silently as certification.
+  if (!/details\.topologyGitHead !== gateHead/.test(runnerCode) || !/TOPOLOGY_RECEIPT_STALE_HEAD/.test(runnerCode)) {
+    fail('quality-gate runner must reject a topology receipt whose gitHead is not its own HEAD');
+  }
+  if (!/typeof details\.topologyCertifying !== 'boolean'/.test(runnerCode) || !/TOPOLOGY_RECEIPT_CERTIFYING_UNRECORDED/.test(runnerCode)) {
+    fail('quality-gate runner must require the topology certifying flag to be recorded');
+  }
   if (/shell\s*:\s*true|stdio\s*:\s*['"]inherit['"]|(?<!\.)\bexec(?:File)?\s*\(/.test(runner)) fail('quality-gate runner exposes shell-capable or unbounded child execution');
   if (!/NIGHTWATCH_STORAGE_STATE/.test(runnerCode) || !/GITHUB_TOKEN/.test(runnerCode) || !/environment\.TZ\s*=\s*['"]UTC['"]/.test(runnerCode)) fail('quality-gate runner does not sanitize credentials and host behavior');
   if (!/filePattern/.test(specCode) || !/QUALITY_GATE_UNKNOWN_COMMAND/.test(specCode) || !/QUALITY_GATE_DEPENDENCY_ORDER_INVALID/.test(specCode)) fail('quality-gate spec validator lacks fixed command/dependency fail-closed checks');

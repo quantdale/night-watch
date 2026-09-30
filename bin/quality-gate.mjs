@@ -131,6 +131,16 @@ function runFixedCommandInner(commandKey, mode, timeoutClass) {
     if (typeof details?.topologyReceiptDigest !== 'string' || typeof details?.topologyGitHead !== 'string') {
       return { ...summary, status: 'TEST_FAILURE', exitCode: 1, errorClass: 'TOPOLOGY_RECEIPT_UNBOUND' };
     }
+    // R3-09 / corrections task 8.8: the receipt must be bound to THIS run's
+    // HEAD, and the certifying flag must be present so no consumer can treat
+    // PROVEN_DEGRADED as certification by omission.
+    const gateHead = gitValue(['rev-parse', 'HEAD']);
+    if (typeof gateHead !== 'string' || details.topologyGitHead !== gateHead) {
+      return { ...summary, status: 'TEST_FAILURE', exitCode: 1, errorClass: 'TOPOLOGY_RECEIPT_STALE_HEAD' };
+    }
+    if (typeof details.topologyCertifying !== 'boolean') {
+      return { ...summary, status: 'TEST_FAILURE', exitCode: 1, errorClass: 'TOPOLOGY_RECEIPT_CERTIFYING_UNRECORDED' };
+    }
     return summary;
   } else if (commandKey === 'UI_GATE') {
     // B-14 / D-18 — the Control Center UI package joins every gate mode:

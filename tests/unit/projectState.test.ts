@@ -50,6 +50,7 @@ import {
 import { classifyCheckpointRange } from '../../bin/lib/checkpoint-range.mjs';
 import { stableCanonical, verifyPersistedReceipt } from '../../bin/lib/release-evidence.mjs';
 import { laneArtifactDemotions } from '../../bin/lib/evidence-artifact.mjs';
+import { topologyCertificationForCheckpoint } from '../../bin/lib/topology-receipts.mjs';
 import { checkpointRoleViolations } from '../../bin/lib/checkpoint-role.mjs';
 import {
   UI_HARNESS_FILE,
@@ -1866,6 +1867,34 @@ function definitionWithExactEvidence(
 // R3-08 / corrections task 8.7 — the lane-artifact demotion and the
 // non-certifying subject flag.
 // ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// R3-09 / corrections task 8.8 — only a certifying topology receipt counts.
+// ---------------------------------------------------------------------------
+
+test.describe('topology certification consumer (R3-09)', () => {
+  const S = 'a'.repeat(40);
+  const OTHER = 'b'.repeat(40);
+
+  test('only a receipt bound to the checkpoint with certifying true certifies', () => {
+    expect(topologyCertificationForCheckpoint([], S)).toMatchObject({ checked: false, certifying: false });
+    const degraded = [{ gitHead: S, generatedAt: '2026-09-30T00:00:00.000Z', runnerTopologyClass: 'PROVEN_DEGRADED', ciClaim: { certifying: false } }];
+    expect(topologyCertificationForCheckpoint(degraded, S)).toMatchObject({ checked: true, certifying: false });
+    expect(topologyCertificationForCheckpoint(degraded, S).detail).toContain('PROVEN_DEGRADED (non-certifying)');
+    const proven = [{ ...degraded[0], runnerTopologyClass: 'PROVEN', ciClaim: { certifying: true } }];
+    expect(topologyCertificationForCheckpoint(proven, S)).toMatchObject({ checked: true, certifying: true });
+    // Another commit's receipt is not this checkpoint's evidence.
+    expect(topologyCertificationForCheckpoint(degraded, OTHER)).toMatchObject({ checked: false, certifying: false });
+    // The newest receipt for the checkpoint wins.
+    const newest = [
+      { gitHead: S, generatedAt: '2026-01-01T00:00:00.000Z', runnerTopologyClass: 'PROVEN_DEGRADED', ciClaim: { certifying: false } },
+      { gitHead: S, generatedAt: '2026-02-01T00:00:00.000Z', runnerTopologyClass: 'PROVEN', ciClaim: { certifying: true } },
+    ];
+    expect(topologyCertificationForCheckpoint(newest, S)).toMatchObject({ certifying: true });
+    // A malformed checkpoint never resolves.
+    expect(topologyCertificationForCheckpoint(degraded, 'HEAD')).toMatchObject({ checked: false });
+  });
+});
 
 test.describe('lane artifact wiring and non-certifying subjects (R3-08)', () => {
   const S = 'a'.repeat(40);

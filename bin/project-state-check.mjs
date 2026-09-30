@@ -39,6 +39,7 @@ import { bindTreeProbe, receiptBindingRelation, receiptNotAtCheckpoint, resolveP
 import { classifyCheckpointRange } from './lib/checkpoint-range.mjs';
 import { classifyCertificationDemotion } from './lib/certification-demotion.mjs';
 import { collectCiBlockStale, validateCiBlockRecord } from './lib/ci-block-record.mjs';
+import { topologyCertificationForCheckpoint } from './lib/topology-receipts.mjs';
 import { checkpointRoleViolations } from './lib/checkpoint-role.mjs';
 import {
   findDuplicateFields,
@@ -336,6 +337,24 @@ function probeLaneState(root, substantiveSha, isAncestor, today) {
   };
 }
 
+/** @param {string} root */
+function readTopologyReceipts(root) {
+  const directory = path.join(root, 'artifacts', 'topology-receipts');
+  /** @type {string[]} */
+  let entries;
+  try {
+    entries = fs.readdirSync(directory);
+  } catch {
+    return [];
+  }
+  const receipts = [];
+  for (const entry of entries.filter((name) => name.endsWith('.json')).sort().slice(-50)) {
+    const raw = readJsonAt(root, `artifacts/topology-receipts/${entry}`);
+    if (raw !== null) receipts.push(raw);
+  }
+  return receipts;
+}
+
 function probeCiBlockRecord(root, blockFields) {
   // A-14: one CI authority. The block record is validated and its revisit
   // staleness judged HERE, from the same module gate:topology uses, so the two
@@ -356,7 +375,13 @@ function probeCiBlockRecord(root, blockFields) {
   const executed = blockFields.get('CI_EXECUTED_SHA') ?? 'NONE';
   const checkpoint = blockFields.get('LAST_SUBSTANTIVE_IMPLEMENTATION_SHA') ?? 'NONE';
   if (status === 'EXECUTED_PASS' && HEX40.test(executed) && executed === checkpoint) {
-    return { state: 'MET', detail: `exact-head CI executed PASS at ${executed}; block record ${record.runId} class=${record.blockClass}` };
+    // R3-09 / corrections task 8.8: a CI run whose topology receipt is not
+    // certifying (PROVEN_DEGRADED) is recorded evidence, not certification.
+    const topology = topologyCertificationForCheckpoint(readTopologyReceipts(root), executed);
+    if (topology.checked && !topology.certifying) {
+      return { state: 'UNMET', detail: `TOPOLOGY_NOT_CERTIFYING: ${topology.detail}; the exact-head CI run at ${executed} is not certifying` };
+    }
+    return { state: 'MET', detail: `exact-head CI executed PASS at ${executed}; block record ${record.runId} class=${record.blockClass}; topology ${topology.detail}` };
   }
   return {
     state: 'UNMET',
