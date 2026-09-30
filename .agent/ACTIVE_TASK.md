@@ -6,10 +6,10 @@ Title: Corrective campaign (child of the terminal campaign)
 CHILD OF: nightwatch-final-product-completion-v1
 Status: IN_PROGRESS
 TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1
-TASK_GROUPS_COMPLETE: 1,2,3,4,5
-TASK_GROUP_NEXT: 8
+TASK_GROUPS_COMPLETE: 1,2,3,4,5,8
+TASK_GROUP_NEXT: 7
 TASK_NEXT_ID: 7.15
-TASK_GROUP_DEFERRED: 6.2,6.3,6.4,7.15
+TASK_GROUP_DEFERRED: 6.2,6.3,6.4
 Task directory: .agent/tasks/nightwatch-final-completion-corrections-v1
 Starting SHA: 1d47e2eef1ef029560ace12e31571624602eab0b
 Last validated implementation SHA: b9306626e5386c371a2e7357a6432cfd2784acb1

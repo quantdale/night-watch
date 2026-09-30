@@ -7,10 +7,10 @@ Phase: COMPLETION_CORRECTIONS_V1
 CHILD OF: nightwatch-final-product-completion-v1
 Status: IN_PROGRESS
 TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1
-TASK_GROUPS_COMPLETE: 1,2,3,4,5
-TASK_GROUP_NEXT: 8
+TASK_GROUPS_COMPLETE: 1,2,3,4,5,8
+TASK_GROUP_NEXT: 7
 TASK_NEXT_ID: 7.15
-TASK_GROUP_DEFERRED: 6.2,6.3,6.4,7.15
+TASK_GROUP_DEFERRED: 6.2,6.3,6.4
 Starting SHA: 1d47e2eef1ef029560ace12e31571624602eab0b
 Last validated implementation SHA: b9306626e5386c371a2e7357a6432cfd2784acb1
 Last substantive checkpoint SHA: b9306626e5386c371a2e7357a6432cfd2784acb1
@@ -83,8 +83,9 @@ RESUME_PROMPT_3 §3), re-verifying every audit finding at the parent base
 
 ## Current Milestone
 
-Milestone ID: M6 (group 5) with group 7 (review-2 corrections) implemented;
-group 8 (review-3 corrections) is next after the step-4 integration.
+Milestone ID: M6.5 close-out (group 7): 7.1-7.14 are implemented and
+CI-observed; 7.15 is the group close-out gate. Group 8 (review-3 corrections)
+is COMPLETE (8.1-8.16, exact-head CI pending its own observation).
 
 M1 (bootstrap + Phase 1 preconditions), M2 (task 6.1 formatter policy,
 landed FIRST per RESUME_PROMPT §2), M3 (certification anchors, tasks
