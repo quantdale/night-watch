@@ -33,15 +33,26 @@ export function isCorrectionAppendAdmissible(
 export function correctionStillExemptsArchive(entry: { oldLineSha256: string }, archiveText: string): boolean;
 
 export function guardClassForPath(file: string): string | null;
+export interface BindingReceiptVerifier {
+  (subject: string, digest: string, sha: string): boolean;
+}
 export function isValuesOnlyBindingChange(
   beforeText: string | null,
   afterText: string | null,
+  options?: { verifyReceipt?: BindingReceiptVerifier | undefined },
 ): { valuesOnly: boolean; reason: string };
 export function isAppendOnlyCorrectionsChange(
   beforeText: string | null,
   afterText: string | null,
 ): { appendOnly: boolean; reason: string };
-export function guardHoldsForChange(file: string, beforeText: string | null, afterText: string | null): boolean;
+export function guardHoldsForChange(
+  file: string,
+  beforeText: string | null,
+  afterText: string | null,
+  options?: { verifyReceipt?: BindingReceiptVerifier | undefined },
+): boolean;
+export function verifyPersistedReceipt(root: string, digest: string, sha: string | null): { verified: boolean; reason: string };
+export function stableCanonical(value: unknown): string;
 export function parseEvidenceBinding(record: unknown): { ok: boolean; errors: string[]; binding: EvidenceBinding | null };
 export function parseReleaseEvidence(record: unknown): { ok: boolean; errors: string[]; bindings: EvidenceBinding[] };
 export function loadReleaseEvidenceBindings(

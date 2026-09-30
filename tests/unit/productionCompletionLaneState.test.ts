@@ -118,8 +118,17 @@ test.describe('validation lane state', () => {
     // Adding evidence where there was none, and refreshing values, stay
     // values-only — the guard is narrowed to erasure, not widened to every
     // value edit.
-    expect(isValuesOnlyBindingChange(binding(null), binding(SHA_A)).valuesOnly).toBe(true);
-    expect(isValuesOnlyBindingChange(binding(SHA_A), binding(SHA_B)).valuesOnly).toBe(true);
+    // R3-05 / corrections task 8.4: the receipt is verified against a
+    // persisted file re-read at check time; with a verifying callback the
+    // additions stay documentary, without one they are substantive.
+    const verified = { verifyReceipt: () => true };
+    expect(isValuesOnlyBindingChange(binding(null), binding(SHA_A), verified).valuesOnly).toBe(true);
+    expect(isValuesOnlyBindingChange(binding(SHA_A), binding(SHA_B), verified).valuesOnly).toBe(true);
+    expect(isValuesOnlyBindingChange(binding(null), binding(SHA_A))).toEqual({
+      valuesOnly: false,
+      reason: 'BINDING_RECEIPT_UNVERIFIED:root-compile',
+    });
+    expect(isValuesOnlyBindingChange(binding(SHA_A), binding(SHA_B), { verifyReceipt: () => false }).valuesOnly).toBe(false);
   });
 
   // VB-03 (corrections task 2.3) — a correction is admitted only with its
@@ -315,10 +324,17 @@ test.describe('validation lane state', () => {
       ...overrides,
     });
     const doc = (entry: unknown) => JSON.stringify({ schemaVersion: 'nightwatch.release-evidence.v1', bindings: [entry] });
-    const verdict = (after: unknown) => isValuesOnlyBindingChange(doc(binding()), doc(after));
+    // R3-05: the receipt must re-derive from a persisted file; the verifying
+    // callback stands in for the re-read in this pure unit.
+    const verdict = (after: unknown) => isValuesOnlyBindingChange(doc(binding()), doc(after), { verifyReceipt: () => true });
     expect(verdict(binding({ evidenceSha: SHA_B, receiptDigest: digest('2') }))).toEqual({ valuesOnly: true, reason: 'VALUES_ONLY' });
     // A refresh of the same SHA's observation metadata stays documentary.
     expect(verdict(binding({ observedAt: '2026-09-30T01:00:00.000Z' })).valuesOnly).toBe(true);
+    // R3-05: the same re-bind with an UNVERIFIED digest is substantive.
+    expect(isValuesOnlyBindingChange(doc(binding()), doc(binding({ evidenceSha: SHA_B, receiptDigest: digest('2') })), { verifyReceipt: () => false })).toEqual({
+      valuesOnly: false,
+      reason: 'BINDING_RECEIPT_UNVERIFIED:lane-one',
+    });
     for (const [after, reason] of [
       [binding({ evidenceSha: SHA_B, receiptDigest: null }), 'BINDING_REBIND_WITHOUT_RECEIPT:lane-one'],
       [binding({ evidenceSha: SHA_B, observedAt: null }), 'BINDING_REBIND_WITHOUT_RECEIPT:lane-one'],

@@ -477,6 +477,18 @@ export interface ReleaseEvaluationInput {
   /** Declared evidence-artifact paths per subject (from the bindings). */
   readonly evidenceArtifactPaths?: Readonly<Record<string, readonly string[]>>;
   /**
+   * R3-05 (corrections task 8.4): the receipt verifier. A non-null
+   * `receiptDigest` is evidence only when this callback re-reads a persisted
+   * receipt bound to the same SHA and re-derives the digest. When supplied,
+   * an unverified digest makes the condition EVIDENCE_RECEIPT_ABSENT (never
+   * MET); a fabricated digest can no longer flip the state.
+   */
+  readonly verifyEvidenceReceipt?: (
+    subject: string,
+    digest: string,
+    evidenceSha: string,
+  ) => boolean;
+  /**
    * RV-02 (corrections task 7.2): the bound `receiptDigest` per condition id
    * (null when the binding carries none). When supplied, a raw-MET condition
    * at an EXACT bound SHA resolves MET only if its digest is non-null;
@@ -625,9 +637,23 @@ export function evaluateReleaseCertification(input: ReleaseEvaluationInput): Rel
     } else if (evidenceRelation === 'EXACT') {
       // Exact lineage never upgrades a non-MET check.
       state = checkState;
-      if (checkState === 'MET' && input.evidenceReceiptDigests !== undefined && (input.evidenceReceiptDigests[condition.id] ?? null) === null) {
-        state = 'EVIDENCE_RECEIPT_ABSENT';
-        effectiveDetail = `${detail}; the binding carries no receiptDigest for exact evidence ${resolvedEvidenceSha}: a SHA without a receipt is a claim, not an observation`;
+      if (checkState === 'MET' && input.evidenceReceiptDigests !== undefined) {
+        const digest = input.evidenceReceiptDigests[condition.id] ?? null;
+        let receiptVerified = digest !== null;
+        if (receiptVerified && input.verifyEvidenceReceipt !== undefined) {
+          try {
+            receiptVerified = input.verifyEvidenceReceipt(condition.id, digest as string, resolvedEvidenceSha as string) === true;
+          } catch {
+            receiptVerified = false;
+          }
+        }
+        if (digest === null) {
+          state = 'EVIDENCE_RECEIPT_ABSENT';
+          effectiveDetail = `${detail}; the binding carries no receiptDigest for exact evidence ${resolvedEvidenceSha}: a SHA without a receipt is a claim, not an observation`;
+        } else if (!receiptVerified) {
+          state = 'EVIDENCE_RECEIPT_ABSENT';
+          effectiveDetail = `${detail}; the receiptDigest ${digest} does not re-derive from a persisted receipt bound to ${resolvedEvidenceSha}: an unverified digest is not evidence`;
+        }
       }
     } else {
       state = evidenceRelationToState(evidenceRelation);

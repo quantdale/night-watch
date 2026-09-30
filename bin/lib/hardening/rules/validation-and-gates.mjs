@@ -576,25 +576,29 @@ export function checkCheckpointRoleGuardIntegrity() {
     reason: 'synthetic',
   });
   const corrections = (/** @type {unknown[]} */ entries) => JSON.stringify({ schemaVersion: DOCUMENT_ROLE_CORRECTIONS_SCHEMA, corrections: entries });
-  /** @type {Array<[string, string | null, string | null, boolean, string]>} */
+  /** @type {Array<[string, string | null, string | null, boolean, string, { verifyReceipt?: (subject: string, digest: string, sha: string) => boolean } | undefined]>} */
   const cases = [
-    [RELEASE_EVIDENCE_FILE, evidence([binding()]), evidence([binding()]), true, 'an unchanged bindings file'],
-    [RELEASE_EVIDENCE_FILE, evidence([binding()]), evidence([binding({ evidenceSha: sha('b'), receiptDigest: digest('2') })]), true, 'a re-bind that arrives with a new receipt'],
-    [RELEASE_EVIDENCE_FILE, evidence([binding()]), evidence([binding({ evidenceSha: null })]), false, 'evidence erasure (VB-01)'],
-    [RELEASE_EVIDENCE_FILE, evidence([binding()]), evidence([binding({ artifactPaths: ['config/x.json'] })]), false, 'a non-value binding key (VB-02)'],
-    [RELEASE_EVIDENCE_FILE, evidence([binding()]), evidence([binding({ evidenceSha: sha('b'), receiptDigest: null })]), false, 'a re-bind with no receipt (RV-02)'],
-    [RELEASE_EVIDENCE_FILE, evidence([binding()]), evidence([binding({ evidenceSha: sha('b') })]), false, 'a re-bind that reuses the old receipt (RV-02)'],
-    [RELEASE_EVIDENCE_FILE, evidence([binding()]), evidence([binding(), binding({ subject: 'lane-two' })]), false, 'an added subject'],
-    [RELEASE_EVIDENCE_FILE, null, evidence([binding()]), false, 'an added bindings file'],
-    [DOCUMENT_ROLE_CORRECTIONS_FILE, corrections([correction('C-1', 'a')]), corrections([correction('C-1', 'a'), correction('C-2', 'b')]), true, 'a valid corrections append'],
-    [DOCUMENT_ROLE_CORRECTIONS_FILE, corrections([correction('C-1', 'a')]), corrections([correction('C-1', 'c')]), false, 'an edited correction'],
-    [DOCUMENT_ROLE_CORRECTIONS_FILE, corrections([correction('C-1', 'a'), correction('C-2', 'b')]), corrections([correction('C-1', 'a')]), false, 'a removed correction'],
-    ['docs/CURRENT_STATE.md', 'x\n', 'x\n', false, 'an unguarded path (no path-alone approval through the guard)'],
+    [RELEASE_EVIDENCE_FILE, evidence([binding()]), evidence([binding()]), true, 'an unchanged bindings file', undefined],
+    [RELEASE_EVIDENCE_FILE, evidence([binding()]), evidence([binding({ evidenceSha: sha('b'), receiptDigest: digest('2') })]), true, 'a re-bind that arrives with a new VERIFIED receipt', { verifyReceipt: () => true }],
+    // R3-05 / corrections task 8.4: the same shape with an unverifiable
+    // digest is substantive — a hand-written receipt is not evidence.
+    [RELEASE_EVIDENCE_FILE, evidence([binding()]), evidence([binding({ evidenceSha: sha('b'), receiptDigest: digest('2') })]), false, 'a re-bind whose receipt does not verify', { verifyReceipt: () => false }],
+    [RELEASE_EVIDENCE_FILE, evidence([binding()]), evidence([binding({ receiptDigest: digest('2') })]), false, 'a receipt addition at the same SHA whose digest does not verify', { verifyReceipt: () => false }],
+    [RELEASE_EVIDENCE_FILE, evidence([binding()]), evidence([binding({ evidenceSha: null })]), false, 'evidence erasure (VB-01)', undefined],
+    [RELEASE_EVIDENCE_FILE, evidence([binding()]), evidence([binding({ artifactPaths: ['config/x.json'] })]), false, 'a non-value binding key (VB-02)', undefined],
+    [RELEASE_EVIDENCE_FILE, evidence([binding()]), evidence([binding({ evidenceSha: sha('b'), receiptDigest: null })]), false, 'a re-bind with no receipt (RV-02)', undefined],
+    [RELEASE_EVIDENCE_FILE, evidence([binding()]), evidence([binding({ evidenceSha: sha('b') })]), false, 'a re-bind that reuses the old receipt (RV-02)', undefined],
+    [RELEASE_EVIDENCE_FILE, evidence([binding()]), evidence([binding(), binding({ subject: 'lane-two' })]), false, 'an added subject', undefined],
+    [RELEASE_EVIDENCE_FILE, null, evidence([binding()]), false, 'an added bindings file', undefined],
+    [DOCUMENT_ROLE_CORRECTIONS_FILE, corrections([correction('C-1', 'a')]), corrections([correction('C-1', 'a'), correction('C-2', 'b')]), true, 'a valid corrections append', undefined],
+    [DOCUMENT_ROLE_CORRECTIONS_FILE, corrections([correction('C-1', 'a')]), corrections([correction('C-1', 'c')]), false, 'an edited correction', undefined],
+    [DOCUMENT_ROLE_CORRECTIONS_FILE, corrections([correction('C-1', 'a'), correction('C-2', 'b')]), corrections([correction('C-1', 'a')]), false, 'a removed correction', undefined],
+    ['docs/CURRENT_STATE.md', 'x\n', 'x\n', false, 'an unguarded path (no path-alone approval through the guard)', undefined],
   ];
-  for (const [file, before, after, expected, what] of cases) {
+  for (const [file, before, after, expected, what, options] of cases) {
     let actual;
     try {
-      actual = guardHoldsForChange(file, before, after);
+      actual = guardHoldsForChange(file, before, after, options ?? {});
     } catch {
       actual = null;
     }
@@ -615,7 +619,7 @@ export function checkCheckpointRoleGuardIntegrity() {
   // needs a git history); the guard behaviour above is what a stub cannot fake.
   const checkpoint = read('bin/lib/checkpoint-role.mjs');
   const required = [
-    ['guardHoldsForChange(file, before, after)', 'the classifier live guard consumption'],
+    ['guardHoldsForChange(file, before, after, guardOptions)', 'the classifier live guard consumption'],
     ['guardClassForPath(file) === null && !isApprovedCheckpointPath(file)', 'the guarded-path exclusion from path-alone approval'],
   ];
   for (const [needle, what] of required) {

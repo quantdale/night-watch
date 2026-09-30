@@ -2236,7 +2236,7 @@
         "ops": [
           {
             "file": "bin/lib/release-evidence.mjs",
-            "search": "if (right.evidenceSha !== null && right.evidenceSha !== left.evidenceSha) {",
+            "search": "if (rebind) {",
             "replace": "if (false) {"
           }
         ]
@@ -2268,6 +2268,16 @@
             "file": "bin/lib/checkpoint-role.mjs",
             "search": "removedLineDigests(root, commit, entry.path)",
             "replace": "removedLineDigests(root, commit, 'docs/CURRENT_STATE.md')"
+          }
+        ]
+      },
+      {
+        "id": "HC-201",
+        "ops": [
+          {
+            "file": "bin/lib/release-evidence.mjs",
+            "search": "if (!verified) return { valuesOnly: false, reason: `BINDING_RECEIPT_UNVERIFIED:${left.subject}` };",
+            "replace": "if (false) return { valuesOnly: false, reason: `BINDING_RECEIPT_UNVERIFIED:${left.subject}` };"
           }
         ]
       }

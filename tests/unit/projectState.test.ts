@@ -48,6 +48,7 @@ import {
   resolveProbeBinding,
 } from '../../bin/lib/probe-binding.mjs';
 import { classifyCheckpointRange } from '../../bin/lib/checkpoint-range.mjs';
+import { stableCanonical, verifyPersistedReceipt } from '../../bin/lib/release-evidence.mjs';
 import { checkpointRoleViolations } from '../../bin/lib/checkpoint-role.mjs';
 import {
   UI_HARNESS_FILE,
@@ -1879,6 +1880,54 @@ test.describe('RV-02 — a SHA without a receipt is a claim, not an observation'
     void _dropped;
     expect(evaluateReleaseCertification(evaluationInput(definition, { certifiedCheckpointSha: checkpoint, evidenceReceiptDigests: partial }))
       .conditions.find((entry) => entry.id === target.id)?.state).toBe('EVIDENCE_RECEIPT_ABSENT');
+  });
+
+  // R3-05 / corrections task 8.4: a fabricated digest must not flip the state.
+  test('a receiptDigest that does not re-derive from a persisted receipt stays EVIDENCE_RECEIPT_ABSENT', () => {
+    const checkpoint = '2'.repeat(40);
+    const definition = definitionWithExactEvidence(liveDefinition(), checkpoint);
+    const target = definition.conditions[0] as { id: string };
+    const digests = Object.fromEntries(definition.conditions.map((condition) => [condition.id, `receipt:sha256:${'1'.repeat(24)}`]));
+    const verdict = evaluateReleaseCertification(evaluationInput(definition, {
+      certifiedCheckpointSha: checkpoint,
+      evidenceReceiptDigests: digests,
+      verifyEvidenceReceipt: (subject) => subject !== target.id,
+    }));
+    const condition = verdict.conditions.find((entry) => entry.id === target.id);
+    expect(condition?.state).toBe('EVIDENCE_RECEIPT_ABSENT');
+    expect(condition?.detail).toContain('does not re-derive from a persisted receipt');
+    expect(verdict.conditionsMet).toBe(definition.conditions.length - 1);
+    expect(verdict.certificationRefused).toBe(true);
+  });
+
+  test('a persisted receipt verifies only when it re-derives AND is bound to the same SHA', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-receipt-verify-'));
+    const sha = 'a'.repeat(40);
+    const other = 'b'.repeat(40);
+    try {
+      // clean-receipt: order-preserving JSON.stringify over the body.
+      fs.mkdirSync(path.join(root, 'artifacts/gate-receipts'), { recursive: true });
+      const cleanBody = { schemaVersion: 'nightwatch.clean-checkout-receipt.v1', sourceHead: sha, sourceRootCleanAtEmit: true, finalResult: 'PASS' };
+      const cleanDigest = `clean-receipt:sha256:${createHash('sha256').update(JSON.stringify(cleanBody)).digest('hex').slice(0, 24)}`;
+      fs.writeFileSync(path.join(root, 'artifacts/gate-receipts/clean.json'), `${JSON.stringify({ ...cleanBody, receiptDigest: cleanDigest })}\n`);
+      expect(verifyPersistedReceipt(root, cleanDigest, sha)).toEqual({ verified: true, reason: 'VERIFIED' });
+      expect(verifyPersistedReceipt(root, cleanDigest, other).verified).toBe(false);
+      expect(verifyPersistedReceipt(root, `clean-receipt:sha256:${'0'.repeat(24)}`, sha).verified).toBe(false);
+      // receipt: stable-canonical body, gitHead-bound.
+      fs.mkdirSync(path.join(root, 'artifacts/receipts'), { recursive: true });
+      const gateBody = { schemaVersion: 'nightwatch.quality-gate-receipt.v1', gitHead: sha, finalResult: 'PASS' };
+      const gateDigest = `receipt:sha256:${createHash('sha256').update(stableCanonical(gateBody)).digest('hex').slice(0, 24)}`;
+      fs.writeFileSync(path.join(root, 'artifacts/receipts/gate.json'), `${JSON.stringify({ ...gateBody, receiptDigest: gateDigest })}\n`);
+      expect(verifyPersistedReceipt(root, gateDigest, sha).verified).toBe(true);
+      expect(verifyPersistedReceipt(root, gateDigest, other).verified).toBe(false);
+      // A receipt whose clean flag is false is not clean evidence.
+      const dirtyBody = { ...cleanBody, sourceRootCleanAtEmit: false };
+      const dirtyDigest = `clean-receipt:sha256:${createHash('sha256').update(JSON.stringify(dirtyBody)).digest('hex').slice(0, 24)}`;
+      fs.writeFileSync(path.join(root, 'artifacts/gate-receipts/dirty.json'), `${JSON.stringify({ ...dirtyBody, receiptDigest: dirtyDigest })}\n`);
+      expect(verifyPersistedReceipt(root, dirtyDigest, sha).verified).toBe(false);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
   });
 });
 

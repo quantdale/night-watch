@@ -30,7 +30,13 @@ export const DOCUMENT_ROLE_CORRECTIONS_SCHEMA = 'nightwatch.document-role-correc
 export const DOCUMENT_ROLE_CORRECTIONS_FILE = 'config/document-role-corrections.v1.json';
 
 const SHA40_RE = /^[0-9a-f]{40}$/i;
-const DIGEST_RE = /^(?:receipt:)?sha256:[0-9a-f]{24,64}$/;
+// R3-05 / corrections task 8.4: the real receipt digests are `clean-receipt:`
+// (gate:clean) and `receipt:` (quality gate); both are accepted, and a digest
+// without a kind prefix is legacy `receipt:`-style.
+const DIGEST_RE = /^(?:receipt:|clean-receipt:)?sha256:[0-9a-f]{24,64}$/;
+// An executor is a bounded machine token (a command or tool identity), never
+// free text: whitespace and other prose characters are rejected.
+const EXECUTOR_RE = /^[A-Za-z0-9][A-Za-z0-9._:@/+\-]{0,119}$/;
 const ISO_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?(?:Z|[+-]\d{2}:\d{2})$/;
 const SUBJECT_RE = /^[a-z0-9][a-z0-9._-]{0,127}$/;
 const ARTIFACT_PATH_RE = /^(?!\/)(?!.*\.\.)[A-Za-z0-9._/-]{1,200}$/;
@@ -112,7 +118,7 @@ export function parseEvidenceBinding(record) {
   const observedAt = valueOrNull(raw.observedAt, ISO_RE, 'OBSERVED_AT');
   let executor = null;
   if (raw.executor !== null) {
-    if (typeof raw.executor !== 'string' || raw.executor.trim() === '' || raw.executor.length > 200) {
+    if (typeof raw.executor !== 'string' || !EXECUTOR_RE.test(raw.executor)) {
       errors.push(`BINDING_EXECUTOR_INVALID:${String(raw.executor)}`);
     } else {
       executor = raw.executor;
@@ -268,11 +274,18 @@ export function parseDocumentRoleCorrections(record) {
  * side — is substantive.
  *
  * Pure over JSON texts. A null side means the file was added or deleted.
+ *
+ * R3-05 / corrections task 8.4: a receipt is a CLAIM until it is re-read and
+ * its digest re-derived, so a re-bind OR any receipt observation change is
+ * documentary only when `options.verifyReceipt(subject, digest, sha)` proves
+ * the digest against a persisted receipt bound to the same SHA. Without the
+ * verifier the change is substantive — the fail-closed direction.
  * @param {string | null} beforeText
  * @param {string | null} afterText
+ * @param {{ verifyReceipt?: ((subject: string, digest: string, sha: string) => boolean) | undefined }} [options]
  * @returns {{ valuesOnly: boolean, reason: string }}
  */
-export function isValuesOnlyBindingChange(beforeText, afterText) {
+export function isValuesOnlyBindingChange(beforeText, afterText, options = {}) {
   if (beforeText === null || afterText === null) {
     return { valuesOnly: false, reason: beforeText === null ? 'BINDING_FILE_ADDED' : 'BINDING_FILE_DELETED' };
   }
@@ -302,13 +315,33 @@ export function isValuesOnlyBindingChange(beforeText, afterText) {
     // and the observation time and executor that produced it. Values alone let
     // a docs-only commit re-bind a lane or condition to a fresh SHA without
     // any re-execution.
-    if (right.evidenceSha !== null && right.evidenceSha !== left.evidenceSha) {
+    const rebind = right.evidenceSha !== null && right.evidenceSha !== left.evidenceSha;
+    if (rebind) {
       if (right.receiptDigest === null || right.observedAt === null || right.executor === null) {
         return { valuesOnly: false, reason: `BINDING_REBIND_WITHOUT_RECEIPT:${left.subject}` };
       }
       if (right.receiptDigest === left.receiptDigest) {
         return { valuesOnly: false, reason: `BINDING_REBIND_RECEIPT_UNCHANGED:${left.subject}` };
       }
+    }
+    // R3-05 / corrections task 8.4: every receipt observation (a re-bind, a
+    // digest/observedAt/executor addition or refresh at the SAME SHA included)
+    // must verify against a persisted receipt bound to the same SHA. A
+    // hand-written digest can no longer flip EVIDENCE_RECEIPT_ABSENT to MET.
+    const receiptChanged = right.receiptDigest !== left.receiptDigest
+      || right.observedAt !== left.observedAt
+      || right.executor !== left.executor;
+    if (receiptChanged && right.receiptDigest !== null) {
+      if (options.verifyReceipt === undefined || right.evidenceSha === null) {
+        return { valuesOnly: false, reason: `BINDING_RECEIPT_UNVERIFIED:${left.subject}` };
+      }
+      let verified = false;
+      try {
+        verified = options.verifyReceipt(left.subject, right.receiptDigest, right.evidenceSha) === true;
+      } catch {
+        verified = false;
+      }
+      if (!verified) return { valuesOnly: false, reason: `BINDING_RECEIPT_UNVERIFIED:${left.subject}` };
     }
     for (const key of EVIDENCE_BINDING_KEYS) {
       if (key === 'subject') continue;
@@ -373,11 +406,95 @@ export function isAppendOnlyCorrectionsChange(beforeText, afterText) {
 }
 
 /**
+ * R3-05 / corrections task 8.4 — the receipt verifier: a digest is evidence
+ * only when a PERSISTED receipt file, re-read at check time, re-derives to
+ * that exact digest and is bound to the same commit.
+ *
+ *   `clean-receipt:sha256:<24>`  artifacts/gate-receipts/*.json
+ *     digest over `JSON.stringify(body without receiptDigest)` (the writer's
+ *     own order-preserving computation); the body must record
+ *     `sourceHead === sha` and a clean source root.
+ *   `receipt:sha256:<24>`        artifacts/receipts/*.json
+ *     digest over the stable-canonical body (the quality gate's sorted-key
+ *     computation); the body must record `gitHead === sha`.
+ *
+ * The scan is bounded (two directories, `.json` entries) and every failure is
+ * a plain non-verification, never a throw.
+ * @param {string} root
+ * @param {string} digest
+ * @param {string | null} sha
+ * @returns {{ verified: boolean, reason: string }}
+ */
+export function verifyPersistedReceipt(root, digest, sha) {
+  if (typeof digest !== 'string' || typeof sha !== 'string' || !SHA40_RE.test(sha)) {
+    return { verified: false, reason: 'RECEIPT_INPUT_INVALID' };
+  }
+  const clean = digest.startsWith('clean-receipt:');
+  const quality = digest.startsWith('receipt:');
+  if (!clean && !quality) return { verified: false, reason: 'RECEIPT_KIND_UNSUPPORTED' };
+  const prefix = clean ? 'clean-receipt:' : 'receipt:';
+  const marker = `${prefix}sha256:`;
+  if (!digest.startsWith(marker)) return { verified: false, reason: 'RECEIPT_DIGEST_MALFORMED' };
+  const directory = clean ? 'artifacts/gate-receipts' : 'artifacts/receipts';
+  let entries;
+  try {
+    entries = fs.readdirSync(path.join(root, directory));
+  } catch {
+    return { verified: false, reason: 'RECEIPT_DIRECTORY_ABSENT' };
+  }
+  for (const entry of entries.slice().sort()) {
+    if (!entry.endsWith('.json')) continue;
+    let text;
+    try {
+      text = fs.readFileSync(path.join(root, directory, entry), 'utf8');
+    } catch {
+      continue;
+    }
+    let body;
+    try {
+      body = JSON.parse(text);
+    } catch {
+      continue;
+    }
+    if (body === null || typeof body !== 'object' || Array.isArray(body)) continue;
+    if (typeof body.receiptDigest !== 'string') continue;
+    const recordedSha = typeof body.sourceHead === 'string' ? body.sourceHead
+      : typeof body.gitHead === 'string' ? body.gitHead
+        : null;
+    if (recordedSha === null || recordedSha.toLowerCase() !== sha.toLowerCase()) continue;
+    const clone = { ...body };
+    delete clone.receiptDigest;
+    let candidate;
+    if (clean) {
+      if (body.sourceRootCleanAtEmit !== true) continue;
+      candidate = `${prefix}sha256:${crypto.createHash('sha256').update(JSON.stringify(clone), 'utf8').digest('hex').slice(0, 24)}`;
+    } else {
+      candidate = `${prefix}sha256:${crypto.createHash('sha256').update(stableCanonical(clone), 'utf8').digest('hex').slice(0, 24)}`;
+    }
+    if (candidate === digest) return { verified: true, reason: 'VERIFIED' };
+  }
+  return { verified: false, reason: 'RECEIPT_NOT_FOUND_OR_UNBOUND' };
+}
+
+/**
+ * The quality gate's canonical computation: object keys sorted, arrays in
+ * order. Exported for the verifier and its tests.
+ * @param {unknown} value
+ * @returns {string}
+ */
+export function stableCanonical(value) {
+  if (value === null || typeof value !== 'object') return JSON.stringify(value) ?? 'null';
+  if (Array.isArray(value)) return `[${value.map(stableCanonical).join(',')}]`;
+  return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${stableCanonical(/** @type {Record<string, unknown>} */ (value)[key])}`).join(',')}}`;
+}
+
+/**
  * Evaluate one file's guard for a raw byte change. Unknown guard classes fail
  * closed: only the two declared bindings files are guarded at all.
  * @param {string} file
  * @param {string | null} beforeText
  * @param {string | null} afterText
+ * @param {{ verifyReceipt?: ((subject: string, digest: string, sha: string) => boolean) | undefined }} [options]
  */
 /**
  * VB-03 / corrections task 2.3 — the correction entries appended by one
@@ -429,9 +546,9 @@ export function correctionStillExemptsArchive(entry, archiveText) {
   return archiveText.split(/\r?\n/).some((line) => lineSha256Prefix(line) === entry.oldLineSha256);
 }
 
-export function guardHoldsForChange(file, beforeText, afterText) {
+export function guardHoldsForChange(file, beforeText, afterText, options = {}) {
   const guard = guardClassForPath(file);
-  if (guard === 'VALUES_ONLY_BINDINGS') return isValuesOnlyBindingChange(beforeText, afterText).valuesOnly;
+  if (guard === 'VALUES_ONLY_BINDINGS') return isValuesOnlyBindingChange(beforeText, afterText, options).valuesOnly;
   if (guard === 'APPEND_ONLY_CORRECTIONS') return isAppendOnlyCorrectionsChange(beforeText, afterText).appendOnly;
   return false;
 }

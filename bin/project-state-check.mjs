@@ -30,7 +30,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
 import { loadTypeScriptModule as loadRuntimeTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
-import { evidenceLaneDisagreements, loadReleaseEvidenceBindings, resolveEvidenceShaForSubject } from './lib/release-evidence.mjs';
+import { evidenceLaneDisagreements, loadReleaseEvidenceBindings, resolveEvidenceShaForSubject, verifyPersistedReceipt } from './lib/release-evidence.mjs';
 import { ACCESSIBILITY_RECORD_PATH, parseAccessibilityCertificationRecord } from './lib/accessibility-record.mjs';
 import { UI_HARNESS_RECEIPT_PATH, UI_HARNESS_TYPES_PATH, evaluateUiHarnessReceipt, extractApiErrorKinds } from './lib/ui-harness-receipt.mjs';
 import { evidenceArtifactExistsAtSha } from './lib/evidence-artifact.mjs';
@@ -1471,6 +1471,22 @@ function main() {
           // EVIDENCE_ARTIFACT_ABSENT_AT_SHA (it is fed to the evaluator), and a
           // missing commit object is still a hard evidence failure.
           const evidenceBindingsForArtifacts = loadReleaseEvidenceBindings(root);
+          // R3-05 / corrections task 8.4: observations must be structurally
+          // real — a future observedAt and a non-existent evidence SHA are
+          // rejected here, before any condition can lean on them.
+          {
+            const nowMs = Date.now();
+            for (const [subject, binding] of evidenceBindingsForArtifacts.bySubject ?? []) {
+              if (binding === null) continue;
+              if (typeof binding.observedAt === 'string' && Date.parse(binding.observedAt) > nowMs) {
+                fail(errors, `PROJECT_STATE_EVIDENCE_BINDING_OBSERVED_AT_FUTURE: ${subject}`);
+              }
+              if (typeof binding.evidenceSha === 'string' && HEX40.test(binding.evidenceSha)
+                && gitReadOnly(root, ['cat-file', '-e', `${binding.evidenceSha}^{commit}`]) === null) {
+                fail(errors, `PROJECT_STATE_EVIDENCE_BINDING_SHA_MISSING: ${subject}`);
+              }
+            }
+          }
           const artifactPathsBySubject = new Map();
           for (const [subject, binding] of evidenceBindingsForArtifacts.bySubject ?? []) {
             artifactPathsBySubject.set(subject, Array.isArray(binding?.artifactPaths) ? binding.artifactPaths : []);
@@ -1586,6 +1602,11 @@ function main() {
             evidenceArtifactPaths: Object.fromEntries(artifactPathsBySubject),
             // RV-02: a SHA with no receipt is a claim, not an observation.
             evidenceReceiptDigests: Object.fromEntries([...(evidenceBindingsForArtifacts.bySubject ?? [])].map(([subject, binding]) => [subject, binding?.receiptDigest ?? null])),
+            // R3-05 / corrections task 8.4: a receiptDigest is evidence only
+            // when a persisted receipt re-read AT CHECK TIME re-derives it and
+            // is bound to the same SHA. A hand-written digest resolves the
+            // condition EVIDENCE_RECEIPT_ABSENT, never MET.
+            verifyEvidenceReceipt: (/** @type {string} */ subject, /** @type {string} */ digest, /** @type {string} */ evidenceSha) => verifyPersistedReceipt(root, digest, evidenceSha).verified,
             resolveEvidenceRelation: (resolvedEvidenceSha, checkpoint) => {
               const headAfter = gitReadOnly(root, ['rev-parse', 'HEAD'])?.trim() ?? null;
               if (headBefore !== null && headAfter !== null && headBefore !== headAfter) {

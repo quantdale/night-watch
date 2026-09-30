@@ -77,7 +77,7 @@ export function removedLineDigestsFromDiff(diffText) {
  *
  * @param {string} root
  * @param {readonly string[]} files paths the commit/range touches
- * @param {{ kind: 'commit', commit: string } | { kind: 'range', from: string, to: string }} context
+ * @param {{ kind: 'commit', commit: string } | { kind: 'range', from: string, to: string }, verifyBindingReceipt?: (subject: string, digest: string, sha: string) => boolean }} context
  * @returns {string[]} violating files (de-duplicated, source order)
  */
 /**
@@ -188,7 +188,10 @@ export function checkpointRoleViolations(root, files, context) {
       for (const parent of parentRefs) {
         const before = parent === null ? null : blobAt(root, parent, file);
         const after = blobAt(root, commit, file);
-        if (!guardHoldsForChange(file, before, after)) {
+        const guardOptions = typeof context.verifyBindingReceipt === 'function'
+          ? { verifyReceipt: context.verifyBindingReceipt }
+          : {};
+        if (!guardHoldsForChange(file, before, after, guardOptions)) {
           violations.push(file);
           guardFailed = true;
           break;
