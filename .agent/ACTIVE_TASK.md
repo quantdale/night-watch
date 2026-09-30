@@ -8,7 +8,7 @@ Status: IN_PROGRESS
 TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1
 TASK_GROUPS_COMPLETE: 1,2,3,4,5
 TASK_GROUP_NEXT: 8
-TASK_NEXT_ID: 8.2
+TASK_NEXT_ID: 8.3
 TASK_GROUP_DEFERRED: 6.2,6.3,6.4,7.15
 Task directory: .agent/tasks/nightwatch-final-completion-corrections-v1
 Starting SHA: 1d47e2eef1ef029560ace12e31571624602eab0b

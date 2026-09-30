@@ -618,6 +618,151 @@ function checkContinuity(stateFields, root, head, errors, warnings) {
   if (head) console.log(`[agent-check] LIVE GIT HEAD: ${head}${liveRemoteHead ? `; LIVE origin/main: ${liveRemoteHead}` : ''}`);
 }
 
+// ---------------------------------------------------------------------------
+// Review-3 R3-02 / corrections task 8.2 — the task-group ledger.
+//
+// A campaign's ticks and its continuity prose drift apart silently: the
+// child ACTIVE_TASK said "M4 COMPLETE / start M5" while group 5 and 7.1-7.14
+// were already ticked, and no checker compared them. The binding is
+// mechanical: STATE declares which groups are done, which group runs next,
+// the exact next task ID, and any earlier-group tasks deliberately deferred
+// behind it; this checker derives the truth from the active change's
+// `tasks.md` and fails on any disagreement. It also binds the declared next
+// ID and deferred IDs to the `## Exact Next Action` body and the next group
+// number to `## Current Milestone`, so a stale prose snapshot cannot survive
+// an unchanged ledger.
+const TASK_GROUP_TASK_RE = /^- \[( |x|X)\]\s+(\d+)\.(\d+)\s/;
+
+/**
+ * Derive the group/tick truth from one change's tasks.md. Group headers are
+ * not required for a task line to count: the `N.M` prefix is the identity.
+ * @param {string} tasksText
+ * @returns {Map<number, { total: number, ticked: number, open: number, openIds: string[] }>}
+ */
+export function deriveTaskGroups(tasksText) {
+  /** @type {Map<number, { total: number, ticked: number, open: number, openIds: string[] }>} */
+  const groups = new Map();
+  for (const line of String(tasksText ?? '').split(/\r?\n/)) {
+    const task = TASK_GROUP_TASK_RE.exec(line);
+    if (task === null) continue;
+    const group = Number(task[2]);
+    if (!groups.has(group)) groups.set(group, { total: 0, ticked: 0, open: 0, openIds: [] });
+    const record = groups.get(group);
+    record.total += 1;
+    if (task[1].toLowerCase() === 'x') record.ticked += 1;
+    else {
+      record.open += 1;
+      record.openIds.push(`${task[2]}.${task[3]}`);
+    }
+  }
+  return groups;
+}
+
+/**
+ * @param {string} value
+ * @returns {number[]}
+ */
+function parseGroupList(value) {
+  return String(value ?? '').split(',').map((entry) => entry.trim()).filter((entry) => entry !== '').map(Number);
+}
+
+/**
+ * @param {string} root
+ * @param {string} taskId
+ * @param {string} stateText
+ * @param {string[]} errors
+ * @param {string[]} warnings
+ * @returns {void}
+ */
+export function checkTaskGroupLedger(root, taskId, stateText, errors, warnings) {
+  const changePath = path.join(root, 'openspec', 'changes', taskId, 'tasks.md');
+  let tasksText = null;
+  try {
+    tasksText = fs.readFileSync(changePath, 'utf8');
+  } catch {
+    tasksText = null;
+  }
+  if (tasksText === null) {
+    // Historical or synthetic task records may not have a change document;
+    // the live active change does, and its ledger is then mandatory below.
+    warnings.push(`TASK_GROUP_LEDGER_UNAVAILABLE: ${taskId} has no openspec/changes/${taskId}/tasks.md`);
+    return;
+  }
+  const groups = deriveTaskGroups(tasksText);
+  if (groups.size === 0) {
+    warnings.push(`TASK_GROUP_LEDGER_UNAVAILABLE: ${taskId}/tasks.md carries no numbered task groups`);
+    return;
+  }
+  const sorted = [...groups.keys()].sort((a, b) => a - b);
+  const complete = sorted.filter((group) => (groups.get(group)?.open ?? 0) === 0);
+  const open = sorted.filter((group) => (groups.get(group)?.open ?? 0) > 0);
+  const fields = parseKeyValueFile(stateText);
+  const completeField = fields.get('TASK_GROUPS_COMPLETE');
+  const nextGroupField = fields.get('TASK_GROUP_NEXT');
+  const nextIdField = fields.get('TASK_NEXT_ID');
+  const deferredField = fields.get('TASK_GROUP_DEFERRED');
+  if (completeField === undefined && nextGroupField === undefined && nextIdField === undefined) {
+    errors.push(`TASK_GROUP_LEDGER_MISSING: STATE declares no TASK_GROUP_LEDGER fields for ${taskId} while its change document exists`);
+    return;
+  }
+  for (const [key, value] of [['TASK_GROUPS_COMPLETE', completeField], ['TASK_GROUP_NEXT', nextGroupField], ['TASK_NEXT_ID', nextIdField]]) {
+    if (value === undefined) errors.push(`TASK_GROUP_LEDGER_FIELD_MISSING: STATE ${key} is required together with the other ledger fields`);
+  }
+  const declaredComplete = parseGroupList(completeField);
+  if (declaredComplete.length !== complete.length || declaredComplete.some((group, index) => group !== complete[index])) {
+    errors.push(
+      `TASK_GROUP_LEDGER_COMPLETE_MISMATCH: STATE TASK_GROUPS_COMPLETE=[${declaredComplete.join(',')}] but tasks.md shows complete groups [${complete.join(',')}] (open [${open.join(',')}])`,
+    );
+  }
+  const deferred = String(deferredField ?? '').split(',').map((entry) => entry.trim()).filter((entry) => entry !== '');
+  if (open.length === 0) {
+    if (String(nextGroupField ?? '').trim() !== 'NONE' || String(nextIdField ?? '').trim() !== 'NONE') {
+      errors.push('TASK_GROUP_LEDGER_COMPLETE_WITHOUT_NONE: every group is ticked but STATE still declares a next group/task');
+    }
+    if (deferred.length > 0) errors.push(`TASK_GROUP_LEDGER_DEFERRED_WITHOUT_OPEN: STATE defers [${deferred.join(',')}] while no task is open`);
+    return;
+  }
+  const nextGroup = Number(String(nextGroupField ?? '').trim());
+  if (!Number.isInteger(nextGroup) || !open.includes(nextGroup)) {
+    errors.push(`TASK_GROUP_LEDGER_NEXT_GROUP_INVALID: STATE TASK_GROUP_NEXT=${String(nextGroupField)} is not an open group (open [${open.join(',')}])`);
+    return;
+  }
+  const nextId = String(nextIdField ?? '').trim();
+  const openIds = open.flatMap((group) => groups.get(group)?.openIds ?? []);
+  if (!openIds.includes(nextId)) {
+    errors.push(`TASK_GROUP_LEDGER_NEXT_ID_INVALID: STATE TASK_NEXT_ID=${nextId} is not an open task (open [${openIds.join(',')}])`);
+  } else if (!nextId.startsWith(`${nextGroup}.`)) {
+    errors.push(`TASK_GROUP_LEDGER_NEXT_ID_MISMATCH: STATE TASK_NEXT_ID=${nextId} does not belong to TASK_GROUP_NEXT=${nextGroup}`);
+  }
+  // Every open task in an EARLIER group must be explicitly deferred behind the
+  // declared next group, and every deferred ID must be exactly such a task.
+  const earlierOpen = open.filter((group) => group < nextGroup).flatMap((group) => groups.get(group)?.openIds ?? []);
+  const earlierOpenSet = new Set(earlierOpen);
+  for (const id of earlierOpen) {
+    if (!deferred.includes(id)) {
+      errors.push(`TASK_GROUP_LEDGER_OPEN_TASK_UNACCOUNTED: ${id} is open in a group before ${nextGroup} but STATE does not defer it in TASK_GROUP_DEFERRED`);
+    }
+  }
+  for (const id of deferred) {
+    if (!earlierOpenSet.has(id)) {
+      errors.push(`TASK_GROUP_LEDGER_DEFERRED_INVALID: STATE defers ${id}, which is not an open task in a group before ${nextGroup}`);
+    }
+  }
+  const exactNext = extractSectionRaw(stateText, '## Exact Next Action') ?? '';
+  if (!exactNext.includes(nextId)) {
+    errors.push(`TASK_GROUP_LEDGER_NEXT_ACTION_STALE: STATE TASK_NEXT_ID=${nextId} does not appear in ## Exact Next Action`);
+  }
+  for (const id of deferred) {
+    if (!exactNext.includes(id)) {
+      errors.push(`TASK_GROUP_LEDGER_DEFERRED_UNSCHEDULED: the deferred open task ${id} does not appear in ## Exact Next Action`);
+    }
+  }
+  const milestone = extractSectionRaw(stateText, '## Current Milestone') ?? '';
+  if (!new RegExp(`\\bgroup\\s+${nextGroup}\\b`).test(milestone)) {
+    errors.push(`TASK_GROUP_LEDGER_MILESTONE_STALE: STATE ## Current Milestone does not name group ${nextGroup}`);
+  }
+}
+
 // checkContinuity runs once per task record; the remote head cannot change
 // within a single read-only checker process, so the first answer per root is
 // cached.
@@ -1040,6 +1185,7 @@ export function validate(root, auditMode = false) {
         errors.push(`STATE/ACTIVE_TASK validated implementation anchors differ: ${stateValidated} != ${active.get('Last validated implementation SHA')}`);
       }
       checkContinuity(stateFields, root, head, errors, warnings);
+      checkTaskGroupLedger(root, taskId, state, errors, warnings);
     }
     const currentSha = active.get('Last validated implementation SHA');
     if (head && currentSha) {

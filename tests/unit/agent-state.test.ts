@@ -1617,3 +1617,120 @@ test('a missing routing block fails agent:check', () => {
   expect(result.status).toBe(1);
   expect(result.stderr).toContain('ACTIVE_TASK_ROUTING_BLOCK_MISSING');
 });
+
+// ---------------------------------------------------------------------------
+// Review-3 R3-02 / corrections task 8.2 — ticked task groups vs STATE prose.
+// ---------------------------------------------------------------------------
+
+const GROUP_LEDGER_TASKS = [
+  '## 1. First group',
+  '',
+  '- [x] 1.1 done',
+  '- [x] 1.2 done',
+  '',
+  '## 2. Second group',
+  '',
+  '- [x] 2.1 done',
+  '- [ ] 2.2 open',
+  '',
+  '## 3. Third group',
+  '',
+  '- [ ] 3.1 open',
+  '',
+].join('\n');
+
+function setSectionBody(file: string, heading: string, body: string): void {
+  const text = fs.readFileSync(file, 'utf8');
+  const lines = text.split(/\r?\n/);
+  const start = lines.findIndex((line) => line.trim() === heading);
+  if (start === -1) throw new Error(`section not found: ${heading}`);
+  const rest = lines.slice(start + 1);
+  const end = rest.findIndex((line) => /^##\s+/.test(line.trim()));
+  const next = end === -1 ? [] : rest.slice(end);
+  fs.writeFileSync(file, [...lines.slice(0, start + 1), '', body, '', ...next].join('\n'));
+}
+
+function writeGroupLedger(root: string, options: { readonly tasks?: string; readonly fields?: string; readonly exactNext?: string; readonly milestone?: string; readonly activeMilestone?: string } = {}): void {
+  const change = path.join(root, 'openspec', 'changes', 'phase-test');
+  fs.mkdirSync(change, { recursive: true });
+  fs.writeFileSync(path.join(change, 'tasks.md'), options.tasks ?? GROUP_LEDGER_TASKS);
+  fs.mkdirSync(path.join(root, 'config'), { recursive: true });
+  fs.writeFileSync(
+    path.join(root, 'config', 'task-id-ledger.v1.json'),
+    `${JSON.stringify({ schemaVersion: 'nightwatch.task-id-ledger.v1', changes: [] }, null, 2)}\n`,
+  );
+  const stateFile = path.join(root, '.agent', 'tasks', 'phase-test', 'STATE.md');
+  fs.appendFileSync(
+    stateFile,
+    `\n${options.fields ?? 'TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1\nTASK_GROUPS_COMPLETE: 1\nTASK_GROUP_NEXT: 3\nTASK_NEXT_ID: 3.1\nTASK_GROUP_DEFERRED: 2.2'}\n`,
+  );
+  setSectionBody(stateFile, '## Exact Next Action', options.exactNext ?? 'Do 3.1 next, then 2.2 after.');
+  setSectionBody(stateFile, '## Current Milestone', options.milestone ?? 'Milestone ID: M3 — third group execution (group 3 run)');
+  setField(root, '.agent/ACTIVE_TASK.md', 'Current milestone', options.activeMilestone ?? 'M3 — third group execution');
+}
+
+test('a matching task-group ledger passes agent:check', () => {
+  const { root, sha } = fixture();
+  writeProtocol(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha });
+  writeGroupLedger(root);
+  const result = run(root);
+  expect(result.stderr).not.toContain('TASK_GROUP_LEDGER');
+  expect(result.status, result.stderr).toBe(0);
+});
+
+test('a ticked group missing from TASK_GROUPS_COMPLETE fails', () => {
+  const { root, sha } = fixture();
+  writeProtocol(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha });
+  writeGroupLedger(root, { fields: 'TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1\nTASK_GROUPS_COMPLETE: 1,2\nTASK_GROUP_NEXT: 3\nTASK_NEXT_ID: 3.1\nTASK_GROUP_DEFERRED: 2.2' });
+  const result = run(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('TASK_GROUP_LEDGER_COMPLETE_MISMATCH');
+});
+
+test('a next task that is already ticked fails', () => {
+  const { root, sha } = fixture();
+  writeProtocol(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha });
+  writeGroupLedger(root, { fields: 'TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1\nTASK_GROUPS_COMPLETE: 1\nTASK_GROUP_NEXT: 3\nTASK_NEXT_ID: 1.1\nTASK_GROUP_DEFERRED: 2.2' });
+  const result = run(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('TASK_GROUP_LEDGER_NEXT_ID_INVALID');
+});
+
+test('an open earlier-group task that is neither next nor deferred fails', () => {
+  const { root, sha } = fixture();
+  writeProtocol(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha });
+  writeGroupLedger(root, { fields: 'TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1\nTASK_GROUPS_COMPLETE: 1\nTASK_GROUP_NEXT: 3\nTASK_NEXT_ID: 3.1' });
+  const result = run(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('TASK_GROUP_LEDGER_OPEN_TASK_UNACCOUNTED');
+});
+
+test('a stale Exact Next Action that does not name the declared next ID fails', () => {
+  const { root, sha } = fixture();
+  writeProtocol(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha });
+  writeGroupLedger(root, { exactNext: 'Start M4 task 5.2.' });
+  const result = run(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('TASK_GROUP_LEDGER_NEXT_ACTION_STALE');
+});
+
+test('a Current Milestone that names another group fails', () => {
+  const { root, sha } = fixture();
+  writeProtocol(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha });
+  writeGroupLedger(root, { milestone: 'Milestone ID: M3 — the group 4 run', activeMilestone: 'M3 — the group 4 run' });
+  const result = run(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('TASK_GROUP_LEDGER_MILESTONE_STALE');
+});
+
+test('every group ticked requires TASK_GROUP_NEXT: NONE', () => {
+  const { root, sha } = fixture();
+  writeProtocol(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha });
+  writeGroupLedger(root, {
+    tasks: '## 1. First group\n\n- [x] 1.1 done\n',
+    fields: 'TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1\nTASK_GROUPS_COMPLETE: 1\nTASK_GROUP_NEXT: 1\nTASK_NEXT_ID: 1.1',
+  });
+  const result = run(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('TASK_GROUP_LEDGER_COMPLETE_WITHOUT_NONE');
+});
