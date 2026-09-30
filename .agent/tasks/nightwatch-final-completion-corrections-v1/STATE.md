@@ -7,10 +7,9 @@ Phase: COMPLETION_CORRECTIONS_V1
 CHILD OF: nightwatch-final-product-completion-v1
 Status: IN_PROGRESS
 TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1
-TASK_GROUPS_COMPLETE: 1,2,3,4,5,8
-TASK_GROUP_NEXT: 7
-TASK_NEXT_ID: 7.15
-TASK_GROUP_DEFERRED: 6.2,6.3,6.4
+TASK_GROUPS_COMPLETE: 1,2,3,4,5,7,8
+TASK_GROUP_NEXT: 6
+TASK_NEXT_ID: 6.2
 Starting SHA: 1d47e2eef1ef029560ace12e31571624602eab0b
 Last validated implementation SHA: b9306626e5386c371a2e7357a6432cfd2784acb1
 Last substantive checkpoint SHA: b9306626e5386c371a2e7357a6432cfd2784acb1
@@ -83,9 +82,10 @@ RESUME_PROMPT_3 §3), re-verifying every audit finding at the parent base
 
 ## Current Milestone
 
-Milestone ID: M6.5 close-out (group 7): 7.1-7.14 are implemented and
-CI-observed; 7.15 is the group close-out gate. Group 8 (review-3 corrections)
-is COMPLETE (8.1-8.16, exact-head CI pending its own observation).
+Milestone ID: M7 group 6 close-out: 6.2 (the full validation set), 6.3
+(integration, exact-head CI, release, gate:clean) and 6.4 (route back to the
+parent, archive). Groups 1-5, 7 and 8 are COMPLETE (7.15: gate:dev and
+gate:milestone PASS, 5848/0; hardening:rules 209/209).
 
 M1 (bootstrap + Phase 1 preconditions), M2 (task 6.1 formatter policy,
 landed FIRST per RESUME_PROMPT §2), M3 (certification anchors, tasks
@@ -343,7 +343,7 @@ artifact wiring), 8.8 (PROVEN_DEGRADED non-certifying), 8.9 (ledger gaps),
 8.10 (behavioural classifier dispatch), 8.11 (DEV-launcher anchor), 8.12 (skip
 identities + VC-01 CI per-test proof), 8.13 (file-relative Prettier), 8.14
 (D-149 Decision 4), 8.15 (record corrections), 8.16 (minor gaps), each with
-its regression and probe. Then 7.15, then 6.2, 6.3, 6.4, then route to the
+its regression and probe. Then 6.2, 6.3, 6.4, then route to the
 parent at "M9 task 10.2 remainder".
 
 ## Files Changed
@@ -389,6 +389,14 @@ parent at "M9 task 10.2 remainder".
 
 ## Validation Ledger
 
+- 2026-10-01 — TASK 7.15 GROUP CLOSE-OUT (local half). Focused suites: 462
+  passed / 1 declared skip (`formatterPolicy` PRETTIER_BINARY_ABSENT, added to
+  the canonical skip identities). `hardening:rules`: 209/209 probes DETECTED,
+  status unchanged. `gate:dev` PASS (5848 passed / 0 failed, 605.3s; the first
+  runs surfaced real fixture-contract regressions — certifying keys, verified
+  re-binds, the handoff fixture's ledger placement, the clean-tree receipt
+  parse — each repaired forward). `gate:milestone` PASS (12 steps incl. the
+  full probe campaign; 5848/0; 770.0s). Integration + exact-head CI next.
 - 2026-09-30 — R3-09 / task 8.8 TOPOLOGY CERTIFICATION RECORD. The exact-head
   CI runs observed by this campaign (`36639792380` at `b9306626` and
   `36717972936` at `f887e76b`) carry `runnerTopologyClass=PROVEN_DEGRADED`

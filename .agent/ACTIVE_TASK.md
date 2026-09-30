@@ -6,10 +6,9 @@ Title: Corrective campaign (child of the terminal campaign)
 CHILD OF: nightwatch-final-product-completion-v1
 Status: IN_PROGRESS
 TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1
-TASK_GROUPS_COMPLETE: 1,2,3,4,5,8
-TASK_GROUP_NEXT: 7
-TASK_NEXT_ID: 7.15
-TASK_GROUP_DEFERRED: 6.2,6.3,6.4
+TASK_GROUPS_COMPLETE: 1,2,3,4,5,7,8
+TASK_GROUP_NEXT: 6
+TASK_NEXT_ID: 6.2
 Task directory: .agent/tasks/nightwatch-final-completion-corrections-v1
 Starting SHA: 1d47e2eef1ef029560ace12e31571624602eab0b
 Last validated implementation SHA: b9306626e5386c371a2e7357a6432cfd2784acb1
@@ -79,7 +78,7 @@ sibling-checkout-gated skip identities undeclared) fixed at `491b5ef9` with
 4 exact declarations + a source-bound regression; VC-01 CI-execution half
 PROVEN at `2b5d8178` (zero skip sites in both security suites; receipt
 1966/1926/40/0 failed 0).
-Current milestone: M6 group 5 (ledger and continuity truth, 5.1-5.6) and
+Current milestone: M7 group 6 close-out (6.2-6.4)
 group 7 (review-2 corrections, 7.1-7.14) are IMPLEMENTED on the unintegrated
 commits; group 8 (review-3 corrections, 8.1-8.16) is next after the step-4
 integration. M5 (release probes, 4.1-4.9) is CLOSED at `b9306626` (full local
