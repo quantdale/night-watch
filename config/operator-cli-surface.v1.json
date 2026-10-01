@@ -92,7 +92,7 @@
     },
     {
       "file": "bin/nightwatch-intelligence.mjs",
-      "disposition": "PENDING_OPERATOR_CLI"
+      "disposition": "OPERATOR_CLI"
     },
     {
       "file": "bin/nightwatch-reasoner-print.mjs",
@@ -313,8 +313,8 @@
   ],
   "counts": {
     "total": 76,
-    "operatorCli": 70,
+    "operatorCli": 71,
     "libraryRetained": 4,
-    "pending": 2
+    "pending": 1
   }
 }

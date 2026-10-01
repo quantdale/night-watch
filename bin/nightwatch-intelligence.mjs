@@ -6,19 +6,88 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadTypeScriptModules as loadRuntimeTypeScriptModules } from "./lib/typescript-runtime-loader.mjs";
+import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from "./lib/operator-cli.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const args = process.argv.slice(2);
-const command = args[0] ?? "status";
-const asJson = args.includes("--json");
-
 const COMMANDS = new Set(["status", "plan", "coverage", "campaign", "contracts", "gaps", "differential", "replay-coverage", "minimization-coverage", "mutation-score", "findings", "explain", "source-scan", "source-gaps", "eligibility-census", "readonly-census", "surfaces", "review-queue", "explain-surface"]);
-if (!COMMANDS.has(command)) {
-  console.error("NIGHTWATCH_INTELLIGENCE: unknown local command");
+
+/** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
+const CLI_METADATA = {
+  schemaVersion: OPERATOR_CLI_SCHEMA,
+  name: "nightwatch-intelligence",
+  entry: "bin/nightwatch-intelligence.mjs",
+  purpose: "Deterministic local source/operator intelligence: coverage, gaps, contracts, census, review queue and surface explanations over checked-in local configuration. No network, no auth, no product contact.",
+  group: "inspect-intelligence",
+  commands: [
+    { name: "status", summary: "observed local state summary" },
+    { name: "plan", summary: "synthetic-preview plan (optionally explain one id)" },
+    { name: "coverage", summary: "coverage projection" },
+    { name: "campaign", summary: "campaign projection" },
+    { name: "contracts", summary: "contract projection" },
+    { name: "gaps", summary: "gap ledger (--actionable / --irreducible)" },
+    { name: "differential", summary: "differential projection" },
+    { name: "replay-coverage", summary: "replay coverage projection" },
+    { name: "minimization-coverage", summary: "minimization coverage projection" },
+    { name: "mutation-score", summary: "mutation score projection" },
+    { name: "findings", summary: "synthetic-preview findings (optionally explain one id)" },
+    { name: "explain", summary: "synthetic-preview explanation for one id" },
+    { name: "source-scan", summary: "approved real-source scan inventory" },
+    { name: "source-gaps", summary: "source-surface gaps" },
+    { name: "eligibility-census", summary: "eligibility census over discovered surfaces" },
+    { name: "readonly-census", summary: "read-only candidate census" },
+    { name: "surfaces", summary: "integrated source surfaces and portfolio" },
+    { name: "review-queue", summary: "source review queue" },
+    { name: "explain-surface", summary: "explain one source surface by --surface=<id> or a positional id" },
+  ],
+  defaultCommand: "status",
+  positionals: { min: 0, max: 1, names: ["id-or-surface"], summary: "the target id for plan/findings/explain-surface" },
+  flags: [
+    { name: "--json", shape: "boolean", summary: "emit exactly one JSON document on stdout" },
+    { name: "--repo", shape: "string", summary: "restrict the approved real-source scan to one repository id" },
+    { name: "--surface", shape: "string", summary: "the surface id for explain-surface (a positional id also works)" },
+    { name: "--actionable", shape: "boolean", summary: "gaps: keep only OPEN_ACTIONABLE records" },
+    { name: "--irreducible", shape: "boolean", summary: "gaps: keep only IRREDUCIBLE_* records" },
+  ],
+  json: true,
+  authorization: "LOCAL_ONLY",
+  artifacts: [],
+};
+
+// The documented boundary refuses any environment-execution flag with the
+// domain message before loading source or product modules. The shared parser
+// refuses it categorically first, so re-assert the exact refusal here for the
+// `--env*` family to keep the operator-facing wording stable.
+const envRefusalRequested = process.argv.slice(2).some((arg) => arg.startsWith("--env"));
+const cli = defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url });
+if (envRefusalRequested) {
+  console.error("NIGHTWATCH_INTELLIGENCE: source/operator commands never accept environment execution");
   process.exit(2);
 }
-if (args.some((arg) => arg.startsWith("--env"))) {
-  console.error("NIGHTWATCH_INTELLIGENCE: source/operator commands never accept environment execution");
+if (cli.ok !== true || cli.stop === true) {
+  // The shared parser answered --help/--print-metadata or refused an unknown
+  // command/option/positional.
+} else {
+  // Rebuild the argv-shaped view the dispatch below already consumes, so the
+  // projections and their guards are unchanged.
+  // The shared parser binds argv[0] to the command only when it MATCHES a
+  // declared command; an unrecognised first token is an unknown local command
+  // here (never a positional id), and that stays a usage refusal.
+  const firstToken = cli.raw[0] ?? "";
+  if (firstToken !== "" && !firstToken.startsWith("-") && !COMMANDS.has(firstToken)) {
+    console.error("NIGHTWATCH_INTELLIGENCE: unknown local command");
+    process.exit(2);
+  }
+  const command = cli.command ?? "status";
+  const asJson = cli.flags["--json"] === true;
+  const args = [command];
+  if (typeof cli.flags["--repo"] === "string") args.push(`--repo=${cli.flags["--repo"]}`);
+  if (typeof cli.flags["--surface"] === "string") args.push(`--surface=${cli.flags["--surface"]}`);
+  if (cli.flags["--actionable"] === true) args.push("--actionable");
+  if (cli.flags["--irreducible"] === true) args.push("--irreducible");
+  for (const positional of cli.positionals) args.push(positional);
+
+if (!COMMANDS.has(command)) {
+  console.error("NIGHTWATCH_INTELLIGENCE: unknown local command");
   process.exit(2);
 }
 
@@ -364,4 +433,5 @@ try {
   const detail = error instanceof Error && /^[A-Z0-9_:-]{1,120}$/.test(error.message) ? error.message : "CONFIG_INVALID";
   console.error(`NIGHTWATCH_INTELLIGENCE_FAILED code=${detail} remediation=Use_checked_in_local_configuration_and_rerun`);
   process.exitCode = 2;
+}
 }
