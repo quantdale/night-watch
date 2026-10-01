@@ -204,7 +204,7 @@ async function main() {
   process.stdout.write(`${JSON.stringify({ outputPath, changesetId: changeset.changesetId, selectedJourneys: selection.selectedJourneys.map((journey) => journey.journeyId), priorityOrder: selection.priorityOrder, fallbackTriggered: selection.fallbackTriggered, dirtyFiles: changeset.dirtyFiles.length }, null, 2)}\n`);
 }
 
-if (cli.stop) {
+if (cli.ok !== true || cli.stop === true) {
   // The shared parser answered --help/--print-metadata or refused an argument;
   // nothing was compiled and no report was written.
 } else {

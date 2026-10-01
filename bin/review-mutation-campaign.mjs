@@ -372,11 +372,12 @@ const CLI_METADATA = {
 
 const cli = defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url });
 
-function main() {
+/** @param {{ flags: Record<string, unknown> }} parsed */
+function main(parsed) {
   // `--plan` is the bounded, side-effect-free observation surface: it prints
   // the declared mutation inventory without editing a file or starting a
   // suite. `npm run mutation:review` (no arguments) remains the full campaign.
-  if (cli.flags['--plan'] === true) {
+  if (parsed.flags['--plan'] === true) {
     console.log(JSON.stringify({
       schemaVersion: 'nightwatch.review-mutation-campaign-plan.v1',
       mutationCount: MUTATIONS.length,
@@ -474,9 +475,9 @@ function main() {
   console.log(`[mutation] PASS: ${introduced} introduced, ${detected} detected, ${survived} survived (all declared), restore drift NONE`);
 }
 
-if (cli.stop) {
+if (cli.ok !== true || cli.stop === true) {
   // The shared parser answered --help/--print-metadata or refused an argument;
   // no mutation was introduced and no suite was started.
 } else {
-  main();
+  main(cli);
 }

@@ -2,10 +2,10 @@
   "schemaVersion": "nightwatch.ci-block-record.v1",
   "definitionName": "Nightwatch exact-head CI block record (F-02)",
   "note": "The block is RETIRED: GitHub Actions executes the hardening workflow on every push, and the record's top level is the latest observed executed run (D-03 / R2-61). The block-record judgements stay load-bearing as the single CI authority shared by agent:check, project:check and gate:topology; the revisit date keeps the record from going stale. Candidate routes remain recorded with their trade-offs, and the materialised owner route is the restored GitHub-hosted execution.",
-  "runId": "36832639979",
-  "jobId": "110272541211",
-  "observedSha": "67eb30981b4bb4d6bb6959b9afee9345938f5750",
-  "blockClass": "EXECUTED_PASS",
+  "runId": "36867934911",
+  "jobId": "110375824527",
+  "observedSha": "ae1ff3a67c5cade13f97f01f264a05ef67438685",
+  "blockClass": "EXECUTED_TEST_FAILURE",
   "observedDate": "2026-10-01",
   "ownerAction": "None required while the hardening workflow executes on every push; re-observe the next exact-head run and refresh this record before the revisit date.",
   "revisitCondition": "Re-observe each push: refresh runId, jobId, observedSha and observedDate from the latest hardening run, and record any red run with its classification.",
@@ -138,6 +138,29 @@
       "observedDate": "2026-10-01",
       "classification": "EXECUTED_PASS",
       "detail": "parent pause checkpoint (continuity sync) green before the parent session was released"
+    },
+    {
+      "runId": "36867934911",
+      "jobId": "110375824527",
+      "observedSha": "ae1ff3a67c5cade13f97f01f264a05ef67438685",
+      "observedDate": "2026-10-01",
+      "classification": "EXECUTED_TEST_FAILURE",
+      "detail": "BIN_TYPECHECK_CEILING failed: four newly migrated bins introduced bin type-check diagnostics (hardening-check 12 with no ceiling, review-mutation-campaign 5/4, w11-historical-arm 24/20, total 1463/1446). The shared-parser narrowing and the mutation-campaign entry signature were repaired forward and typecheck:bin is PASS at 1446 with the ceilings unchanged; the harden chain stopped at this group so the remaining groups were NOT_RUN.",
+      "defectClasses": [
+        {
+          "class": "BIN_TYPECHECK_RATCHET",
+          "suite": "bin/bin-typecheck.mjs",
+          "detail": "the migration's `cli.stop` narrowing did not discriminate the OperatorCliParseResult union, so `cli.flags` was untyped; fixed by narrowing on `cli.ok !== true || cli.stop === true` and by typing the entry parameter"
+        }
+      ]
+    },
+    {
+      "runId": "36797226757",
+      "jobId": "110267957125",
+      "observedSha": "027367d9da22ea1198c0a60fb1b11805f6719d40",
+      "observedDate": "2026-10-01",
+      "classification": "EXECUTED_PASS",
+      "detail": "the corrective child campaign's close-out head: the run that certifies the anchor 027367d9 recorded in the project-state block (CI_EXECUTED_SHA). Recorded so the block's execution claim is supported by an observation at that exact SHA (R4-11/R4-12)."
     }
   ],
   "routeSelection": {

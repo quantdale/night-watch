@@ -1023,8 +1023,24 @@ export function deriveCiObservationStatus() {
   const executed = /^CI_EXECUTED_SHA:[ \t]*(\S+)[ \t]*$/m.exec(blockBody)?.[1] ?? '';
   if (value === 'EXECUTED_PASS' || value === 'EXECUTED_FAIL') {
     if (!/^[0-9a-f]{40}$/i.test(observed) || observed !== executed) return null;
-    if (value === 'EXECUTED_PASS' && record.blockClass !== 'EXECUTED_PASS') return null;
-    if (value === 'EXECUTED_FAIL' && !['EXECUTED_TEST_FAILURE', 'EXECUTED_INFRA_FAILURE', 'EXECUTED_PASS'].includes(record.blockClass)) return null;
+    // The block's CI fields describe the CERTIFIED ANCHOR, while the record's
+    // top level is the LATEST observation — a newer run may legitimately be a
+    // red one. The claim must therefore be supported by SOME recorded
+    // observation at that exact SHA, not necessarily by the top level.
+    const observations = [
+      { sha: record.observedSha, classification: record.blockClass },
+      ...(Array.isArray(record.history)
+        ? record.history.map((/** @type {Record<string, unknown> | null} */ entry) => {
+            const item = /** @type {Record<string, unknown>} */ (entry ?? {});
+            return { sha: item.observedSha, classification: item.classification };
+          })
+        : []),
+    ].filter((entry) => typeof entry.sha === 'string');
+    const matching = observations.filter((entry) => String(entry.sha).toLowerCase() === observed.toLowerCase());
+    if (matching.length === 0) return null;
+    const hasPass = matching.some((entry) => entry.classification === 'EXECUTED_PASS');
+    const hasFail = matching.some((entry) => entry.classification === 'EXECUTED_TEST_FAILURE' || entry.classification === 'EXECUTED_INFRA_FAILURE');
+    if (value === 'EXECUTED_PASS' ? !hasPass : !hasFail) return null;
   } else if (observed !== 'NONE' || executed !== 'NONE') {
     return null;
   }

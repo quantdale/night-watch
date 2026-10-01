@@ -57,7 +57,7 @@ const CLI_METADATA = {
 
 const cli = defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url });
 
-if (cli.stop) {
+if (cli.ok !== true || cli.stop === true) {
   // The shared parser answered --help/--print-metadata or refused an argument;
   // no rule ran.
 } else {
