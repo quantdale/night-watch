@@ -54,6 +54,19 @@ an observed green exact-head CI at the tip that contains its close-out.
 
 ## Milestones
 
+### M0 — Bootstrap (owner preconditions)
+
+- Objective: create the bounded child campaign from the canonical-routed
+  parent checkpoint `67eb3098` (= `origin/main`, exact-head CI 36832639979
+  GREEN, no live session): the review-4 change, the continuity v2 records and
+  the task-ID ledger entry, in the session worktree.
+- Files/areas: `openspec/changes/nightwatch-final-completion-review4-v1/`,
+  `.agent/tasks/nightwatch-final-completion-review4-v1/`, `.agent/ACTIVE_TASK.md`,
+  `config/task-id-ledger.v1.json`.
+- Acceptance criteria: `agent:check` PASS, `openspec validate --strict` PASS,
+  the ID baseline resolvable at the bootstrap commit.
+- **Status:** COMPLETE (2026-10-01)
+
 ### M1 — Certification soundness (group 1: 1.1-1.8)
 
 - Objective: complete, reachable, fail-closed certification (OD-5, OD-6).
