@@ -167,7 +167,7 @@
     },
     {
       "bin": "bin/phase22-dev.mjs",
-      "maxErrors": 36
+      "maxErrors": 28
     },
     {
       "bin": "bin/phase22-real.mjs",
@@ -318,6 +318,6 @@
       "maxErrors": 94
     }
   ],
-  "totalCeiling": 1427,
+  "totalCeiling": 1419,
   "anyAnnotationBudget": 91
 }

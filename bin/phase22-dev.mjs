@@ -14,6 +14,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { loadTypeScriptModule as loadRuntimeTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
 import { buildChildEnvironment, emitChildStdio } from './child-environment.mjs';
+import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
 
 const ROOT = process.cwd();
 const WORKSPACE_ROOT = path.resolve(ROOT, '..', '..');
@@ -29,20 +30,37 @@ const HELP = `Phase 22 contained DEV operator surface
 The default path is local. No --all flag or dynamic target discovery exists.
 `;
 
-function parseArgs(argv) {
-  const out = { _: [] };
-  for (let index = 0; index < argv.length; index += 1) {
-    const arg = argv[index];
-    if (arg === '--help' || arg === '-h') { out.help = true; continue; }
-    if (!arg.startsWith('--')) { out._.push(arg); continue; }
-    const separator = arg.indexOf('=');
-    if (separator !== -1) { out[arg.slice(2, separator)] = arg.slice(separator + 1); continue; }
-    const next = argv[index + 1];
-    if (next !== undefined && !next.startsWith('--')) { out[arg.slice(2)] = next; index += 1; }
-    else out[arg.slice(2)] = true;
-  }
-  return out;
-}
+/** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
+const CLI_METADATA = {
+  schemaVersion: OPERATOR_CLI_SCHEMA,
+  name: 'phase22-dev',
+  entry: 'bin/phase22-dev.mjs',
+  purpose: 'Contained Phase 22 DEV operator surface: manifest, preflight, acceptance, results and explain over frozen external inputs. The default path is local; there is no --all target discovery.',
+  group: 'run-scenario',
+  commands: [
+    { name: 'manifest', summary: 'compile a frozen Phase 22 manifest from an exact source snapshot' },
+    { name: 'preflight', summary: 'evaluate the DEV preconditions for a manifest' },
+    { name: 'acceptance', summary: 'run the acceptance lane (dry-run by default, --execute is explicit)' },
+    { name: 'results', summary: 'summarise acceptance results' },
+    { name: 'explain', summary: 'explain one frozen target id from a manifest' },
+  ],
+  commandRequired: true,
+  flags: [
+    { name: '--snapshot', shape: 'path', summary: 'exact source snapshot directory for the manifest' },
+    { name: '--source-sha', shape: 'string', summary: 'the 40-hex source sha the snapshot corresponds to' },
+    { name: '--manifest', shape: 'path', summary: 'absolute external manifest path' },
+    { name: '--env', shape: 'string', summary: 'target environment label (DEV only)' },
+    { name: '--storage-state', shape: 'path', summary: 'absolute external owner-captured storage state' },
+    { name: '--results', shape: 'path', summary: 'absolute external acceptance results JSON' },
+    { name: '--out', shape: 'path', summary: 'absolute external output path (mode 0600)' },
+    { name: '--execute', shape: 'boolean', summary: 'run the acceptance lane for real instead of dry-run' },
+    { name: '--dry-run', shape: 'boolean', summary: 'evaluate acceptance without any effect (the default)' },
+    { name: '--all', shape: 'boolean', summary: 'include every frozen target (never dynamic discovery)' },
+  ],
+  json: true,
+  authorization: 'LOCAL_ONLY',
+  artifacts: [],
+};
 
 function fail(code) {
   throw new Error(`PHASE22_OPERATOR_BLOCKED:${code}`);
@@ -285,9 +303,23 @@ function explain(args) {
 }
 
 function main() {
-  const args = parseArgs(process.argv.slice(2));
-  if (args.help || args._.length === 0) { process.stdout.write(HELP); return; }
-  const command = args._[0];
+  const cli = defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url });
+  if (cli.ok !== true || cli.stop === true) { process.stdout.write(HELP); return; }
+  const flags = cli.flags;
+  const args = {
+    _: cli.positionals,
+    snapshot: flags['--snapshot'],
+    'source-sha': flags['--source-sha'],
+    manifest: flags['--manifest'],
+    env: flags['--env'],
+    'storage-state': flags['--storage-state'],
+    results: flags['--results'],
+    out: flags['--out'],
+    execute: flags['--execute'],
+    'dry-run': flags['--dry-run'],
+    all: flags['--all'],
+  };
+  const command = cli.command;
   if (command === 'manifest') {
     const result = buildManifest(args);
     writeSafeOutput(args.out, result.manifest);
