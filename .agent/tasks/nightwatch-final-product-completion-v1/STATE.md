@@ -57,7 +57,7 @@ ledger, and end at `PROJECT_COMPLETE_AND_CI_CERTIFIED` under D-129 with a
 ## Current Milestone
 
 M9 D-129 CLI contract and bin type-check (group 10, tasks 10.1-10.6): 10.1
-DONE, 10.2 IN PROGRESS (65/76 declared, 4 library-retained, 7 pending). The
+DONE, 10.2 IN PROGRESS (67/76 declared, 4 library-retained, 5 pending). The
 corrective child campaign (`nightwatch-final-completion-corrections-v1`) is
 CLOSED and archived; the parent resumed at "M9 task 10.2 remainder" in the
 fresh C-00 session `sess-83d720703401` (worktree
@@ -148,7 +148,7 @@ remaining 12 pending bins are named in tasks.md 10.2.
 
 **Current (2026-10-01):** the parent resumed at M9 task 10.2: operator-CLI conformance is **61/76 declared** (4 library-retained, 11 pending; next bin `change-intelligence`). The log below is HISTORICAL and is not the current state.
 
-**Current (2026-10-01):** the review-4 child campaign is CLOSED and the parent resumed at M9 task 10.2; operator-CLI conformance is 65/76 declared (4 library-retained, 7 pending; next bin `nightwatch-agent`). The log below is HISTORICAL (M7 onward, oldest first) and is not the current state.
+**Current (2026-10-01):** the review-4 child campaign is CLOSED and the parent resumed at M9 task 10.2; operator-CLI conformance is 67/76 declared (4 library-retained, 5 pending; next bin `nightwatch-agent`). The log below is HISTORICAL (M7 onward, oldest first) and is not the current state.
 
 - M7 (tasks 8.1-8.5) is in progress; 8.1 is implemented and committed: the
   `.env` layer is parsed FAIL CLOSED (a malformed line, an undeclared key and a
@@ -551,6 +551,13 @@ exactly as in M4/M5.
 
 ## Validation Ledger
 
+- 2026-10-01 — M9 10.2 RESUME BATCH 4 (parent). `phase23-ci` and
+  `phase23-predev` migrated (subcommand + bounded options, both keeping their
+  own ABSOLUTE/EXTERNAL output boundary). Their bin diagnostics dropped, so the
+  three ceilings were LOWERED (phase23-ci 49 → 37, phase23-predev 13 → 6,
+  total 1446 → 1427). `phase23-ci observe --run-id=36875579501` re-exercised
+  against the live run. Registry counts 67/4/5; focused suites 62/62;
+  `hardening:check` PASS; `typecheck` clean; `typecheck:bin` PASS at 1427.
 - 2026-10-01 — M9 10.2 BATCH 3 CI CHAIN. Two red exact-head runs were
   recorded and repaired forward, both inside this campaign's scope and both
   now green: run **36867934911** at `ae1ff3a6` (BIN_TYPECHECK_CEILING — the
@@ -596,7 +603,7 @@ exactly as in M4/M5.
   (`openspec/changes/archive/2026-10-01-nightwatch-final-completion-review4-v1/`,
   spec published as `openspec/specs/review4-closure/`), its session branch is
   deleted, and this campaign is active again, canonical-routed, at the recorded
-  resume point: M9 task 10.2 remainder (65/76 declared after resume batch 3;
+  resume point: M9 task 10.2 remainder (67/76 declared after resume batch 4;
   next bin `nightwatch-agent`), then 10.3-10.6, M10-M14 and the 13-section
   final report.
   D-150 (OD-5/OD-6) and D-151 (proxy liveness) were added by the child.
@@ -1111,7 +1118,7 @@ named in the routing block; integration is fast-forward only.
 
 ## Completion Snapshot
 
-Not complete. M9 task 10.2 is IN PROGRESS at 65/76 declared (7 pending).
+Not complete. M9 task 10.2 is IN PROGRESS at 67/76 declared (5 pending).
 Terminal snapshot is written at M14: all 228 census items
 dispositioned (OD-1), `PROJECT_COMPLETE_AND_CI_CERTIFIED` under D-129 with CI
 `EXECUTED_PASS` at S (OD-2), operator proofs recorded, ledger closed, and a

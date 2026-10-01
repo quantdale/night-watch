@@ -175,7 +175,7 @@
     },
     {
       "bin": "bin/phase23-ci.mjs",
-      "maxErrors": 49
+      "maxErrors": 37
     },
     {
       "bin": "bin/phase23-dev.mjs",
@@ -183,7 +183,7 @@
     },
     {
       "bin": "bin/phase23-predev.mjs",
-      "maxErrors": 13
+      "maxErrors": 6
     },
     {
       "bin": "bin/phase2b-real.mjs",
@@ -318,6 +318,6 @@
       "maxErrors": 94
     }
   ],
-  "totalCeiling": 1446,
+  "totalCeiling": 1427,
   "anyAnnotationBudget": 91
 }

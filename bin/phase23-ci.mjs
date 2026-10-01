@@ -14,6 +14,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { loadTypeScriptModule as loadRuntimeTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
+import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const WORKSPACE_ROOT = path.resolve(ROOT, '..', '..');
@@ -35,19 +36,31 @@ class ExternalObservationError extends Error {
   }
 }
 
-function parseArgs(argv) {
-  const args = { _: [] };
-  for (const arg of argv) {
-    if (arg === '--help' || arg === '-h') { args.help = true; continue; }
-    if (!arg.startsWith('--')) { args._.push(arg); continue; }
-    const separator = arg.indexOf('=');
-    if (separator < 0) fail('FLAGS_REQUIRE_EQUALS');
-    const key = arg.slice(2, separator);
-    if (!/^[a-z][a-z0-9-]{0,48}$/.test(key) || Object.hasOwn(args, key)) fail('UNKNOWN_OR_DUPLICATE_FLAG');
-    args[key] = arg.slice(separator + 1);
-  }
-  return args;
-}
+/**
+ * A-12 / 10.2: the shared operator-CLI contract. `observe` takes the exact
+ * GitHub Actions run id and may write the report and the gate receipt to
+ * ABSOLUTE EXTERNAL paths (this module's own boundary check, not the parser's);
+ * `--help`/`--print-metadata` answer without contacting `gh`, and an unknown
+ * option or command is refused with exit 2.
+ */
+/** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
+const CLI_METADATA = {
+  schemaVersion: OPERATOR_CLI_SCHEMA,
+  name: 'phase23-ci',
+  entry: 'bin/phase23-ci.mjs',
+  purpose: 'Observe one exact-head GitHub Actions run and classify it from its own gate receipt and per-test evidence.',
+  group: 'validate',
+  commands: [{ name: 'observe', summary: 'classify one exact-head GitHub Actions run' }],
+  commandRequired: true,
+  flags: [
+    { name: '--run-id', shape: 'string', required: true, summary: 'the exact-head GitHub Actions run id to observe' },
+    { name: '--out', shape: 'path', summary: 'absolute external path for the observation report (mode 0600)' },
+    { name: '--gate-receipt-out', shape: 'path', summary: 'absolute external path for the gate receipt copy (mode 0600)' },
+  ],
+  json: true,
+  authorization: 'LOCAL_ONLY',
+  artifacts: [],
+};
 
 function loadTypeScriptModule(file) {
   return loadRuntimeTypeScriptModule(file, { root: ROOT });
@@ -263,15 +276,19 @@ function writeExternalJson(file, value, label) {
   fs.writeFileSync(resolved, JSON.stringify(value, null, 2) + '\n', { mode: 0o600 });
 }
 
-function help() {
-  process.stdout.write('Usage: node bin/phase23-ci.mjs observe --run-id=<github-actions-run-id>\n');
-}
-
 try {
-  const args = parseArgs(process.argv.slice(2));
-  if (args.help) help();
-  else if (args._[0] !== 'observe' || typeof args['run-id'] !== 'string' || !/^\d+$/.test(args['run-id'])) fail('RUN_ID_REQUIRED');
+  const cli = defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url });
+  if (cli.ok !== true || cli.stop === true) {
+    // The shared parser answered --help/--print-metadata or refused an argument;
+    // `gh` was not contacted and no report was written.
+  } else if (cli.command !== 'observe' || typeof cli.flags['--run-id'] !== 'string' || !/^\d+$/.test(String(cli.flags['--run-id']))) fail('RUN_ID_REQUIRED');
   else {
+    const args = {
+      _: [],
+      'run-id': cli.flags['--run-id'],
+      out: cli.flags['--out'],
+      'gate-receipt-out': cli.flags['--gate-receipt-out'],
+    };
     const report = observe(args['run-id']);
     if (args.out !== undefined) writeExternalJson(args.out, report, 'REPORT_OUTPUT');
     const gateReceipt = report.observation.gateReceipt;

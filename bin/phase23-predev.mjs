@@ -9,6 +9,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadTypeScriptModule as loadRuntimeTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
+import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const WORKSPACE_ROOT = path.resolve(ROOT, '..', '..');
@@ -17,19 +18,29 @@ function fail(code) {
   throw new Error(`PHASE23_PREDEV_BLOCKED:${code}`);
 }
 
-function parseArgs(argv) {
-  const args = { _: [] };
-  for (const arg of argv) {
-    if (arg === '--help' || arg === '-h') { args.help = true; continue; }
-    if (!arg.startsWith('--')) { args._.push(arg); continue; }
-    const separator = arg.indexOf('=');
-    if (separator < 0) fail('FLAGS_REQUIRE_EQUALS');
-    const key = arg.slice(2, separator);
-    if (!/^[a-z][a-z0-9-]{0,48}$/.test(key) || Object.hasOwn(args, key)) fail('UNKNOWN_OR_DUPLICATE_FLAG');
-    args[key] = arg.slice(separator + 1);
-  }
-  return args;
-}
+/**
+ * A-12 / 10.2: the shared operator-CLI contract. The facts/output paths are the
+ * only options, and they stay ABSOLUTE and EXTERNAL (the adapter's own boundary
+ * check, not the parser's); `--help`/`--print-metadata` answer without reading
+ * a facts file, and an unknown option or command is refused with exit 2.
+ */
+/** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
+const CLI_METADATA = {
+  schemaVersion: OPERATOR_CLI_SCHEMA,
+  name: 'phase23-predev',
+  entry: 'bin/phase23-predev.mjs',
+  purpose: 'Evaluate the Phase 23 pre-DEV authority from a sanitized owner-local facts file and emit the receipt; never contacts an external service.',
+  group: 'validate',
+  commands: [{ name: 'evaluate', summary: 'evaluate the pre-DEV authority from --facts' }],
+  commandRequired: true,
+  flags: [
+    { name: '--facts', shape: 'path', required: true, summary: 'absolute external path of the sanitized facts JSON' },
+    { name: '--out', shape: 'path', summary: 'absolute external path for the receipt (mode 0600)' },
+  ],
+  json: true,
+  authorization: 'LOCAL_ONLY',
+  artifacts: [],
+};
 
 function loadTypeScriptModule(file) {
   return loadRuntimeTypeScriptModule(file, { root: ROOT });
@@ -52,15 +63,18 @@ function writeOutput(file, value) {
   fs.writeFileSync(resolved, JSON.stringify(value, null, 2) + '\n', { mode: 0o600 });
 }
 
-function help() {
-  process.stdout.write('Usage: node bin/phase23-predev.mjs evaluate --facts=/external/sanitized-facts.json [--out=/external/receipt.json]\n');
-}
-
 try {
-  const args = parseArgs(process.argv.slice(2));
-  if (args.help) help();
+  const cli = defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url });
+  if (cli.ok !== true || cli.stop === true) {
+    // The shared parser answered --help/--print-metadata or refused an argument;
+    // no facts file was read and no receipt was produced.
+  } else if (cli.command !== 'evaluate') fail('UNKNOWN_COMMAND');
   else {
-    if (args._[0] !== 'evaluate') fail('UNKNOWN_COMMAND');
+    const args = {
+      _: [],
+      facts: cli.flags['--facts'],
+      out: cli.flags['--out'],
+    };
     const factsFile = externalFile(args.facts, 'FACTS');
     let facts;
     try { facts = JSON.parse(fs.readFileSync(factsFile, 'utf8')); }
