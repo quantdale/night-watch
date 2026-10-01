@@ -9,7 +9,7 @@ Status: IN_PROGRESS
 TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1
 TASK_GROUPS_COMPLETE: 1,2,3,4,5,7,8
 TASK_GROUP_NEXT: 6
-TASK_NEXT_ID: 6.3
+TASK_NEXT_ID: 6.4
 Starting SHA: 1d47e2eef1ef029560ace12e31571624602eab0b
 Last validated implementation SHA: b9306626e5386c371a2e7357a6432cfd2784acb1
 Last substantive checkpoint SHA: b9306626e5386c371a2e7357a6432cfd2784acb1
@@ -389,6 +389,10 @@ parent at "M9 task 10.2 remainder".
 
 ## Validation Ledger
 
+- 2026-10-01 — TASK 6.3 EXACT-HEAD CI GREEN AT THE CLOSE-OUT CHECKPOINT. Run
+  **36796334869** at `14efed2e` is GREEN: all 15 groups PASS (receipt
+  `receipt:sha256:` recorded in the run). The session is released and removed
+  next, then `gate:clean` runs from canonical with no live session.
 - 2026-10-01 — TASK 6.2 FULL VALIDATION SET (tip `60663905`): every command exit
   0 — `npm test` 5848/0/34 (5882 executed), `gate:local` all 15 groups PASS
   (`receipt:sha256:030bc83d1ef06cc219167f3d`; TOPOLOGY PROVEN/BUBBLEWRAP,
