@@ -86,7 +86,12 @@ test.describe('external DEV credential provider', () => {
   test('configuration CLI has no credential argument path and uses hidden input', () => {
     const cli = fs.readFileSync(path.resolve(__dirname, '..', '..', 'bin', 'auth-configure.mjs'), 'utf8');
     expect(cli).toContain("process.stdin.setRawMode(true)");
-    expect(cli).toContain('auth:configure accepts no credential or account arguments');
+    // 10.2 migration: the refusal is now the SHARED parser's, and the surface
+    // declares no flags and no positionals, so no argument can carry or name a
+    // credential at all (a stronger property than a bespoke refusal string).
+    expect(cli).toContain('defineOperatorCli(CLI_METADATA');
+    expect(cli).toMatch(/flags: \[\],/);
+    expect(cli).not.toMatch(/positionals: /);
     expect(cli).not.toMatch(/--password|password=/);
   });
 });

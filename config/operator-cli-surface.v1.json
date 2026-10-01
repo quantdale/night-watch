@@ -28,7 +28,7 @@
     },
     {
       "file": "bin/auth-configure.mjs",
-      "disposition": "PENDING_OPERATOR_CLI"
+      "disposition": "OPERATOR_CLI"
     },
     {
       "file": "bin/bin-typecheck.mjs",
@@ -313,8 +313,8 @@
   ],
   "counts": {
     "total": 76,
-    "operatorCli": 60,
+    "operatorCli": 61,
     "libraryRetained": 4,
-    "pending": 12
+    "pending": 11
   }
 }

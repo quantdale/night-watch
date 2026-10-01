@@ -59,7 +59,7 @@ Previous checkpoint: 2026-09-26 — M4 COMPLETE (5.1-5.7): six release probes wi
 states + the CI block-record single authority (`a784e668`), and the final
 integration `137207b1` after reconciling origin/main `946b52c4` and restoring
 the ledger-governed README status block; gate:dev/gate:milestone 5520/0.
-Current milestone: M9 task 10.2 remainder (60/76 declared)
+Current milestone: M9 task 10.2 remainder (61/76 declared)
 10.2 IN PROGRESS (60/76 declared, 4 library-retained, 12 pending), then
 10.3-10.6. The bounded review-4 child campaign
 (`nightwatch-final-completion-review4-v1`) resolves the 24 review-4 findings
@@ -102,7 +102,7 @@ reconcile every operator-truth surface, close the ledger, and end with a
 ```text
 CAMPAIGN: nightwatch-final-product-completion-v1
 CHILD TASK: NONE
-SESSION WORKTREE: NONE
+SESSION WORKTREE: session/nightwatch-final-product-complet-0e405e6b
 
 IMPLEMENTATION AUTHORIZED:
   Nightwatch source, tests, hardening rules/probes, schemas/configuration,
@@ -115,8 +115,8 @@ EXTERNAL CONTACT AUTHORIZED (OD-3 ONLY):
   provider proof run; one npm registry advisory query.
 
 CURRENT STATUS:
-  IN_PROGRESS — RESUMED AT M9 TASK 10.2 REMAINDER (60/76 declared; 12 pending;
-  next bin `auth-configure`). The review-4 child campaign
+  IN_PROGRESS — RESUMED AT M9 TASK 10.2 REMAINDER (61/76 declared; 11 pending;
+  next bin `change-intelligence`). The review-4 child campaign
   `nightwatch-final-completion-review4-v1` is COMPLETE and archived
   (`2026-10-01-nightwatch-final-completion-review4-v1`, with spec sync to
   `openspec/specs/review4-closure/`): all 24 findings dispositioned, exact-head

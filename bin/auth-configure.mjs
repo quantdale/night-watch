@@ -9,13 +9,35 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadTypeScriptModule as loadRuntimeTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
+import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
-function usage() {
-  console.log('Usage: npm run auth:configure');
-  console.log('Configures the designated DEV test account using hidden terminal prompts.');
-}
+/**
+ * A-12 / 10.2: the shared operator-CLI contract. The surface declares NO flags
+ * and NO positionals, because no argument may ever carry or name a credential;
+ * `--help` and `--print-metadata` answer through the shared parser without
+ * prompting, and any other argument is refused (`CLI_UNKNOWN_ARGUMENT` /
+ * `CLI_UNEXPECTED_POSITIONAL`, exit 2) before this module reads a terminal.
+ */
+/** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
+const CLI_METADATA = {
+  schemaVersion: OPERATOR_CLI_SCHEMA,
+  name: 'auth-configure',
+  entry: 'bin/auth-configure.mjs',
+  purpose: 'Configure the designated DEV test account from hidden terminal prompts. The credential is never accepted as an argument, an inherited environment value, or printed.',
+  group: 'owner-gated',
+  flags: [],
+  json: false,
+  authorization: 'LOCAL_ONLY',
+  artifacts: [],
+};
+
+const cli = defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url });
+if (cli.stop) {
+  // The shared parser answered --help/--print-metadata or refused an argument
+  // (unknown option, unexpected positional); nothing was prompted.
+} else {
 
 /** @param {string} prompt @returns {Promise<string>} */
 function readHidden(prompt) {
@@ -59,13 +81,9 @@ function readHidden(prompt) {
 }
 
 async function main() {
-  const args = process.argv.slice(2);
-  if (args.includes('--help') || args.includes('-h')) {
-    usage();
-    return;
-  }
-  if (args.length > 0) throw new Error('auth:configure accepts no credential or account arguments');
-
+  // R4-18-established pattern: the shared parser above owns argument handling,
+  // so reaching here means the argv was empty (no flags and no positionals are
+  // declared, and anything else was refused).
   /** @type {typeof import('../src/auth/devCredentialProvider')} */
   const provider = loadRuntimeTypeScriptModule('src/auth/devCredentialProvider.ts', { root });
   console.log('target-environment=dev');
@@ -98,3 +116,5 @@ main().catch(() => {
   console.error('auth:configure failed; no credential values were printed');
   process.exitCode = 2;
 });
+
+}
