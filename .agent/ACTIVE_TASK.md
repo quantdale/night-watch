@@ -5,9 +5,10 @@ Phase: FINAL_PRODUCT_COMPLETION_V1
 Title: Final product completion (terminal campaign)
 Status: IN_PROGRESS
 TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1
-TASK_GROUPS_COMPLETE: 1,2,3,4,5,6,7,8,9
+TASK_GROUPS_COMPLETE: 1,2,3,4,5,6,7,8
 TASK_GROUP_NEXT: 10
 TASK_NEXT_ID: 10.2
+TASK_GROUP_DEFERRED: 9.5b
 Task directory: .agent/tasks/nightwatch-final-product-completion-v1
 Starting SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
 Last validated implementation SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
@@ -114,15 +115,14 @@ EXTERNAL CONTACT AUTHORIZED (OD-3 ONLY):
   provider proof run; one npm registry advisory query.
 
 CURRENT STATUS:
-  IN_PROGRESS — PAUSED AT A CLEAN, CANONICAL-ROUTED CHECKPOINT (60/76
-  declared; 12 pending) after the review-4 child campaign closed. The corrective child campaign is CLOSED and
-  archived; the resume-batch-1 session `sess-83d720703401` was released and
-  its worktree removed with `--delete-branch` on 2026-10-01, after exact-head
-  CI went green at `aea15b47` (run 36830613569). This campaign therefore has
-  NO live session, and the canonical checkout is clean at `origin/main`. The
-  bounded review-4 child campaign `nightwatch-final-completion-review4-v1`
-  runs next and routes this campaign back to "M9 task 10.2 remainder
-  (60/76 declared; next bin `auth-configure`)".
+  IN_PROGRESS — RESUMED AT M9 TASK 10.2 REMAINDER (60/76 declared; 12 pending;
+  next bin `auth-configure`). The review-4 child campaign
+  `nightwatch-final-completion-review4-v1` is COMPLETE and archived
+  (`2026-10-01-nightwatch-final-completion-review4-v1`, with spec sync to
+  `openspec/specs/review4-closure/`): all 24 findings dispositioned, exact-head
+  CI run 36855178941 GREEN at `17391ae6`, close-out run 36859209949 GREEN at
+  `e5ec64ca`, `gate:clean` PASS from canonical with no live session. The
+  canonical checkout is clean at `origin/main`.
 
 ALPHAUS DEV / NEXT / PRODUCTION CONTACT:   NOT AUTHORIZED
 AUTHENTICATED ALPHAUS RUNTIME:             NOT AUTHORIZED
