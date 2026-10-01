@@ -117,7 +117,7 @@
       "id": "CORR-PERF-001",
       "path": "docs/CURRENT_STATE.md",
       "oldLineSha256": "sha256:8c6c2e74663d9af7d5c27984",
-      "oldLineExcerpt": "| `TEST_INFRASTRUCTURE_PERFORMANCE_V1_STATUS` | `IN_PROGRESS` — owner-authorized test/gate performance campaign activated from `8dd8b163b567b939b977649d6ba7c371cf230ee6`; W13 remains a frozen read-o",
+      "oldLineExcerpt": "| `TEST_INFRASTRUCTURE_PERFORMANCE_V1_STATUS` | `IN_PROGRESS` \u2014 owner-authorized test/gate performance campaign activated from `8dd8b163b567b939b977649d6ba7c371cf230ee6`; W13 remains a frozen read-o",
       "reason": "The performance campaign close-out advanced its governed status row from IN_PROGRESS to the terminal measured verdict; the campaign body after the status word is unchanged."
     },
     {
@@ -182,6 +182,13 @@
       "oldLineSha256": "sha256:8d04d57e2fdad95f587e92d9",
       "oldLineExcerpt": "| `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA` | the last commit that changed implementation AND was validated | `6b19e428` | Corrections-campaign VC-02..VC-06 validation-spine work: exact skip identities, truthful topology classification...",
       "reason": "Corrections M4 close (2026-09-29): the validated substantive anchor advanced from 6b19e428 to 3c9c1a06 (CF-04 skip declarations + CF-05/FLAKE-002 paced fixture) with exact-head CI run 36552500573 green (all 15 groups) and gate:dev/gate:milestone PASS at the tip; the prose row is reconciled cell-by-cell to the new anchor and the old line is removed, leaving this correction inert."
+    },
+    {
+      "id": "CORR-HEADER-001",
+      "path": "docs/CURRENT_STATE.md",
+      "oldLineSha256": "sha256:e6d26742d036a2ba6d242384",
+      "oldLineExcerpt": "> Durable memory for the next agent/session. Last updated: **2026-09-29**",
+      "reason": "2026-10-01 corrective-child close-out: the machine-checked project-state block advanced the substantive baseline to 027367d9, so the durable-memory header date is bumped to 2026-10-01; the pre-move line is removed in the same commit."
     }
   ]
 }
