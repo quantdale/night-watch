@@ -2,9 +2,9 @@
   "schemaVersion": "nightwatch.ci-block-record.v1",
   "definitionName": "Nightwatch exact-head CI block record (F-02)",
   "note": "The block is RETIRED: GitHub Actions executes the hardening workflow on every push, and the record's top level is the latest observed executed run (D-03 / R2-61). The block-record judgements stay load-bearing as the single CI authority shared by agent:check, project:check and gate:topology; the revisit date keeps the record from going stale. Candidate routes remain recorded with their trade-offs, and the materialised owner route is the restored GitHub-hosted execution.",
-  "runId": "36889920975",
-  "jobId": "110421590611",
-  "observedSha": "f87108992924a7ac9abbdb776ffdff6fdb0ba68e",
+  "runId": "36912796291",
+  "jobId": "110539346332",
+  "observedSha": "6e4c6ee1d5c6b628d20e688d667a8535db939bd8",
   "blockClass": "EXECUTED_TEST_FAILURE",
   "observedDate": "2026-10-01",
   "ownerAction": "None required while the hardening workflow executes on every push; re-observe the next exact-head run and refresh this record before the revisit date.",
@@ -198,6 +198,21 @@
           "class": "SHARED_PARSER_EXIT_CODE",
           "suite": "tests/unit/phase16hCliHandoffHardening.test.ts",
           "detail": "an H01 boundary test pinned the pre-migration module exit code 1 for an unknown subcommand"
+        }
+      ]
+    },
+    {
+      "runId": "36912796291",
+      "jobId": "110539346332",
+      "observedSha": "6e4c6ee1d5c6b628d20e688d667a8535db939bd8",
+      "observedDate": "2026-10-01",
+      "classification": "EXECUTED_TEST_FAILURE",
+      "detail": "BIN_TYPECKECK_CEILING failed: the new checkSharedOperatorParserStructure rule added 2 bin diagnostics (an untyped entry parameter). Repaired forward by typing both parameters; typecheck:bin is PASS at 1412 with every ceiling unchanged.",
+      "defectClasses": [
+        {
+          "class": "BIN_TYPECHECK_RATCHET",
+          "suite": "bin/bin-typecheck.mjs",
+          "detail": "a new hardening rule shipped with 2 implicit-any diagnostics"
         }
       ]
     }

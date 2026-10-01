@@ -224,7 +224,9 @@ export function checkSharedOperatorParserStructure() {
     return;
   }
   const tracked = fs.readdirSync(path.join(root, 'bin')).filter((name) => name.endsWith('.mjs')).map((name) => `bin/${name}`).sort();
-  const declared = new Map(bins.filter((entry) => entry !== null && typeof entry === 'object').map((entry) => [entry.file, entry]));
+  const declared = new Map(bins
+    .filter((/** @type {unknown} */ entry) => entry !== null && typeof entry === 'object')
+    .map((/** @type {Record<string, unknown>} */ entry) => [String(entry.file), entry]));
   const missing = tracked.filter((file) => !declared.has(file));
   if (missing.length > 0) {
     fail(`SHARED_PARSER_STRUCTURE ${missing.length} tracked bin(s) have no registry disposition: ${missing.slice(0, 8).join(', ')}`);
