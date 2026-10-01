@@ -9,7 +9,7 @@ Status: IN_PROGRESS
 TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1
 TASK_GROUPS_COMPLETE: 1,2,3,4,5,6
 TASK_GROUP_NEXT: 7
-TASK_NEXT_ID: 7.1
+TASK_NEXT_ID: 7.3
 Starting SHA: 67eb30981b4bb4d6bb6959b9afee9345938f5750
 Last validated implementation SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
 Last substantive checkpoint SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
@@ -75,13 +75,12 @@ Groups 1-6 are implemented and locally validated; group 7 (close-out) is the nex
 
 ## Exact Next Action
 
-Implement task 7.1: the focused suites, `gate:dev` and `gate:milestone` PASS
-with every registered mutant family DETECTED, then commit. Then 7.2 (the full
-authoritative set), 7.3 (integrate, CI green, release, remove, gate:clean from
-canonical), 7.4 (REPORT with the per-ID disposition table, archival with spec
-sync, route ACTIVE_TASK back to the parent), 7.5 (the DECISIONS session-identity
-correction and the public-CI-artifact record) and 7.6 (the parent group-15
-owner revert-to-private line).
+Implement task 7.3: integrate the validated head (`--expect-head
+<the 40-hex HEAD>`), observe exact-head CI green and record the run, then
+release, `remove --delete-branch` and run `gate:clean` from canonical with no
+live session. Then 7.4 (the REPORT close-out record, the archive with spec sync
+and the route back to the parent), 7.5 and 7.6 are recorded in the same
+close-out commit.
 
 ## Files Changed
 
