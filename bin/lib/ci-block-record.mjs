@@ -104,6 +104,24 @@ export function validateCiBlockRecord(record) {
   if (typeof record.revisitDate !== 'string' || !DATE_RE.test(record.revisitDate)) {
     incomplete('revisitDate must be a YYYY-MM-DD date');
   }
+  // R4-12 / review-4 task 3.3: the TOP LEVEL is the LATEST observation. A
+  // record whose top-level observation is older than one of its recorded
+  // history observations is stale — the newest observation must be promoted,
+  // or a red run silently stops being the record's current fact.
+  let newestHistoryDate = null;
+  for (const entry of Array.isArray(record.history) ? record.history : []) {
+    if (!isObject(entry)) continue;
+    const observedDate = entry.observedDate;
+    if (typeof observedDate === 'string' && DATE_RE.test(observedDate) && (newestHistoryDate === null || observedDate > newestHistoryDate)) {
+      newestHistoryDate = observedDate;
+    }
+  }
+  if (newestHistoryDate !== null && typeof record.observedDate === 'string' && DATE_RE.test(record.observedDate) && record.observedDate < newestHistoryDate) {
+    errors.push({
+      code: 'CI_BLOCK_RECORD_TOP_LEVEL_STALE',
+      detail: `the top-level observation ${record.observedDate} is older than the newest recorded observation ${newestHistoryDate}; promote the newest observation to the top level`,
+    });
+  }
   return { ok: errors.length === 0, errors };
 }
 

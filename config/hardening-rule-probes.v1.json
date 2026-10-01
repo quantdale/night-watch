@@ -1470,6 +1470,56 @@
             "append": "\n<!--probe--> PHASE_8_STATUS: IN_PROGRESS\n"
           }
         ]
+      },
+      {
+        "id": "HC-231",
+        "ops": [
+          {
+            "file": "src/core/source/censusFigureLedger.ts",
+            "search": "  { key: 'CI_STATUS', currentValue: DERIVED_FROM_CI_OBSERVATION, derivedFrom: 'CI_BLOCK_RECORD',",
+            "replace": "  { key: 'CI_STATUS', currentValue: 'NOT_OBSERVED',"
+          }
+        ]
+      },
+      {
+        "id": "HC-232",
+        "ops": [
+          {
+            "file": "bin/lib/hardening/rules/documentation.mjs",
+            "search": "  const field = /^CI_STATUS:[ \\t]*(\\S+)[ \\t]*$/m.exec(block[1]);",
+            "replace": "  const field = null;"
+          }
+        ]
+      },
+      {
+        "id": "HC-233",
+        "ops": [
+          {
+            "file": "bin/lib/hardening/rules/documentation.mjs",
+            "search": "  const vocabulary = new Set(['NOT_OBSERVED', 'NO_STEPS_EXTERNAL_NON_EVIDENCE', 'EXECUTED_PASS', 'EXECUTED_FAIL']);",
+            "replace": "  const vocabulary = new Set(['NOT_OBSERVED']);"
+          }
+        ]
+      },
+      {
+        "id": "HC-234",
+        "ops": [
+          {
+            "file": "bin/lib/hardening/rules/documentation.mjs",
+            "search": "  return value;\n}",
+            "replace": "  return 'NOT_OBSERVED';\n}"
+          }
+        ]
+      },
+      {
+        "id": "HC-235",
+        "ops": [
+          {
+            "file": "bin/lib/hardening/rules/documentation.mjs",
+            "search": "    } else if (entry.derivedFromCiObservation) {",
+            "replace": "    } else if (false) {"
+          }
+        ]
       }
     ],
     "checkRuleEngineSoundness": [
@@ -2426,7 +2476,7 @@
         "ops": [
           {
             "file": "bin/lib/checkpoint-role.mjs",
-            "search": "if (guarded.size === 0) return [...new Set(violations)];",
+            "search": "if (guarded.size === 0 && archived.size === 0) return [...new Set(violations)];",
             "replace": "if (true) return [...new Set(violations)];"
           }
         ]
@@ -2488,6 +2538,56 @@
             "file": "bin/lib/checkpoint-role.mjs",
             "search": "      const parentRefs = parents.length === 0 ? [null] : parents;",
             "replace": "      const parentRefs = parents.length === 0 ? [null] : [parents[0]];"
+          }
+        ]
+      },
+      {
+        "id": "HC-236",
+        "ops": [
+          {
+            "file": "bin/lib/checkpoint-role.mjs",
+            "search": "  if (before === null || after === null) return false;\n  if (before !== after) return false;\n  // The source must be GONE at this commit: a copy is not a move.\n  return blobAt(root, commit, source) === null;",
+            "replace": "  if (before === null || after === null) return false;\n  return true;"
+          }
+        ]
+      },
+      {
+        "id": "HC-237",
+        "ops": [
+          {
+            "file": "bin/lib/checkpoint-role.mjs",
+            "search": "  const before = blobAt(root, `${commit}^`, source);",
+            "replace": "  const before = blobAt(root, commit, file);"
+          }
+        ]
+      },
+      {
+        "id": "HC-238",
+        "ops": [
+          {
+            "file": "bin/lib/checkpoint-role.mjs",
+            "search": "&& !ARCHIVE_MOVE_PATH_RE.test(file));",
+            "replace": ");"
+          }
+        ]
+      },
+      {
+        "id": "HC-239",
+        "ops": [
+          {
+            "file": "bin/lib/checkpoint-role.mjs",
+            "search": "  if (guarded.size === 0 && archived.size === 0) return [...new Set(violations)];",
+            "replace": "  if (guarded.size === 0) return [...new Set(violations)];"
+          }
+        ]
+      },
+      {
+        "id": "HC-240",
+        "ops": [
+          {
+            "file": "bin/lib/checkpoint-role.mjs",
+            "search": "      if (!archiveMoveHolds(root, commit, file)) violations.push(file);",
+            "replace": "      void file;"
           }
         ]
       }

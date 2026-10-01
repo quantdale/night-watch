@@ -30,7 +30,7 @@ import {
   productionBindingReceiptVerifier,
   stableCanonical,
 } from '../../bin/lib/release-evidence.mjs';
-import { checkpointRoleViolations, correctionPairingViolations, removedLineDigests, removedLineDigestsFromDiff, unpairedCorrectionsInRange } from '../../bin/lib/checkpoint-role.mjs';
+import { archiveMoveHolds, checkpointRoleViolations, correctionPairingViolations, removedLineDigests, removedLineDigestsFromDiff, unpairedCorrectionsInRange } from '../../bin/lib/checkpoint-role.mjs';
 import { classifyCheckpointRange } from '../../bin/lib/checkpoint-range.mjs';
 import { evidenceArtifactExistsAtSha } from '../../bin/lib/evidence-artifact.mjs';
 import { loadReleaseEvidenceBindings, resolveEvidenceShaForSubject } from '../../bin/lib/release-evidence.mjs';
@@ -371,6 +371,47 @@ test.describe('validation lane state', () => {
       });
       expect(rangeClass(withRenameDetection)).toBe('DOCUMENTARY_DESCENDANT');
       expect(rangeClass(withoutRenameDetection)).toBe('SUBSTANTIVE_DESCENDANT');
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('R4-13: an archived change file is documentary only as a byte-identical move', () => {
+    const os = require('node:os') as typeof import('node:os');
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'nw-r413-'));
+    const git = (args: string[]) => spawnSync('git', args, { cwd: root, encoding: 'utf8', shell: false });
+    const write = (file: string, text: string) => {
+      fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
+      fs.writeFileSync(path.join(root, file), text);
+    };
+    try {
+      git(['init', '--quiet', '-b', 'main']);
+      git(['config', 'user.email', 'probe@nightwatch.local']);
+      git(['config', 'user.name', 'probe']);
+      write('openspec/changes/fixture-change/tasks.md', '# tasks\n');
+      git(['add', '--all']);
+      git(['commit', '--quiet', '--no-gpg-sign', '-m', 'seed the change']);
+      const archived = 'openspec/changes/archive/2026-10-01-fixture-change/tasks.md';
+      // A COPY leaves the source in place: substantive.
+      write(archived, '# tasks\n');
+      git(['add', '--all']);
+      git(['commit', '--quiet', '--no-gpg-sign', '-m', 'copy']);
+      const copied = git(['rev-parse', 'HEAD']).stdout!.trim();
+      expect(checkpointRoleViolations(root, [archived], { kind: 'commit', commit: copied })).toEqual([archived]);
+      // A byte-identical MOVE with the source removed in the SAME commit:
+      // documentary.
+      fs.rmSync(path.join(root, 'openspec/changes/fixture-change/tasks.md'));
+      git(['add', '--all']);
+      git(['commit', '--quiet', '--no-gpg-sign', '-m', 'move']);
+      const moved = git(['rev-parse', 'HEAD']).stdout!.trim();
+      expect(archiveMoveHolds(root, moved, archived)).toBe(true);
+      expect(checkpointRoleViolations(root, [archived], { kind: 'commit', commit: moved })).toEqual([]);
+      // An EDIT of the archived file is substantive.
+      write(archived, '# edited after archiving\n');
+      git(['add', '--all']);
+      git(['commit', '--quiet', '--no-gpg-sign', '-m', 'edit the archived file']);
+      const edited = git(['rev-parse', 'HEAD']).stdout!.trim();
+      expect(checkpointRoleViolations(root, [archived], { kind: 'commit', commit: edited })).toEqual([archived]);
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
     }

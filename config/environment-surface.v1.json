@@ -158,6 +158,20 @@
       ]
     },
     {
+      "name": "NIGHTWATCH_PUSH_BEFORE",
+      "purpose": "The exact pre-push tip of a push event (40-hex, or all zeros for a new branch), supplied by the GitHub Actions workflow and forwarded explicitly by the quality gate to its children. The append-only/pushed-range pairing (resolveArchiveDiffBase) uses it so a push is inspected as the pushed commit range instead of the empty merge-base range. Classification input only; never a credential, path or authority.",
+      "requiredIn": [],
+      "shape": {
+        "kind": "string"
+      },
+      "default": null,
+      "secretBearing": false,
+      "consumers": [
+        "bin/quality-gate.mjs",
+        "bin/lib/hardening/rules/documentation.mjs"
+      ]
+    },
+    {
       "name": "NIGHTWATCH_GATE_RECEIPT_PATH",
       "purpose": "Explicit quality-gate receipt destination; honoured only after full path validation.",
       "requiredIn": [],

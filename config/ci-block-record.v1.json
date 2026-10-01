@@ -2,11 +2,11 @@
   "schemaVersion": "nightwatch.ci-block-record.v1",
   "definitionName": "Nightwatch exact-head CI block record (F-02)",
   "note": "The block is RETIRED: GitHub Actions executes the hardening workflow on every push, and the record's top level is the latest observed executed run (D-03 / R2-61). The block-record judgements stay load-bearing as the single CI authority shared by agent:check, project:check and gate:topology; the revisit date keeps the record from going stale. Candidate routes remain recorded with their trade-offs, and the materialised owner route is the restored GitHub-hosted execution.",
-  "runId": "36251410183",
-  "jobId": "108430018660",
-  "observedSha": "d595c7c88bd7d2ab1a39c32fce2f297fcdce28d9",
+  "runId": "36832639979",
+  "jobId": "110272541211",
+  "observedSha": "67eb30981b4bb4d6bb6959b9afee9345938f5750",
   "blockClass": "EXECUTED_PASS",
-  "observedDate": "2026-09-26",
+  "observedDate": "2026-10-01",
   "ownerAction": "None required while the hardening workflow executes on every push; re-observe the next exact-head run and refresh this record before the revisit date.",
   "revisitCondition": "Re-observe each push: refresh runId, jobId, observedSha and observedDate from the latest hardening run, and record any red run with its classification.",
   "revisitDate": "2026-12-31",
@@ -46,6 +46,98 @@
       "observedDate": "2026-09-26",
       "classification": "EXECUTED_PASS",
       "detail": "first exact-head run observed green after the M3 spine repair"
+    },
+    {
+      "runId": "36537649045",
+      "jobId": "108926734997",
+      "observedSha": "491b5ef9b4ba5f393f002ce6e3c0b1aee253e3a2",
+      "observedDate": "2026-09-29",
+      "classification": "EXECUTED_TEST_FAILURE",
+      "detail": "SEMANTIC_COMPATIBILITY failed with exactly one location, tests/unit/observerSemanticLedger.test.ts:138:UNCLASSIFIED (the ledger-overflow loop collided with the bounded body-read acquisition gate); repaired forward. R4-12 recorded this run, which the record had omitted.",
+      "defectClasses": [
+        {
+          "class": "BOUNDED_ACQUISITION_COLLISION",
+          "suite": "tests/unit/observerSemanticLedger.test.ts",
+          "detail": "the 550-request overflow loop assumed every response body is captured; a saturated acquisition gate correctly refuses a read"
+        }
+      ]
+    },
+    {
+      "runId": "36596242188",
+      "jobId": "108940112256",
+      "observedSha": "88f8eaf7f87eb333685d23900ae0688db40af80f",
+      "observedDate": "2026-09-29",
+      "classification": "EXECUTED_TEST_FAILURE",
+      "detail": "HARDENING_PROBES failed (TEST_FAILURE) in run 36596242188; repaired forward. R4-12 recorded this run, which the record had omitted.",
+      "defectClasses": [
+        {
+          "class": "MUTATION_PROBE_UNDETECTED",
+          "suite": "bin/hardening-check.mjs --probe-campaign",
+          "detail": "the probe campaign reported an undetected member; repaired by the following commits"
+        }
+      ]
+    },
+    {
+      "runId": "36787018515",
+      "jobId": "110110217144",
+      "observedSha": "673e2ddbf28b7013aef04ff14d9058d71ee9f051",
+      "observedDate": "2026-09-30",
+      "classification": "EXECUTED_TEST_FAILURE",
+      "detail": "SYNTHETIC_CAMPAIGN failed (TEST_FAILURE) and the SHA-bound topology artifact was never produced (the TOPOLOGY group is ordered after it). R4-12 recorded this run, which the record had omitted.",
+      "defectClasses": [
+        {
+          "class": "SYNTHETIC_CAMPAIGN_TEST_FAILURE",
+          "suite": "SYNTHETIC_CAMPAIGN",
+          "detail": "the synthetic campaign group failed its shard bucket; repaired forward"
+        }
+      ]
+    },
+    {
+      "runId": "36806004712",
+      "jobId": "110243796114",
+      "observedSha": "a408d31bc37d6ed59ed05d005c5c97ccbe4af68b",
+      "observedDate": "2026-10-01",
+      "classification": "EXECUTED_TEST_FAILURE",
+      "detail": "HARDENING failed (the CURRENT_STATE header date predated the change and a governed status word disagreed with the ledger); repaired forward at e97b38aa. This is the R4-13 breach: the close-out shipped without a local hardening:check.",
+      "defectClasses": [
+        {
+          "class": "HARDENING_STRUCTURAL_INVARIANT",
+          "suite": "bin/hardening-check.mjs",
+          "detail": "checkDocumentationFreshness (header date) and checkGovernedStatusWords (CI_STATUS literal) failed together"
+        }
+      ]
+    },
+    {
+      "runId": "36806699016",
+      "jobId": "110245202199",
+      "observedSha": "e97b38aaeea500ede1e9862b656b787440978c79",
+      "observedDate": "2026-10-01",
+      "classification": "EXECUTED_PASS",
+      "detail": "repair of run 36806004712; exact-head CI green at the repair tip"
+    },
+    {
+      "runId": "36808189880",
+      "jobId": "110266119590",
+      "observedSha": "07dd950672d82b5f106a16d42a59b40822272e70",
+      "observedDate": "2026-10-01",
+      "classification": "EXECUTED_PASS",
+      "detail": "M9 10.2 resume batch 1 record (documentation-only descendant of the substantive anchor)"
+    },
+    {
+      "runId": "36809415911",
+      "jobId": "110268933853",
+      "observedSha": "ce289948aa6f2ec8edf4439c39cbe72593149074",
+      "observedDate": "2026-10-01",
+      "classification": "EXECUTED_PASS",
+      "detail": "the review-4 validated range tip (review-4 validated b9306626..ce289948)"
+    },
+    {
+      "runId": "36830613569",
+      "jobId": "110294555976",
+      "observedSha": "aea15b47f7f0473626eefb9e7619460b9cbd60af",
+      "observedDate": "2026-10-01",
+      "classification": "EXECUTED_PASS",
+      "detail": "parent pause checkpoint (continuity sync) green before the parent session was released"
     }
   ],
   "routeSelection": {

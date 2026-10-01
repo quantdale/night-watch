@@ -377,7 +377,12 @@ export function checkPhase23QualityGate() {
     fail('quality-gate runner must require the topology certifying flag to be recorded');
   }
   if (/shell\s*:\s*true|stdio\s*:\s*['"]inherit['"]|(?<!\.)\bexec(?:File)?\s*\(/.test(runner)) fail('quality-gate runner exposes shell-capable or unbounded child execution');
-  if (!/NIGHTWATCH_STORAGE_STATE/.test(runnerCode) || !/GITHUB_TOKEN/.test(runnerCode) || !/environment\.TZ\s*=\s*['"]UTC['"]/.test(runnerCode)) fail('quality-gate runner does not sanitize credentials and host behavior');
+  // R4-10 / review-4 task 3.1: the child-environment construction moved into
+  // bin/lib/gate-child-environment.mjs so it is testable in isolation; the
+  // sanitisation invariants are asserted there and the gate keeps its own.
+  const gateChildEnvCode = read('bin/lib/gate-child-environment.mjs');
+  if (!/NIGHTWATCH_STORAGE_STATE/.test(gateChildEnvCode) || !/GITHUB_TOKEN/.test(gateChildEnvCode) || !/environment\.TZ\s*=\s*['"]UTC['"]/.test(gateChildEnvCode)) fail('quality-gate runner does not sanitize credentials and host behavior');
+  if (!/buildGateChildEnvironment\(process\.env, \{ mode, commandKey \}\)/.test(runnerCode)) fail('quality-gate runner no longer builds its child environment through the extracted builder');
   if (!/filePattern/.test(specCode) || !/QUALITY_GATE_UNKNOWN_COMMAND/.test(specCode) || !/QUALITY_GATE_DEPENDENCY_ORDER_INVALID/.test(specCode)) fail('quality-gate spec validator lacks fixed command/dependency fail-closed checks');
   if (!/shell=false|shell=false|spawnSync/.test(semanticCode) || !/SEMANTIC_COMPATIBILITY_PHASE_OMITTED/.test(semanticCode)) fail('semantic compatibility runner lacks bounded argv/phase omission checks');
   // VC-06: cleanliness is verified through measureClean (whose status calls
@@ -1157,6 +1162,36 @@ function verifyCheckpointRoleClassifierFixture() {
     const pairingViolations = checkpointRoleViolations(directory, [DOCUMENT_ROLE_CORRECTIONS_FILE], { kind: 'commit', commit: unpairedCorrections });
     if (pairingViolations.length === 0) {
       fail('CHECKPOINT_ROLE_GUARD_STUBBED an unpaired correction append was classified documentary (the classifier no longer pairs corrections)');
+    }
+    // R4-13 / review-4 task 3.4: an `openspec/changes/archive/<dated>-<change>/`
+    // path is documentary ONLY as a byte-identical move of the named change's
+    // file in the same commit. A copy (source still present) or an edit is
+    // substantive.
+    fs.mkdirSync(path.join(directory, 'openspec/changes/fixture-change'), { recursive: true });
+    fs.writeFileSync(path.join(directory, 'openspec/changes/fixture-change/tasks.md'), '# tasks\n');
+    run(['add', '.']);
+    run(['commit', '--quiet', '--no-gpg-sign', '-m', 'seed the change to archive']);
+    fs.mkdirSync(path.join(directory, 'openspec/changes/archive/2026-10-01-fixture-change'), { recursive: true });
+    fs.copyFileSync(path.join(directory, 'openspec/changes/fixture-change/tasks.md'), path.join(directory, 'openspec/changes/archive/2026-10-01-fixture-change/tasks.md'));
+    run(['add', '.']);
+    run(['commit', '--quiet', '--no-gpg-sign', '-m', 'copy (the source still exists)']);
+    const copied = (run(['rev-parse', 'HEAD']).stdout ?? '').trim();
+    if (checkpointRoleViolations(directory, ['openspec/changes/archive/2026-10-01-fixture-change/tasks.md'], { kind: 'commit', commit: copied }).length === 0) {
+      fail('CHECKPOINT_ROLE_GUARD_STUBBED an archive COPY (the source still present) was classified documentary');
+    }
+    fs.rmSync(path.join(directory, 'openspec/changes/fixture-change/tasks.md'));
+    run(['add', '.']);
+    run(['commit', '--quiet', '--no-gpg-sign', '-m', 'move (source removed, bytes identical)']);
+    const moved = (run(['rev-parse', 'HEAD']).stdout ?? '').trim();
+    if (checkpointRoleViolations(directory, ['openspec/changes/archive/2026-10-01-fixture-change/tasks.md'], { kind: 'commit', commit: moved }).length !== 0) {
+      fail('CHECKPOINT_ROLE_GUARD_STUBBED a byte-identical archive MOVE was classified substantive');
+    }
+    fs.writeFileSync(path.join(directory, 'openspec/changes/archive/2026-10-01-fixture-change/tasks.md'), '# edited after archiving\n');
+    run(['add', '.']);
+    run(['commit', '--quiet', '--no-gpg-sign', '-m', 'edit the archived file']);
+    const edited = (run(['rev-parse', 'HEAD']).stdout ?? '').trim();
+    if (checkpointRoleViolations(directory, ['openspec/changes/archive/2026-10-01-fixture-change/tasks.md'], { kind: 'commit', commit: edited }).length === 0) {
+      fail('CHECKPOINT_ROLE_GUARD_STUBBED an EDIT of an archived file was classified documentary');
     }
     // The merge hook and the fail-closed touched-null branch stay present: a
     // merge must be judged against EVERY parent, and an unreadable diff must

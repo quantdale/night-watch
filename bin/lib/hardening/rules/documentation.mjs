@@ -32,6 +32,7 @@ import {
   loadReleaseEvidenceBindings,
 } from '../../release-evidence.mjs';
 import { removedLineDigestsFromDiff, unpairedCorrectionsInRange } from '../../checkpoint-role.mjs';
+import { collectCiBlockStale, validateCiBlockRecord } from '../../ci-block-record.mjs';
 
 /**
  * NW-08. The gate had no mechanical relationship to the set of tests that
@@ -920,13 +921,18 @@ export function parseGovernedStatusLedger(rule) {
         currentValue: match[2] ?? match[3],
         bare: match[2] === undefined,
         derivedFromActiveTask: tail.includes("derivedFrom: 'ACTIVE_TASK_STATUS'"),
+        // R4-11 / review-4 task 3.2: the CI status word is derived from the
+        // project-state block / CI block record, never a literal that would
+        // force the project truth to be reverted to fit it.
+        derivedFromCiObservation: tail.includes("derivedFrom: 'CI_BLOCK_RECORD'"),
         requiredInReadme: tail.includes('requiredInReadme: true'),
       };
     });
   for (const entry of entries) {
     if (!entry.bare) continue;
     if (entry.currentValue === 'DERIVED_FROM_ACTIVE_TASK' && entry.derivedFromActiveTask) continue;
-    fail(`${rule} governed status key ${entry.key} uses a non-literal currentValue that is not the derived active-task sentinel`);
+    if (entry.currentValue === 'DERIVED_FROM_CI_OBSERVATION' && entry.derivedFromCiObservation) continue;
+    fail(`${rule} governed status key ${entry.key} uses a non-literal currentValue that is not a declared derived sentinel`);
     return null;
   }
   if (entries.length < 60) {
@@ -937,17 +943,74 @@ export function parseGovernedStatusLedger(rule) {
   for (const entry of entries) {
     if (seen.has(entry.key)) fail(`${rule} governed status key ${entry.key} is declared more than once`);
     seen.add(entry.key);
-    if (!entry.derivedFromActiveTask) continue;
     // R2-N6: the task lifecycle value is derived from the active task at
     // check time, so opening or closing a task never edits src/.
-    const derived = deriveActiveTaskStatus();
-    if (derived === null) {
-      fail(`${rule} cannot derive ${entry.key} from .agent/ACTIVE_TASK.md; a derived key must not fall back to a literal`);
-      return null;
+    if (entry.derivedFromActiveTask) {
+      const derived = deriveActiveTaskStatus();
+      if (derived === null) {
+        fail(`${rule} cannot derive ${entry.key} from .agent/ACTIVE_TASK.md; a derived key must not fall back to a literal`);
+        return null;
+      }
+      entry.currentValue = derived;
+    } else if (entry.derivedFromCiObservation) {
+      const derived = deriveCiObservationStatus();
+      if (derived === null) {
+        fail(`${rule} cannot derive ${entry.key} from the project-state block and the CI block record; a derived key must not fall back to a literal`);
+        return null;
+      }
+      entry.currentValue = derived;
     }
-    entry.currentValue = derived;
   }
   return entries;
+}
+
+/**
+ * R4-11 / review-4 task 3.2 — the governed CI status word, DERIVED at check
+ * time. The authority is the machine-checked project-state block in
+ * `docs/CURRENT_STATE.md` (whose CI fields project:check validates against the
+ * live Git state), cross-checked against `config/ci-block-record.v1.json`:
+ * the record must exist, be schema-valid and be current, and the block's value
+ * must be in the closed CI vocabulary. Fail closed: an unreadable block, an
+ * unknown word, an invalid or stale record, and a claim/observation
+ * disagreement all return null rather than guessing a literal.
+ * @returns {string | null}
+ */
+export function deriveCiObservationStatus() {
+  let currentState;
+  try {
+    currentState = readDataFile('docs/CURRENT_STATE.md');
+  } catch {
+    return null;
+  }
+  const block = /```[^\n]*\nPROJECT_STATE_PROTOCOL_VERSION: nightwatch\.project-state\.v2\n([\s\S]*?)```/m.exec(String(currentState));
+  if (block === null) return null;
+  const field = /^CI_STATUS:[ \t]*(\S+)[ \t]*$/m.exec(block[1]);
+  if (field === null) return null;
+  const value = String(field[1]).trim();
+  const vocabulary = new Set(['NOT_OBSERVED', 'NO_STEPS_EXTERNAL_NON_EVIDENCE', 'EXECUTED_PASS', 'EXECUTED_FAIL']);
+  if (!vocabulary.has(value)) return null;
+  // The record is the CI authority: it must exist, validate and be current.
+  let record;
+  try {
+    record = JSON.parse(readDataFile('config/ci-block-record.v1.json'));
+  } catch {
+    return null;
+  }
+  const completeness = validateCiBlockRecord(record);
+  if (!completeness.ok) return null;
+  if (collectCiBlockStale(record, new Date().toISOString().slice(0, 10)).length > 0) return null;
+  // An execution claim must carry a 40-hex observed == executed pair; a
+  // non-observation must not claim one.
+  const observed = /^CI_OBSERVED_SHA:[ \t]*(\S+)[ \t]*$/m.exec(block[1])?.[1] ?? '';
+  const executed = /^CI_EXECUTED_SHA:[ \t]*(\S+)[ \t]*$/m.exec(block[1])?.[1] ?? '';
+  if (value === 'EXECUTED_PASS' || value === 'EXECUTED_FAIL') {
+    if (!/^[0-9a-f]{40}$/i.test(observed) || observed !== executed) return null;
+    if (value === 'EXECUTED_PASS' && record.blockClass !== 'EXECUTED_PASS') return null;
+    if (value === 'EXECUTED_FAIL' && !['EXECUTED_TEST_FAILURE', 'EXECUTED_INFRA_FAILURE', 'EXECUTED_PASS'].includes(record.blockClass)) return null;
+  } else if (observed !== 'NONE' || executed !== 'NONE') {
+    return null;
+  }
+  return value;
 }
 
 export function checkGovernedStatusWords() {

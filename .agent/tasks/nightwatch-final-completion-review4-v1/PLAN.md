@@ -94,7 +94,7 @@ an observed green exact-head CI at the tip that contains its close-out.
 - Objective: record CI truth instead of bending it.
 - Acceptance: the pushed-range pairing runs in CI; `CI_STATUS` is derived;
   every red run and repair is recorded; the close-out procedure is enforced.
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE (2026-10-01; implemented, exact-head CI pending)
 
 ### M4 — Product correctness (group 4: 4.1-4.5)
 

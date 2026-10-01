@@ -199,6 +199,13 @@ export const STATUS_LEDGER_VERSION = 'nightwatch.status-word-ledger.v1' as const
  */
 export const DERIVED_FROM_ACTIVE_TASK = 'DERIVED_FROM_ACTIVE_TASK' as const;
 
+/**
+ * R4-11 / review-4 task 3.2 — a governed status whose value is OBSERVED, not
+ * authored: the exact-head CI status word is derived at check time from the
+ * machine-checked project-state block and the CI block record.
+ */
+export const DERIVED_FROM_CI_OBSERVATION = 'DERIVED_FROM_CI_OBSERVATION' as const;
+
 export const GOVERNED_STATUS_KINDS = ['PROJECT', 'PHASE', 'LANE_CLASS', 'LIVE_STATE', 'CAMPAIGN_DISPOSITION'] as const;
 export type GovernedStatusKind = (typeof GOVERNED_STATUS_KINDS)[number];
 
@@ -212,11 +219,15 @@ export interface GovernedStatusKey {
    */
   readonly currentValue: string;
   /**
-   * The one derivation source this ledger accepts: the active task identity
-   * preamble (`Status:` in `.agent/ACTIVE_TASK.md`). Present only on entries
-   * whose `currentValue` is {@link DERIVED_FROM_ACTIVE_TASK}.
+   * The derivation source this ledger accepts, present only on an entry whose
+   * `currentValue` is a derived sentinel:
+   *   - `ACTIVE_TASK_STATUS`: the active task identity preamble (`Status:` in
+   *     `.agent/ACTIVE_TASK.md`), for {@link DERIVED_FROM_ACTIVE_TASK}.
+   *   - `CI_BLOCK_RECORD`: the machine-checked project-state block's CI_STATUS
+   *     field, cross-checked against `config/ci-block-record.v1.json`, for
+   *     {@link DERIVED_FROM_CI_OBSERVATION} (R4-11).
    */
-  readonly derivedFrom?: 'ACTIVE_TASK_STATUS';
+  readonly derivedFrom?: 'ACTIVE_TASK_STATUS' | 'CI_BLOCK_RECORD';
   readonly kind: GovernedStatusKind;
   /** Where the current value is established. Prose for the reader; never parsed. */
   readonly establishedBy: string;
@@ -296,7 +307,12 @@ export const GOVERNED_STATUS_KEYS: readonly GovernedStatusKey[] = Object.freeze(
   { key: 'FC_1_STATUS', currentValue: 'COMPLETE', kind: 'PROJECT', establishedBy: 'docs/CURRENT_STATE.md current status table' },
   { key: 'ENVIRONMENTAL_LANE_STATUS', currentValue: 'NO_RESIDUAL_FLAKE_REPRODUCED', kind: 'LANE_CLASS', establishedBy: 'docs/CURRENT_STATE.md current status table' },
   { key: 'PROJECT_COMPLETION_STATUS', currentValue: 'OPERATIONALLY_ACCEPTED', kind: 'PROJECT', establishedBy: 'docs/CURRENT_STATE.md current status table / nightwatch.project-state.v2', requiredInReadme: true },
-  { key: 'CI_STATUS', currentValue: 'NOT_OBSERVED', kind: 'PROJECT', establishedBy: 'docs/CURRENT_STATE.md current status table / nightwatch.project-state.v2' },
+  // R4-11 / review-4 task 3.2: DERIVED at check time from the project-state
+  // block's own CI_STATUS field (cross-checked against
+  // config/ci-block-record.v1.json). A literal here was not an observation: it
+  // forced the project truth to be reverted to NOT_OBSERVED so the guard would
+  // pass, which is truth bent to fit a guard.
+  { key: 'CI_STATUS', currentValue: DERIVED_FROM_CI_OBSERVATION, derivedFrom: 'CI_BLOCK_RECORD', kind: 'PROJECT', establishedBy: 'docs/CURRENT_STATE.md nightwatch.project-state.v2 CI_STATUS field + config/ci-block-record.v1.json (derived at check time; no literal)' },
   { key: 'AUTH_STATUS', currentValue: 'VALID', kind: 'PROJECT', establishedBy: 'docs/CURRENT_STATE.md current status table' },
   { key: 'REMOTE_CI_STATUS', currentValue: 'CONFIRMED_PASS_AT_HARDENING_CLOSURE', kind: 'PROJECT', establishedBy: 'docs/CURRENT_STATE.md current status table' },
   { key: 'PROJECT_VERDICT_EFFECT', currentValue: 'PRESERVE', kind: 'CAMPAIGN_DISPOSITION', establishedBy: 'docs/CURRENT_STATE.md current status table' },

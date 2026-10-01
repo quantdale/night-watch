@@ -4,6 +4,7 @@
 // fixed command keys. No runtime string is passed to a shell.
 
 import fs from 'node:fs';
+import { buildGateChildEnvironment } from './lib/gate-child-environment.mjs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import os from 'node:os';
@@ -39,42 +40,8 @@ const CLI_METADATA = {
 const timeoutMs = { SHORT: 120_000, MEDIUM: 600_000, LONG: 1_200_000 };
 const packageManager = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 const nodeExecutable = process.execPath;
-const FORBIDDEN_ENVIRONMENT_KEYS = Object.freeze([
-  'NIGHTWATCH_STORAGE_STATE', 'NIGHTWATCH_AUTH_FILE', 'NIGHTWATCH_OWNER_FINDINGS',
-  'GITHUB_TOKEN', 'GH_TOKEN', 'AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY',
-  'AWS_SESSION_TOKEN', 'GOOGLE_APPLICATION_CREDENTIALS', 'CLOUDSDK_AUTH_ACCESS_TOKEN',
-  // The receipt destination belongs to THIS gate run. A child inheriting it
-  // could overwrite the parent's authoritative receipt with its own.
-  GATE_RECEIPT_PATH_ENV,
-]);
-
-function canonical(value) {
-  if (value === null || typeof value !== 'object') return JSON.stringify(value);
-  if (Array.isArray(value)) return `[${value.map(canonical).join(',')}]`;
-  return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${canonical(value[key])}`).join(',')}}`;
-}
-
-function sha256(value) {
-  return crypto.createHash('sha256').update(value, 'utf8').digest('hex');
-}
-
 function safeChildEnvironment(mode, commandKey = null) {
-  const environment = buildChildEnvironment(process.env, {
-    NIGHTWATCH_ENV: 'local',
-    NIGHTWATCH_GATE_ENVIRONMENT: mode.toUpperCase(),
-    // F-PERF-1: attribute this group's Playwright timing document to the group
-    // that produced it. The reporter sanitizes the label itself.
-    ...(typeof commandKey === 'string' && commandKey.length > 0
-      ? { NIGHTWATCH_TIMING_LANE: commandKey.toLowerCase().replace(/_+/g, '-') }
-      : {}),
-  });
-  environment.TZ = 'UTC';
-  environment.LC_ALL = 'C';
-  environment.LANG = 'C';
-  environment.NO_COLOR = '1';
-  environment.NIGHTWATCH_HEADED = '0';
-  for (const key of FORBIDDEN_ENVIRONMENT_KEYS) delete environment[key];
-  return environment;
+  return buildGateChildEnvironment(process.env, { mode, commandKey });
 }
 
 function readJson(file) {

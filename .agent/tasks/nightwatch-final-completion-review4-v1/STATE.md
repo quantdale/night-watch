@@ -7,9 +7,9 @@ Phase: COMPLETION_REVIEW4_V1
 CHILD OF: nightwatch-final-product-completion-v1
 Status: IN_PROGRESS
 TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1
-TASK_GROUPS_COMPLETE: 1,2
-TASK_GROUP_NEXT: 3
-TASK_NEXT_ID: 3.1
+TASK_GROUPS_COMPLETE: 1,2,3
+TASK_GROUP_NEXT: 4
+TASK_NEXT_ID: 4.1
 Starting SHA: 67eb30981b4bb4d6bb6959b9afee9345938f5750
 Last validated implementation SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
 Last substantive checkpoint SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
@@ -50,15 +50,13 @@ sync, and ACTIVE_TASK routed back to the parent at "M9 task 10.2 remainder
 
 ## Current Milestone
 
-group 3 — CI truth, tasks 3.1-3.4: pass `NIGHTWATCH_PUSH_BEFORE` explicitly to
-the HARDENING child and declare it in environment-surface with a wiring test
-(3.1); derive the `CI_STATUS` status word from the project-state block /
-ci-block-record instead of a literal and restore the truthful CURRENT_STATE CI
-fields at the correct anchor (3.2); record every red run and its repair in
-`config/ci-block-record.v1.json` history with an observed-run staleness check
-(3.3); and enforce the close-out procedure (3.4).
-Groups 1 and 2 are COMPLETE (implemented; CI pending): certification soundness
-(1.1-1.8) and guard robustness (2.1-2.2).
+group 4 — Product correctness, tasks 4.1-4.5: carry `captureFailureCounts`
+into the main-path journey evidence, its manifest entry and journey event
+(4.1); make proxy liveness tolerate transient misses with declared constants
+(4.2); restore the VC-01 required list (4.3); run real Prettier in a CI lane
+for the formatter policy (4.4); accurate `ai-local-canary` help (4.5).
+Groups 1-3 are COMPLETE (implemented; CI pending): certification soundness
+(1.1-1.8), guard robustness (2.1-2.2) and CI truth (3.1-3.4).
 
 ## Completed Milestones
 
@@ -69,16 +67,17 @@ Groups 1 and 2 are COMPLETE (implemented; CI pending): certification soundness
 
 ## Work In Progress
 
-Groups 1 and 2 are implemented and locally validated; group 3 (CI truth) is the next unit of work. Nothing is uncommitted.
+Groups 1-3 are implemented and locally validated; group 4 (product correctness) is the next unit of work.
 
 ## Exact Next Action
 
-Implement task 3.1 (R4-10): pass `NIGHTWATCH_PUSH_BEFORE` explicitly to the
-HARDENING child from `bin/quality-gate.mjs`, declare it in
-`config/environment-surface.v1.json`, and add a wiring test proving
-`resolveArchiveDiffBase` receives it under `gate:ci` (it is currently stripped
-by `buildChildEnvironment`, so the CI pushed-range pairing never runs and the
-merge-base range is empty). Then 3.2, 3.3 and 3.4 in order.
+Implement task 4.1 (R4-14): carry `captureFailureCounts` (including
+BODY_READ_ACQUISITION_BOUND) into the main journey path's evidence,
+`addManifestEntry('journeyEvidence')` and the journey event, and into the
+auth-invalid manifest entry, and assert the RECORDED summary rather than the
+observer. Then 4.2 (proxy liveness threshold + deadline, FLAKE-003 correction
+and the load re-run), 4.3 (VC-01 list), 4.4 (formatter policy) and 4.5
+(`ai-local-canary` help).
 
 ## Files Changed
 
@@ -90,6 +89,15 @@ merge-base range is empty). Then 3.2, 3.3 and 3.4 in order.
 
 ## Validation Ledger
 
+- 2026-10-01 — GROUP 3 (CI truth). `npm run hardening:check` PASS;
+  `npm run typecheck` clean; `node bin/hardening-check.mjs --probe-campaign`
+  rules=93 probes=235 detected=235 undetected=0; focused suites green
+  (`phase23QualityGate` 16/16 with the push-before wiring, `ciBlockRecord`
+  19/19 with the top-level staleness and the five recorded red runs,
+  `productionCompletionLaneState` 29/29 with the R4-13 archive-move guard);
+  `agent:check` PASS (85 warnings); `project:check` refuses only on
+  PROJECT_STATE_CHECKOUT_DIRTY before the commit, and reports the exact-head CI
+  condition honestly UNMET with `TOPOLOGY_RECEIPT_ABSENT` (OD-6b).
 - 2026-10-01 — GROUP 1 (certification soundness) and GROUP 2 (guard
   robustness). `npm run hardening:check` PASS; `npm run typecheck` clean;
   `node bin/hardening-check.mjs --probe-campaign` rules=93 probes=230

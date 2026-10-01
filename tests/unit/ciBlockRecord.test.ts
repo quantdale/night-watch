@@ -61,6 +61,34 @@ test.describe('CI block record completeness and staleness', () => {
     expect(stale[0]!.ownerAction).toBe(RECORD.ownerAction);
     expect(collectCiBlockStale(record({ revisitDate: '2026-12-01' }), '2026-09-12')).toEqual([]);
   });
+
+  // R4-12 / review-4 task 3.3 — the top level is the LATEST observation. A red
+  // run recorded in history whose observation is NEWER than the top level
+  // means the record was never refreshed, so the record silently stopped
+  // describing current CI truth.
+  test('a top level older than its newest recorded observation is CI_BLOCK_RECORD_TOP_LEVEL_STALE', () => {
+    const stale = { ...RECORD, observedDate: '2026-09-01', history: [...RECORD.history, { runId: '1', jobId: '2', observedSha: SHA_A, observedDate: '2026-09-15', classification: 'EXECUTED_TEST_FAILURE' }] };
+    expect(validateCiBlockRecord(stale).ok).toBe(false);
+    expect(validateCiBlockRecord(stale).errors.map((entry) => entry.code)).toContain('CI_BLOCK_RECORD_TOP_LEVEL_STALE');
+    // The shipped record IS refreshed: its top level is the newest observation.
+    expect(validateCiBlockRecord(RECORD).errors.map((entry) => entry.code)).not.toContain('CI_BLOCK_RECORD_TOP_LEVEL_STALE');
+    const newest = RECORD.history.map((entry: { observedDate: string }) => entry.observedDate).sort().at(-1);
+    expect(RECORD.observedDate >= newest).toBe(true);
+  });
+
+  // R4-12: the red runs the review named are recorded, with their repair runs.
+  test('the five review-4 red runs and their repairs are all recorded', () => {
+    const runIds = new Set(RECORD.history.map((entry: { runId: string }) => entry.runId));
+    for (const runId of ['36537649045', '36596242188', '36787018515', '36806004712', '36806699016']) {
+      expect(runIds.has(runId), `run ${runId} is not recorded`).toBe(true);
+    }
+    const reds = RECORD.history.filter((entry: { classification: string }) => entry.classification !== 'EXECUTED_PASS');
+    for (const red of reds) {
+      const classified = Array.isArray(red.defectClasses) && red.defectClasses.length > 0;
+      const detailed = typeof red.detail === 'string' && red.detail.length >= 20;
+      expect(classified || detailed, `red run ${red.runId} carries neither a defect class nor a detail`).toBe(true);
+    }
+  });
 });
 
 test.describe('substitutes may never set CI_EXECUTED_SHA', () => {

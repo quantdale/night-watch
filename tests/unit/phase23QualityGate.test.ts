@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { test, expect } from '@playwright/test';
+import { buildGateChildEnvironment } from '../../bin/lib/gate-child-environment.mjs';
 import {
   QUALITY_GATE_COMMAND_KEYS,
   QUALITY_GATE_DEFINITION,
@@ -187,6 +188,45 @@ test.describe('HARDENING_PROBES is executed by the authoritative gate', () => {
     expect(install).toBeDefined();
     expect(install).toContain('--ignore-scripts');
     expect(install).toContain('ui/control-center');
+  });
+
+  // R4-10 / review-4 task 3.1 — NIGHTWATCH_PUSH_BEFORE must reach the child that
+  // runs the pushed-range pairing. The child-environment allowlist stripped it,
+  // so `resolveArchiveDiffBase` fell back to the empty merge-base range in CI
+  // and the append-only archive pairing never ran on a push.
+  test('the push-before tip is forwarded to gate children and consumed by the archive diff base', () => {
+    const head = spawnSync('git', ['-C', ROOT, 'rev-parse', 'HEAD'], { cwd: ROOT, encoding: 'utf8' }).stdout?.trim() ?? '';
+    const before = spawnSync('git', ['-C', ROOT, 'rev-parse', 'HEAD~1'], { cwd: ROOT, encoding: 'utf8' }).stdout?.trim() ?? '';
+    expect(head).toMatch(/^[0-9a-f]{40}$/);
+    expect(before).toMatch(/^[0-9a-f]{40}$/);
+    const previous = process.env['NIGHTWATCH_PUSH_BEFORE'];
+    try {
+      // (a) the gate forwards it EXPLICITLY to a HARDENING child.
+      process.env['NIGHTWATCH_PUSH_BEFORE'] = before;
+      const forwarded = buildGateChildEnvironment(process.env, { mode: 'ci', commandKey: 'HARDENING_PROBES' });
+      expect(forwarded['NIGHTWATCH_PUSH_BEFORE']).toBe(before);
+      expect(forwarded['NIGHTWATCH_GATE_ENVIRONMENT']).toBe('CI');
+      // The forwarding is shape-validated: a malformed tip is never passed on.
+      process.env['NIGHTWATCH_PUSH_BEFORE'] = 'not-a-sha';
+      expect(buildGateChildEnvironment(process.env, { mode: 'ci', commandKey: 'HARDENING_PROBES' })['NIGHTWATCH_PUSH_BEFORE']).toBeUndefined();
+      delete process.env['NIGHTWATCH_PUSH_BEFORE'];
+      expect(buildGateChildEnvironment(process.env, { mode: 'ci', commandKey: 'HARDENING_PROBES' })['NIGHTWATCH_PUSH_BEFORE']).toBeUndefined();
+      // (b) the CONSUMER (the append-only rule's diff base) reads it: a real
+      // node process, the real rule module, the forwarded value.
+      const readBase = (pushBefore: string) => {
+        const probe = spawnSync(process.execPath, ['--input-type=module', '-e',
+          "import { resolveArchiveDiffBase } from './bin/lib/hardening/rules/documentation.mjs'; console.log(resolveArchiveDiffBase());",
+        ], { cwd: ROOT, encoding: 'utf8', env: { ...process.env, NIGHTWATCH_PUSH_BEFORE: pushBefore } });
+        expect(probe.status).toBe(0);
+        return (probe.stdout ?? '').trim();
+      };
+      expect(readBase(before)).toBe(before);
+      // The all-zeros tip (a new branch) is never used as a base.
+      expect(readBase('0'.repeat(40))).not.toBe('0'.repeat(40));
+    } finally {
+      if (previous === undefined) delete process.env['NIGHTWATCH_PUSH_BEFORE'];
+      else process.env['NIGHTWATCH_PUSH_BEFORE'] = previous;
+    }
   });
 
   test('the gate definition digest reflects the added group', () => {

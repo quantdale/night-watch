@@ -20,3 +20,6 @@ export function checkpointRoleViolations(
     verifyBindingReceipt?: (subject: string, digest: string, sha: string) => boolean;
   },
 ): string[];
+// R4-13 / review-4 task 3.4 (bin/lib/checkpoint-role.mjs).
+export const ARCHIVE_MOVE_PATH_RE: RegExp;
+export function archiveMoveHolds(root: string, commit: string, file: string): boolean;

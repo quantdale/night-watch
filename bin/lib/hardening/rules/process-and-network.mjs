@@ -752,12 +752,16 @@ export function checkR11ProxyGateReliability() {
   }
   // Anchored to the list, not the bare name: the identifier also appears in the
   // import statement, so an unanchored match stays true with the entry deleted.
+  // R4-10 / review-4 task 3.1: the child-environment construction (and with it
+  // the forbidden-key list) moved into bin/lib/gate-child-environment.mjs so it
+  // is testable in isolation; the anchors follow it.
+  const gateChildEnvCode = read('bin/lib/gate-child-environment.mjs');
   if (
     !/FORBIDDEN_ENVIRONMENT_KEYS = Object\.freeze\(\[[\s\S]{0,800}?GATE_RECEIPT_PATH_ENV,[\s\S]{0,200}?\]\);/.test(
-      runnerCode,
+      gateChildEnvCode,
     ) ||
     !/for \(const key of FORBIDDEN_ENVIRONMENT_KEYS\) delete environment\[key\];/.test(
-      runnerCode,
+      gateChildEnvCode,
     )
   ) {
     fail(

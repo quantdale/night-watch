@@ -157,12 +157,42 @@ export function unpairedCorrectionsInRange(root, fromExclusive, toInclusive, cor
   return found;
 }
 
+/**
+ * R4-13 / review-4 task 3.4 — `openspec/changes/archive/<dated>-<change>/<rest>`
+ * is a MOVED planning artifact. It is documentary ONLY when the same commit
+ * ADDS the archived path byte-identically and REMOVES the source
+ * `openspec/changes/<change>/<rest>` in that same commit. An edit, a copy, an
+ * addition from elsewhere, or a change that leaves the source in place is
+ * substantive. Enumerating the archive prefix exactly keeps the rule from
+ * approving any other path.
+ */
+export const ARCHIVE_MOVE_PATH_RE = /^openspec\/changes\/archive\/(\d{4}-\d{2}-\d{2})-(.+)\/(.+)$/;
+
+/**
+ * @param {string} root
+ * @param {string} commit
+ * @param {string} file
+ * @returns {boolean} true when this commit is a byte-identical move
+ */
+export function archiveMoveHolds(root, commit, file) {
+  const archived = ARCHIVE_MOVE_PATH_RE.exec(file);
+  if (archived === null) return false;
+  const source = `openspec/changes/${archived[2]}/${archived[3]}`;
+  const before = blobAt(root, `${commit}^`, source);
+  const after = blobAt(root, commit, file);
+  if (before === null || after === null) return false;
+  if (before !== after) return false;
+  // The source must be GONE at this commit: a copy is not a move.
+  return blobAt(root, commit, source) === null;
+}
+
 export function checkpointRoleViolations(root, files, context) {
   // VB-06: guarded paths are excluded from the path-alone filter — their
   // admissibility is decided exclusively by their diff-shape guard below.
-  const violations = files.filter((file) => guardClassForPath(file) === null && !isApprovedCheckpointPath(file));
+  const violations = files.filter((file) => guardClassForPath(file) === null && !isApprovedCheckpointPath(file) && !ARCHIVE_MOVE_PATH_RE.test(file));
   const guarded = new Set(files.filter((file) => guardClassForPath(file) !== null));
-  if (guarded.size === 0) return [...new Set(violations)];
+  const archived = new Set(files.filter((file) => ARCHIVE_MOVE_PATH_RE.test(file)));
+  if (guarded.size === 0 && archived.size === 0) return [...new Set(violations)];
 
   /** @type {string[]} */
   let commits;
@@ -170,7 +200,7 @@ export function checkpointRoleViolations(root, files, context) {
     commits = [context.commit];
   } else {
     const listed = gitText(root, ['rev-list', `${context.from}..${context.to}`]);
-    if (listed === null) return [...new Set([...violations, ...guarded])];
+    if (listed === null) return [...new Set([...violations, ...guarded, ...archived])];
     commits = listed.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
     // A range from A to B is classified over every commit in it; commits
     // before `from` are the checkpoint itself and not part of the range.
@@ -180,6 +210,17 @@ export function checkpointRoleViolations(root, files, context) {
     if (touched === null) {
       violations.push(...guarded);
       continue;
+    }
+    // R4-13: every archive-prefix path this commit touched must be a
+    // byte-identical move of its named change's file.
+    for (const file of archived) {
+      const touchedArchive = gitText(root, ['diff-tree', '--root', '--no-commit-id', '--name-only', '--no-renames', '-r', '-m', commit, '--', file]);
+      if (touchedArchive === null) {
+        violations.push(file);
+        continue;
+      }
+      if (touchedArchive.trim() === '') continue;
+      if (!archiveMoveHolds(root, commit, file)) violations.push(file);
     }
     for (const file of touched) {
       // A merge must hold its guard against EVERY parent: a rewrite visible
