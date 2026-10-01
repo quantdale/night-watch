@@ -10,8 +10,38 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadTypeScriptModule as loadRuntimeTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
+import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+/**
+ * A-12 / 10.2: the shared operator-CLI contract. `--help` and
+ * `--print-metadata` answer through the shared parser without executing the
+ * canary; the semantic argument validation stays with the TS service, which is
+ * the single authority on the canary's exact option set.
+ */
+/** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
+const CLI_METADATA = {
+  schemaVersion: OPERATOR_CLI_SCHEMA,
+  name: 'ai-local-canary',
+  entry: 'bin/ai-local-canary.mjs',
+  purpose: 'Run one fixed synthetic local-model canary against a strict loopback provider and report only sanitized metadata.',
+  group: 'validate',
+  flags: [
+    { name: '--endpoint', shape: 'string', summary: 'loopback v1 chat-completions endpoint' },
+    { name: '--model', shape: 'string', summary: 'model identifier' },
+    { name: '--timeout-ms', shape: 'integer', summary: 'bounded timeout 1-5000 ms' },
+  ],
+  json: false,
+  authorization: 'LOCAL_ONLY',
+  artifacts: [],
+};
+
+const cli = defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url });
+if (cli.stop) {
+  // The shared parser answered --help/--print-metadata or refused an unknown
+  // option; the canary must not execute.
+} else {
 
 function usage() {
   console.log('Usage: npm run ai:local-canary -- --endpoint <loopback-v1-chat-completions-url> --model <model-id> [--timeout-ms <1-5000>]');
@@ -89,4 +119,5 @@ async function main() {
   }
 }
 
-main();
+  main();
+}

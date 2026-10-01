@@ -47,10 +47,14 @@ ledger, and end at `PROJECT_COMPLETE_AND_CI_CERTIFIED` under D-129 with a
 ## Current Milestone
 
 M9 D-129 CLI contract and bin type-check (group 10, tasks 10.1-10.6): 10.1
-DONE, 10.2 IN PROGRESS (59/76 declared, 4 library-retained, 13 pending). The
+DONE, 10.2 IN PROGRESS (60/76 declared, 4 library-retained, 12 pending). The
 corrective child campaign (`nightwatch-final-completion-corrections-v1`) is
-CLOSED and archived; the parent resumes at "M9 task 10.2 remainder" in a fresh
-C-00 session.
+CLOSED and archived; the parent resumed at "M9 task 10.2 remainder" in the
+fresh C-00 session `sess-83d720703401` (worktree
+`nightwatch-final-product-complet-e3ce743d`). The first resumed batch migrated
+`bin/ai-local-canary.mjs` (3 flags, group `validate`; registry counts updated;
+operatorCliSurface/cliImplementationContract/aiLocalCanary 56/56). The
+remaining 12 pending bins are named in tasks.md 10.2.
 
 ## Completed Milestones
 
