@@ -18,18 +18,6 @@ import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
 
 const ROOT = process.cwd();
 const WORKSPACE_ROOT = path.resolve(ROOT, '..', '..');
-const HELP = `Phase 22 contained DEV operator surface
-
-  node bin/phase22-dev.mjs manifest --snapshot=/tmp/exact-source --source-sha=<40hex> [--out=/external/manifest.json]
-  node bin/phase22-dev.mjs preflight --manifest=/external/manifest.json [--env=dev --storage-state=/external/state.json]
-  node bin/phase22-dev.mjs acceptance --dry-run --manifest=/external/manifest.json
-  node bin/phase22-dev.mjs acceptance --execute --env=dev --storage-state=/external/state.json --manifest=/external/manifest.json
-  node bin/phase22-dev.mjs results --results=/external/results.json
-  node bin/phase22-dev.mjs explain <safe-id> --manifest=/external/manifest.json
-
-The default path is local. No --all flag or dynamic target discovery exists.
-`;
-
 /** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
 const CLI_METADATA = {
   schemaVersion: OPERATOR_CLI_SCHEMA,
@@ -304,7 +292,12 @@ function explain(args) {
 
 function main() {
   const cli = defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url });
-  if (cli.ok !== true || cli.stop === true) { process.stdout.write(HELP); return; }
+  // The shared parser owns `--help` (rendered usage), `--print-metadata` (one
+  // JSON document) and every refusal (usage on stderr, exit 2). On ANY of
+  // those the parser has already written the operator-facing output, so this
+  // wrapper writes nothing further — that is what keeps `--help` a single,
+  // leak-free usage document and keeps the metadata document pure JSON.
+  if (cli.ok !== true || cli.stop === true) return;
   const flags = cli.flags;
   const args = {
     _: cli.positionals,

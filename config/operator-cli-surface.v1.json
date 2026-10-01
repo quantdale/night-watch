@@ -80,7 +80,7 @@
     },
     {
       "file": "bin/nightwatch-agent.mjs",
-      "disposition": "PENDING_OPERATOR_CLI"
+      "disposition": "OPERATOR_CLI"
     },
     {
       "file": "bin/nightwatch-control-center.mjs",
@@ -313,8 +313,8 @@
   ],
   "counts": {
     "total": 76,
-    "operatorCli": 71,
+    "operatorCli": 72,
     "libraryRetained": 4,
-    "pending": 1
+    "pending": 0
   }
 }

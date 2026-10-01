@@ -111,7 +111,7 @@
     },
     {
       "bin": "bin/nightwatch-agent.mjs",
-      "maxErrors": 21
+      "maxErrors": 20
     },
     {
       "bin": "bin/nightwatch-control-center.mjs",
@@ -318,6 +318,6 @@
       "maxErrors": 94
     }
   ],
-  "totalCeiling": 1413,
+  "totalCeiling": 1412,
   "anyAnnotationBudget": 91
 }

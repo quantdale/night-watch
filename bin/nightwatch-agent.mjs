@@ -14,11 +14,57 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { buildChildEnvironment, emitChildStdio } from './child-environment.mjs';
+import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
 import { loadTypeScriptModules } from './lib/typescript-runtime-loader.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const args = process.argv.slice(2);
-const command = args[0] ?? 'help';
+
+/**
+ * A-12 / 10.2: the shared operator-CLI contract. The three top-level commands
+ * are declared with `help` as the default; `campaign` takes one subcommand and
+ * the bounded run flags the campaign runner actually consumes. `--help`/
+ * `--print-metadata` answer through the shared parser without loading the agent
+ * runtime, and an unknown option/command is refused with exit 2.
+ */
+/** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
+const CLI_METADATA = {
+  schemaVersion: OPERATOR_CLI_SCHEMA,
+  name: 'nightwatch-agent',
+  entry: 'bin/nightwatch-agent.mjs',
+  purpose: 'Operator surface for the local investigation agent: measured status, the deterministic test command set, and bounded campaign runs. Local/owner-gated only.',
+  group: 'manage-sessions',
+  commands: [
+    { name: 'status', summary: 'measured owner-local agent status' },
+    { name: 'test', summary: 'deterministic agent test command' },
+    { name: 'campaign', summary: 'bounded campaign control (see `campaign help`)' },
+    { name: 'help', summary: 'print the usage line' },
+  ],
+  defaultCommand: 'help',
+  positionals: { min: 0, max: 1, names: ['subcommand'], summary: 'the campaign subcommand (run|help)' },
+  flags: [
+    { name: '--reasoner', shape: 'string', summary: 'campaign run reasoner (must be cli)' },
+    { name: '--duration', shape: 'enum', values: ['1h', '4h', '8h', 'overnight'], summary: 'campaign run budget window' },
+    { name: '--wall-clock-minutes', shape: 'integer', summary: 'campaign run wall-clock bound' },
+    { name: '--max-turns', shape: 'integer', summary: 'campaign run turn bound' },
+    { name: '--model', shape: 'string', summary: 'reasoner model label' },
+    { name: '--repository', shape: 'string', summary: 'approved org/repo target' },
+    { name: '--env', shape: 'enum', values: ['dev', 'next', 'production'], summary: 'campaign target environment (owner-gated; next/production refused here)' },
+    { name: '--id', shape: 'string', summary: 'campaign run id label' },
+    { name: '--porcelain', shape: 'boolean', summary: 'machine-readable summary' },
+    { name: '--project', shape: 'string', summary: 'project label' },
+    { name: '--workers', shape: 'integer', summary: 'worker bound' },
+    { name: '--expose-gc', shape: 'boolean', summary: 'enable NODE_OPTIONS --expose-gc for the child' },
+  ],
+  json: true,
+  authorization: 'OWNER_GATED',
+  artifacts: [],
+};
+const cli = defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url });
+const args = (cli.ok === true && cli.stop !== true)
+  ? [cli.command ?? 'help', ...cli.positionals, ...Object.entries(cli.flags).filter(([, value]) => value !== false && value !== undefined).map(([name, value]) => (value === true ? name : `${name}=${String(value)}`))]
+  : [cli.command ?? 'help'];
+const command = cli.ok === true && cli.stop !== true ? cli.command ?? 'help' : 'help';
+const cliStopped = cli.ok !== true || cli.stop === true;
 
 const DURATIONS = new Map([
   ['1h', 'HOUR_1'],
@@ -227,7 +273,7 @@ function resolveReasonerIdentity(reasonerMod, configured, options = {}) {
   };
 }
 
-if (command === 'status') {
+if (!cliStopped && command === 'status') {
   // M5 (6.14/C-13/B-12): status reports MEASURED state — the durable records
   // the owner-local store actually holds and the campaigns actually stored —
   // not a constant schema list. The static protocol identity stays, because it
@@ -280,7 +326,7 @@ if (command === 'status') {
       storeUnavailable,
     },
   }, null, 2));
-} else if (command === 'test') {
+} else if (!cliStopped && command === 'test') {
   try {
     assertStartupEnvironment();
   } catch (error) {
@@ -317,7 +363,7 @@ if (command === 'status') {
   emitChildStdio(result);
   process.exitCode = result.status ?? 1;
   }
-} else if (command === 'campaign') {
+} else if (!cliStopped && command === 'campaign') {
   const sub = args[1] ?? 'help';
   const flags = Object.fromEntries(args.slice(2).filter((item) => item.startsWith('--')).map((item) => {
     const eq = item.indexOf('=');
@@ -638,6 +684,8 @@ if (command === 'status') {
       'usage: nightwatch-agent campaign run --reasoner=cli --duration=1h|4h|8h|overnight [--wall-clock-minutes=<n>] [--max-turns=<n>] [--model=<label>] [--repository=<approved-org/repo>]',
     );
   }
+} else if (cliStopped) {
+  // The shared parser answered --help/--print-metadata or refused an argument.
 } else {
   console.log('usage: node bin/nightwatch-agent.mjs status|test|campaign');
   process.exitCode = command === 'help' || command === undefined ? 0 : 2;

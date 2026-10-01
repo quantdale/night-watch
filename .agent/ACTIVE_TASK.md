@@ -59,17 +59,14 @@ Previous checkpoint: 2026-09-26 — M4 COMPLETE (5.1-5.7): six release probes wi
 states + the CI block-record single authority (`a784e668`), and the final
 integration `137207b1` after reconciling origin/main `946b52c4` and restoring
 the ledger-governed README status block; gate:dev/gate:milestone 5520/0.
-Current milestone: M9 task 10.2 remainder (71/76 declared)
+Current milestone: M9 task 10.3 (shared-parser structural rule, counts, README claim)
 10.2 IN PROGRESS (60/76 declared, 4 library-retained, 12 pending), then
 10.3-10.6. The bounded review-4 child campaign
 (`nightwatch-final-completion-review4-v1`) resolves the 24 review-4 findings
 and then routes this campaign back to the resume point recorded above.
-Next action: M9 task 10.2 remainder — the next bin is `auth-configure`, then
-`change-intelligence`, `hardening-check`, `nightwatch-agent`,
-`nightwatch-intelligence`, `phase22-dev`, `phase23-ci`, `phase23-dev`,
-`phase23-predev`, `portfolio`, `review-mutation-campaign` and
-`w11-historical-arm`; then 10.3-10.6, M10-M14 and the 13-section final report.
-
+Next action: implement task 10.3 — register the shared-parser structural rule with a
+negative probe (programme 4.10), correct the task counts, and restore the README
+claim now that conformance is 76/76; then 10.4-10.6.
 Authorization class: FINAL_PRODUCT_COMPLETION_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
@@ -115,7 +112,7 @@ EXTERNAL CONTACT AUTHORIZED (OD-3 ONLY):
   provider proof run; one npm registry advisory query.
 
 CURRENT STATUS:
-  IN_PROGRESS — RESUMED AT M9 TASK 10.2 REMAINDER (71/76 declared; 1 pending: `nightwatch-agent`). The review-4 child campaign
+  IN_PROGRESS — RESUMED AT M9 TASK 10.2 REMAINDER (76/76 declared, 0 pending; task 10.2 COMPLETE). The review-4 child campaign
   `nightwatch-final-completion-review4-v1` is COMPLETE and archived
   (`2026-10-01-nightwatch-final-completion-review4-v1`, with spec sync to
   `openspec/specs/review4-closure/`): all 24 findings dispositioned, exact-head

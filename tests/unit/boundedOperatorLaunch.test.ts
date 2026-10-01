@@ -47,9 +47,14 @@ test.describe('bounded operator launch (6.16)', () => {
 
   test('a non-integer or widening wall-clock override is refused before any child exists', () => {
     const env = { NIGHTWATCH_REASONER_CLI: process.execPath };
+    // 10.2 migration: a NON-integer is now refused by the shared operator-CLI
+    // parser (CLI_ARGUMENT_INVALID, the categorical shape refusal) BEFORE the
+    // bin's own range check, which still owns the out-of-range integer. Both
+    // refusals are exit 2 and both happen before any child exists.
     const malformed = runAgent(['campaign', 'run', '--reasoner=cli', '--duration=1h', '--wall-clock-minutes=abc'], env);
     expect(malformed.status).toBe(2);
-    expect(malformed.stderr).toContain('must be an integer 1..1440');
+    expect(malformed.stderr).toContain('CLI_ARGUMENT_INVALID');
+    expect(malformed.stderr).toContain('--wall-clock-minutes');
 
     const widening = runAgent(['campaign', 'run', '--reasoner=cli', '--duration=1h', '--wall-clock-minutes=99999'], env);
     expect(widening.status).toBe(2);
