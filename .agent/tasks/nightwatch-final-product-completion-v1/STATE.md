@@ -550,6 +550,33 @@ exactly as in M4/M5.
 
 ## Validation Ledger
 
+- 2026-10-01 — M9 10.2/10.3 COMPLETE, 10.4 BASELINE MEASURED (parent). Task
+  10.2 finished at 76/76 conformance across eight resume batches (auth-configure,
+  change-intelligence, hardening-check, review-mutation-campaign,
+  w11-historical-arm, phase23-ci, phase23-predev, phase22-dev, phase23-dev,
+  portfolio, nightwatch-intelligence, nightwatch-agent): 72 operator-CLI entry
+  points + 4 library-retained, 0 pending. Every migration kept its own boundary
+  (the DEV-lane guard first, ABSOLUTE/EXTERNAL output checks, the `--env*` and
+  unknown-command refusals); four red CI runs from the batch were recorded and
+  repaired forward (36867934911 BIN_TYPECHECK_CEILING, 36869760469
+  SYNTHETIC_CAMPAIGN, 36889920975 SEMANTIC_COMPATIBILITY, 36912796291
+  BIN_TYPECHECK_CEILING) and the top-level ceiling only ever turned DOWN
+  (1450 → 1412). Task 10.3 registered `checkSharedOperatorParserStructure`
+  (blocking, probe family HC-246..HC-250). `gate:dev` and `gate:milestone` PASS
+  at 5865/0; `hardening:rules` 94 rules / 248 probes / 248 DETECTED. Task 10.4
+  is NOT STARTED and its measured baseline is recorded: 77 non-conforming bins
+  carry 1412 diagnostics, of which the safety-critical first batch is
+  `project-state-check.mjs` (132), `nightwatch-session.mjs` (101),
+  `workspace-integrity.mjs` (94), `nightwatch-hygiene.mjs` (50),
+  `quality-gate.mjs` (27) and `evidence-retention.mjs` (27) — 431 diagnostics.
+  A trial annotation pass over `project-state-check.mjs` was measured and
+  REVERTED: block-level JSDoc on 23 signatures plus 16 inline arrows reached 128,
+  but the inline `String()`/`Number()` wrappers it needed produced NEW
+  TS2345 mismatches, so a half-annotated file with imprecise types is a net
+  regression in code quality and was discarded rather than committed. The batch
+  rule therefore stands: annotate each file to ZERO with accurate types (not
+  stringifying wrappers), lower that file's ceiling and the total, and run the
+  gate plus the probe campaign after each batch.
 - 2026-10-01 — M9 10.2 RESUME BATCH 8 (parent). `nightwatch-intelligence`
   migrated: nineteen subcommands, `--json`/`--repo`/`--surface`/`--actionable`/
   `--irreducible` and the optional positional id. The unknown-command refusal
