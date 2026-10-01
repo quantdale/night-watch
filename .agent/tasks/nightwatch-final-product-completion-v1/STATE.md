@@ -8,7 +8,7 @@ Status: IN_PROGRESS
 TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1
 TASK_GROUPS_COMPLETE: 1,2,3,4,5,6,7,8
 TASK_GROUP_NEXT: 10
-TASK_NEXT_ID: 10.3
+TASK_NEXT_ID: 10.4
 TASK_GROUP_DEFERRED: 9.5b
 Starting SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
 Last validated implementation SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
@@ -148,7 +148,7 @@ remaining 12 pending bins are named in tasks.md 10.2.
 
 **Current (2026-10-01):** the parent resumed at M9 task 10.2: operator-CLI conformance is **61/76 declared** (4 library-retained, 11 pending; next bin `change-intelligence`). The log below is HISTORICAL and is not the current state.
 
-**Current (2026-10-01):** the review-4 child campaign is CLOSED and the parent resumed at M9 task 10.2; operator-CLI conformance is 76/76 declared (72 operator-CLI + 4 library-retained, 0 pending) and task 10.2 is COMPLETE; 10.3 (the shared-parser structural rule with a negative probe, task counts and the README claim) is next. The log below is HISTORICAL (M7 onward, oldest first) and is not the current state.
+**Current (2026-10-01):** the review-4 child campaign is CLOSED and the parent resumed at M9 task 10.2; operator-CLI conformance is 76/76 declared (72 operator-CLI + 4 library-retained, 0 pending); 10.2 and 10.3 are COMPLETE (the shared-parser structural rule `checkSharedOperatorParserStructure` is registered and blocking with the HC-246..HC-250 probe family); 10.4 (annotate bins to zero diagnostics in safety-critical-first batches) is next. The log below is HISTORICAL (M7 onward, oldest first) and is not the current state.
 
 - M7 (tasks 8.1-8.5) is in progress; 8.1 is implemented and committed: the
   `.env` layer is parsed FAIL CLOSED (a malformed line, an undeclared key and a
@@ -502,19 +502,18 @@ agent:check PASS (86 warnings).
 
 ## Exact Next Action
 
-M9 task 10.2 remainder. The review-4 child campaign
-`nightwatch-final-completion-review4-v1` runs while this campaign is paused
-(canonical-routed: `SESSION WORKTREE: NONE`, `Branch: main`, no live session).
-When it closes and routes ACTIVE_TASK back here at IN_PROGRESS: start a fresh
-C-00 parent session (`session start --task
-nightwatch-final-product-completion-v1`, then `claim --adopt`), finish the 12
-pending 10.2 declarations (60/76 declared; next bin `auth-configure`), then
-10.3-10.6, M10-M14, and the 13-section final report. The open sub-task 9.5b
-(NW-AUD-020 tasks 3.2/4.2, re-tagged UNPROVEN) stays DEFERRED behind group 10
-and is carried by 14.1/14.2, which must record the NW-AUD-020 status before
-9.5b is ticked. Sequencing constraint
-recorded in D-148: run the paid proof (12.3) after the last substantive fix so
-G12's receipt binds to S.
+M9 task 10.4. Task 10.2 is COMPLETE at 76/76 conformance (72 operator-CLI
+entry points, 4 library-retained, 0 pending) and task 10.3 is COMPLETE: the
+shared-parser structural rule `checkSharedOperatorParserStructure` is registered
+and blocking with its five-member negative probe family (HC-246..HC-250, all
+DETECTED). Next: task 10.4 — annotate bins to zero diagnostics in
+safety-critical-first batches, with the gate plus the probe campaign after each
+batch; then 10.5 (flip `config/bin-typecheck.v1.json` to BLOCKING with 0
+exemptions) and 10.6 (`gate:milestone` PASS, commit), then M10-M14 and the
+13-section final report. The deferred `9.5b` (NW-AUD-020 tasks 3.2/4.2)
+continues to be carried by 14.1/14.2. Sequencing constraint recorded in D-148:
+run the paid proof (12.3) after the last substantive fix so G12's receipt binds
+to S.
 
 ## Superseded Next Action (8.1, complete)
 
@@ -631,10 +630,10 @@ exactly as in M4/M5.
   (`openspec/changes/archive/2026-10-01-nightwatch-final-completion-review4-v1/`,
   spec published as `openspec/specs/review4-closure/`), its session branch is
   deleted, and this campaign is active again, canonical-routed, at the recorded
-  resume point: M9 task 10.3 — register the shared-parser structural rule with a negative
-  probe, correct the task counts and restore the README claim now that
-  conformance is 76/76; then 10.4-10.6, M10-M14 and the 13-section final
-  report.
+  resume point: M9 task 10.4 — annotate bins to zero diagnostics in
+  safety-critical-first batches with the gate plus probe campaign after each
+  batch; then 10.5 (flip the bin type-check to BLOCKING with 0 exemptions) and
+  10.6, then M10-M14 and the 13-section final report.
   D-150 (OD-5/OD-6) and D-151 (proxy liveness) were added by the child.
 - 2026-10-01 — PARENT PAUSED (review-4 preconditions). Exact-head CI run
   **36830613569** at `aea15b47` is GREEN (15/15 groups) — the continuity-sync

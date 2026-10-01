@@ -2703,6 +2703,58 @@
           }
         ]
       }
+    ],
+    "checkSharedOperatorParserStructure": [
+      {
+        "id": "HC-246",
+        "ops": [
+          {
+            "file": "bin/change-intelligence.mjs",
+            "search": "if (cli.ok !== true || cli.stop === true) {\n  // The shared parser answered --help/--print-metadata or refused an argument;\n  // nothing was compiled and no report was written.\n} else {",
+            "replace": "if (false) {\n} else {"
+          }
+        ]
+      },
+      {
+        "id": "HC-247",
+        "ops": [
+          {
+            "file": "bin/change-intelligence.mjs",
+            "search": "if (cli.ok !== true || cli.stop === true) {\n  // The shared parser answered --help/--print-metadata or refused an argument;\n  // nothing was compiled and no report was written.\n} else {",
+            "replace": "const parserStopped = false;\nif (parserStopped) {\n} else {"
+          }
+        ]
+      },
+      {
+        "id": "HC-248",
+        "ops": [
+          {
+            "file": "config/operator-cli-surface.v1.json",
+            "search": "\"file\": \"bin/change-intelligence.mjs\",\n      \"disposition\": \"OPERATOR_CLI\"",
+            "replace": "\"file\": \"bin/change-intelligence.mjs\",\n      \"disposition\": \"PENDING_OPERATOR_CLI\""
+          }
+        ]
+      },
+      {
+        "id": "HC-249",
+        "ops": [
+          {
+            "file": "config/operator-cli-surface.v1.json",
+            "search": "\"operatorCli\": 72",
+            "replace": "\"operatorCli\": 71"
+          }
+        ]
+      },
+      {
+        "id": "HC-250",
+        "ops": [
+          {
+            "file": "bin/change-intelligence.mjs",
+            "search": "const cli = defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url });",
+            "replace": "const cli = defineOperatorCli({ schemaVersion: 'nightwatch.operator-cli.v1', name: 'x', entry: 'bin/change-intelligence.mjs', purpose: 'x', group: 'validate', flags: [] }, { entryUrl: import.meta.url });"
+          }
+        ]
+      }
     ]
   }
 }

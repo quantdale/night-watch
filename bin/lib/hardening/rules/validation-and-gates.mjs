@@ -196,6 +196,90 @@ export function checkReview4CollectorTotality() {
   }
 }
 
+/**
+ * M9 10.3 / A-12 / B-05 — the shared-parser structural rule (programme 4.10).
+ *
+ * Every tracked `bin/*.mjs` is declared in `config/operator-cli-surface.v1.json`
+ * with exactly one disposition. An `OPERATOR_CLI` entry is an OPERATOR COMMAND,
+ * so it must route through `defineOperatorCli(CLI_METADATA, { entryUrl })`: the
+ * shared parser owns `--help`/`--print-metadata`, refuses an unknown option
+ * with the categorical usage code BEFORE any effect, and keeps the metadata
+ * document pure. A `LIBRARY_RETAINED` module is genuinely not an entry point
+ * (no `defineOperatorCli(`, no `process.argv`). This rule makes that structure
+ * BLOCKING in the gate rather than a test-level fact, and it is TOTALITY: every
+ * declared bin is examined exactly once, and the registry must cover the tracked
+ * set exactly.
+ */
+export function checkSharedOperatorParserStructure() {
+  let registry;
+  try {
+    registry = JSON.parse(readDataFile('config/operator-cli-surface.v1.json'));
+  } catch {
+    fail('SHARED_PARSER_STRUCTURE config/operator-cli-surface.v1.json is not valid JSON');
+    return;
+  }
+  const bins = Array.isArray(registry.bins) ? registry.bins : null;
+  if (bins === null) {
+    fail('SHARED_PARSER_STRUCTURE config/operator-cli-surface.v1.json carries no bins array');
+    return;
+  }
+  const tracked = fs.readdirSync(path.join(root, 'bin')).filter((name) => name.endsWith('.mjs')).map((name) => `bin/${name}`).sort();
+  const declared = new Map(bins.filter((entry) => entry !== null && typeof entry === 'object').map((entry) => [entry.file, entry]));
+  const missing = tracked.filter((file) => !declared.has(file));
+  if (missing.length > 0) {
+    fail(`SHARED_PARSER_STRUCTURE ${missing.length} tracked bin(s) have no registry disposition: ${missing.slice(0, 8).join(', ')}`);
+  }
+  const untracked = [...declared.keys()].filter((file) => !tracked.includes(file));
+  if (untracked.length > 0) {
+    fail(`SHARED_PARSER_STRUCTURE the registry declares ${untracked.length} bin(s) that are not tracked: ${untracked.slice(0, 8).join(', ')}`);
+  }
+  let operatorCount = 0;
+  let libraryCount = 0;
+  for (const file of tracked) {
+    const entry = declared.get(file);
+    if (entry === undefined) continue;
+    const code = read(file);
+    const disposition = entry.disposition;
+    if (disposition === 'OPERATOR_CLI') {
+      operatorCount += 1;
+      if (!code.includes('defineOperatorCli(')) {
+        fail(`SHARED_PARSER_STRUCTURE ${file} declares OPERATOR_CLI but never calls defineOperatorCli(; its help would run module effects`);
+        continue;
+      }
+      if (!/defineOperatorCli\(CLI_METADATA/.test(code)) {
+        fail(`SHARED_PARSER_STRUCTURE ${file} declares OPERATOR_CLI but does not pass its own CLI_METADATA to the shared parser`);
+      }
+      // The help/metadata short-circuit must be honoured. An entry that does
+      // module WORK gates its dispatcher on `cli.stop`; a DECLARATION-ONLY entry
+      // (its whole body is declarations, so the shared parser is called for
+      // help/metadata and there is nothing else to gate) instead guards the
+      // call behind a direct-invocation check.
+      const dispatchGated = /cli\.stop/.test(code);
+      const declarationOnly = /process\.argv\[1\][^\n]*\n?[^\n]*defineOperatorCli\(CLI_METADATA\)/.test(code);
+      if (!dispatchGated && !declarationOnly) {
+        fail(`SHARED_PARSER_STRUCTURE ${file} declares OPERATOR_CLI but neither gates its dispatcher on cli.stop nor is a declaration-only entry; a help query could execute module work`);
+      }
+    } else if (disposition === 'LIBRARY_RETAINED') {
+      libraryCount += 1;
+      if (code.includes('defineOperatorCli(')) {
+        fail(`SHARED_PARSER_STRUCTURE ${file} is LIBRARY_RETAINED yet declares the operator CLI contract`);
+      }
+      if (code.includes('process.argv')) {
+        fail(`SHARED_PARSER_STRUCTURE ${file} is LIBRARY_RETAINED yet reads process.argv (a library has no entry surface)`);
+      }
+      if (typeof entry.reason !== 'string' || entry.reason.trim().length < 12) {
+        fail(`SHARED_PARSER_STRUCTURE ${file} is LIBRARY_RETAINED without a stated reason`);
+      }
+    } else if (disposition !== 'PENDING_OPERATOR_CLI') {
+      fail(`SHARED_PARSER_STRUCTURE ${file} declares an unknown disposition ${String(disposition)}`);
+    }
+  }
+  const counts = registry.counts ?? {};
+  if (counts.operatorCli !== operatorCount || counts.libraryRetained !== libraryCount || counts.pending !== bins.length - operatorCount - libraryCount) {
+    fail(`SHARED_PARSER_STRUCTURE the recorded counts (${JSON.stringify(counts)}) disagree with the measured surface (${operatorCount} operator, ${libraryCount} library, ${bins.length - operatorCount - libraryCount} pending)`);
+  }
+}
+
 export function checkTypecheckCoverage() {
   let config;
   try {

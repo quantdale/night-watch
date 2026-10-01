@@ -412,3 +412,27 @@ continuity files (SPEC/PLAN/STATE/REPORT), i.e. the docs-only BLOCKED record
 described in the census. It is superseded by this change and by the
 successor campaign's integrated work. Deleted with `git branch -D` under
 owner decision OD-3.
+
+## M9 10.3 reconciliation (appended 2026-10-01, never rewritten)
+
+The rows above record the counts as measured at the audit. The operator-CLI
+surface has since reached 76/76, so the two headline figures are now historical
+and are corrected here rather than in the rows:
+
+- **A-12 / B-05** recorded "28 of 76 bins undeclared" / "bypass the shared
+  parser". Today all 76 tracked `bin/*.mjs` carry exactly one declared
+  disposition in `config/operator-cli-surface.v1.json` (72 OPERATOR_CLI, 4
+  LIBRARY_RETAINED, 0 PENDING), and `checkSharedOperatorParserStructure`
+  (registered by task 10.3, with the negative probe family HC-246..HC-250)
+  makes that structure BLOCKING in the gate: an OPERATOR_CLI entry must route
+  `--help`/`--print-metadata` through `defineOperatorCli(CLI_METADATA, …)` and
+  gate its dispatcher on the parse result (or be a declaration-only entry), and a
+  LIBRARY_RETAINED module must read neither `defineOperatorCli(` nor
+  `process.argv`.
+- **B-06** recorded that the README's "every entry answers `--help` … without
+  executing" claim was false for 28 entries. With 76/76 conformance and the
+  exhaustive operator-CLI sweep proving `--help` is side-effect free and
+  leak-free for every conforming bin, the claim in `README.md` is now true and
+  is retained.
+- The conformance counts are derived from the registry, so no document restates
+  them as a literal.
