@@ -2,10 +2,10 @@
   "schemaVersion": "nightwatch.ci-block-record.v1",
   "definitionName": "Nightwatch exact-head CI block record (F-02)",
   "note": "The block is RETIRED: GitHub Actions executes the hardening workflow on every push, and the record's top level is the latest observed executed run (D-03 / R2-61). The block-record judgements stay load-bearing as the single CI authority shared by agent:check, project:check and gate:topology; the revisit date keeps the record from going stale. Candidate routes remain recorded with their trade-offs, and the materialised owner route is the restored GitHub-hosted execution.",
-  "runId": "36875579501",
-  "jobId": "110414021893",
-  "observedSha": "f5c5c8da31ba87033edf52156f2e3d873e917439",
-  "blockClass": "EXECUTED_PASS",
+  "runId": "36889920975",
+  "jobId": "110421590611",
+  "observedSha": "f87108992924a7ac9abbdb776ffdff6fdb0ba68e",
+  "blockClass": "EXECUTED_TEST_FAILURE",
   "observedDate": "2026-10-01",
   "ownerAction": "None required while the hardening workflow executes on every push; re-observe the next exact-head run and refresh this record before the revisit date.",
   "revisitCondition": "Re-observe each push: refresh runId, jobId, observedSha and observedDate from the latest hardening run, and record any red run with its classification.",
@@ -185,6 +185,21 @@
       "classification": "EXECUTED_PASS",
       "detail": "green at the M9 10.2 resume batch 3 tip (BIN_TYPECHECK_CEILING, SYNTHETIC_CAMPAIGN and every other group PASS) after repairing both red runs recorded above",
       "defectClasses": []
+    },
+    {
+      "runId": "36889920975",
+      "jobId": "110421590611",
+      "observedSha": "f87108992924a7ac9abbdb776ffdff6fdb0ba68e",
+      "observedDate": "2026-10-01",
+      "classification": "EXECUTED_TEST_FAILURE",
+      "detail": "SEMANTIC_COMPATIBILITY failed with one location, tests/unit/phase16hCliHandoffHardening.test.ts:233 (H01) \u2014 the portfolio migration moved the unknown-subcommand refusal into the shared operator-CLI parser, so the exit code is the categorical USAGE code 2 rather than the module's 1. Repaired forward by asserting the shared-parser contract (same properties: no stdout, usage on stderr, bounded, no secret shapes).",
+      "defectClasses": [
+        {
+          "class": "SHARED_PARSER_EXIT_CODE",
+          "suite": "tests/unit/phase16hCliHandoffHardening.test.ts",
+          "detail": "an H01 boundary test pinned the pre-migration module exit code 1 for an unknown subcommand"
+        }
+      ]
     }
   ],
   "routeSelection": {

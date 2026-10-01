@@ -232,7 +232,14 @@ test("DEF-04 malformed sentinel-bearing input produces sanitized failure only", 
 
 test("H01 unknown subcommand exits with usage and no stdout", () => {
   const result = runCli(["definitely-not-a-subcommand"]);
-  expect(result.status).toBe(1);
+  // 10.2 migration: an unknown subcommand is now refused by the SHARED
+  // operator-CLI parser with its categorical USAGE code (2) before the
+  // module's own dispatch; the properties under test are unchanged — nothing on
+  // stdout, a usage line on stderr, a bounded message, no secret shapes.
+  expect(result.status).toBe(2);
   expect(result.stdout).toBe("");
-  expect(result.stderr).toContain("usage:");
+  expect(result.stderr).toContain("CLI_UNKNOWN_COMMAND");
+  expect(result.stderr).toContain("Usage:");
+  expect(SECRET_SHAPES.test(result.stderr)).toBe(false);
+  expect(result.stderr.length).toBeLessThan(400);
 });
