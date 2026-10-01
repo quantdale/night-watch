@@ -25,6 +25,7 @@ import crypto from "node:crypto";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { spawnSync } from "node:child_process";
 import { buildChildEnvironment } from "./child-environment.mjs";
+import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from "./lib/operator-cli.mjs";
 
 const nightwatchRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -262,16 +263,44 @@ const SUBCOMMANDS = new Set([
   "runtime-plan",
 ]);
 
+/** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
+const CLI_METADATA = {
+  schemaVersion: OPERATOR_CLI_SCHEMA,
+  name: "portfolio",
+  entry: "bin/portfolio.mjs",
+  purpose: "Phase 16A local read-only portfolio operator CLI (inspect, explain-score, plan, compare-plan, shadow-simulate, dev-handoff, runtime-plan). It never executes a campaign, never contacts DEV/NEXT/production, and never writes artifacts.",
+  group: "inspect-intelligence",
+  commands: [
+    { name: "inspect", summary: "member table over the demo portfolio or an input JSON" },
+    { name: "explain-score", summary: "per-member score component contributions" },
+    { name: "plan", summary: "deterministic budget allocation and campaign-plan manifest" },
+    { name: "compare-plan", summary: "diff two plan manifests (--previous/--current)" },
+    { name: "shadow-simulate", summary: "baseline-vs-optimized shadow backtest (synthetic only)" },
+    { name: "dev-handoff", summary: "separately owner-gated DEV handoff package (not executed)" },
+    { name: "runtime-plan", summary: "deterministic runtime campaign plan" },
+  ],
+  commandRequired: true,
+  flags: [
+    { name: "--input", shape: "path", summary: "portfolio JSON to read instead of the demo" },
+    { name: "--previous", shape: "path", summary: "earlier plan manifest for compare-plan" },
+    { name: "--current", shape: "path", summary: "current plan manifest for compare-plan" },
+  ],
+  json: false,
+  authorization: "LOCAL_ONLY",
+  artifacts: [],
+};
+
 async function main() {
-  const argv = process.argv.slice(2);
-  const subcommand = argv[0];
-  if (!SUBCOMMANDS.has(subcommand)) {
-    fail(
-      `usage: node bin/portfolio.mjs <${[...SUBCOMMANDS].join("|")}> [--input portfolio.json] [--previous plan.json] [--current plan.json]`,
-    );
-  }  const args = new Map();
-  for (let index = 1; index < argv.length - 1; index += 2) {
-    if (argv[index]?.startsWith("--")) args.set(argv[index], argv[index + 1]);
+  const cli = defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url });
+  if (cli.ok !== true || cli.stop === true) return;
+  const subcommand = cli.command;
+  if (subcommand === null || !SUBCOMMANDS.has(subcommand)) {
+    fail(`unknown subcommand ${String(subcommand)}`);
+  }
+  const args = new Map();
+  for (const key of ["--input", "--previous", "--current"]) {
+    const value = cli.flags[key];
+    if (typeof value === "string") args.set(key, value);
   }
 
   const core = await loadCore();

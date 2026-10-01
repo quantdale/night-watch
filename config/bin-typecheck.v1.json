@@ -215,7 +215,7 @@
     },
     {
       "bin": "bin/portfolio.mjs",
-      "maxErrors": 21
+      "maxErrors": 20
     },
     {
       "bin": "bin/project-state-check.mjs",
@@ -318,6 +318,6 @@
       "maxErrors": 94
     }
   ],
-  "totalCeiling": 1414,
+  "totalCeiling": 1413,
   "anyAnnotationBudget": 91
 }

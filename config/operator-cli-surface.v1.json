@@ -204,7 +204,7 @@
     },
     {
       "file": "bin/portfolio.mjs",
-      "disposition": "PENDING_OPERATOR_CLI"
+      "disposition": "OPERATOR_CLI"
     },
     {
       "file": "bin/project-state-check.mjs",
@@ -313,8 +313,8 @@
   ],
   "counts": {
     "total": 76,
-    "operatorCli": 69,
+    "operatorCli": 70,
     "libraryRetained": 4,
-    "pending": 3
+    "pending": 2
   }
 }

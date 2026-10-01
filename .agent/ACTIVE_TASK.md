@@ -59,7 +59,7 @@ Previous checkpoint: 2026-09-26 — M4 COMPLETE (5.1-5.7): six release probes wi
 states + the CI block-record single authority (`a784e668`), and the final
 integration `137207b1` after reconciling origin/main `946b52c4` and restoring
 the ledger-governed README status block; gate:dev/gate:milestone 5520/0.
-Current milestone: M9 task 10.2 remainder (69/76 declared)
+Current milestone: M9 task 10.2 remainder (70/76 declared)
 10.2 IN PROGRESS (60/76 declared, 4 library-retained, 12 pending), then
 10.3-10.6. The bounded review-4 child campaign
 (`nightwatch-final-completion-review4-v1`) resolves the 24 review-4 findings
@@ -115,7 +115,7 @@ EXTERNAL CONTACT AUTHORIZED (OD-3 ONLY):
   provider proof run; one npm registry advisory query.
 
 CURRENT STATUS:
-  IN_PROGRESS — RESUMED AT M9 TASK 10.2 REMAINDER (69/76 declared; 3 pending;
+  IN_PROGRESS — RESUMED AT M9 TASK 10.2 REMAINDER (70/76 declared; 2 pending;
   next bin `nightwatch-agent`). The review-4 child campaign
   `nightwatch-final-completion-review4-v1` is COMPLETE and archived
   (`2026-10-01-nightwatch-final-completion-review4-v1`, with spec sync to
