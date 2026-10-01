@@ -527,6 +527,12 @@ exactly as in M4/M5.
 
 ## Validation Ledger
 
+- 2026-10-01 — M9 10.2 RESUME BATCH 1. `bin/ai-local-canary.mjs` migrated to the
+  shared operator-CLI contract (3 flags, group `validate`); registry 60/76
+  declared, 12 pending; operatorCliSurface/cliImplementationContract/
+  aiLocalCanary 56/56; typecheck, typecheck:bin and hardening:check PASS.
+  Exact-head CI run **36808189880** at `07dd9506` is GREEN (15/15 groups).
+
 Command: `git fetch origin` + `git rev-parse HEAD origin/main`
 Result: PASS
 When: 2026-09-25
