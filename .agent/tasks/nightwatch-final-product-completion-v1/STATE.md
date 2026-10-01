@@ -14,7 +14,7 @@ Last validated implementation SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
 Last substantive checkpoint SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
-Branch: session/nightwatch-final-product-complet-e3ce743d
+Branch: main
 Last checkpoint: 2026-10-01 — PARENT PAUSED AT A CLEAN CHECKPOINT FOR
 REVIEW-4 (60/76 declared, 4 library-retained, 12 pending). After the
 corrective child campaign `nightwatch-final-completion-corrections-v1` closed
@@ -499,7 +499,16 @@ agent:check PASS (86 warnings).
 
 ## Exact Next Action
 
-M9 task 10.2 remainder. When the review-4 child campaign closes (its ACTIVE_TASK route returns here at IN_PROGRESS): start a fresh C-00 parent session (`session start --task nightwatch-final-product-completion-v1`, then `claim --adopt`), finish the 12 pending 10.2 declarations (60/76 declared; next bin `auth-configure`), then 10.3-10.6, M10-M14, and the 13-section final report. Sequencing constraint recorded in D-148: run the paid proof (12.3) after the last substantive fix so G12's receipt binds to S.
+M9 task 10.2 remainder. The review-4 child campaign
+`nightwatch-final-completion-review4-v1` runs while this campaign is paused
+(canonical-routed: `SESSION WORKTREE: NONE`, `Branch: main`, no live session).
+When it closes and routes ACTIVE_TASK back here at IN_PROGRESS: start a fresh
+C-00 parent session (`session start --task
+nightwatch-final-product-completion-v1`, then `claim --adopt`), finish the 12
+pending 10.2 declarations (60/76 declared; next bin `auth-configure`), then
+10.3-10.6, M10-M14, and the 13-section final report. Sequencing constraint
+recorded in D-148: run the paid proof (12.3) after the last substantive fix so
+G12's receipt binds to S.
 
 ## Superseded Next Action (8.1, complete)
 
@@ -535,6 +544,23 @@ exactly as in M4/M5.
 | `openspec/changes/nightwatch-final-product-completion-v1/tasks.md` | stable IDs restored (VA-01), reopened-by-corrections annotations | corrected by the child campaign (task 5.1) |
 
 ## Validation Ledger
+
+- 2026-10-01 — PARENT PAUSED (review-4 preconditions). Exact-head CI run
+  **36830613569** at `aea15b47` is GREEN (15/15 groups) — the continuity-sync
+  commit that recorded resume batch 1 and the stale-prose repairs. The parent
+  session `sess-83d720703401` (worktree
+  `nightwatch-final-product-complet-e3ce743d`) was then released and removed
+  with `--delete-branch`; ancestry was proven first (`HEAD == origin/main ==
+  aea15b47`, 0 unique commits). Local validation before the push:
+  hardening:check PASS, agent:check PASS (86 warnings), project:check PASS
+  (exit 0, certificationRefused with 0/16 conditions — the OD-4 baseline), and
+  session:check PASS with attention=0. The canonical checkout is clean at
+  `aea15b47` and now holds a bounded MAINTENANCE claim only.
+- 2026-10-01 — MERGED ORPHAN BRANCH DELETED (owner-visible cleanup, R4-22).
+  `session/nightwatch-final-completion-corr-c45f0e9d` tip `b4d0c611`
+  (`b4d0c611a7848df675390d47aa21f008d078cde6`) was proven an ancestor of
+  `origin/main` with 0 unique commits (`git rev-list --count origin/main..
+  <branch>` = 0) and then deleted. No unmerged work existed.
 
 - 2026-10-01 — M9 10.2 RESUME BATCH 1. `bin/ai-local-canary.mjs` migrated to the
   shared operator-CLI contract (3 flags, group `validate`); registry 60/76

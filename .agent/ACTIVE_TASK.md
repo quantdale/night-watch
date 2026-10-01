@@ -24,7 +24,8 @@ session `sess-83d720703401` and completed M9 10.2 resume batch 1
 60/76 declared, 4 library-retained, 12 pending), with exact-head CI green at
 `07dd9506` (run 36808189880) and at `ce289948` (run 36809415911). It is now
 paused for the bounded review-4 child campaign
-`nightwatch-final-completion-review4-v1`. RESUME POINT: M9 task 10.2 remainder
+`nightwatch-final-completion-review4-v1` (canonical-routed: `SESSION WORKTREE:
+NONE`, `Branch: main`, no live session). RESUME POINT: M9 task 10.2 remainder
 (60/76 declared; next bin `auth-configure`), then 10.3-10.6, M10-M14 and the
 13-section final report.
 Previous checkpoint: 2026-09-27 — M8 COMPLETE (9.1-9.13): DEV-lane
@@ -98,7 +99,7 @@ reconcile every operator-truth surface, close the ledger, and end with a
 ```text
 CAMPAIGN: nightwatch-final-product-completion-v1
 CHILD TASK: NONE
-SESSION WORKTREE: session/nightwatch-final-product-complet-e3ce743d
+SESSION WORKTREE: NONE
 
 IMPLEMENTATION AUTHORIZED:
   Nightwatch source, tests, hardening rules/probes, schemas/configuration,
@@ -111,9 +112,15 @@ EXTERNAL CONTACT AUTHORIZED (OD-3 ONLY):
   provider proof run; one npm registry advisory query.
 
 CURRENT STATUS:
-  IN_PROGRESS — the corrective child campaign is CLOSED and archived; the
-  parent resumed at M9 task 10.2 remainder in session
-  `sess-83d720703401` (60/76 declared; 12 pending).
+  IN_PROGRESS — PAUSED AT A CLEAN, CANONICAL-ROUTED CHECKPOINT (60/76
+  declared; 12 pending). The corrective child campaign is CLOSED and
+  archived; the resume-batch-1 session `sess-83d720703401` was released and
+  its worktree removed with `--delete-branch` on 2026-10-01, after exact-head
+  CI went green at `aea15b47` (run 36830613569). This campaign therefore has
+  NO live session, and the canonical checkout is clean at `origin/main`. The
+  bounded review-4 child campaign `nightwatch-final-completion-review4-v1`
+  runs next and routes this campaign back to "M9 task 10.2 remainder
+  (60/76 declared; next bin `auth-configure`)".
 
 ALPHAUS DEV / NEXT / PRODUCTION CONTACT:   NOT AUTHORIZED
 AUTHENTICATED ALPHAUS RUNTIME:             NOT AUTHORIZED
