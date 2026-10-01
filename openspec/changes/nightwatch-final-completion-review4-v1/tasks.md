@@ -31,8 +31,8 @@
 
 ## 5. Ledger and records
 
-- [ ] 5.1 `TASK_GROUP_TASK_RE` accepts suffixed IDs; regression with an open `9.5b`; declare `TASK_GROUP_DEFERRED: 9` (carried by 14.1/14.2) or drop 9 from COMPLETE in the parent (R4-19).
-- [ ] 5.2 Records: rewrite the corrections-v1 REPORT header (29 findings 22/6/1) and add a per-ID disposition table for all 71 IDs (VB/VC/VD/VA/VE/CF/RV/R3); annotate 8.2–8.16 and 7.15 "ticked before integration; first push 673e2ddb red; CI-observed at 027367d9 (36790169165)"; add 6.4's DONE note; correct the a408d31b CI-run pairing and the STATE:673-676 CF-04 line by annotation; record the CORR-PERF-001 re-encode. Archived files are corrected only by appended dated annotations, never rewritten (R4-20).
+- [x] 5.1 `TASK_GROUP_TASK_RE` accepts suffixed IDs; regression with an open `9.5b`; declare `TASK_GROUP_DEFERRED: 9` (carried by 14.1/14.2) or drop 9 from COMPLETE in the parent (R4-19). — DONE (implemented; CI pending): `TASK_GROUP_TASK_RE` accepts a suffixed ID (`9.5b`) and the regression proves that an open suffixed sub-task keeps its group out of `TASK_GROUPS_COMPLETE`; the parent declares `TASK_GROUP_DEFERRED: 9.5b` (carried by 14.1/14.2) with `TASK_GROUPS_COMPLETE: 1..8`.
+- [x] 5.2 Records: rewrite the corrections-v1 REPORT header (29 findings 22/6/1) and add a per-ID disposition table for all 71 IDs (VB/VC/VD/VA/VE/CF/RV/R3); annotate 8.2–8.16 and 7.15 "ticked before integration; first push 673e2ddb red; CI-observed at 027367d9 (36790169165)"; add 6.4's DONE note; correct the a408d31b CI-run pairing and the STATE:673-676 CF-04 line by annotation; record the CORR-PERF-001 re-encode. Archived files are corrected only by appended dated annotations, never rewritten (R4-20). — DONE (implemented; CI pending): the corrections-v1 REPORT gains an appended dated correction section with the corrected header figures (29 findings, 22/6/1), a per-ID disposition table for all 71 IDs, the 8.2-8.16/7.15 tick annotations, the 6.4 DONE note, the a408d31b CI-run pairing correction, the STATE CF-04 attribution correction and the CORR-PERF-001 re-encode record. Nothing above the appendix was rewritten.
 
 ## 6. Hygiene and continuity
 

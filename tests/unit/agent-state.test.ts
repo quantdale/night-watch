@@ -1686,6 +1686,42 @@ test('a matching task-group ledger passes agent:check', () => {
   expect(result.status, result.stderr).toBe(0);
 });
 
+// R4-19 / review-4 task 5.1 — a SUFFIXED task ID is a real task. Before the
+// fix the group derivation ignored `9.5b`, so a group could be declared
+// COMPLETE while the suffixed sub-task was still open.
+test('an open suffixed task keeps its group out of TASK_GROUPS_COMPLETE', () => {
+  const tasks = [
+    '- [x] 2.1 closed work',
+    '- [x] 2.2 closed work',
+    '- [x] 3.1 closed work',
+    '- [ ] 3.5b RE-TAGGED (open sub-task)',
+    '',
+  ].join('\n');
+  // Declaring group 3 complete while 3.5b is open is refused.
+  const first = fixture();
+  writeProtocol(first.root, { baselineSha: first.sha, substantiveSha: first.sha, startingSha: first.sha });
+  writeGroupLedger(first.root, {
+    tasks,
+    fields: 'TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1\nTASK_GROUPS_COMPLETE: 2,3\nTASK_GROUP_NEXT: 4\nTASK_NEXT_ID: NONE',
+    exactNext: 'Group 4 does not exist; this fixture only proves the suffix is seen.',
+    milestone: 'Milestone ID: M4 — fourth group execution (group 4 run)',
+  });
+  expect(run(first.root).stderr).toContain('TASK_GROUP_LEDGER_COMPLETE_MISMATCH');
+  // Naming the suffixed task as the next unit is accepted, and group 2 is the
+  // only complete group.
+  const second = fixture();
+  writeProtocol(second.root, { baselineSha: second.sha, substantiveSha: second.sha, startingSha: second.sha });
+  writeGroupLedger(second.root, {
+    tasks,
+    fields: 'TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1\nTASK_GROUPS_COMPLETE: 2\nTASK_GROUP_NEXT: 3\nTASK_NEXT_ID: 3.5b',
+    exactNext: 'Do 3.5b next.',
+    milestone: 'Milestone ID: M3 — third group execution (group 3 run)',
+  });
+  const accepted = run(second.root);
+  expect(accepted.stderr).not.toContain('TASK_GROUP_LEDGER');
+  expect(accepted.status, accepted.stderr).toBe(0);
+});
+
 test('a ticked group missing from TASK_GROUPS_COMPLETE fails', () => {
   const { root, sha } = fixture();
   writeProtocol(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha });

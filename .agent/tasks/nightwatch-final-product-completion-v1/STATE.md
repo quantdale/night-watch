@@ -6,9 +6,10 @@ Task ID: nightwatch-final-product-completion-v1
 Phase: FINAL_PRODUCT_COMPLETION_V1
 Status: IN_PROGRESS
 TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1
-TASK_GROUPS_COMPLETE: 1,2,3,4,5,6,7,8,9
+TASK_GROUPS_COMPLETE: 1,2,3,4,5,6,7,8
 TASK_GROUP_NEXT: 10
 TASK_NEXT_ID: 10.2
+TASK_GROUP_DEFERRED: 9.5b
 Starting SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
 Last validated implementation SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
 Last substantive checkpoint SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
@@ -506,7 +507,10 @@ When it closes and routes ACTIVE_TASK back here at IN_PROGRESS: start a fresh
 C-00 parent session (`session start --task
 nightwatch-final-product-completion-v1`, then `claim --adopt`), finish the 12
 pending 10.2 declarations (60/76 declared; next bin `auth-configure`), then
-10.3-10.6, M10-M14, and the 13-section final report. Sequencing constraint
+10.3-10.6, M10-M14, and the 13-section final report. The open sub-task 9.5b
+(NW-AUD-020 tasks 3.2/4.2, re-tagged UNPROVEN) stays DEFERRED behind group 10
+and is carried by 14.1/14.2, which must record the NW-AUD-020 status before
+9.5b is ticked. Sequencing constraint
 recorded in D-148: run the paid proof (12.3) after the last substantive fix so
 G12's receipt binds to S.
 

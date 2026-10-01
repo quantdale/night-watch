@@ -107,7 +107,7 @@ an observed green exact-head CI at the tip that contains its close-out.
 
 - Objective: suffixed task IDs are seen; archived records are corrected by
   appended annotations with a per-ID disposition table.
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE (2026-10-01; implemented, exact-head CI pending)
 
 ### M6 — Hygiene and continuity (group 6: 6.1-6.2)
 

@@ -7,9 +7,9 @@ Phase: COMPLETION_REVIEW4_V1
 CHILD OF: nightwatch-final-product-completion-v1
 Status: IN_PROGRESS
 TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1
-TASK_GROUPS_COMPLETE: 1,2,3,4
-TASK_GROUP_NEXT: 5
-TASK_NEXT_ID: 5.1
+TASK_GROUPS_COMPLETE: 1,2,3,4,5
+TASK_GROUP_NEXT: 6
+TASK_NEXT_ID: 6.1
 Starting SHA: 67eb30981b4bb4d6bb6959b9afee9345938f5750
 Last validated implementation SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
 Last substantive checkpoint SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
@@ -50,13 +50,15 @@ sync, and ACTIVE_TASK routed back to the parent at "M9 task 10.2 remainder
 
 ## Current Milestone
 
-group 5 — Ledger and records, tasks 5.1-5.2: `TASK_GROUP_TASK_RE` accepts
-suffixed IDs with a regression for an open `9.5b` (5.1); the corrections-v1
-REPORT is corrected by appended dated annotations with a per-ID disposition
-table for all 71 IDs (5.2).
-Groups 1-4 are COMPLETE (implemented; CI pending): certification soundness
-(1.1-1.8), guard robustness (2.1-2.2), CI truth (3.1-3.4) and product
-correctness (4.1-4.5).
+group 6 — Hygiene and continuity, tasks 6.1-6.2: the merged corrections
+session branch deleted with its SHA recorded, gate:clean receipts recording the
+source worktree path class, the live-session count and the declared SESSION
+WORKTREE, and every release/remove recorded with its timestamp and output
+(6.1); the parent ACTIVE_TASK/STATE/PLAN prose synced with an extended
+task-group checker (6.2).
+Groups 1-5 are COMPLETE (implemented; CI pending): certification soundness
+(1.1-1.8), guard robustness (2.1-2.2), CI truth (3.1-3.4), product correctness
+(4.1-4.5) and ledger/records (5.1-5.2).
 
 ## Completed Milestones
 
@@ -67,16 +69,16 @@ correctness (4.1-4.5).
 
 ## Work In Progress
 
-Groups 1-4 are implemented and locally validated; group 5 (ledger and records) is the next unit of work.
+Groups 1-5 are implemented and locally validated; group 6 (hygiene and continuity) is the next unit of work.
 
 ## Exact Next Action
 
-Implement task 5.1 (R4-19): make `TASK_GROUP_TASK_RE` in
-`bin/agent-state.mjs` accept suffixed task IDs (`9.5b`), add a regression that
-an open suffixed task keeps its group incomplete, and declare
-`TASK_GROUP_DEFERRED: 9` (carried by 14.1/14.2) or drop 9 from the parent's
-COMPLETE list. Then 5.2 (the corrections-v1 REPORT record corrections by
-appended dated annotations with a per-ID disposition table for all 71 IDs).
+Implement task 6.1 (R4-22): record the corrections session-branch deletion and
+the parent session release/remove (timestamp + output) in STATE, and make
+`gate:clean` receipts record the source worktree path class, the live-session
+count and the declared SESSION WORKTREE. Then 6.2 (sync the parent
+ACTIVE_TASK/STATE/PLAN prose and extend the task-group checker to compare the
+declared counts/session in prose with the structured fields).
 
 ## Files Changed
 
@@ -88,6 +90,10 @@ appended dated annotations with a per-ID disposition table for all 71 IDs).
 
 ## Validation Ledger
 
+- 2026-10-01 — GROUP 5 (ledger and records). `agent-state` regression for the
+  suffixed task ID passes; the parent ledger declares `TASK_GROUP_DEFERRED:
+  9.5b`; the corrections-v1 REPORT carries the appended per-ID table for all 71
+  IDs and the six named record corrections.
 - 2026-10-01 — GROUP 4 (product correctness). `npm run hardening:check` PASS;
   `npm run typecheck` clean; the focused suites green (`journeyEngine` with the
   recorded-summary test, `bodyReadAcquisition` 7/7 with the `afterEach` drain,

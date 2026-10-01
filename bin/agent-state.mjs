@@ -645,7 +645,11 @@ function checkContinuity(stateFields, root, head, errors, warnings) {
 // ID and deferred IDs to the `## Exact Next Action` body and the next group
 // number to `## Current Milestone`, so a stale prose snapshot cannot survive
 // an unchanged ledger.
-const TASK_GROUP_TASK_RE = /^- \[( |x|X)\]\s+(\d+)\.(\d+)\s/;
+// R4-19 / review-4 task 5.1: the ID may carry a SUFFIX (`9.5b`), exactly as
+// the task-ID ledger's own pattern accepts. Without the suffix the group
+// derivation could not see a reopened sub-task, so `TASK_GROUPS_COMPLETE: …,9`
+// passed while `9.5b` was still open.
+const TASK_GROUP_TASK_RE = /^- \[( |x|X)\]\s+(\d+)\.(\d+[a-z]?)\s/;
 
 /**
  * Derive the group/tick truth from one change's tasks.md. Group headers are
