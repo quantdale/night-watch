@@ -549,6 +549,11 @@ exactly as in M4/M5.
 
 ## Validation Ledger
 
+- 2026-10-01 — REVIEW-4 CHILD CLOSE-OUT OBSERVED. The canonical close-out
+  commit `e5ec64ca827de8dae8c3384281c95de8081ba3d6` carries exact-head CI run
+  **36859209949** GREEN (15/15 groups) — the record that the child's archive +
+  the route back to this campaign are themselves CI-verified. The MAINTENANCE
+  claim was released afterwards.
 - 2026-10-01 — REVIEW-4 CHILD CLOSED. The bounded child campaign
   `nightwatch-final-completion-review4-v1` resolved all 24 review-4 findings and
   closed at `17391ae673644d67226de4fadea81d1f4b0b1912` (exact-head CI run
