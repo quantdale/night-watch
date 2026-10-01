@@ -435,7 +435,13 @@ test.describe('F-08 — governed status-word ledger', () => {
     ).lines.join('\n');
     const activeTaskStatus = /^[ \t]*Status:[ \t]*(.+?)[ \t]*$/m.exec(preamble)?.[1]?.trim();
     expect(activeTaskStatus, 'the active task identity must state a Status').toBeTruthy();
-    const result = checkGovernedStatusWords(documents, { activeTaskStatus });
+    // R4-11 / review-4 task 3.2: CI_STATUS is derived from the machine-checked
+    // project-state block, exactly as the hardening rule derives it.
+    const currentState = documents.find((document) => document.path === 'docs/CURRENT_STATE.md')?.text ?? '';
+    const projectStateBlock = /```[^\n]*\nPROJECT_STATE_PROTOCOL_VERSION: nightwatch\.project-state\.v2\n([\s\S]*?)```/m.exec(currentState)?.[1] ?? '';
+    const ciObservationStatus = /^CI_STATUS:[ \t]*(\S+)[ \t]*$/m.exec(projectStateBlock)?.[1]?.trim();
+    expect(ciObservationStatus, 'the project-state block must state CI_STATUS').toBeTruthy();
+    const result = checkGovernedStatusWords(documents, { activeTaskStatus, ciObservationStatus });
     expect(result.violations).toEqual([]);
     expect(result.holds).toBe(true);
     // Non-vacuous: the scan must actually see governed statements.

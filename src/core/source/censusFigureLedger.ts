@@ -431,6 +431,13 @@ export function statusValueIsCurrent(statedValue: string, currentValue: string):
 export interface GovernedStatusDerivation {
   /** The `Status:` field of `.agent/ACTIVE_TASK.md`, for derived keys. */
   readonly activeTaskStatus?: string;
+  /**
+   * R4-11 / review-4 task 3.2 — the observed exact-head CI status word, for
+   * {@link DERIVED_FROM_CI_OBSERVATION}. The caller reads it from the
+   * machine-checked project-state block (cross-checked against
+   * `config/ci-block-record.v1.json`); the module stays data-only.
+   */
+  readonly ciObservationStatus?: string;
 }
 
 export function checkGovernedStatusWords(
@@ -439,11 +446,17 @@ export function checkGovernedStatusWords(
 ): GovernedStatusCheckResult {
   const entries = new Map(GOVERNED_STATUS_KEYS.map((entry) => [entry.key, entry]));
   const resolveCurrentValue = (entry: GovernedStatusKey): string | null => {
-    if (entry.currentValue !== DERIVED_FROM_ACTIVE_TASK) return entry.currentValue;
-    const status = String(derived?.activeTaskStatus ?? '').trim();
-    // Fail closed: without the derivation input a stated derived key cannot
-    // be proven current, and guessing a value would launder a stale claim.
-    return status === '' ? null : normalizeStatusValue(status);
+    if (entry.currentValue === DERIVED_FROM_ACTIVE_TASK) {
+      const status = String(derived?.activeTaskStatus ?? '').trim();
+      // Fail closed: without the derivation input a stated derived key cannot
+      // be proven current, and guessing a value would launder a stale claim.
+      return status === '' ? null : normalizeStatusValue(status);
+    }
+    if (entry.currentValue === DERIVED_FROM_CI_OBSERVATION) {
+      const observed = String(derived?.ciObservationStatus ?? '').trim();
+      return observed === '' ? null : normalizeStatusValue(observed);
+    }
+    return entry.currentValue;
   };
   const violations: GovernedStatusViolation[] = [];
   let statements = 0;
@@ -463,7 +476,7 @@ export function checkGovernedStatusWords(
             line: index + 1,
             key: occurrence.key,
             statedValue: occurrence.value,
-            currentValue: DERIVED_FROM_ACTIVE_TASK,
+            currentValue: entry.currentValue,
             reason: 'DERIVED_VALUE_UNAVAILABLE',
           }));
           continue;

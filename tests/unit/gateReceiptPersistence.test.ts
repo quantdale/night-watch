@@ -529,11 +529,16 @@ test.describe('R-11 the gate itself persists its receipt', () => {
   });
 
   test('the receipt destination is not inherited by gate children', () => {
-    const runner = fs.readFileSync(GATE, 'utf8');
+    // R4-10 / review-4 task 3.1: the child environment (and with it the
+    // forbidden-key list) lives in bin/lib/gate-child-environment.mjs, which the
+    // gate calls through buildGateChildEnvironment.
+    const childEnvironment = fs.readFileSync(path.join(ROOT, 'bin', 'lib', 'gate-child-environment.mjs'), 'utf8');
     // A child inheriting the destination could overwrite the parent's
     // authoritative receipt with its own.
-    expect(runner).toMatch(/FORBIDDEN_ENVIRONMENT_KEYS[\s\S]{0,600}GATE_RECEIPT_PATH_ENV,/);
-    expect(runner).toMatch(/for \(const key of FORBIDDEN_ENVIRONMENT_KEYS\) delete environment\[key\];/);
+    expect(childEnvironment).toMatch(/FORBIDDEN_ENVIRONMENT_KEYS[\s\S]{0,600}GATE_RECEIPT_PATH_ENV,/);
+    expect(childEnvironment).toMatch(/for \(const key of FORBIDDEN_ENVIRONMENT_KEYS\) delete environment\[key\];/);
+    const runner = fs.readFileSync(GATE, 'utf8');
+    expect(runner).toMatch(/buildGateChildEnvironment\(process\.env, \{ mode, commandKey \}\)/);
   });
 
   test('stdout carries the receipt and nothing else', () => {
