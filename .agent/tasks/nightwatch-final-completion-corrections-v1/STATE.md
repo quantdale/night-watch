@@ -9,7 +9,7 @@ Status: IN_PROGRESS
 TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1
 TASK_GROUPS_COMPLETE: 1,2,3,4,5,7,8
 TASK_GROUP_NEXT: 6
-TASK_NEXT_ID: 6.2
+TASK_NEXT_ID: 6.3
 Starting SHA: 1d47e2eef1ef029560ace12e31571624602eab0b
 Last validated implementation SHA: b9306626e5386c371a2e7357a6432cfd2784acb1
 Last substantive checkpoint SHA: b9306626e5386c371a2e7357a6432cfd2784acb1
@@ -389,6 +389,14 @@ parent at "M9 task 10.2 remainder".
 
 ## Validation Ledger
 
+- 2026-10-01 — TASK 6.2 FULL VALIDATION SET (tip `60663905`): every command exit
+  0 — `npm test` 5848/0/34 (5882 executed), `gate:local` all 15 groups PASS
+  (`receipt:sha256:030bc83d1ef06cc219167f3d`; TOPOLOGY PROVEN/BUBBLEWRAP,
+  `topologyCertifying=true`), `campaign:synthetic` PASS (skipPolicy 14/0),
+  `hardening:rules` 209/209, UI 105/105 + typecheck + build, `openspec
+  validate --all --strict` 125/125, and typecheck/typecheck:bin/schema:check/
+  validation:universe/agent:check/agent:audit/project:check/workspace:check/
+  session:check PASS.
 - 2026-10-01 — TASK 7.15 EXACT-HEAD CI GREEN. Run **36790169165** at
   `027367d9` is GREEN: all 15 groups PASS (receipt
   `receipt:sha256:ca9b52e35d67a31cece53fb6`; SEMANTIC 2227/2213/14/0 skipPolicy
