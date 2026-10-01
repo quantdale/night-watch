@@ -23,10 +23,154 @@ import {
   gitFiles,
   isRuleEngineSource,
 } from "../kernel.mjs";
+import typescript from 'typescript';
+
 import {
   buildChildProcessCensus,
   EXECUTION_PROFILES,
 } from "../../childProcessCensus.mjs";
+
+/**
+ * R4-09 / review-4 task 2.2 — the effect vocabulary and the syntax-aware
+ * top-level effect collector the DEV-launcher rule uses.
+ *
+ * The vocabulary is the FULL fs mutation family (unlink, symlink, rename, rm,
+ * mkdir, write, append, copy, truncate, chmod, chown, utimes, link, mkdtemp)
+ * plus process, fetch, browser and network effects and dynamic import. The walk
+ * is syntax-aware: it starts at the parsed TOP-LEVEL statements inside the
+ * guarded region, descends into blocks and control statements (so an effect
+ * inside a top-level `try` or `if` is seen), sees a local call reached through
+ * an assignment, and stops at function-like bodies, which do not run at load.
+ */
+const DEV_EFFECT_FS_MUTATIONS = new Set([
+  'writeFile', 'writeFileSync', 'appendFile', 'appendFileSync', 'mkdir', 'mkdirSync', 'rm', 'rmSync',
+  'rename', 'renameSync', 'copyFile', 'copyFileSync', 'createWriteStream', 'open', 'openSync',
+  'unlink', 'unlinkSync', 'symlink', 'symlinkSync', 'rmdir', 'rmdirSync', 'truncate', 'truncateSync',
+  'chmod', 'chmodSync', 'chown', 'chownSync', 'utimes', 'utimesSync', 'link', 'linkSync',
+  'mkdtemp', 'mkdtempSync', 'createWriteStreamSync', 'writev', 'writevSync', 'futimes', 'futimesSync',
+]);
+const DEV_EFFECT_PROCESS_CALLS = new Set(['spawnSync', 'spawn', 'execFileSync', 'execFile', 'execSync', 'fork', 'fetch', 'chromium', 'launchPersistentContext']);
+const DEV_EFFECT_NETWORK_OBJECTS = new Set(['http', 'https', 'net']);
+const DEV_EFFECT_NETWORK_MEMBERS = new Set(['request', 'get', 'connect']);
+const DEV_EFFECT_FS_OBJECTS = /^(?:fs|fsp|fsPromises|fsSync)(?:\.promises)?$/;
+const DEV_EFFECT_DECLARATION_KINDS = new Set([
+  typescript.SyntaxKind.FunctionDeclaration, typescript.SyntaxKind.ClassDeclaration,
+  typescript.SyntaxKind.InterfaceDeclaration, typescript.SyntaxKind.TypeAliasDeclaration,
+  typescript.SyntaxKind.EnumDeclaration, typescript.SyntaxKind.ImportDeclaration,
+  typescript.SyntaxKind.ImportEqualsDeclaration, typescript.SyntaxKind.ModuleDeclaration,
+  typescript.SyntaxKind.ExportDeclaration, typescript.SyntaxKind.ExportAssignment,
+  typescript.SyntaxKind.EmptyStatement,
+]);
+
+/**
+ * The dotted text of a callee's receiver, so `fs.promises.writeFile` resolves
+ * to the `fs` family rather than to a bare property name.
+ * @param {typescript.Expression} expression
+ * @param {typescript.SourceFile} sourceFile
+ */
+function devEffectReceiver(expression, sourceFile) {
+  if (typescript.isIdentifier(expression)) return expression.text;
+  if (typescript.isPropertyAccessExpression(expression)) return expression.getText(sourceFile);
+  return null;
+}
+
+/**
+ * R4-09 / review-4 task 2.2 — the behavioural self-test for the DEV-launcher
+ * effect scan. It is intentionally built from a SYNTHETIC source so the probe
+ * campaign can mutate any single element of the scan (the fs vocabulary, the
+ * positional bound, the descent, the function-body stop, the local-call rule)
+ * and observe a failure without touching a real launcher.
+ * @returns {string[]} findings (empty when the scan is sound)
+ */
+export function devLauncherEffectSelfTest() {
+  const guardLine = 'guardDevLane({ root, launcher: \'fixture.mjs\', args: process.argv.slice(2) });\n';
+  const dispatchLine = 'if (cli.stop) return;\n';
+  const before = [
+    'try {\n',
+    '  if (probe) { fs.unlinkSync(scratch); }\n',
+    '  fs.symlinkSync(target, link);\n',
+    '  const h = currentHead();\n',
+    '} catch { /* bounded */ }\n',
+    'const helper = () => { fs.rmSync(scratch); };\n',
+  ].join('');
+  const after = [
+    'spawnSync(process.execPath, [path.join(root, \'bin\', \'x.mjs\')]);\n',
+    'fs.rmSync(scratch);\n',
+  ].join('');
+  const code = `${guardLine}${before}${dispatchLine}${after}`;
+  const from = guardLine.length;
+  const to = guardLine.length + before.length;
+  const localNames = new Set(['currentHead', 'helper']);
+  const found = collectTopLevelEffects(code, from, to, localNames);
+  const findings = [];
+  for (const expected of ['fs.unlinkSync(scratch)', 'fs.symlinkSync(target, link)', 'currentHead()']) {
+    if (!found.includes(expected)) {
+      findings.push(`DEV_LAUNCHER_EFFECT_SCAN_SELFTEST the effect scan missed ${expected}; the R4-09 vocabulary/descent regression is back`);
+    }
+  }
+  for (const forbidden of ['fs.rmSync(scratch)', 'spawnSync(']) {
+    if (found.some((entry) => entry.startsWith(forbidden))) {
+      findings.push(`DEV_LAUNCHER_EFFECT_SCAN_SELFTEST the effect scan reported ${forbidden} outside the guarded region or inside a function body`);
+    }
+  }
+  return findings;
+}
+
+/**
+ * @param {string} code the module source
+ * @param {number} from inclusive character offset of the guarded region
+ * @param {number} to exclusive character offset of the dispatch statement
+ * @param {Set<string>} localNames locally declared function/arrow names
+ * @returns {string[]} the source text of every offending call, in source order
+ */
+export function collectTopLevelEffects(code, from, to, localNames) {
+  const sourceFile = typescript.createSourceFile('dev-launcher.mjs', code, typescript.ScriptTarget.Latest, true, typescript.ScriptKind.JS);
+  /** @type {string[]} */
+  const effects = [];
+  /**
+   * The region is POSITIONAL, not statement-granular: a top-level `try { … }`
+   * may wrap BOTH legitimate pre-dispatch work and the dispatch itself, so a
+   * node is judged by its own start offset. Nodes at or after the dispatch are
+   * never effects of interest (the dispatch legitimately does the work).
+   * @param {typescript.Node} node
+   */
+  const walk = (node) => {
+    if (
+      typescript.isArrowFunction(node) || typescript.isFunctionExpression(node) || typescript.isFunctionDeclaration(node)
+      || typescript.isMethodDeclaration(node) || typescript.isClassDeclaration(node) || typescript.isClassExpression(node)
+      || typescript.isGetAccessor(node) || typescript.isSetAccessor(node) || typescript.isConstructorDeclaration(node)
+    ) return;
+    const start = node.getStart(sourceFile);
+    const inRegion = start >= from && start < to;
+    if (inRegion) {
+      if (typescript.isImportCall(node)) {
+        effects.push(node.getText(sourceFile));
+      } else if (typescript.isCallExpression(node)) {
+        const callee = node.expression;
+        const text = node.getText(sourceFile);
+        if (typescript.isElementAccessExpression(callee) && DEV_EFFECT_FS_OBJECTS.test(devEffectReceiver(callee.expression, sourceFile) ?? '')) {
+          effects.push(text);
+        } else if (typescript.isIdentifier(callee)) {
+          if (DEV_EFFECT_PROCESS_CALLS.has(callee.text) || localNames.has(callee.text)) effects.push(text);
+        } else if (typescript.isPropertyAccessExpression(callee)) {
+          const receiver = devEffectReceiver(callee.expression, sourceFile) ?? '';
+          const member = callee.name.text;
+          if (DEV_EFFECT_FS_OBJECTS.test(receiver) && DEV_EFFECT_FS_MUTATIONS.has(member)) effects.push(text);
+          else if (DEV_EFFECT_NETWORK_OBJECTS.has(receiver) && DEV_EFFECT_NETWORK_MEMBERS.has(member)) effects.push(text);
+        }
+      } else if (typescript.isNewExpression(node)) {
+        if (typescript.isIdentifier(node.expression) && node.expression.text === 'WebSocket') effects.push(node.getText(sourceFile));
+      }
+    }
+    typescript.forEachChild(node, walk);
+  };
+  for (const statement of sourceFile.statements) {
+    if (statement.getEnd() <= from || statement.getStart(sourceFile) >= to) continue;
+    if (DEV_EFFECT_DECLARATION_KINDS.has(statement.kind)) continue;
+    walk(statement);
+  }
+  return effects;
+}
 import {
   buildTransportEffectCensus,
   EFFECT_CLASSES,
@@ -100,6 +244,17 @@ export function checkM8GuardTotality() {
  *      not executed there).
  */
 export function checkDevLauncherMetadataShortCircuit() {
+  // R4-09 / review-4 task 2.2: the effect scan is SYNTAX-AWARE and it proves
+  // itself. The self-test below runs the collector on a synthetic source that
+  // contains one effect of every class the review named (an effect inside a
+  // top-level `try`, an effect wrapped in `if (…)`, a local call reached
+  // through an assignment, `fs.unlinkSync`, `fs.symlinkSync`) and asserts both
+  // inclusion and exclusion, so removing a vocabulary member, dropping the
+  // positional bound, or failing to descend into a block fails here.
+  const selfTest = devLauncherEffectSelfTest();
+  if (selfTest.length > 0) {
+    for (const finding of selfTest) fail(finding);
+  }
   const exemptionSource = read('bin/lib/dev-lane-precondition.mjs');
   const exemptionLines = [...exemptionSource.matchAll(/if \(([^\n]*args\.includes\('--help'\)[^\n]*)\) return false;/g)];
   // Exactly ONE exemption statement may exist; a second one is a widening too.
@@ -118,8 +273,11 @@ export function checkDevLauncherMetadataShortCircuit() {
   const ownParser = new Map([['bin/phase23-dev.mjs', {
     permissive: "fail('FLAGS_REQUIRE_EQUALS')",
     shortCircuit: 'if (args.help || args._.length === 0) help();',
-  }]]);
-  const effect = /\b(?:spawnSync|spawn|execFileSync|execFile|execSync|fork|fetch|chromium|launchPersistentContext)\s*[.(]|\bfs\.(?:writeFile|writeFileSync|appendFile|appendFileSync|mkdir|mkdirSync|rm|rmSync|rename|renameSync|copyFile|copyFileSync|createWriteStream|open|openSync)\s*\(|\bimport\s*\(|\b(?:http|https|net)\.(?:request|get|connect)\b|new WebSocket\b/;
+    // A DECLARED pure local helper: the launcher must parse its own arguments
+    // to KNOW whether help/metadata was requested, so the argument parser is
+    // exempt by name. Any other local call is an effect (R4-09).
+    pureLocals: ['parseArgs'],
+  }]]);;
   const launchers = gitFiles().filter((file) => /^bin\/[^/]+\.mjs$/.test(file) && read(file).includes('guardDevLane('));
   if (launchers.length === 0) fail('DEV_LAUNCHER_SHORT_CIRCUIT_VACUOUS no launcher calls guardDevLane(; the rule found nothing to check');
   for (const file of launchers) {
@@ -145,26 +303,24 @@ export function checkDevLauncherMetadataShortCircuit() {
       fail(`DEV_LAUNCHER_NO_SHORT_CIRCUIT ${file} has no help/metadata short-circuit after its DEV guard`);
       continue;
     }
-    // Top-level statements only: a col-0 line opens a statement that runs until
-    // the next col-0 line; declarations (function/class/import/export/comment)
-    // are skipped, because they do not execute here.
-    const region = code.slice(guardEnd, shortCircuitAt);
-    // R3-12: a top-level call to a LOCALLY defined function may have effects;
-    // it is flagged unless it is a declaration or the dispatch itself.
+    // R3-12 established a top-level effect scan; R4-09 / review-4 task 2.2 made
+    // it SYNTAX-AWARE. The col-0 statement split missed an effect inside a
+    // top-level `try` / `if` / block (the whole block was skipped as a control
+    // statement), a local call reached through an assignment
+    // (`const h = currentHead()`), and the fs mutations outside the write
+    // family (`unlinkSync`, `symlinkSync`, …). The scan now walks the parsed
+    // top-level statements, descends into every non-declaration statement
+    // (blocks, control statements, initializers) and stops at function-like
+    // bodies, which do not execute at load time.
     const localNames = new Set([
       ...[...code.matchAll(/^(?:async\s+)?function\s+([A-Za-z_$][\w$]*)\s*\(/gm)].map((match) => String(match[1])),
       ...[...code.matchAll(/^const\s+([A-Za-z_$][\w$]*)\s*=\s*(?:async\s*)?\(/gm)].map((match) => String(match[1])),
+      ...[...code.matchAll(/^const\s+([A-Za-z_$][\w$]*)\s*=\s*(?:async\s+)?[A-Za-z_$][\w$.]*\s*=>/gm)].map((match) => String(match[1])),
     ]);
-    const localCall = localNames.size === 0
-      ? null
-      : new RegExp(`^(?:await\\s+)?(?:${[...localNames].map((name) => name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})\\s*\\(`);
-    const statements = region.split(/\n(?=\S)/);
-    for (const statement of statements) {
-      const trimmed = statement.trim();
-      if (trimmed === '' || /^(?:async\s+function|function|class|import|export|\/\/|\/\*|\}|\)|if\b|try\b|for\b|while\b|switch\b|do\b|catch\b|finally\b|else\b|return\b|throw\b)/.test(trimmed)) continue;
-      if (effect.test(trimmed) || (localCall !== null && localCall.test(trimmed))) {
-        fail(`DEV_LAUNCHER_EFFECT_BEFORE_SHORT_CIRCUIT ${file} performs an effect at top level between its DEV guard and the help/metadata short-circuit: ${trimmed.split('\n')[0]?.slice(0, 100)}`);
-      }
+    const pureLocals = new Set(ownParser.get(file)?.pureLocals ?? []);
+    for (const name of pureLocals) localNames.delete(name);
+    for (const effectText of collectTopLevelEffects(code, guardEnd, shortCircuitAt, localNames)) {
+      fail(`DEV_LAUNCHER_EFFECT_BEFORE_SHORT_CIRCUIT ${file} performs an effect at top level between its DEV guard and the help/metadata short-circuit: ${effectText.replace(/\s+/g, ' ').slice(0, 100)}`);
     }
   }
 }

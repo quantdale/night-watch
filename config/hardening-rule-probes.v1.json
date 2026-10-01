@@ -42,6 +42,76 @@
             "replace": "spawnSync('true', []);\ntry {\n  const args = parseArgs(process.argv.slice(2));"
           }
         ]
+      },
+      {
+        "id": "HC-210",
+        "ops": [
+          {
+            "file": "bin/lib/hardening/rules/process-and-network.mjs",
+            "search": "  'unlink', 'unlinkSync', 'symlink', 'symlinkSync', 'rmdir', 'rmdirSync', 'truncate', 'truncateSync',",
+            "replace": "  'rmdir', 'rmdirSync', 'truncate', 'truncateSync',"
+          }
+        ]
+      },
+      {
+        "id": "HC-211",
+        "ops": [
+          {
+            "file": "bin/lib/hardening/rules/process-and-network.mjs",
+            "search": "    typescript.forEachChild(node, walk);",
+            "replace": "    void 0;"
+          }
+        ]
+      },
+      {
+        "id": "HC-212",
+        "ops": [
+          {
+            "file": "bin/lib/hardening/rules/process-and-network.mjs",
+            "search": "    const inRegion = start >= from && start < to;",
+            "replace": "    const inRegion = true;"
+          }
+        ]
+      },
+      {
+        "id": "HC-213",
+        "ops": [
+          {
+            "file": "bin/lib/hardening/rules/process-and-network.mjs",
+            "search": "          if (DEV_EFFECT_PROCESS_CALLS.has(callee.text) || localNames.has(callee.text)) effects.push(text);",
+            "replace": "          if (DEV_EFFECT_PROCESS_CALLS.has(callee.text)) effects.push(text);"
+          }
+        ]
+      },
+      {
+        "id": "HC-214",
+        "ops": [
+          {
+            "file": "bin/lib/hardening/rules/process-and-network.mjs",
+            "search": "      typescript.isArrowFunction(node) || typescript.isFunctionExpression(node) || typescript.isFunctionDeclaration(node)",
+            "replace": "      typescript.isFunctionExpression(node) || typescript.isFunctionDeclaration(node)"
+          }
+        ]
+      },
+      {
+        "id": "HC-215",
+        "ops": [
+          {
+            "file": "bin/lib/hardening/rules/process-and-network.mjs",
+            "search": "export function collectTopLevelEffects(code, from, to, localNames) {",
+            "replace": "export function collectTopLevelEffects(code, from, to, localNames) {\n  if (true) return [];"
+          }
+        ]
+      },
+      {
+        "id": "HC-216",
+        "ops": [
+          {
+            "file": "bin/lib/hardening/rules/process-and-network.mjs",
+            "search": "  const found = collectTopLevelEffects(code, from, to, localNames);",
+            "replace": "  const found = [];"
+          }
+        ]
       }
     ],
     "checkChildProcessBoundaries": [
@@ -2358,6 +2428,148 @@
             "file": "bin/lib/checkpoint-role.mjs",
             "search": "if (guarded.size === 0) return [...new Set(violations)];",
             "replace": "if (true) return [...new Set(violations)];"
+          }
+        ]
+      },
+      {
+        "id": "HC-225",
+        "ops": [
+          {
+            "file": "bin/lib/checkpoint-role.mjs",
+            "search": "      if (file === 'config/document-role-corrections.v1.json') {",
+            "replace": "      if (file === 'config/document-role-corrections.v1.json' && false) {"
+          }
+        ]
+      },
+      {
+        "id": "HC-226",
+        "ops": [
+          {
+            "file": "bin/lib/checkpoint-role.mjs",
+            "search": "    const listed = gitText(root, ['rev-list', `${context.from}..${context.to}`]);",
+            "replace": "    return [...new Set(violations)];\n    const listed = gitText(root, ['rev-list', `${context.from}..${context.to}`]);"
+          }
+        ]
+      },
+      {
+        "id": "HC-227",
+        "ops": [
+          {
+            "file": "bin/lib/checkpoint-role.mjs",
+            "search": "  const output = gitText(root, ['diff-tree', '--root', '--no-commit-id', '--name-only', '--no-renames', '-m', '-r', commit]);",
+            "replace": "  const output = gitText(root, ['diff-tree', '--root', '--no-commit-id', '--name-only', '--no-renames', '-r', commit]);"
+          }
+        ]
+      },
+      {
+        "id": "HC-228",
+        "ops": [
+          {
+            "file": "bin/lib/checkpoint-role.mjs",
+            "search": "      violations.push(...guarded);\n      continue;",
+            "replace": "      continue;"
+          }
+        ]
+      },
+      {
+        "id": "HC-229",
+        "ops": [
+          {
+            "file": "bin/lib/checkpoint-role.mjs",
+            "search": "      for (const parent of parentRefs) {",
+            "replace": "      for (const parent of parentRefs.slice(0, 1)) {"
+          }
+        ]
+      },
+      {
+        "id": "HC-230",
+        "ops": [
+          {
+            "file": "bin/lib/checkpoint-role.mjs",
+            "search": "      const parentRefs = parents.length === 0 ? [null] : parents;",
+            "replace": "      const parentRefs = parents.length === 0 ? [null] : [parents[0]];"
+          }
+        ]
+      }
+    ],
+    "checkReview4CollectorTotality": [
+      {
+        "id": "HC-217",
+        "ops": [
+          {
+            "file": "bin/project-state-check.mjs",
+            "search": "  const headSha = headOutput === null ? null : headOutput.trim();",
+            "replace": "  const headSha = substantiveSha;"
+          }
+        ]
+      },
+      {
+        "id": "HC-218",
+        "ops": [
+          {
+            "file": "bin/project-state-check.mjs",
+            "search": "    treeClean: porcelainOutput === null ? null : porcelainOutput.trim() === '',",
+            "replace": "    treeClean: true,"
+          }
+        ]
+      },
+      {
+        "id": "HC-219",
+        "ops": [
+          {
+            "file": "bin/project-state-check.mjs",
+            "search": "  const porcelainOutput = gitReadOnly(root, ['status', '--porcelain']);",
+            "replace": "  const porcelainOutput = '';"
+          }
+        ]
+      },
+      {
+        "id": "HC-220",
+        "ops": [
+          {
+            "file": "bin/project-state-check.mjs",
+            "search": "    documentaryDescendant: rangeClass === 'DOCUMENTARY_DESCENDANT',",
+            "replace": "    documentaryDescendant: true,"
+          }
+        ]
+      },
+      {
+        "id": "HC-221",
+        "ops": [
+          {
+            "file": "bin/project-state-check.mjs",
+            "search": "            evidenceCertifying: Object.fromEntries(",
+            "replace": "            evidenceCertifying: {},"
+          }
+        ]
+      },
+      {
+        "id": "HC-222",
+        "ops": [
+          {
+            "file": "bin/project-state-check.mjs",
+            "search": "=> verifyPersistedReceipt(root, subject, digest, evidenceSha).verified,",
+            "replace": "=> true,"
+          }
+        ]
+      },
+      {
+        "id": "HC-223",
+        "ops": [
+          {
+            "file": "bin/project-state-check.mjs",
+            "search": "    harnessSourceAtS = typeof harnessAtCheckpoint === 'string' ? harnessAtCheckpoint : null;",
+            "replace": "    harnessSourceAtS = null;"
+          }
+        ]
+      },
+      {
+        "id": "HC-224",
+        "ops": [
+          {
+            "file": "bin/project-state-check.mjs",
+            "search": "      const output = gitReadOnly(root, ['diff', '--name-only', '--no-renames', `${from}..${to}`]);",
+            "replace": "      const output = null;"
           }
         ]
       }

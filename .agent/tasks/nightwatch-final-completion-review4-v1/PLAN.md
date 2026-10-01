@@ -81,13 +81,13 @@ an observed green exact-head CI at the tip that contains its close-out.
   hand-written FAIL/mismatched receipt never verifies; a rename is
   SUBSTANTIVE; no topology receipt is NOT MET; `autonomous-yield-proof` is
   required and honestly unmet.
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE (2026-10-01; implemented, exact-head CI pending)
 
 ### M2 — Guard robustness (group 2: 2.1-2.2)
 
 - Objective: every R4-08/R4-09 survivor killed by a registered family.
 - Acceptance: `hardening:rules` DETECTED for every member.
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE (2026-10-01; implemented, exact-head CI pending)
 
 ### M3 — CI truth (group 3: 3.1-3.4)
 

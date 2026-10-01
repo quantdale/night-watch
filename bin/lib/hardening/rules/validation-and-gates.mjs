@@ -12,6 +12,7 @@
  */
 
 import fs from 'node:fs';
+import { createHash } from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -38,10 +39,159 @@ import {
   lineSha256Prefix,
   RELEASE_EVIDENCE_SCHEMA,
   guardHoldsForChange,
+  verifyPersistedReceipt,
 } from '../../release-evidence.mjs';
 import { bindTreeProbe, receiptBindingRelation, resolveProbeBinding } from '../../probe-binding.mjs';
 import { classifyCheckpointRange } from '../../checkpoint-range.mjs';
-import { buildUiHarnessReceipt, evaluateUiHarnessReceipt, UI_HARNESS_REQUIRED_TESTS, UI_HARNESS_SUITE } from '../../ui-harness-receipt.mjs';
+import { buildUiHarnessReceipt, evaluateUiHarnessReceipt, extractApiErrorKinds, UI_HARNESS_REQUIRED_TESTS, UI_HARNESS_SUITE } from '../../ui-harness-receipt.mjs';
+
+import { parseAccessibilityCertificationRecord } from '../../accessibility-record.mjs';
+/**
+ * R4-08 / review-4 task 2.1 — the collector's certification decisions must stay
+ * REAL. The review named equivalent mutants that survived the honesty and
+ * classifier rules; this rule kills them with BEHAVIOURAL fixtures wherever a
+ * pure decision can be executed, plus whole-expression anchors for the few
+ * collector-internal facts only a full checker run could otherwise observe.
+ *
+ * Behavioural half: `verifyPersistedReceipt` on a fixture root (a hard-coded
+ * `{verified:true}` stub fails), `resolveProbeBinding`/`bindTreeProbe` on the
+ * checkpoint facts, `evaluateUiHarnessReceipt`, `evaluateYieldCampaignEvidence`
+ * and `parseAccessibilityCertificationRecord` each bound to ANOTHER commit.
+ * Anchored half: the collector must derive its HEAD, its clean-tree state, its
+ * documentary-descendant fact, its changed-file list, its harness source at S,
+ * its certifying flags and its receipt verifier EXACTLY as reviewed.
+ */
+export function checkReview4CollectorTotality() {
+  const collector = read('bin/project-state-check.mjs');
+  const S = 'a'.repeat(40);
+  const OTHER = 'b'.repeat(40);
+
+  // --- behavioural: the receipt verifier really verifies ------------------
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'nw-review4-receipt-'));
+  try {
+    const crypto = { createHash };
+    const stableCanonical = (value) => {
+      if (value === null || typeof value !== 'object') return JSON.stringify(value) ?? 'null';
+      if (Array.isArray(value)) return `[${value.map(stableCanonical).join(',')}]`;
+      return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${stableCanonical(value[key])}`).join(',')}}`;
+    };
+    fs.mkdirSync(path.join(directory, 'artifacts/receipts'), { recursive: true });
+    const writeGateReceipt = (name, body) => {
+      const digest = `receipt:sha256:${crypto.createHash('sha256').update(stableCanonical(body)).digest('hex').slice(0, 24)}`;
+      fs.writeFileSync(path.join(directory, 'artifacts/receipts', `${name}.json`), `${JSON.stringify({ ...body, receiptDigest: digest })}\n`);
+      return digest;
+    };
+    const passBody = { schemaVersion: 'nightwatch.quality-gate-receipt.v1', subject: 'authoritative-gate', gitHead: S, finalResult: 'PASS' };
+    const failBody = { ...passBody, finalResult: 'FAIL' };
+    const passDigest = writeGateReceipt('pass', passBody);
+    const failDigest = writeGateReceipt('fail', failBody);
+    if (verifyPersistedReceipt(directory, 'authoritative-gate', passDigest, S).verified !== true) {
+      fail('REVIEW4_RECEIPT_VERIFIER_STUBBED a persisted PASS receipt with the right subject no longer verifies');
+    }
+    if (verifyPersistedReceipt(directory, 'authoritative-gate', failDigest, S).verified !== false) {
+      fail('REVIEW4_RECEIPT_VERIFIER_STUBBED a hand-written FAIL receipt verifies; the verdict check is gone');
+    }
+    if (verifyPersistedReceipt(directory, 'root-compile', passDigest, S).verified !== false) {
+      fail('REVIEW4_RECEIPT_VERIFIER_STUBBED a receipt that declares ANOTHER subject certifies this subject');
+    }
+    if (verifyPersistedReceipt(directory, 'authoritative-gate', passDigest, OTHER).verified !== false) {
+      fail('REVIEW4_RECEIPT_VERIFIER_STUBBED a receipt bound to another SHA certifies this one');
+    }
+  } finally {
+    fs.rmSync(directory, { recursive: true, force: true });
+  }
+
+  // --- behavioural: the tree-probe binding facts --------------------------
+  const same = resolveProbeBinding({ certifiedCheckpointSha: S, headSha: S, treeClean: true });
+  const documentary = resolveProbeBinding({ certifiedCheckpointSha: S, headSha: OTHER, treeClean: true, documentaryDescendant: true });
+  const substantive = resolveProbeBinding({ certifiedCheckpointSha: S, headSha: OTHER, treeClean: true, documentaryDescendant: false });
+  const dirty = resolveProbeBinding({ certifiedCheckpointSha: S, headSha: OTHER, treeClean: false, documentaryDescendant: true });
+  if (!same.atCheckpoint || !documentary.atCheckpoint) {
+    fail('REVIEW4_PROBE_BINDING_STUBBED the probe binding no longer admits HEAD == S or a clean documentary descendant of S');
+  }
+  if (substantive.atCheckpoint || dirty.atCheckpoint) {
+    fail('REVIEW4_PROBE_BINDING_STUBBED the probe binding admits a substantive descendant or a dirty tree');
+  }
+  if (bindTreeProbe(substantive, { state: 'MET', detail: 'x' }).state === 'MET') {
+    fail('REVIEW4_PROBE_BINDING_STUBBED bindTreeProbe passes a substantive descendant through as MET');
+  }
+
+  // --- behavioural: the receipt-consuming probes bind to S -----------------
+  const harnessSource = fs.readFileSync(path.join(root, 'ui/control-center/src/contractRender.test.tsx'), 'utf8');
+  const typesSource = fs.readFileSync(path.join(root, 'ui/control-center/src/types.ts'), 'utf8');
+  const harnessTestCount = (harnessSource.match(/^\s*(?:it|test)\(/gm) ?? []).length;
+  const harnessSuite = UI_HARNESS_REQUIRED_TESTS.filter((entry) => entry.suite === UI_HARNESS_SUITE);
+  const otherSuite = UI_HARNESS_REQUIRED_TESTS.filter((entry) => entry.suite !== UI_HARNESS_SUITE);
+  const extras = harnessTestCount - harnessSuite.length - 1 - otherSuite.length;
+  const buildHarness = (sha) => buildUiHarnessReceipt({
+    files: [{
+      filepath: `/repo/ui/control-center/src/contractRender.test.tsx`,
+      tasks: [
+        {
+          type: 'suite',
+          name: UI_HARNESS_SUITE,
+          tasks: [
+            ...harnessSuite.map((entry) => ({ type: 'test', name: `${entry.titlePrefix} (self-test)`, result: { state: 'pass' } })),
+            { type: 'test', name: 'offers retry only for NETWORK, TIMEOUT, 408 and 429', result: { state: 'pass' } },
+            ...Array.from({ length: Math.max(0, extras) }, (_, index) => ({ type: 'test', name: `fixture remainder ${index}`, result: { state: 'pass' } })),
+          ],
+        },
+        { type: 'suite', name: 'control center render truth', tasks: otherSuite.map((entry) => ({ type: 'test', name: `${entry.titlePrefix} (self-test)`, result: { state: 'pass' } })) },
+      ],
+    }],
+    headSha: sha,
+    treeClean: true,
+    typesSource,
+    harnessSource,
+    executedAt: '2026-10-01T00:00:00.000Z',
+  });
+  const harnessAtS = buildHarness(S);
+  const harnessAtOther = buildHarness(OTHER);
+  if (harnessAtS === null || harnessAtOther === null) {
+    fail('REVIEW4_RECEIPT_PROBES_STUBBED the UI-harness self-test fixture could not be built');
+    return;
+  }
+  const kindsAtS = extractApiErrorKinds(typesSource);
+  const boundHarness = evaluateUiHarnessReceipt(harnessAtS, { certifiedCheckpointSha: S, expectedKinds: kindsAtS, harnessSourceAtS: harnessSource });
+  const otherHarness = evaluateUiHarnessReceipt(harnessAtOther, { certifiedCheckpointSha: S, expectedKinds: kindsAtS, harnessSourceAtS: harnessSource });
+  if (boundHarness.relation !== 'BOUND') {
+    fail('REVIEW4_RECEIPT_PROBES_STUBBED a UI-harness receipt at S no longer resolves BOUND');
+  }
+  if (otherHarness.relation === 'BOUND') {
+    fail('REVIEW4_RECEIPT_PROBES_STUBBED a UI-harness receipt bound to ANOTHER commit resolves BOUND to S');
+  }
+  if (evaluateUiHarnessReceipt(harnessAtS, { certifiedCheckpointSha: S, expectedKinds: kindsAtS, harnessSourceAtS: null }).ok) {
+    fail('REVIEW4_RECEIPT_PROBES_STUBBED a UI-harness receipt with no source AT S is accepted; the harness-source cross-check is gone');
+  }
+  const accessibility = { file: 'ui/control-center/artifacts/accessibility-certification.v1.json', sha: S, measuredFocusIndicators: 3, minimumFocusContrast: 4.5, sections: [] };
+  if (receiptBindingRelation(S, accessibility.sha) !== 'BOUND' || receiptBindingRelation(S, OTHER) === 'BOUND') {
+    fail('REVIEW4_RECEIPT_PROBES_STUBBED receiptBindingRelation no longer distinguishes the bound SHA from another SHA');
+  }
+  if (typeof parseAccessibilityCertificationRecord(accessibility).ok !== 'boolean') {
+    fail('REVIEW4_RECEIPT_PROBES_STUBBED the accessibility record parser is unavailable');
+  }
+
+  // --- anchored: the collector must derive its facts EXACTLY as reviewed ---
+  const required = [
+    ['const headSha = headOutput === null ? null : headOutput.trim();', 'the HEAD resolution (a `const headSha = substantiveSha` rewrite must be visible)'],
+    ["const porcelainOutput = gitReadOnly(root, ['status', '--porcelain']);", 'the clean-tree measurement (an empty-string stub must be visible)'],
+    ["treeClean: porcelainOutput === null ? null : porcelainOutput.trim() === '',", 'the clean-tree fact fed to the probe binding'],
+    ["documentaryDescendant: rangeClass === 'DOCUMENTARY_DESCENDANT',", 'the documentary-descendant fact (an unconditional `true` must be visible)'],
+    ["const output = gitReadOnly(root, ['diff', '--name-only', '--no-renames', `${from}..${to}`]);", 'the changed-file range callback'],
+    ['return output === null ? null : output.split', 'the changed-file fail-closed return (a `return []` rewrite must be visible)'],
+    ["harnessSourceAtS = typeof harnessAtCheckpoint === 'string' ? harnessAtCheckpoint : null;", 'the harness source committed AT S'],
+    ["if (evaluated.relation !== 'BOUND') {", 'the receipt binding relation check'],
+    ['evidenceCertifying: Object.fromEntries(', 'the certifying flags map (a cleared map must be visible)'],
+    ['verifyEvidenceReceipt: (', 'the subject-carrying receipt verifier call form'],
+    ['=> verifyPersistedReceipt(root, subject, digest, evidenceSha).verified,', 'the subject-carrying receipt verifier body'],
+    ["if (evaluated.relation === 'BOUND') {", 'the yield/UI BOUND branch'],
+  ];
+  for (const [needle, what] of required) {
+    if (!collector.includes(needle)) {
+      fail(`REVIEW4_COLLECTOR_FACT_WEAKENED bin/project-state-check.mjs no longer carries ${what} (${needle.slice(0, 90)})`);
+    }
+  }
+}
 
 export function checkTypecheckCoverage() {
   let config;
@@ -917,6 +1067,8 @@ function verifyCheckpointRoleClassifierFixture() {
     fs.writeFileSync(path.join(directory, 'config/release-evidence.v1.json'), binding());
     run(['add', '.']);
     run(['commit', '--quiet', '--no-gpg-sign', '-m', 'binding base']);
+    const base = (run(['rev-parse', 'HEAD']).stdout ?? '').trim();
+    const mainBranch = (run(['rev-parse', '--abbrev-ref', 'HEAD']).stdout ?? '').trim();
     // A values-only re-bind WITH a verifying receipt: documentary.
     fs.writeFileSync(path.join(directory, 'config/release-evidence.v1.json'), binding({ evidenceSha: sha('b'), receiptDigest: `receipt:sha256:${'2'.repeat(24)}` }));
     run(['add', '.']);
@@ -947,6 +1099,77 @@ function verifyCheckpointRoleClassifierFixture() {
     const unguarded = checkpointRoleViolations(directory, ['fixture-unapproved.txt'], { kind: 'commit', commit: valuesOnly });
     if (unguarded.length === 0) {
       fail('CHECKPOINT_ROLE_GUARD_STUBBED an unguarded non-approved path was approved (the path filter is short-circuited)');
+    }
+    // R4-08 / review-4 task 2.1 — a `kind: 'range'` classification must walk
+    // EVERY commit in the range (a range-branch early return would classify the
+    // aggregate as documentary). The range from the base to the VALUES-ONLY
+    // commit is documentary with a verifier; the range to the STRUCTURAL commit
+    // is substantive.
+    const documentaryRange = checkpointRoleViolations(directory, ['config/release-evidence.v1.json'], { kind: 'range', from: base, to: valuesOnly, verifyBindingReceipt: () => true });
+    if (documentaryRange.length !== 0) {
+      fail(`CHECKPOINT_ROLE_GUARD_STUBBED the classifier no longer accepts a documentary RANGE with verified receipts (got ${documentaryRange.join(',')})`);
+    }
+    const substantiveRange = checkpointRoleViolations(directory, ['config/release-evidence.v1.json'], { kind: 'range', from: base, to: structural, verifyBindingReceipt: () => true });
+    if (substantiveRange.length === 0) {
+      fail('CHECKPOINT_ROLE_GUARD_STUBBED a range containing a structural guarded rewrite was classified documentary (a range-branch early return or a dropped commit walk)');
+    }
+    // R4-08: a MERGE that carries a structural guarded rewrite against ONE
+    // parent is substantive. Without `-m` a merge commit lists NOTHING, so the
+    // rewrite would be invisible; first-parent-only handling hides it too.
+    run(['checkout', '--quiet', '-b', 'fixture-side', structural]);
+    fs.writeFileSync(path.join(directory, 'config/release-evidence.v1.json'), binding({ evidenceSha: null }));
+    run(['add', '.']);
+    run(['commit', '--quiet', '--no-gpg-sign', '-m', 'side structural null-out']);
+    run(['checkout', '--quiet', mainBranch]);
+    fs.writeFileSync(path.join(directory, 'fixture-mainline.txt'), 'mainline\n');
+    run(['add', '.']);
+    run(['commit', '--quiet', '--no-gpg-sign', '-m', 'mainline prose']);
+    run(['merge', '--no-ff', '--no-gpg-sign', '-m', 'merge the structural rewrite', 'fixture-side']);
+    const merged = (run(['rev-parse', 'HEAD']).stdout ?? '').trim();
+    const mergeViolations = checkpointRoleViolations(directory, ['config/release-evidence.v1.json'], { kind: 'commit', commit: merged, verifyBindingReceipt: () => true });
+    if (mergeViolations.length === 0) {
+      fail('CHECKPOINT_ROLE_GUARD_STUBBED a merge carrying a structural guarded rewrite against one parent was classified documentary (first-parent-only handling or a missing -m)');
+    }
+    // R4-08: an `ours`-resolution merge keeps the mainline tree, so the guarded
+    // rewrite is visible ONLY against the SECOND parent. A first-parent-only
+    // evaluation misses it; the per-parent loop must catch it.
+    run(['checkout', '--quiet', '-b', 'fixture-side2', base]);
+    fs.writeFileSync(path.join(directory, 'config/release-evidence.v1.json'), binding({ evidenceSha: sha('c'), receiptDigest: `receipt:sha256:${'3'.repeat(24)}`, artifactPaths: ['config/y.json'] }));
+    run(['add', '.']);
+    run(['commit', '--quiet', '--no-gpg-sign', '-m', 'side2 structural rewrite']);
+    run(['checkout', '--quiet', mainBranch]);
+    run(['merge', '--no-ff', '-s', 'ours', '--no-gpg-sign', '-m', 'merge ours: keep the mainline tree', 'fixture-side2']);
+    const oursMerged = (run(['rev-parse', 'HEAD']).stdout ?? '').trim();
+    const oursViolations = checkpointRoleViolations(directory, ['config/release-evidence.v1.json'], { kind: 'commit', commit: oursMerged, verifyBindingReceipt: () => true });
+    if (oursViolations.length === 0) {
+      fail('CHECKPOINT_ROLE_GUARD_STUBBED an `ours`-resolution merge hiding a structural guarded rewrite against its second parent was classified documentary (first-parent-only evaluation)');
+    }
+    // R4-08: an unpaired corrections APPEND must make the classifier's touch of
+    // the corrections file substantive. The guard holds (append-only shape), so
+    // only the pairing branch can catch it.
+    fs.writeFileSync(path.join(directory, 'config/document-role-corrections.v1.json'), `${JSON.stringify({ schemaVersion: DOCUMENT_ROLE_CORRECTIONS_SCHEMA, corrections: [] })}\n`);
+    run(['add', '.']);
+    run(['commit', '--quiet', '--no-gpg-sign', '-m', 'seed the corrections registry']);
+    fs.writeFileSync(path.join(directory, 'config/document-role-corrections.v1.json'), `${JSON.stringify({ schemaVersion: DOCUMENT_ROLE_CORRECTIONS_SCHEMA, corrections: [{ id: 'CORR-SELFTEST', path: 'docs/archive.md', oldLineSha256: lineSha256Prefix('a line that still exists'), oldLineExcerpt: 'a line that still exists', reason: 'self-test' }] })}\n`);
+    run(['add', '.']);
+    run(['commit', '--quiet', '--no-gpg-sign', '-m', 'unpaired correction append']);
+    const unpairedCorrections = (run(['rev-parse', 'HEAD']).stdout ?? '').trim();
+    const pairingViolations = checkpointRoleViolations(directory, [DOCUMENT_ROLE_CORRECTIONS_FILE], { kind: 'commit', commit: unpairedCorrections });
+    if (pairingViolations.length === 0) {
+      fail('CHECKPOINT_ROLE_GUARD_STUBBED an unpaired correction append was classified documentary (the classifier no longer pairs corrections)');
+    }
+    // The merge hook and the fail-closed touched-null branch stay present: a
+    // merge must be judged against EVERY parent, and an unreadable diff must
+    // fail closed rather than skip the guarded file.
+    const checkpointSource = read('bin/lib/checkpoint-role.mjs');
+    for (const [needle, what] of [
+      ["['diff-tree', '--root', '--no-commit-id', '--name-only', '--no-renames', '-m', '-r', commit]", 'the merge-aware guarded-file listing (-m per parent)'],
+      ['if (touched === null) {\n      violations.push(...guarded);\n      continue;\n    }', 'the fail-closed unreadable-diff branch (an unreadable diff must still violate)'],
+      ['for (const parent of parentRefs) {', 'the per-parent guard evaluation'],
+    ]) {
+      if (!checkpointSource.includes(needle)) {
+        fail(`CHECKPOINT_ROLE_GUARD_STUBBED bin/lib/checkpoint-role.mjs no longer carries ${what} (${needle.slice(0, 80)})`);
+      }
     }
   } finally {
     fs.rmSync(directory, { recursive: true, force: true });

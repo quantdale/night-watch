@@ -102,9 +102,10 @@ test.describe('G16.5 — a TOTALITY rule reports EVERY failing occurrence', () =
     const undeclared = rules.filter((rule) => !allowed.has(rule.quantifier));
     expect(undeclared.map((rule) => rule.name)).toEqual([]);
     // M8 (9.12) registered the M8 guard totality rule; corrections task 7.13
-    // (RV-18) added checkDevLauncherMetadataShortCircuit (TOTALITY).
-    expect(rules).toHaveLength(92);
-    expect(rules.filter((rule) => rule.quantifier === 'TOTALITY')).toHaveLength(69);
+    // (RV-18) added checkDevLauncherMetadataShortCircuit (TOTALITY); review-4
+    // task 2.1 registered checkReview4CollectorTotality (TOTALITY).
+    expect(rules).toHaveLength(93);
+    expect(rules.filter((rule) => rule.quantifier === 'TOTALITY')).toHaveLength(70);
     expect(rules.filter((rule) => rule.quantifier === 'EXISTENCE')).toHaveLength(23);
     for (const rule of rules) {
       expect(rule.subject.trim().length, `${rule.name} has no recorded subject`).toBeGreaterThanOrEqual(8);

@@ -7,16 +7,23 @@ Phase: COMPLETION_REVIEW4_V1
 CHILD OF: nightwatch-final-product-completion-v1
 Status: IN_PROGRESS
 TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1
-TASK_GROUPS_COMPLETE:
-TASK_GROUP_NEXT: 1
-TASK_NEXT_ID: 1.1
+TASK_GROUPS_COMPLETE: 1,2
+TASK_GROUP_NEXT: 3
+TASK_NEXT_ID: 3.1
 Starting SHA: 67eb30981b4bb4d6bb6959b9afee9345938f5750
 Last validated implementation SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
 Last substantive checkpoint SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-final-completion-revi-be20f537
-Last checkpoint: 2026-10-01 — child campaign bootstrap. The review-4 change
+Last checkpoint: 2026-10-01 — GROUPS 1-2 IMPLEMENTED (CI PENDING). Group 1
+(certification soundness, R4-01..R4-07 + D-150) and group 2 (guard robustness,
+R4-08/R4-09) are implemented and locally validated: `hardening:rules` reports
+93 rules / 230 probes / 230 DETECTED / 0 undetected with every mutation
+restored, `hardening:check`, `typecheck`, `typecheck:bin` and the focused
+suites pass, and `agent:check`/`project:check` are green. The ticks carry
+`(implemented; CI pending)` until exact-head CI is observed at a tip that
+contains them. Previous: child campaign bootstrap. The review-4 change
 (`openspec/changes/nightwatch-final-completion-review4-v1/`: proposal, design
 with OD-5/OD-6 and D150-1..D150-8, audit = the 24 findings verbatim, tasks =
 the seven groups verbatim, one spec requirement per group) and this continuity
@@ -43,14 +50,15 @@ sync, and ACTIVE_TASK routed back to the parent at "M9 task 10.2 remainder
 
 ## Current Milestone
 
-group 1 — Certification soundness (OD-5, OD-6), tasks 1.1-1.8: wire the
-production receipt verifier into every `checkpointRoleViolations` call
-(1.1), `--no-renames` on every checkpoint/range name listing (1.2), a complete
-`verifyPersistedReceipt` (1.3), a fail-closed topology consumer (1.4),
-`autonomous-yield-proof` certifying only from the paid-run receipt (1.5), the
-real-tree test expectation derived from `classifyCheckpointRange` (1.6),
-receipts persisted where the verifier reads them (1.7), and D-150 plus the
-tamper-evident receipt limit (1.8).
+group 3 — CI truth, tasks 3.1-3.4: pass `NIGHTWATCH_PUSH_BEFORE` explicitly to
+the HARDENING child and declare it in environment-surface with a wiring test
+(3.1); derive the `CI_STATUS` status word from the project-state block /
+ci-block-record instead of a literal and restore the truthful CURRENT_STATE CI
+fields at the correct anchor (3.2); record every red run and its repair in
+`config/ci-block-record.v1.json` history with an observed-run staleness check
+(3.3); and enforce the close-out procedure (3.4).
+Groups 1 and 2 are COMPLETE (implemented; CI pending): certification soundness
+(1.1-1.8) and guard robustness (2.1-2.2).
 
 ## Completed Milestones
 
@@ -61,19 +69,16 @@ tamper-evident receipt limit (1.8).
 
 ## Work In Progress
 
-Nothing in progress yet; group 1 is the next unit of work.
+Groups 1 and 2 are implemented and locally validated; group 3 (CI truth) is the next unit of work. Nothing is uncommitted.
 
 ## Exact Next Action
 
-Implement task 1.1 (R4-01): give `checkpointRoleViolations` a real
-`verifyBindingReceipt` at every production call site — `bin/project-state-check.mjs`
-(971, 1050, 1316, 1351, 1569), `bin/agent-state.mjs` (510, 562, 599, 889) — by
-wrapping `verifyPersistedReceipt` in one exported production verifier in
-`bin/lib/release-evidence.mjs`, keep `() => true` inside test fixtures only,
-update `tests/unit/productionCompletionLaneState.test.ts:166` to prove the real
-verifier path, and add a behavioural regression proving that a binding commit at
-a descendant of S with a verified receipt leaves the range DOCUMENTARY. Then
-continue 1.2 → 1.8 in order.
+Implement task 3.1 (R4-10): pass `NIGHTWATCH_PUSH_BEFORE` explicitly to the
+HARDENING child from `bin/quality-gate.mjs`, declare it in
+`config/environment-surface.v1.json`, and add a wiring test proving
+`resolveArchiveDiffBase` receives it under `gate:ci` (it is currently stripped
+by `buildChildEnvironment`, so the CI pushed-range pairing never runs and the
+merge-base range is empty). Then 3.2, 3.3 and 3.4 in order.
 
 ## Files Changed
 
@@ -85,6 +90,16 @@ continue 1.2 → 1.8 in order.
 
 ## Validation Ledger
 
+- 2026-10-01 — GROUP 1 (certification soundness) and GROUP 2 (guard
+  robustness). `npm run hardening:check` PASS; `npm run typecheck` clean;
+  `node bin/hardening-check.mjs --probe-campaign` rules=93 probes=230
+  detected=230 undetected=0 restored=122 statusUnchanged=true; the focused
+  suites green: `productionCompletionLaneState` 28/28 (incl. the R4-01
+  production-verifier and R4-02 rename regressions), `projectState` 140/140
+  (incl. the R4-03 receipt-verifier cases, the R4-04 conjunction cases and the
+  fixture-root G18/G12 collector tests), `gateReceiptPersistence` 44/44,
+  `hardeningRuleQuantifiers`/`hardeningRuleParity`/`hardeningProbeCampaign`
+  green; `agent:check` PASS (85 warnings), `project:check` exit 0.
 - 2026-10-01 — bootstrap. Local checks at the bootstrap commit in the session
   worktree: `session:check`, `workspace:check`, `agent:check` and
   `openspec validate nightwatch-final-completion-review4-v1 --strict` run after
