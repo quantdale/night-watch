@@ -166,7 +166,45 @@ const CLEAN_RECEIPT_DIRECTORY = path.join(root, 'artifacts', 'gate-receipts');
  * @param {number} [code]
  * @returns {void}
  */
-function emit(receipt, code = 0) {
+/**
+ * R4-22 / review-4 task 6.1 — the source-worktree topology this clean run was
+ * launched from: the path class, the number of LIVE sessions, and the session
+ * worktree `.agent/ACTIVE_TASK.md` declares. A clean receipt that does not say
+ * where it ran cannot distinguish a canonical run from a session run.
+ * Fail-closed: an unreadable topology is recorded as UNKNOWN, never omitted.
+ */
+function sourceTopology() {
+  const classify = (candidate = '') => {
+    if (typeof candidate !== 'string' || candidate === '') return 'UNKNOWN';
+    if (candidate === root) return 'CANONICAL_CHECKOUT';
+    if (candidate.startsWith(`${path.dirname(root)}${path.sep}`)) return 'SIBLING_CHECKOUT';
+    if (candidate.includes(`${path.sep}worktrees${path.sep}`)) return 'SESSION_WORKTREE';
+    return 'OTHER_ABSOLUTE';
+  };
+  let liveSessionCount = null;
+  let declaredSessionWorktree = 'UNREADABLE';
+  try {
+    const listed = spawnSync('git', ['worktree', 'list', '--porcelain'], { cwd: root, encoding: 'utf8', shell: false, timeout: 10_000 });
+    if (listed.status === 0) {
+      const branches = String(listed.stdout ?? '').split('\n')
+        .filter((line) => line.startsWith('branch refs/heads/session/'))
+        .map((line) => line.trim().slice('branch refs/heads/'.length));
+      liveSessionCount = branches.length;
+      const active = fs.readFileSync(path.join(root, '.agent', 'ACTIVE_TASK.md'), 'utf8');
+      const declared = /^SESSION WORKTREE:[ \t]*(\S+)[ \t]*$/m.exec(active)?.[1] ?? null;
+      declaredSessionWorktree = declared === null ? 'NONE' : declared;
+    }
+  } catch {
+    // Bounded: UNKNOWN below.
+  }
+  return {
+    sourceWorktreePathClass: classify(root),
+    liveSessionCount,
+    declaredSessionWorktree,
+  };
+}
+
+function emit(receipt = /** @type {Record<string, unknown>} */ ({}), code = 0) {
   // VC-06: every receipt records whether the SOURCE checkout was clean at the
   // moment it was written. Early exits measure it here; the final path passes
   // its own value (already used for the verdict) so it is measured exactly once.
@@ -174,6 +212,8 @@ function emit(receipt, code = 0) {
     const measured = measureClean(root);
     receipt.sourceRootCleanAtEmit = measured.ok ? measured.clean : null;
   }
+  // R4-22 / review-4 task 6.1: every clean receipt names the source topology.
+  if (!('sourceWorktreePathClass' in receipt)) Object.assign(receipt, sourceTopology());
   receipt.receiptDigest = `clean-receipt:sha256:${sha256(JSON.stringify(receipt)).slice(0, 24)}`;
   // B-14 / D-18 — the clean receipt is persisted to the ignored receipts
   // directory, not only printed: an evidence receipt nobody can re-read is

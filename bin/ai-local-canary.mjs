@@ -93,10 +93,9 @@ async function main() {
     process.exitCode = 2;
     return;
   }
-  if (parsed.help) {
-    usage();
-    return;
-  }
+  // R4-18 / review-4 task 4.5: `--help`/`-h` and `--print-metadata` are answered
+  // by the shared parser above, so this branch could never be reached. It is
+  // gone, together with the `usage()` printer it called.
 
   try {
     const result = await service.runSingleLocalCanary(parsed);

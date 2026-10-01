@@ -36,8 +36,8 @@
 
 ## 6. Hygiene and continuity
 
-- [ ] 6.1 Delete the merged corrections session branch (ancestry proven; SHA recorded); gate:clean receipts record source worktree path class, live-session count and declared SESSION WORKTREE; record every release/remove with timestamp and output in STATE (R4-22).
-- [ ] 6.2 Sync parent ACTIVE_TASK/STATE/PLAN prose (live session, 60/76, stray fragment, prose anchor, Exact Next Action, PLAN M9); extend the task-group checker to compare declared counts/session in prose with structured fields (R4-23).
+- [x] 6.1 Delete the merged corrections session branch (ancestry proven; SHA recorded); gate:clean receipts record source worktree path class, live-session count and declared SESSION WORKTREE; record every release/remove with timestamp and output in STATE (R4-22). — DONE (implemented; CI pending): the merged corrections session branch is deleted with its ancestry proven and its SHA `b4d0c611` recorded, the parent session release/remove outputs are recorded in the Validation Ledger, and `gate:clean` receipts record the source worktree path class, the live-session count and the declared SESSION WORKTREE.
+- [x] 6.2 Sync parent ACTIVE_TASK/STATE/PLAN prose (live session, 60/76, stray fragment, prose anchor, Exact Next Action, PLAN M9); extend the task-group checker to compare declared counts/session in prose with structured fields (R4-23). — DONE (implemented; CI pending): the parent ACTIVE_TASK/STATE/PLAN prose is synced (60/76, the live session, the resume point, no stray fragment, the prose anchor fixed, PLAN M9), and the checkers were extended: a declared live session may not coexist with a NO-live-session claim (`ACTIVE_TASK_ROUTING_LIVE_SESSION_PROSE_DRIFT`) and the ACTIVE_TASK/STATE declared-progress figures must agree (`TASK_GROUP_LEDGER_PROGRESS_PROSE_DRIFT`), both with regressions and 5 registered probes.
 
 ## 7. Close-out
 

@@ -112,7 +112,7 @@ an observed green exact-head CI at the tip that contains its close-out.
 ### M6 — Hygiene and continuity (group 6: 6.1-6.2)
 
 - Objective: session/clean-receipt/continuity hygiene.
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE (2026-10-01; implemented, exact-head CI pending)
 
 ### M7 — Close-out (group 7: 7.1-7.6)
 

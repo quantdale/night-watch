@@ -1580,6 +1580,35 @@ test('routing block naming a predecessor campaign fails agent:check', () => {
   expect(result.stderr).toContain('ACTIVE_TASK_ROUTING_CAMPAIGN_DRIFT');
 });
 
+// R4-23 / review-4 task 6.2 — a LIVE declared session and a prose claim that
+// there is none cannot both be true. The parent campaign ran with exactly this
+// shape: the routing named a live session worktree while the document said
+// "this parent has NO live session".
+test('a NO-live-session claim beside a declared session worktree fails agent:check', () => {
+  const { root, sha } = fixture();
+  writeProtocol(root, {
+    baselineSha: sha,
+    substantiveSha: sha,
+    startingSha: sha,
+    activeExtra: '\nthis parent has NO live session (create one with session start).\n',
+    activeRouting: '## Routing and safety\n\n```\nCAMPAIGN: phase-test\nSESSION WORKTREE: session/phase-test-0000\n```\n',
+  });
+  setField(root, '.agent/tasks/phase-test/STATE.md', 'Branch', 'session/phase-test-0000');
+  const result = run(root);
+  expect(result.stderr).toContain('ACTIVE_TASK_ROUTING_LIVE_SESSION_PROSE_DRIFT');
+});
+
+// R4-23 / review-4 task 6.2 — the two continuity documents of one campaign may
+// not state DIFFERENT declared-progress figures.
+test('a progress figure that disagrees between ACTIVE_TASK and STATE fails agent:check', () => {
+  const { root, sha } = fixture();
+  writeProtocol(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha, activeExtra: '\nProgress: 59/76 declared.\n' });
+  writeGroupLedger(root, {});
+  setSectionBody(root ? path.join(root, '.agent/tasks/phase-test/STATE.md') : '', '## Work In Progress', 'The surface is 60/76 declared.');
+  const result = run(root);
+  expect(result.stderr).toContain('TASK_GROUP_LEDGER_PROGRESS_PROSE_DRIFT');
+});
+
 test('routing block naming a foreign session worktree fails agent:check', () => {
   const { root, sha } = fixture();
   writeProtocol(root, {

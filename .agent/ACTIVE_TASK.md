@@ -23,12 +23,10 @@ and lies on the certification path. Review-5 does not exist by default. The
 parent `nightwatch-final-product-completion-v1` stays paused; on close-out
 ACTIVE_TASK routes back to it at "M9 task 10.2 remainder (60/76 declared; next
 bin `auth-configure`)".
-Current milestone: group 6 — Hygiene and continuity, tasks 6.1-6.2; task 6.1 is
-next.
-Next action: implement task 6.1 (R4-22) — record the corrections session-branch
-deletion and the parent session release/remove in STATE, and make `gate:clean`
-receipts record the source worktree path class, the live-session count and the
-declared SESSION WORKTREE; then 6.2.
+Current milestone: group 7 — Close-out, tasks 7.1-7.6; task 7.1 is next.
+Next action: implement task 7.1 — run the focused suites, `gate:dev`,
+`gate:milestone` and `hardening:rules` (every mutant family DETECTED), then
+commit; then 7.2-7.6.
 Authorization class: COMPLETION_REVIEW4_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
@@ -79,10 +77,8 @@ EXTERNAL CONTACT AUTHORIZED (OD-3 ONLY):
   GitHub Actions read/observe; C-00 fast-forward pushes.
 
 CURRENT STATUS:
-  IN_PROGRESS — groups 1-5 (certification soundness, guard robustness, CI
-  truth, product correctness, ledger/records) are implemented and locally
-  validated (93 rules / 240 probes / 240 DETECTED); group 6 (hygiene and
-  continuity) is next.
+  IN_PROGRESS — groups 1-6 are implemented and locally validated (93 rules /
+  245 probes / 245 DETECTED); group 7 (close-out) is next.
 
 ALPHAUS DEV / NEXT / PRODUCTION CONTACT:   NOT AUTHORIZED
 AUTHENTICATED ALPHAUS RUNTIME:             NOT AUTHORIZED

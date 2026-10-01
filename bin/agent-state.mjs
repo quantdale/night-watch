@@ -136,6 +136,24 @@ export function inspectActiveTaskRouting(activeText, taskId, stateBranch, liveWo
       );
     }
   } else {
+    // R4-23 / review-4 task 6.2: a LIVE session and a prose claim that there is
+    // none cannot both be true. The parent campaign drifted exactly here: the
+    // routing block named a live session worktree while the document's own
+    // prose said "this parent has NO live session".
+    // The claim class is the EMPHATIC/imperative one ("NO live session",
+    // "no live session (create one ...)", "has no live session"); a parenthetical
+    // that describes an EARLIER checkpoint's state ("... GREEN, no live
+    // session): the change ...") is history, not this document's claim.
+    const text = String(activeText ?? '');
+    const staleLiveSessionClaim = /\bNO\s+live\s+session\b/.test(text)
+      || /\bno\s+live\s+session\s*\(create one/i.test(text)
+      || /\bhas\s+no\s+live\s+session\b/i.test(text)
+      || /\bno\s+live\s+session\s+is\s+declared\b/i.test(text);
+    if (staleLiveSessionClaim) {
+      errors.push(
+        `ACTIVE_TASK_ROUTING_LIVE_SESSION_PROSE_DRIFT: routing block declares the live session worktree ${declaredWorktree} but the document states there is no live session`
+      );
+    }
     if (stateBranch && declaredWorktree !== stateBranch) {
       errors.push(
         `ACTIVE_TASK_ROUTING_SESSION_WORKTREE_DRIFT: routing block declares SESSION WORKTREE ${declaredWorktree} but STATE.md records branch ${stateBranch}`
@@ -692,7 +710,7 @@ function parseGroupList(value) {
  * @param {string[]} warnings
  * @returns {void}
  */
-export function checkTaskGroupLedger(root, taskId, stateText, errors, warnings) {
+export function checkTaskGroupLedger(root, taskId, stateText, errors, warnings, activeTextForLedger = null) {
   const changePath = path.join(root, 'openspec', 'changes', taskId, 'tasks.md');
   let tasksText = null;
   try {
@@ -778,6 +796,21 @@ export function checkTaskGroupLedger(root, taskId, stateText, errors, warnings) 
   const milestone = extractSectionRaw(stateText, '## Current Milestone') ?? '';
   if (!new RegExp(`\\bgroup\\s+${nextGroup}\\b`).test(milestone)) {
     errors.push(`TASK_GROUP_LEDGER_MILESTONE_STALE: STATE ## Current Milestone does not name group ${nextGroup}`);
+  }
+  // R4-23 / review-4 task 6.2: the two continuity documents of one campaign
+  // must not state DIFFERENT progress figures. The parent drifted here (the
+  // ACTIVE_TASK prose said 59/76 declared while STATE said 60/76). The scan is
+  // occurrence-complete and compares the LAST figure each document states, so a
+  // historical figure earlier in a narrative is not read as the current claim.
+  const progressIn = (text) => [...String(text ?? '').matchAll(/(\d{1,3})\/(\d{1,3})\s+declared/g)].map((match) => `${match[1]}/${match[2]}`);
+  const stateProgress = progressIn(stateText);
+  const activeProgress = progressIn(activeTextForLedger);
+  if (stateProgress.length > 0 && activeProgress.length > 0) {
+    const stateLast = stateProgress[stateProgress.length - 1];
+    const activeLast = activeProgress[activeProgress.length - 1];
+    if (stateLast !== activeLast) {
+      errors.push(`TASK_GROUP_LEDGER_PROGRESS_PROSE_DRIFT: ACTIVE_TASK states ${activeLast} declared but STATE states ${stateLast}`);
+    }
   }
 }
 
@@ -1203,7 +1236,7 @@ export function validate(root, auditMode = false) {
         errors.push(`STATE/ACTIVE_TASK validated implementation anchors differ: ${stateValidated} != ${active.get('Last validated implementation SHA')}`);
       }
       checkContinuity(stateFields, root, head, errors, warnings);
-      checkTaskGroupLedger(root, taskId, state, errors, warnings);
+      checkTaskGroupLedger(root, taskId, state, errors, warnings, activeText);
     }
     const currentSha = active.get('Last validated implementation SHA');
     if (head && currentSha) {

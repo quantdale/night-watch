@@ -11,7 +11,7 @@
     },
     {
       "bin": "bin/ai-local-canary.mjs",
-      "maxErrors": 4
+      "maxErrors": 3
     },
     {
       "bin": "bin/ai-owner-review.mjs",
@@ -99,7 +99,7 @@
     },
     {
       "bin": "bin/lib/hardening/rules/validation-and-gates.mjs",
-      "maxErrors": 21
+      "maxErrors": 20
     },
     {
       "bin": "bin/lib/hardening/rules/workspace-and-layout.mjs",
@@ -235,7 +235,7 @@
     },
     {
       "bin": "bin/quality-gate.mjs",
-      "maxErrors": 29
+      "maxErrors": 27
     },
     {
       "bin": "bin/record-identity.mjs",
@@ -318,6 +318,6 @@
       "maxErrors": 94
     }
   ],
-  "totalCeiling": 1450,
+  "totalCeiling": 1446,
   "anyAnnotationBudget": 91
 }

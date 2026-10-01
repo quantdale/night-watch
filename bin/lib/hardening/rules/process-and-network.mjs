@@ -143,11 +143,13 @@ export function collectTopLevelEffects(code, from, to, localNames) {
     const start = node.getStart(sourceFile);
     const inRegion = start >= from && start < to;
     if (inRegion) {
-      if (typescript.isImportCall(node)) {
-        effects.push(node.getText(sourceFile));
-      } else if (typescript.isCallExpression(node)) {
+      if (typescript.isCallExpression(node)) {
         const callee = node.expression;
         const text = node.getText(sourceFile);
+        // A dynamic `import(...)` is an effect: the callee is the `import`
+        // keyword rather than an identifier. Checked by KIND because
+        // `typescript.isImportCall` is outside this toolchain's typed surface.
+        if (callee.kind === typescript.SyntaxKind.ImportKeyword) effects.push(text);
         if (typescript.isElementAccessExpression(callee) && DEV_EFFECT_FS_OBJECTS.test(devEffectReceiver(callee.expression, sourceFile) ?? '')) {
           effects.push(text);
         } else if (typescript.isIdentifier(callee)) {

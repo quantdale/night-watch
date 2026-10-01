@@ -70,12 +70,15 @@ export function checkReview4CollectorTotality() {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'nw-review4-receipt-'));
   try {
     const crypto = { createHash };
+    /** @param {unknown} value @returns {string} */
     const stableCanonical = (value) => {
       if (value === null || typeof value !== 'object') return JSON.stringify(value) ?? 'null';
       if (Array.isArray(value)) return `[${value.map(stableCanonical).join(',')}]`;
-      return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${stableCanonical(value[key])}`).join(',')}}`;
+      const record = /** @type {Record<string, unknown>} */ (value);
+      return `{${Object.keys(record).sort().map((key) => `${JSON.stringify(key)}:${stableCanonical(record[key])}`).join(',')}}`;
     };
     fs.mkdirSync(path.join(directory, 'artifacts/receipts'), { recursive: true });
+    /** @param {string} name @param {Record<string, unknown>} body @returns {string} */
     const writeGateReceipt = (name, body) => {
       const digest = `receipt:sha256:${crypto.createHash('sha256').update(stableCanonical(body)).digest('hex').slice(0, 24)}`;
       fs.writeFileSync(path.join(directory, 'artifacts/receipts', `${name}.json`), `${JSON.stringify({ ...body, receiptDigest: digest })}\n`);
@@ -123,6 +126,7 @@ export function checkReview4CollectorTotality() {
   const harnessSuite = UI_HARNESS_REQUIRED_TESTS.filter((entry) => entry.suite === UI_HARNESS_SUITE);
   const otherSuite = UI_HARNESS_REQUIRED_TESTS.filter((entry) => entry.suite !== UI_HARNESS_SUITE);
   const extras = harnessTestCount - harnessSuite.length - 1 - otherSuite.length;
+  /** @param {string} sha @returns {Record<string, unknown> | null} */
   const buildHarness = (sha) => buildUiHarnessReceipt({
     files: [{
       filepath: `/repo/ui/control-center/src/contractRender.test.tsx`,
@@ -187,9 +191,8 @@ export function checkReview4CollectorTotality() {
     ["if (evaluated.relation === 'BOUND') {", 'the yield/UI BOUND branch'],
   ];
   for (const [needle, what] of required) {
-    if (!collector.includes(needle)) {
-      fail(`REVIEW4_COLLECTOR_FACT_WEAKENED bin/project-state-check.mjs no longer carries ${what} (${needle.slice(0, 90)})`);
-    }
+    if (typeof needle === 'string' && collector.includes(needle)) continue;
+    fail(`REVIEW4_COLLECTOR_FACT_WEAKENED bin/project-state-check.mjs no longer carries ${what} (${String(needle).slice(0, 90)})`);
   }
 }
 
@@ -250,7 +253,8 @@ export function checkValidationUniverse() {
     playwrightConfigSource = read('playwright.config.ts');
     referenceGraph = JSON.parse(read('config/reference-graph.v1.json'));
   } catch (error) {
-    fail(`validation classification inputs unreadable: ${String(error?.message ?? error).slice(0, 120)}`);
+    const message = (/** @type {Error | undefined} */ (error))?.message;
+    fail(`validation classification inputs unreadable: ${String(message ?? error).slice(0, 120)}`);
     return;
   }
   const tracked = gitFiles();
@@ -1202,9 +1206,8 @@ function verifyCheckpointRoleClassifierFixture() {
       ['if (touched === null) {\n      violations.push(...guarded);\n      continue;\n    }', 'the fail-closed unreadable-diff branch (an unreadable diff must still violate)'],
       ['for (const parent of parentRefs) {', 'the per-parent guard evaluation'],
     ]) {
-      if (!checkpointSource.includes(needle)) {
-        fail(`CHECKPOINT_ROLE_GUARD_STUBBED bin/lib/checkpoint-role.mjs no longer carries ${what} (${needle.slice(0, 80)})`);
-      }
+      if (typeof needle === 'string' && checkpointSource.includes(needle)) continue;
+      fail(`CHECKPOINT_ROLE_GUARD_STUBBED bin/lib/checkpoint-role.mjs no longer carries ${what} (${String(needle).slice(0, 80)})`);
     }
   } finally {
     fs.rmSync(directory, { recursive: true, force: true });

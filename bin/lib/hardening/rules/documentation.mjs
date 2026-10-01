@@ -199,6 +199,24 @@ export function checkAgentContinuityIntegrity() {
   if (!absentWorktreePredicate.test(agentStateCode) || /gateEnvironment === 'COMPATIBILITY'/.test(agentStateCode)) {
     fail('bin/agent-state.mjs must restrict absent-worktree classification to CI/CLEAN and bind it to the STATE branch');
   }
+  // R4-23 / review-4 task 6.2: the two continuity documents of one campaign
+  // must not disagree about a LIVE session or about the declared progress.
+  // Each element of the guard is anchored, so removing the pattern set, the
+  // predicate, the occurrence-complete scan or either refusal code fails here.
+  for (const [needle, what] of [
+    ['const staleLiveSessionClaim =', 'the live-session prose claim scan'],
+    ['(create one', 'the imperative no-live-session phrasing'],
+    ['no\\s+live\\s+session\\s+is\\s+declared', 'the declared-absence phrasing'],
+    ['if (staleLiveSessionClaim) {', 'the live-session prose refusal branch'],
+    ['ACTIVE_TASK_ROUTING_LIVE_SESSION_PROSE_DRIFT', 'the live-session prose drift code'],
+    ['TASK_GROUP_LEDGER_PROGRESS_PROSE_DRIFT', 'the progress prose drift code'],
+    ['const stateProgress = progressIn(stateText);', 'the STATE progress scan'],
+    ['(\\d{1,3})\\/(\\d{1,3})\\s+declared', 'the progress figure pattern'],
+  ]) {
+    if (!agentStateCode.includes(needle)) {
+      fail(`bin/agent-state.mjs no longer carries ${what} (${needle})`);
+    }
+  }
   const pkg = readDataFile('package.json');
   if (!/"agent:audit"\s*:\s*"node bin\/agent-state\.mjs --audit-history"/.test(pkg)) {
     fail('package.json agent:audit must invoke the local checker with --audit-history');
@@ -983,9 +1001,10 @@ export function deriveCiObservationStatus() {
     return null;
   }
   const block = /```[^\n]*\nPROJECT_STATE_PROTOCOL_VERSION: nightwatch\.project-state\.v2\n([\s\S]*?)```/m.exec(String(currentState));
-  if (block === null) return null;
-  const field = /^CI_STATUS:[ \t]*(\S+)[ \t]*$/m.exec(block[1]);
-  if (field === null) return null;
+  if (block === null || block[1] === undefined) return null;
+  const blockBody = block[1];
+  const field = /^CI_STATUS:[ \t]*(\S+)[ \t]*$/m.exec(blockBody);
+  if (field === null || field[1] === undefined) return null;
   const value = String(field[1]).trim();
   const vocabulary = new Set(['NOT_OBSERVED', 'NO_STEPS_EXTERNAL_NON_EVIDENCE', 'EXECUTED_PASS', 'EXECUTED_FAIL']);
   if (!vocabulary.has(value)) return null;
@@ -1001,8 +1020,8 @@ export function deriveCiObservationStatus() {
   if (collectCiBlockStale(record, new Date().toISOString().slice(0, 10)).length > 0) return null;
   // An execution claim must carry a 40-hex observed == executed pair; a
   // non-observation must not claim one.
-  const observed = /^CI_OBSERVED_SHA:[ \t]*(\S+)[ \t]*$/m.exec(block[1])?.[1] ?? '';
-  const executed = /^CI_EXECUTED_SHA:[ \t]*(\S+)[ \t]*$/m.exec(block[1])?.[1] ?? '';
+  const observed = /^CI_OBSERVED_SHA:[ \t]*(\S+)[ \t]*$/m.exec(blockBody)?.[1] ?? '';
+  const executed = /^CI_EXECUTED_SHA:[ \t]*(\S+)[ \t]*$/m.exec(blockBody)?.[1] ?? '';
   if (value === 'EXECUTED_PASS' || value === 'EXECUTED_FAIL') {
     if (!/^[0-9a-f]{40}$/i.test(observed) || observed !== executed) return null;
     if (value === 'EXECUTED_PASS' && record.blockClass !== 'EXECUTED_PASS') return null;

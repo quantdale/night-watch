@@ -26,6 +26,12 @@ export interface OperatorCliFlag {
   readonly summary: string;
   readonly values?: readonly string[];
   readonly repeatable?: boolean;
+  /**
+   * R4-18 / review-4 task 4.5: a REQUIRED flag is rendered without the optional
+   * brackets in the usage line and prefixed `REQUIRED.` in the options list.
+   * Declaration-only: each entry point enforces its own required set.
+   */
+  readonly required?: boolean;
 }
 
 export interface OperatorCliPositionals {

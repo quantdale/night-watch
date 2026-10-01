@@ -28,7 +28,7 @@ export const FORBIDDEN_ENVIRONMENT_KEYS = Object.freeze([
  * A gate child's environment: the allowlisted base, the gate's own explicit
  * labels, the forwarded (shape-validated) push tip, and a fixed locale.
  * @param {NodeJS.ProcessEnv} parentEnvironment
- * @param {{ mode: string, commandKey?: string | null }} input
+ * @param {{ mode: string, commandKey: string | null }} input
  * @returns {NodeJS.ProcessEnv}
  */
 export function buildGateChildEnvironment(parentEnvironment, input) {

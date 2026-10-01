@@ -40,6 +40,16 @@ const CLI_METADATA = {
 const timeoutMs = { SHORT: 120_000, MEDIUM: 600_000, LONG: 1_200_000 };
 const packageManager = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 const nodeExecutable = process.execPath;
+function canonical(value) {
+  if (value === null || typeof value !== 'object') return JSON.stringify(value);
+  if (Array.isArray(value)) return `[${value.map(canonical).join(',')}]`;
+  return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${canonical(value[key])}`).join(',')}}`;
+}
+
+function sha256(value) {
+  return crypto.createHash('sha256').update(value, 'utf8').digest('hex');
+}
+
 function safeChildEnvironment(mode, commandKey = null) {
   return buildGateChildEnvironment(process.env, { mode, commandKey });
 }

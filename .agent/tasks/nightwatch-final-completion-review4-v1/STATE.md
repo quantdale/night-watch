@@ -7,9 +7,9 @@ Phase: COMPLETION_REVIEW4_V1
 CHILD OF: nightwatch-final-product-completion-v1
 Status: IN_PROGRESS
 TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1
-TASK_GROUPS_COMPLETE: 1,2,3,4,5
-TASK_GROUP_NEXT: 6
-TASK_NEXT_ID: 6.1
+TASK_GROUPS_COMPLETE: 1,2,3,4,5,6
+TASK_GROUP_NEXT: 7
+TASK_NEXT_ID: 7.1
 Starting SHA: 67eb30981b4bb4d6bb6959b9afee9345938f5750
 Last validated implementation SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
 Last substantive checkpoint SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
@@ -50,15 +50,17 @@ sync, and ACTIVE_TASK routed back to the parent at "M9 task 10.2 remainder
 
 ## Current Milestone
 
-group 6 — Hygiene and continuity, tasks 6.1-6.2: the merged corrections
-session branch deleted with its SHA recorded, gate:clean receipts recording the
-source worktree path class, the live-session count and the declared SESSION
-WORKTREE, and every release/remove recorded with its timestamp and output
-(6.1); the parent ACTIVE_TASK/STATE/PLAN prose synced with an extended
-task-group checker (6.2).
-Groups 1-5 are COMPLETE (implemented; CI pending): certification soundness
+group 7 — Close-out, tasks 7.1-7.6: the focused suites, `gate:dev`,
+`gate:milestone` and `hardening:rules` PASS with every mutant family DETECTED
+(7.1); the full authoritative set exit 0 (7.2); integrate with exact-head CI
+green, release, remove with `--delete-branch` and `gate:clean` from canonical
+(7.3); the REPORT with a per-ID disposition table for R4-01..R4-24, archival
+with spec sync and the route back to the parent (7.4); the DECISIONS
+session-identity correction and the public-CI-artifact record (7.5); and the
+parent group-15 owner revert-to-private line (7.6).
+Groups 1-6 are COMPLETE (implemented; CI pending): certification soundness
 (1.1-1.8), guard robustness (2.1-2.2), CI truth (3.1-3.4), product correctness
-(4.1-4.5) and ledger/records (5.1-5.2).
+(4.1-4.5), ledger/records (5.1-5.2) and hygiene/continuity (6.1-6.2).
 
 ## Completed Milestones
 
@@ -69,16 +71,17 @@ Groups 1-5 are COMPLETE (implemented; CI pending): certification soundness
 
 ## Work In Progress
 
-Groups 1-5 are implemented and locally validated; group 6 (hygiene and continuity) is the next unit of work.
+Groups 1-6 are implemented and locally validated; group 7 (close-out) is the next unit of work.
 
 ## Exact Next Action
 
-Implement task 6.1 (R4-22): record the corrections session-branch deletion and
-the parent session release/remove (timestamp + output) in STATE, and make
-`gate:clean` receipts record the source worktree path class, the live-session
-count and the declared SESSION WORKTREE. Then 6.2 (sync the parent
-ACTIVE_TASK/STATE/PLAN prose and extend the task-group checker to compare the
-declared counts/session in prose with the structured fields).
+Implement task 7.1: the focused suites, `gate:dev` and `gate:milestone` PASS
+with every registered mutant family DETECTED, then commit. Then 7.2 (the full
+authoritative set), 7.3 (integrate, CI green, release, remove, gate:clean from
+canonical), 7.4 (REPORT with the per-ID disposition table, archival with spec
+sync, route ACTIVE_TASK back to the parent), 7.5 (the DECISIONS session-identity
+correction and the public-CI-artifact record) and 7.6 (the parent group-15
+owner revert-to-private line).
 
 ## Files Changed
 
@@ -90,6 +93,27 @@ declared counts/session in prose with the structured fields).
 
 ## Validation Ledger
 
+- 2026-10-01 — SESSION HYGIENE (R4-22 / task 6.1). The parent session was
+  released and removed by the review-4 precondition step, with the exact output
+  recorded: `SESSION_RELEASED: task=nightwatch-final-product-completion-v1
+  session=sess-83d720703401`; `SESSION_BRANCH_DELETED:
+  session/nightwatch-final-product-complet-e3ce743d`;
+  `SESSION_WORKTREE_REMOVED: nightwatch-final-product-complet-e3ce743d
+  contained=true`. The merged corrections branch was deleted after its ancestry
+  was proven (`session/nightwatch-final-completion-corr-c45f0e9d`, tip
+  `b4d0c611a7848df675390d47aa21f008d078cde6`, `git rev-list --count
+  origin/main..<branch>` = 0): `Deleted branch
+  session/nightwatch-final-completion-corr-c45f0e9d (was b4d0c611)`. Both
+  operations are recorded in the parent STATE's Validation Ledger as well.
+  `gate:clean` receipts now record `sourceWorktreePathClass`,
+  `liveSessionCount` and `declaredSessionWorktree`.
+- 2026-10-01 — GROUP 6 (hygiene and continuity). `agent:check` PASS with the
+  two new prose-drift refusals (`ACTIVE_TASK_ROUTING_LIVE_SESSION_PROSE_DRIFT`,
+  `TASK_GROUP_LEDGER_PROGRESS_PROSE_DRIFT`) and their regressions;
+  `checkAgentContinuityIntegrity` carries five new probes (HC-241..HC-245), all
+  DETECTED; `typecheck:bin` PASS with the ceilings lowered (total 1446,
+  `bin/quality-gate.mjs` 27, `bin/ai-local-canary.mjs` 3,
+  `bin/lib/hardening/rules/validation-and-gates.mjs` 20).
 - 2026-10-01 — GROUP 5 (ledger and records). `agent-state` regression for the
   suffixed task ID passes; the parent ledger declares `TASK_GROUP_DEFERRED:
   9.5b`; the corrections-v1 REPORT carries the appended per-ID table for all 71

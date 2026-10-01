@@ -673,6 +673,56 @@
             "replace": "true\n        && errors.length === 0"
           }
         ]
+      },
+      {
+        "id": "HC-241",
+        "ops": [
+          {
+            "file": "bin/agent-state.mjs",
+            "search": "    const staleLiveSessionClaim = /\\bNO\\s+live\\s+session\\b/.test(text)\n      || /\\bno\\s+live\\s+session\\s*\\(create one/i.test(text)\n      || /\\bhas\\s+no\\s+live\\s+session\\b/i.test(text)\n      || /\\bno\\s+live\\s+session\\s+is\\s+declared\\b/i.test(text);",
+            "replace": "    const staleLiveSessionClaim = false;"
+          }
+        ]
+      },
+      {
+        "id": "HC-242",
+        "ops": [
+          {
+            "file": "bin/agent-state.mjs",
+            "search": "    if (staleLiveSessionClaim) {",
+            "replace": "    if (true) {"
+          }
+        ]
+      },
+      {
+        "id": "HC-243",
+        "ops": [
+          {
+            "file": "bin/agent-state.mjs",
+            "search": "    if (stateLast !== activeLast) {\n      errors.push(`TASK_GROUP_LEDGER_PROGRESS_PROSE_DRIFT: ACTIVE_TASK states ${activeLast} declared but STATE states ${stateLast}`);\n    }",
+            "replace": "    void stateLast;\n    void activeLast;"
+          }
+        ]
+      },
+      {
+        "id": "HC-244",
+        "ops": [
+          {
+            "file": "bin/agent-state.mjs",
+            "search": "  const stateProgress = progressIn(stateText);",
+            "replace": "  const stateProgress = [];"
+          }
+        ]
+      },
+      {
+        "id": "HC-245",
+        "ops": [
+          {
+            "file": "bin/agent-state.mjs",
+            "search": "  const progressIn = (text) => [...String(text ?? '').matchAll(/(\\d{1,3})\\/(\\d{1,3})\\s+declared/g)].map((match) => `${match[1]}/${match[2]}`);",
+            "replace": "  const progressIn = () => [];"
+          }
+        ]
       }
     ],
     "checkProjectStateIntegrity": [
@@ -1486,7 +1536,7 @@
         "ops": [
           {
             "file": "bin/lib/hardening/rules/documentation.mjs",
-            "search": "  const field = /^CI_STATUS:[ \\t]*(\\S+)[ \\t]*$/m.exec(block[1]);",
+            "search": "  const field = /^CI_STATUS:[ \\t]*(\\S+)[ \\t]*$/m.exec(blockBody);",
             "replace": "  const field = null;"
           }
         ]

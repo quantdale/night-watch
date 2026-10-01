@@ -60,7 +60,7 @@ export function topologyCertificationForCheckpoint(receipts, checkpointSha) {
  * no filesystem, process, network or clock authority.
  *
  * @param {{ checked: boolean, certifying: boolean, detail: string }} topology
- * @param {{ ciStatus: string | null, executedSha: string | null, checkpointSha: string | null, runId?: unknown, blockClass?: unknown }} input
+ * @param {{ ciStatus: string | null, executedSha: string | null, checkpointSha: string | null, runId: unknown, blockClass: unknown }} input
  * @returns {{ state: 'MET' | 'UNMET', detail: string }}
  */
 export function topologyCertificationVerdict(topology, input) {
