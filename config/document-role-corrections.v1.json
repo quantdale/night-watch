@@ -189,6 +189,27 @@
       "oldLineSha256": "sha256:e6d26742d036a2ba6d242384",
       "oldLineExcerpt": "> Durable memory for the next agent/session. Last updated: **2026-09-29**",
       "reason": "2026-10-01 corrective-child close-out: the machine-checked project-state block advanced the substantive baseline to 027367d9, so the durable-memory header date is bumped to 2026-10-01; the pre-move line is removed in the same commit."
+    },
+    {
+      "id": "CORR-R4-24-001",
+      "path": "docs/DECISIONS.md",
+      "oldLineSha256": "sha256:3720ba28b8d2ae543f6db8a2",
+      "oldLineExcerpt": "`<session-id>` (the review-2 implementer session; the",
+      "reason": "R4-24 / review-4 task 7.5: the line published a full agent-session UUID in a repository that is temporarily PUBLIC. The identifier is replaced by a non-identifying provenance reference (the date and the verbatim question and answer are what identify the decision), and a dated correction note records the substitution. Excerpt redacted so the registry does not republish the identifier."
+    },
+    {
+      "id": "CORR-R4-24-002",
+      "path": "docs/DECISIONS.md",
+      "oldLineSha256": "sha256:a8ef1516b33dfade96f6420a",
+      "oldLineExcerpt": "Provenance: owner Q&A at `2026-09-30T01:22:10.912Z` in session",
+      "reason": "R4-24 / review-4 task 7.5: the provenance sentence introduced the session identifier that the next line carried; it is rephrased to name the review-2 implementer session without the identifier."
+    },
+    {
+      "id": "CORR-R4-24-003",
+      "path": "docs/DECISIONS.md",
+      "oldLineSha256": "sha256:fb86ca708388f036114093c4",
+      "oldLineExcerpt": "answer is recorded in that session's transcript). The refusal and the global cap",
+      "reason": "R4-24 / review-4 task 7.5: the trailing clause referring to a session transcript is replaced by the non-identifying statement that the quoted question and answer ARE the provenance."
     }
   ]
 }

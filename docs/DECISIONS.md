@@ -5448,9 +5448,11 @@ whose own description reads "No source change. Fail-closed, smallest change.
 **Add the refusal count to the run summary so lost oracle coverage is visible.**
 The behavioural test already proves the refusal."
 
-Provenance: owner Q&A at `2026-09-30T01:22:10.912Z` in session
-`ce1b48f7-1fba-48ca-b7a5-3ef19d31dd05` (the review-2 implementer session; the
-answer is recorded in that session's transcript). The refusal and the global cap
+Provenance: owner Q&A at `2026-09-30T01:22:10.912Z` in the review-2
+implementer session (identifier redacted for publication; registered as
+`CORR-R4-24-001` in `config/document-role-corrections.v1.json`). The question
+and the answer quoted above are the provenance; the session identifier adds
+nothing to the decision and is not republished. The refusal and the global cap
 stay, and the refusal COUNT is part of the chosen option — not a deferral. The
 chosen follow-up IS implemented: the observer exposes `captureFailureCounts()`
 (per-code counts, `BODY_READ_ACQUISITION_BOUND` included), the journey evidence
@@ -5579,3 +5581,24 @@ test in the same worker (the second mechanism behind FLAKE-003).
 **Revisit trigger.** Revisit if a legitimate run is reported with
 `PROXY_LIVENESS_FAILED` despite three healthy probes inside 5 s, or if the
 threshold/deadline is ever changed without new measurements.
+
+**Correction (2026-10-01, R4-24 / review-4 task 7.5 — appended).** The D-149
+correction note above quoted a full agent-session identifier for the review-2
+implementer session. The repository is temporarily PUBLIC, so that identifier
+was publication of a session identity, not provenance: a reader can do nothing
+with it, while a session id is exactly the kind of value this repository keeps
+out of published bytes. The identifier is replaced in place by a
+non-identifying reference (the observation date plus the verbatim question and
+answer, which are what actually identify the decision), the substitution is
+registered as `CORR-R4-24-001` in
+`config/document-role-corrections.v1.json`, and no other text of the correction
+changed.
+
+**Record (2026-10-01, R4-24).** While the repository is public, the GitHub
+Actions artifacts it uploads are equally public: the workflow retains the
+SHA-bound runner-topology receipt and the per-test skip-identity reports for
+90 days (`actions/upload-artifact` in `.github/workflows/hardening.yml`). Both
+contain only classification tokens, hashes and test identities — no cookie,
+token, header, DOM, message or path — and the repository returns to private at
+the owner's close-out step; this record exists so the exposure window is
+stated rather than assumed.
