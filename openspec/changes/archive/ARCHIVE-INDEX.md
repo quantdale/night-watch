@@ -63,3 +63,4 @@ capability spec stays readable after archiving.
 | nightwatch-control-center-render-truth-v1 | COMPLETE | CAPABILITY_BEARING | archived with specs; published: render-truth |
 | nightwatch-control-center-style-and-absence-truth-v1 | COMPLETE | CAPABILITY_BEARING | archived with specs; published: style-and-absence-truth |
 | nightwatch-current-source-unknown-yield-w12-v1 | COMPLETE | CAPABILITY_BEARING | archived with specs; published: current-source-yield-measurement |
+| nightwatch-final-completion-corrections-v1 | COMPLETE | BLOCKED_NOT_PUBLISHED | archived with --skip-specs (task 6.4): its requirements enforce the parent campaign's specs and publish no new capability |

@@ -159,9 +159,7 @@ and evidence and needs no code change.
   corrections, Prettier neutralisation).
 - Acceptance criteria: focused suites + `gate:dev` + `gate:milestone` +
   `hardening:rules` PASS; exact-head CI green before 6.2.
-- **Status:** IMPLEMENTED, CI OBSERVED — 7.1-7.14 implemented across
-  `31f9ec44`..`8445e7bb` and observed green in exact-head CI run 36717972936 at
-  `f887e76b`; 7.15 (group close-out) remains open and follows group 8.
+- **Status:** COMPLETE — 7.1-7.15 implemented and observed green in exact-head CI; 7.15 closed with gate:dev/gate:milestone PASS.
 
 ### M6.6 — Review-3 corrections (group 8, tasks 8.1-8.16)
 
@@ -173,10 +171,7 @@ and evidence and needs no code change.
   D-149 Decision 4, record corrections, minor gaps).
 - Acceptance criteria: each task's regression and probe green; full gate set
   and exact-head CI green at the close-out tip.
-- **Status:** IN_PROGRESS — recorded 2026-09-30; the step-4 integration and
-  exact-head CI observation are complete (run 36717972936 GREEN at `f887e76b`).
-  8.1's diagnosis is recorded as FLAKE-003 (OPEN); 8.2 and 8.3 are implemented
-  in the working tree.
+- **Status:** COMPLETE — 8.1-8.16 implemented with their regressions and probes; exact-head CI green at `027367d9` (run 36790169165) after the VC-01 repair-forward.
 
 ### M7 — Hygiene and close-out (group 6, tasks 6.2-6.4)
 
@@ -185,7 +180,7 @@ and evidence and needs no code change.
 - Acceptance criteria: the 6.2 command set green; exact-head CI green at the
   close-out checkpoint; ACTIVE_TASK routed back to the parent at IN_PROGRESS
   with Next action "M9 task 10.2 remainder"; change archived.
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE — 6.2 all commands exit 0; 6.3 gate:clean PASS at `b4d0c611`; 6.4 the route returned to the parent and the change is archived.
 
 ## Validation Strategy
 

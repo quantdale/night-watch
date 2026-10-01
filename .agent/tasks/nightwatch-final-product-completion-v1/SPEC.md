@@ -80,6 +80,18 @@ only. Task-by-task scope is frozen in
 
 ## Declared Deletions
 
+Archived child change (2026-10-01, child task 6.4): the corrective change moved
+into the archive with `--skip-specs`; the pre-move locations are declared here.
+
+- `openspec/changes/nightwatch-final-completion-corrections-v1/.openspec.yaml`
+- `openspec/changes/nightwatch-final-completion-corrections-v1/audit.md`
+- `openspec/changes/nightwatch-final-completion-corrections-v1/design.md`
+- `openspec/changes/nightwatch-final-completion-corrections-v1/proposal.md`
+- `openspec/changes/nightwatch-final-completion-corrections-v1/tasks.md`
+- `openspec/changes/nightwatch-final-completion-corrections-v1/specs/completion-correction-certification/spec.md`
+- `openspec/changes/nightwatch-final-completion-corrections-v1/specs/completion-correction-ledger-truth/spec.md`
+- `openspec/changes/nightwatch-final-completion-corrections-v1/specs/completion-correction-validation-spine/spec.md`
+
 Planned tracked-file deletions are declared here before they happen (exact
 paths, one per line, per the WORKSPACE_DECLARED_DELETIONS gate). Deletions
 identified later (for example the M9 retirement of superseded `bin/*.mjs`
@@ -88,3 +100,4 @@ deletion is made. Session-created files that are deleted again inside the
 same session produce no net deletion and need no declaration.
 
 NONE
+

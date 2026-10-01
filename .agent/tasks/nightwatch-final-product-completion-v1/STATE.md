@@ -5,12 +5,16 @@
 Task ID: nightwatch-final-product-completion-v1
 Phase: FINAL_PRODUCT_COMPLETION_V1
 Status: IN_PROGRESS
+TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1
+TASK_GROUPS_COMPLETE: 1,2,3,4,5,6,7,8,9
+TASK_GROUP_NEXT: 10
+TASK_NEXT_ID: 10.2
 Starting SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
-Last validated implementation SHA: 321800018bc819465326ba7c0556bac31e565da4
+Last validated implementation SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
 Last substantive checkpoint SHA: 321800018bc819465326ba7c0556bac31e565da4
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
-Branch: main (no live parent session: `sess-0734f2070d08` was released and removed on 2026-09-28; the next parent session is created by `session start`)
+Branch: main
 Last checkpoint: 2026-09-28 — M9 10.2 IN PROGRESS (59/76 declared, 4
 library-retained, 13 pending): the Phase 0 formatter blocker is RESOLVED
 (owner disposition of the 16 disposable files, harness formatter/autofix
@@ -25,8 +29,8 @@ receipt `receipt:sha256:535217a6dbae65b7a26f9243`.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
-LAST_VALIDATED_IMPLEMENTATION_SHA: 321800018bc819465326ba7c0556bac31e565da4
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 321800018bc819465326ba7c0556bac31e565da4
+LAST_VALIDATED_IMPLEMENTATION_SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 PHASE_FINAL_PRODUCT_COMPLETION_V1_STATUS: IN_PROGRESS
@@ -42,13 +46,11 @@ ledger, and end at `PROJECT_COMPLETE_AND_CI_CERTIFIED` under D-129 with a
 
 ## Current Milestone
 
-M9 D-129 CLI contract and bin type-check (tasks 10.1-10.6): 10.1 DONE,
-10.2 IN PROGRESS (59/76 declared, 4 library-retained, 13 pending). The parent
-is PAUSED at this checkpoint while the corrective child campaign
-(`nightwatch-final-completion-corrections-v1`) runs: its M1-M5 are complete
-(bootstrap, formatter policy, certification anchors, validation spine, release
-probes); its groups 5 and 7 and close-out remain. The parent resumes at
-"M9 task 10.2 remainder" when the child closes.
+M9 D-129 CLI contract and bin type-check (group 10, tasks 10.1-10.6): 10.1
+DONE, 10.2 IN PROGRESS (59/76 declared, 4 library-retained, 13 pending). The
+corrective child campaign (`nightwatch-final-completion-corrections-v1`) is
+CLOSED and archived; the parent resumes at "M9 task 10.2 remainder" in a fresh
+C-00 session.
 
 ## Completed Milestones
 

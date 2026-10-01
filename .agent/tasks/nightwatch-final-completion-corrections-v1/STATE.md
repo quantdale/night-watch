@@ -5,7 +5,7 @@
 Task ID: nightwatch-final-completion-corrections-v1
 Phase: COMPLETION_CORRECTIONS_V1
 CHILD OF: nightwatch-final-product-completion-v1
-Status: IN_PROGRESS
+Status: COMPLETE
 TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1
 TASK_GROUPS_COMPLETE: 1,2,3,4,5,7,8
 TASK_GROUP_NEXT: 6
@@ -70,7 +70,7 @@ LAST_VALIDATED_IMPLEMENTATION_SHA: b9306626e5386c371a2e7357a6432cfd2784acb1
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: b9306626e5386c371a2e7357a6432cfd2784acb1
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_COMPLETION_CORRECTIONS_V1_STATUS: IN_PROGRESS
+PHASE_COMPLETION_CORRECTIONS_V1_STATUS: COMPLETE
 
 ## Objective
 
@@ -82,20 +82,7 @@ RESUME_PROMPT_3 §3), re-verifying every audit finding at the parent base
 
 ## Current Milestone
 
-Milestone ID: M7 group 6 close-out: 6.2 (the full validation set), 6.3
-(integration, exact-head CI, release, gate:clean) and 6.4 (route back to the
-parent, archive). Groups 1-5, 7 and 8 are COMPLETE (7.15: gate:dev and
-gate:milestone PASS, 5848/0; hardening:rules 209/209).
-
-M1 (bootstrap + Phase 1 preconditions), M2 (task 6.1 formatter policy,
-landed FIRST per RESUME_PROMPT §2), M3 (certification anchors, tasks
-2.1-2.8), M4 (validation spine, tasks 3.1-3.12 incl. the CF-04/CF-05
-CI-gate fixes) and M5 (release probes, tasks 4.1-4.9) are COMPLETE. M5's
-last commit `b9306626` carries the full local gates AND exact-head CI run
-36639792380 (15/15 groups GREEN). Group 5 (5.1-5.6) and group 7 (7.1-7.14)
-are IMPLEMENTED on the unintegrated commits (`c9bcff69`..`0f4b911b`) with
-their ticks annotated `(implemented; CI pending)`; group 8 (8.1-8.16) is
-recorded and open, and group 7's close-out (7.15) follows it.
+COMPLETE.
 
 ## Completed Milestones
 
@@ -125,226 +112,13 @@ recorded and open, and group 7's close-out (7.15) follows it.
 
 ## Work In Progress
 
-- **REVIEW-3 RECORD (this checkpoint).** The R3-01 gate:dev investigation is
-  complete: the historical failure was never identified; the re-run at the
-  same clean commit produced 9/5824 under 5.1x host contention, all identities
-  are published in FLAKE-003 (`docs/FLAKE-LEDGER.md`, status OPEN), and all 40
-  tests in the failing files pass in isolation and under bounded artificial
-  load. Review-3's findings table and group 8 tasks were appended verbatim to
-  `audit.md` / `tasks.md`; the child STATE/PLAN/ACTIVE_TASK prose is being
-  synced in the same commit; the 29 unintegrated ticks (4.1-4.9, 5.1-5.6,
-  7.1-7.14) carry `(implemented; CI pending)`. Next: commit, strict-validate,
-  integrate `0f4b911b` + this record, observe exact-head CI, then drop the
-  annotations and execute group 8 in order.
-- **M2 (task 6.1) COMPLETE** — the repository formatter policy landed FIRST
-  per RESUME_PROMPT §2: `biome.json` (formatter + organize-imports + linter
-  off), `.editorconfig` pinning the normalizers off and declaring only the
-  corpus byte invariants that hold, and `tests/unit/formatterPolicy.test.ts`
-  5/5 with a positive control (formatter-enabled config rewrites the probe)
-  and a whole-tracked-corpus `check --write` no-op over a disposable
-  `git ls-files` copy with before/after hashes. The pinned
-  `@biomejs/biome@2.5.14` installed offline (cache-only), the disposable
-  `npm ci --offline` verification re-executed (10 packages, lockfile
-  byte-identical), and dependency-currency + the matrix carry the honest
-  advisory-scope limit. Focused suites green (formatterPolicy 5/5;
-  nw14/nw08/executionClasses/nw07/c16 149/149 with the known clean-tree
-  `projectState:2316` exception on the dirty worktree); hardening:check,
-  handoff:check, agent:check and typecheck all PASS.
-- Lint follow-through in the same checkpoint: the dead `loadTypeScriptModule`
-  wrappers in `bin/ai-local-canary.mjs` and `bin/auth-configure.mjs` are
-  removed (both call sites already use `loadRuntimeTypeScriptModule`
-  directly) — this is the fix the harness autofix kept re-applying in
-  canonical, now landing legitimately through the C-00 integrate.
-- **M4 IN_PROGRESS — validation spine (tasks 3.1-3.12, VC-01..VC-11).**
-  VC-01's stale bundled-Chromium skip guards and allowlist entries are removed;
-  all 34 focused DEV-login/storage-state tests passed locally, including all
-  four browser-backed tests (0 skips); exact-head CI remains pending. VC-02
-  (task 3.2) is implemented and focused-validated: v2 identities are exact by
-  file/title path/reason; all four authoritative Playwright lanes attach the
-  reporter; missing, malformed, unconfigured, and undeclared cases fail
-  closed; and safe skip-policy details propagate into gate receipts. Full
-  `campaign:synthetic` and owner-provenance proofs passed; the run-shards
-  focused proof passed with one declared skip. The semantic-compatibility
-  full attempt was made on a dirty worktree: the intended clean-tree
-  `projectState:2390` assertion failed and one source-stale reason variant was
-  undeclared. That variant is now admitted by its exact identity and a focused
-  report re-evaluates PASS; the clean-tree lane rerun is reserved for the
-  checkpoint. VC-03 (task 3.3) is now implemented and locally validated: Bubblewrap is resolved from PATH and the resolved executable is reused for all envelope spawns; runner topology is `PROVEN` only for the complete envelope with every absence exercised, otherwise `PROVEN_DEGRADED` or `NOT_PROVEN`; bounded class/envelope/unexercised-absence details flow through quality-gate receipts; the CI artifact uploader is pinned to a full commit SHA and names artifacts with `${{ github.sha }}`. Focused topology/receipt/writer/hardening suites passed 63/63; `npm run gate:topology` PASS (BUBBLEWRAP, four absences exercised, class `PROVEN`); persisted receipt projection PASS; `npm run hardening:check` PASS; `npm run typecheck:bin` PASS at 1572 diagnostics after lowering ceilings. Actual exact-head CI artifact observation remains pending task 3.12. VC-04 (task 3.4) is implemented locally: D-04 now permits absent declared worktrees only for CI/CLEAN, and only with an error-free routing record plus exact STATE-branch equality; semantic-compat forwards the parent gate label through a pure environment helper; regression tests prove LOCAL remains LOCAL and COMPATIBILITY is not a relaxation. Focused routing tests pass 15/15, hardening:check PASS, validation:universe PASS (581 discovered, 0 unclassified; digest `sha256:56a4390f3eb87f1fe9b40bf4`), and typecheck:bin PASS at 1572 / 13 of 76. HC-180 is registered to kill the branch-equality conjunct and was proven
-DETECTED at the M4 guard checkpoint `18185f36` (2/2 probes detected, workspace
-restored, status unchanged); full `hardening:rules` probe campaign runs at the
-M4 group gate. Exact-head CI/artifact evidence and group gates remain pending.
-  VC-05 (task 3.5) is implemented and verified: `gate:ui` installs UI
-  dependencies with `npm ci --ignore-scripts`, and the FULL chain was verified
-  without any declared exception — typecheck clean, 105/105 UI tests, and the
-  vite/esbuild production build PASS (esbuild does not need its install script
-  here). `checkPhase23QualityGate` asserts the exact install-script text and
-  HC-181 kills the flag (DETECTED 4/4). Focused phase23 suite 15/15 including
-  the new VC-05 script-text test; hardening:check and typecheck:bin PASS.
-  VC-06 (task 3.6) is implemented and locally validated: the clean-checkout
-  verdict is the pure `resolveCleanCheckoutVerdict` in
-  `bin/lib/cleanCheckoutReceipt.mjs` (measurement integrity > drift >
-  dirty-clone > dirty-source > gate result — the erased-conjunct regression,
-  where a dirty post-run checkout fell through to the inner gate's PASS, is
-  gone); the SOURCE root is re-measured at receipt time
-  (`sourceRootCleanAtEmit` on every receipt); the REAL product-resolved
-  sibling root is measured read-only via `resolveSiblingRoot` (the direct
-  literal stays forbidden) with the v2 depth/entry-bounded manifest whose git
-  calls all carry `--no-optional-locks`; every early exit carries siblingMode,
-  realSiblingRootClass and exact ambient versions through
-  `cleanEarlyReceipt`. Evidence: gateReceiptPersistence 41/41 (9 new VC-06
-  tests incl. a behavioral early-exit receipt), hardening:check PASS, probe
-  campaign checkPhase23QualityGate 6/6 DETECTED (HC-181/182/183), census
-  suites 14/14 after registering the receipt library's npm version probe as
-  TEST_LANE, typecheck:bin PASS at 1560 diagnostics / 14 of 76 (the clean
-  runner itself dropped 12→0), universe PASS at `sha256:95f903de`. The full
-  `gate:clean` arc closed at this checkpoint across four receipts: the first
-  at `6b19e428` proved the VC-06 machinery (real sibling root measured twice,
-  unchanged; TOOLCHAIN versions; sourceRootCleanAtEmit true) and exposed
-  PROJECT_STATE_SUBSTANTIVE_BASELINE_STALE; after the baseline advance
-  (`e9ad3300`) a second run exposed HARDENING APPEND_ONLY on the reconciled
-  prose row (declared CORR-CORR-002); a third run exposed
-  SEMANTIC_COMPATIBILITY_REPORT_MISSING — the VC-04 label forwarding had
-  removed the self-declared COMPATIBILITY authorization the skip reporter
-  keyed on. The reporter now authorizes the semantic-compatibility lane by its
-  own timing-lane identity (missing-path throw preserved), and the full
-  clean-gate run at `9a1abf28` PASSED all 15 groups (clean receipt
-  `clean-receipt:sha256:7ce5fa02f058a2c37ecc4a93`, inner gate receipt
-  `receipt:sha256:86dea28a9dc385bb814a9a6f` with matching stdout digest,
-  real sibling identity `sha256:35b17bb4…` unchanged). The VC-02
-  clean-tree semantic-compat rerun also passed standalone (2177 total, 2163
-  passed, 14 declared skips, 0 failed, skipPolicy PASS). Task 3.7 (VC-07) is
-  complete: 11/11 at the 2 s bound under load (NOT REPRODUCED, recorded as a
-  first-class outcome), the root-cause comment corrected (the wait bounds
-  handler LATENCY after `goto`, not an async projection), `docs/FLAKE-LEDGER.md`
-  (FLAKE-001) created and declared APPEND_ONLY_ARCHIVE. Task 3.8 (VC-08) is
-  complete: the workflow-pinning matcher is token-based over every `uses` key
-  form (block/compact/flow/quoted, quote-aware comment stripping, fail-closed
-  on empty references) and probes HC-184..HC-187 cover the previously
-  unprobed forms — probe campaign 5/5 DETECTED, hardening suites 15/15,
-  typecheck:bin PASS at 1559 (validation-and-gates 23→22, total 1560→1559,
-  lowered in the same change). Task 3.9 (VC-09) is complete: the c04 twins
-  assert non-empty premises (`graph.edges.length > 0` before their loops),
-  phase14 C3-14's silent early return is now a declared skip, and the c03
-  real-topology/method-level/TRUNCATED describes classify through
-  `classifyLiveSourceTestState` (REAL_TOPOLOGY_LIVE_STATE) with `LIVE_SOURCE_`
-  reason tokens — the 11 generic-token config entries were replaced by 22
-  exact LIVE_SOURCE identities + 1 for C3-14 (93 total, zero generic residue).
-  Focused c03/c04/phase14 run 48 passed / 20 declared skips; skip-policy
-  suites 18/18; hardening:check PASS; full semantic-compat on the clean tree
-  at `71a6ca3b` PASS (2177 total, 2163 passed, 14 declared, 0 failed,
-  skipPolicy PASS). Task 3.10 (VC-10) is complete: group measurements count
-  declared dependencies SEPARATELY (`declaredDependence` beside
-  `measuredDependence` — a declared LEGACY_HOST_PATH_SKIP is host-path debt,
-  never zero; NONE_INPUT_FIXTURE stays opaque data), the constant extractor
-  resolves bounded function-returned roots (single-return function bodies
-  without nested braces + literal-returning arrows; path-built or
-  multi-statement returns stay UNRESOLVED by design, never guessed), and
-  SEMANTIC_COMPATIBILITY / SYNTHETIC_CAMPAIGN declare
-  `requiresSiblingTopology: true` (their suites carry 2 + 3 declared
-  dependencies). gateTopology 36/36 (two new VC-10 cases), gate:topology PASS
-  (PROVEN/BUBBLEWRAP, truthful receipt), typecheck:bin PASS at 1559 (the 4
-  implicit-any params its first draft introduced were FIXED, never raised past
-  the ceiling), hardening:check + validation:universe PASS. The genuinely dead
-  `CHILD_ENV_INHERITED_KEYS` export (zero consumers, independently verified)
-  is removed alongside.
-
-Task 3.11 (VC-11) is complete: the orphan-branch unique-commit count runs
-against the canonical REMOTE ref (`origin/<branch>`, never a stale local
-main) and the test asserts the exact numeric value
-(`orphanSessionBranches[0].uniqueCommits === 1`); UI_CONTROL_CENTER declares
-`NODE22`; the sun_path budget measures `os.tmpdir().length` instead of a
-hard-coded `/tmp/`; HC-188 probes the HANDOFF classification invariant
-(probe campaign 2/2 DETECTED with HC-028). workspaceIsolation +
-syntheticCampaignShards + phase23QualityGate 92/92; hardening:check,
-typecheck:bin (1559) and validation:universe PASS. The dead
-`SHARD_CHILD_ENVIRONMENT_IDS` export (.mjs + .d.mts) is removed after full
-consumer verification. M4's `gate:milestone` then PASSED at the clean
-checkpoint `8b24e11e` (task 3.12 local half): all 12 steps exit 0 —
-validation-universe, execution-classes, typecheck, hardening-check,
-agent-check, handoff-check, typecheck-bin, hardening-rules (the FULL probe
-campaign incl. HC-180..HC-188), project-check, workspace-check, affected-tests
-(438 selected), affected-shards (5769 passed / 0 failed); wall 990.4s vs the
-300s telemetry target is disclosed as OVER_TARGET, not a criterion failure.
-The shard-failure fix that unblocked it: the sun_path budget now reads
-`NIGHTWATCH_AMBIENT_TMPDIR` — the pre-override ambient root preserved by
-`buildShardChildEnvironment` — because run-shards points TMPDIR at its own
-run root for isolation while the campaign/gate context the budget describes
-inherits the ambient TMPDIR (reproduced and proven in-shard: run-shards
-20/20 PASS after the fix; before it, the same context failed at 134 > 107).
-
-Task 3.12's integration half exposed a CI-ONLY defect (recorded as
-follow-on CF-04): exact-head CI run 36513017223 at `2b5d8178` failed the
-SYNTHETIC_CAMPAIGN skip policy with `UNDECLARED_SKIP (40 skipped, 4
-undeclared)` while local runs declared all 14. Root cause: four REAL-artifact
-tests — `c08DeploymentBinding.test.ts:110` (ripple-ui host matrix),
-`:238` (ouchan build config), `c09SpecExpectations.test.ts:301` (blueapi
-spec), `:314` (blueinternal spec) — gate on `fs.existsSync` over the sibling
-Alphaus checkouts. Those checkouts exist on this host, so the skips are
-invisible locally and their identities were never declared; the CI runner
-has no siblings and the four skips surfaced UNDECLARED. The fix declares the
-four exact file/title-path identities with the same
-`requires the read-only sibling Alphaus checkouts` reason token already
-sanctioned for the identical c05 sibling-gated skip (97 entries now), plus a
-source-bound regression `every sibling-checkout-gated skip site is declared
-(CI absence coverage)` in semanticSkipIdentity.test.ts that scans the unit
-corpus for reason-gated sibling skip sites and asserts 1:1 correspondence
-between declared identities and source sites (each declared title must be a
-literal of its file, so a rename invalidates rather than widens a
-declaration). Discriminating power proven: the 5 CI-absent identities
-evaluate PASS against the live config, while a drifted title or a removed
-declaration returns UNDECLARED_SKIP. Focused cone green (semanticSkipIdentity
-15/15, phase23 + gateTopology 51/51 alongside), typecheck PASS, hardening:check
-PASS, typecheck:bin PASS (1559 / 14 of 76 / 78 ceilings), validation:universe
-PASS. VC-01's CI-execution proof is satisfied at `2b5d8178`: both security
-suites carry ZERO skip sites (VC-01 removed them) and are members of the
-synthetic-campaign file set, and the exact-head receipt accounts every test
-— 1966 total, 1926 passed, 40 declared-or-declared-here skips, `failed: 0`,
-`didNotRun: 0` — so the four browser-backed security assertions executed and
-passed in CI. The remaining gap at that run was purely the four declarations
-now added. Landed as `491b5ef9` (integrated, origin/main == `491b5ef9`).
-
-The second exact-head observation (run 36537649045 at `491b5ef9`) proved the
-CF-04 fix: SYNTHETIC_CAMPAIGN's skip policy now evaluates PASS (14 declared /
-0 undeclared). It then failed a DIFFERENT group on a real test failure —
-SEMANTIC_COMPATIBILITY 2177 total / 2162 passed / 1 failed at
-`tests/unit/observerSemanticLedger.test.ts:138` ("ledger cap is bounded and
-overflow is explicit"), which is green at `2b5d8178` in the same lane and in
-local isolation. Recorded as FLAKE-002 (docs/FLAKE-LEDGER.md) with its true
-mechanism: the page-side 550-fetch loop paced itself with a blind 10 ms
-sleep, while the observer's response handler (bounded body read gated at
-MAX_CONCURRENT_BODY_READS = 4, which REFUSES rather than queues —
-BODY_READ_ACQUISITION_BOUND) trails page-side fetch resolution; under
-full-suite load the burst crosses 4, reads refuse, and the ledger lands short
-of the 512 cap with the overflow latch false. The fix (D-147) is purely
-fixture-side: the loop now advances only while at most one response handler
-is outstanding (the observer's own `activeRequests()` drain signal — the
-counter the existing settlement barrier consumes) and drains to 0 before
-asserting. No source or gate text changes: bodyReadAcquisition's structural
-pins (4-bound constant, gate line, refusal branch, both release sites) are
-byte-untouched and its 4/4 suite passes; the cap/overflow assertions stay
-exact. Evidence: bodyReadAcquisition 4/4 + observerSemanticLedger 2/2
-(cap test 40.8s paced vs 19.8s blind — the honest cost of the handshake),
-typecheck PASS, hardening:check PASS, typecheck:bin PASS (1559 / 14 of 76 /
-78 ceilings).
+None — task complete.
 
 ## Exact Next Action
 
-RESUME_PROMPT_3 §1 step 4, then group 8 in order. Concretely: commit this
-instrumentation (Review 3 + group 8 + FLAKE-003 + the STATE/PLAN/ACTIVE_TASK
-sync), strict-validate (`openspec validate --all --strict`) and the
-continuity checks, then `node bin/nightwatch-session.mjs integrate
---expect-session sess-66344fe137d7 --expect-head <HEAD>` and observe
-exact-head CI at the pushed tip with `gh`. When it is GREEN, record the run ID
-here and drop the `(implemented; CI pending)` annotations. Then execute group
-8 in order: 8.2 (sync + ticked-group-vs-milestone checker), 8.3 (satisfiable
-certification binding), 8.4 (verified receipt digests), 8.5 (receipt content
-digests and termination checks), 8.6 (behavioural D3 honesty), 8.7 (lane
-artifact wiring), 8.8 (PROVEN_DEGRADED non-certifying), 8.9 (ledger gaps),
-8.10 (behavioural classifier dispatch), 8.11 (DEV-launcher anchor), 8.12 (skip
-identities + VC-01 CI per-test proof), 8.13 (file-relative Prettier), 8.14
-(D-149 Decision 4), 8.15 (record corrections), 8.16 (minor gaps), each with
-its regression and probe. Then 6.2, 6.3, 6.4, then route to the
-parent at "M9 task 10.2 remainder".
+STOP — this task is COMPLETE. The parent campaign
+`nightwatch-final-product-completion-v1` resumes at "M9 task 10.2 remainder"
+(59/76 declared) in a fresh C-00 parent session; nothing remains in this child.
 
 ## Files Changed
 
@@ -1156,16 +930,19 @@ afterwards.
 
 ## Resume Recipe
 
-Resume from this file: read `.agent/ACTIVE_TASK.md`, then this task's
-`SPEC.md`, `PLAN.md`, `STATE.md`, and the change's `tasks.md`/`audit.md`;
-reconcile against `git status` and the session record; run the smallest
-decisive validation; continue the Next Action. All work happens in the
-session worktree named in the routing block; integration is fast-forward
-only; never write under the canonical checkout while this session is live.
+Historical task complete — do not resume. The change is archived as
+`2026-10-01-nightwatch-final-completion-corrections-v1`.
 
 ## Completion Snapshot
 
-Not complete. Terminal snapshot is written at close-out (task 6.4): every
-finding dispositioned with evidence, ACTIVE_TASK routed back to the parent
-at IN_PROGRESS with Next action "M9 task 10.2 remainder", and the change
-archived with `--skip-specs`.
+COMPLETE (2026-10-01). All 73 tasks closed; the change is archived as
+`2026-10-01-nightwatch-final-completion-corrections-v1` with `--skip-specs`.
+Substantive implementation anchor `027367d9`; `npm test` 5848/0/34;
+`gate:local` 15/15 (`receipt:sha256:030bc83d1ef06cc219167f3d`); `gate:clean`
+PASS at `b4d0c611` (`clean-receipt:sha256:bdae336ff5a8c9a182ac9430`); exact-head
+CI green at `f887e76b`, `027367d9`, `14efed2e`, `b4d0c611`. The child session
+`sess-66344fe137d7` was released and its worktree removed; ACTIVE_TASK routes
+back to the parent IN_PROGRESS with Next action "M9 task 10.2 remainder".
+Recorded deviations: FLAKE-003 OPEN; CORR-CORR-002; the 7.14 rewording
+disclosure; the temporary public visibility (owner reverts at parent 15.x);
+the retained session branch with 0 unique commits.

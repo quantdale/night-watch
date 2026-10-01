@@ -1,90 +1,89 @@
-# Execution Prompt — corrective child campaign
+# EXECUTION PROMPT — Final product completion (terminal campaign)
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
 Status: IN_PROGRESS
-Campaign ID: nightwatch-final-completion-corrections-v1
-OpenSpec: openspec/changes/nightwatch-final-completion-corrections-v1/
-Planned-From: 1d47e2eef1ef029560ace12e31571624602eab0b
+Campaign ID: nightwatch-final-product-completion-v1
+OpenSpec: openspec/changes/nightwatch-final-product-completion-v1/
+Planned-From: 1f786a4e1b7e4967d06c930946f1107e32931e8a
 Target Branch: main
 Predecessor Task ID: nightwatch-successor-campaign-engine-v1
 Predecessor Status: COMPLETE
 
 ## Mission
 
-One high-impact campaign: close the corrective change
-`openspec/changes/nightwatch-final-completion-corrections-v1/` so the parent
-campaign `nightwatch-final-product-completion-v1` resumes at M9 task 10.2
-(remainder: 59/76 declared) from sound foundations. The 31 audit findings
-(21 STILL_PRESENT, 5 CHANGED, 2 COMPLETED_LATER at `1d47e2ee`) and the 3
-follow-on defects CF-01..CF-03 each end with a fix plus regression/probe
-where the task requires one.
-
-Lineage note: this is a CHILD OF `nightwatch-final-product-completion-v1`
-(paused at its M9 10.2 checkpoint for this correction). The Predecessor
-fields above follow the programme-lineage convention established by the
-parent's own handoff (the completed predecessor campaign), because the
-handoff header vocabulary has no token for a still-active parent.
+One high-impact campaign: the terminal product-completion programme from
+`openspec/changes/nightwatch-final-product-completion-v1/`. Make an honest
+`PROJECT_COMPLETE_AND_CI_CERTIFIED` verdict reachable and stable — every
+census item dispositioned (OD-1), the certification spine checkpoint-neutral
+and CI-green at the final substantive checkpoint S (OD-2), truthful
+autonomous-hunt results persisted and surfaced, operator-truth surfaces
+reconciled, the ledger closed, and a `main`-only clean terminal topology.
 
 ## Scope
 
 Nightwatch source, tests, hardening rules/probes, schemas/configuration,
-synthetic fixtures, OpenSpec and task continuity records, local bounded
-child processes, and C-00 commits/fast-forward integration from this owned
-session only. Item scope is frozen by the change's `tasks.md` (6 groups,
-39 tasks), `design.md` (D1-D8) and `audit.md` (the re-verification table
-plus CF-01..CF-03).
+synthetic fixtures, OpenSpec/task continuity records, local bounded child
+processes, and C-00 commits/fast-forward integration from the owned session
+only. Item scope is frozen by the change's `tasks.md` (phases 1-15),
+`design.md` (D1-D14), and `audit.md` (228 items with tiers and dispositions).
 
 ## Ordered workstreams
 
-1. Task 6.1 FIRST (RESUME_PROMPT §2): repository formatter policy —
-   `biome.json` with formatter and organize-imports disabled, `.editorconfig`
-   pinning the normalizers off, and the formatter-changes-nothing proof.
-2. Group 2 — certification anchors (2.1-2.8): VB-01..VB-07.
-3. Group 3 — validation spine (3.1-3.12): VC-01..VC-11.
-4. Group 4 — release probes (4.1-4.6): VD-01..VD-05 + CF-01..CF-03.
-5. Group 5 — ledger and continuity truth (5.1-5.6): VA-01..VA-05.
-6. Group 6 — hygiene and close-out (6.2-6.4).
+1. M0 owner pre-flight on canonical (A-04/A-06 fixes, drift record) — COMPLETE.
+2. M1 session bootstrap: one owned C-00 worktree; the planning change and
+   task continuity land together in the bootstrap checkpoint.
+3. M2 certification anchors and ratchets (checkpoint-neutral bindings,
+   `LIVE_TASK_STATUS` derivation, disposition-token ledger, ceiling ratchet).
+4. M3 CI-green deterministic hermetic spine (guarded live-source tests, honest
+   skip identity, sibling-hermetic `gate:clean`, pinned CI, HANDOFF_TRUTH
+   classification) — the spine is done only when CI is green.
+5. M4 release-certification machinery (wire G12/G14/G17/G18/G19/G20/G21,
+   demotion semantics, schema DECIDED state, CI block-record wiring).
+6. M5-M7 T1 operator-truth chains: autonomous hunt result integrity; finding
+   truth surfaces and Control Center data; narrowed over-claims.
+7. M8 T2 contained-DEV lane integrity with the DEV-lane precondition registry.
+8. M9 D-129 debt: 76/76 CLI contract and bin type-check BLOCKING 0 exemptions.
+9. M10-M13 residual dispositions, DECISIONS/SAFETY_MODEL/ARCHITECTURE truth,
+   operator proofs (OD-3), adversarial completion audit, ledger closure.
+10. M14 close-out: full authoritative set at S, `integrate --expect-head S`,
+    CI `EXECUTED_PASS` observed at S and ingested, documentary receipt commit,
+    this change archived last, terminal topology proof, 13-section report.
 
 ## Constraints
 
-- LOCAL / OFFLINE / SYNTHETIC only. OD-3 external exceptions for THIS child exactly: GitHub
-  Actions read/observe and C-00 fast-forward pushes. The single-use paid
-  provider proof run (parent 12.3) and npm registry advisory query (parent
-  15.4) belong to those parent tasks and are not used here.
-- No Alphaus DEV/NEXT/production contact, authenticated Alphaus runtime,
-  credentials, customer data, database/data-plane/cloud access, sibling
-  writes, external publication, force push, or history rewrite.
-- One writer under C-00; never mutate another owner's worktree; never write
-  under the canonical checkout while this session is live; if canonical
-  becomes dirty, STOP and report the exact files and mtimes.
-- Never weaken a safety rule, gate, test, probe, skip policy, certification
-  condition or evidence requirement. Any bounded reclassification must be
-  negative-tested, mutation-probed and recorded in DECISIONS.
-- Never back-date or fabricate anchors, receipts, CI results or evidence
-  SHAs; tracked documents never predict the SHA or CI run of the commit that
-  contains them. Never rewrite a task line's `N.M` prefix.
+LOCAL / OFFLINE / SYNTHETIC only. External contact is exactly OD-3: GitHub
+Actions read/observe, C-00 fast-forward pushes, one bounded paid provider
+proof run, one npm registry advisory query. No Alphaus DEV/NEXT/production
+contact, authenticated Alphaus runtime, credentials, customer data,
+database/data-plane/cloud access, sibling writes, external publication, force
+push, or history rewrite. One writing agent under C-00; Alphaus sibling
+repositories read-only; real findings stay in the owner-only local store.
 
 ## Validation
 
-After each group: focused suites, then `gate:dev`, then `gate:milestone`;
-commit every guard before `hardening:rules`. Close-out (6.2): typecheck,
-typecheck:bin, UI typecheck/test/build, schema:check, hardening:check,
-hardening:rules, validation:universe, agent:check, agent:audit,
-project:check, workspace:check, session:check, campaign:synthetic,
-gate:local, npm test, `openspec validate --all --strict`.
+Focused suites and `npm run gate:dev` during implementation; relevant suites
+plus `npm run gate:milestone` at each milestone commit; `npm run gate:local`
+for groupings; the full authoritative set only at S. Continuity/session truth:
+`npm run session:check`, `npm run agent:check`, `npm run project:check`,
+`npm run workspace:check`, `npm run handoff:check`. Never classify a missing,
+unknown, all-skipped, or zero-executed validation result as PASS.
 
 ## Acceptance / completion gates
 
-Every one of the 31 findings has exactly one disposition with evidence and
-CF-01..CF-03 are closed; the 39 tasks are ticked with DONE notes; the 6.2
-command set is green; exact-head CI is green at the substantive close-out
-checkpoint.
+- Every audit census item carries exactly one recorded disposition (OD-1).
+- All 16 release conditions MET under D-129 with exact-head CI
+  `EXECUTED_PASS` at S; bin type-check BLOCKING 0 exemptions; 76/76 entry
+  points on the shared CLI contract (OD-2).
+- Operator proofs recorded: deterministic synthetic hunt, the bounded paid
+  proof run or `PROVIDER_BLOCKED_BEFORE_SOURCE_ACTION`, clean-clone install.
+- Safety counters zero for unauthorized effects; no optimistic completion claim.
 
-## Git and reporting requirements
+## Git / reporting requirements
 
-Integrate with `--expect-session/--expect-head` (fast-forward only), observe
-exact-head CI with `gh`, release then remove after the branch reachability
-proof, run `gate:clean` from canonical with no live session, archive the
-change with `--skip-specs`, record every finding's disposition in REPORT,
-and route ACTIVE_TASK back to the parent at IN_PROGRESS with Next action
-"M9 task 10.2 remainder". Then stop and hand off.
+C-00 single session; fast-forward integration only; the final substantive
+commit S is pushed alone via `integrate --expect-head S`; never force-push,
+rebase, or amend another agent's commits. Milestone state is recorded in
+`STATE.md` before each milestone commit; durable anchors name SHAs known
+before the recording commit. Final deliverable: the 13-section completion
+report with the terminal verdict, safety counters, external prerequisites,
+and final operator commands.
