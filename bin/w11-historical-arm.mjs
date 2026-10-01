@@ -19,6 +19,36 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadTypeScriptModules } from './lib/typescript-runtime-loader.mjs';
+import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
+
+/**
+ * A-12 / 10.2: the shared operator-CLI contract. `--case` and `--out` are the
+ * two bounded options; `--help`/`--print-metadata` answer through the shared
+ * parser without loading the corpus or a reasoner, and an unknown option is
+ * refused with exit 2.
+ */
+/** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
+const CLI_METADATA = {
+  schemaVersion: OPERATOR_CLI_SCHEMA,
+  name: 'w11-historical-arm',
+  entry: 'bin/w11-historical-arm.mjs',
+  purpose: 'Drive the frozen historical corpus through the leak-isolated benchmark hunt with the configured CLI reasoner and score it against hidden truth; local/synthetic only.',
+  group: 'validate',
+  flags: [
+    { name: '--case', shape: 'string', summary: 'run one frozen corpus case id instead of the whole corpus' },
+    { name: '--out', shape: 'path', summary: 'write the serialized report to this path (mode 0600) instead of stdout only' },
+  ],
+  json: true,
+  authorization: 'LOCAL_ONLY',
+  artifacts: [],
+};
+
+const cli = defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url });
+
+if (cli.stop) {
+  // The shared parser answered --help/--print-metadata or refused an argument;
+  // no corpus case ran and no reasoner was loaded.
+} else {
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const FREEZE_PATH = path.join(
@@ -68,8 +98,8 @@ const [tools, fixtures, hunt, score, cliReasoner, metricsMod, miner, minedCases,
     { root },
   );
 
-const onlyCase = process.argv.find((arg) => arg.startsWith('--case='))?.slice('--case='.length) ?? null;
-const outPath = process.argv.find((arg) => arg.startsWith('--out='))?.slice('--out='.length) ?? null;
+const onlyCase = typeof cli.flags['--case'] === 'string' ? cli.flags['--case'] : null;
+const outPath = typeof cli.flags['--out'] === 'string' ? cli.flags['--out'] : null;
 
 /** Resolve the frozen corpus to defined cases, preserving frozen order. */
 function resolveCorpus() {
@@ -381,3 +411,4 @@ const report = {
 const serialized = JSON.stringify(report, null, 2);
 if (outPath !== null) fs.writeFileSync(outPath, serialized, { mode: 0o600 });
 console.log(serialized);
+}

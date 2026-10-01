@@ -48,7 +48,7 @@
     },
     {
       "file": "bin/change-intelligence.mjs",
-      "disposition": "PENDING_OPERATOR_CLI"
+      "disposition": "OPERATOR_CLI"
     },
     {
       "file": "bin/child-environment.mjs",
@@ -76,7 +76,7 @@
     },
     {
       "file": "bin/hardening-check.mjs",
-      "disposition": "PENDING_OPERATOR_CLI"
+      "disposition": "OPERATOR_CLI"
     },
     {
       "file": "bin/nightwatch-agent.mjs",
@@ -236,7 +236,7 @@
     },
     {
       "file": "bin/review-mutation-campaign.mjs",
-      "disposition": "PENDING_OPERATOR_CLI"
+      "disposition": "OPERATOR_CLI"
     },
     {
       "file": "bin/review-persistence-scale.mjs",
@@ -304,7 +304,7 @@
     },
     {
       "file": "bin/w11-historical-arm.mjs",
-      "disposition": "PENDING_OPERATOR_CLI"
+      "disposition": "OPERATOR_CLI"
     },
     {
       "file": "bin/workspace-integrity.mjs",
@@ -313,8 +313,8 @@
   ],
   "counts": {
     "total": 76,
-    "operatorCli": 61,
+    "operatorCli": 65,
     "libraryRetained": 4,
-    "pending": 11
+    "pending": 7
   }
 }

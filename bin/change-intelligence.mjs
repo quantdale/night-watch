@@ -11,6 +11,7 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { buildChildEnvironment } from './child-environment.mjs';
+import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
 
 const nightwatchRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const outputPath = path.join(nightwatchRoot, 'artifacts', 'change-intelligence-shadow', 'current.json');
@@ -130,15 +131,32 @@ function observedRepo(repo) {
   };
 }
 
+/**
+ * A-12 / 10.2: the shared operator-CLI contract. The surface declares no flags:
+ * `--help` and `--print-metadata` answer through the shared parser without
+ * compiling, reading sibling metadata or writing a report, and any other
+ * argument is refused with exit 2.
+ */
+/** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
+const CLI_METADATA = {
+  schemaVersion: OPERATOR_CLI_SCHEMA,
+  name: 'change-intelligence',
+  entry: 'bin/change-intelligence.mjs',
+  purpose: 'Compile the local change-intelligence core and write one sanitized shadow selection report. Shadow mode never invokes DEV.',
+  group: 'inspect-intelligence',
+  flags: [],
+  json: false,
+  authorization: 'LOCAL_ONLY',
+  artifacts: ['artifacts/change-intelligence-shadow/current.json'],
+};
+
+const cli = defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url });
+
 let repositoriesRoot = null;
 
 async function main() {
-  // `--help` is the bounded, side-effect-free observation surface: it prints
-  // usage without compiling, reading sibling metadata, or writing a report.
-  if (process.argv.slice(2).includes('--help') || process.argv.slice(2).includes('-h')) {
-    process.stdout.write('Usage: node bin/change-intelligence.mjs [--help]\nCompiles the local change-intelligence core and writes one sanitized shadow selection report.\n');
-    return;
-  }
+  // The shared parser above owns --help/--print-metadata and refuses anything
+  // else, so reaching here means the argv was empty.
   compileCore();
   // M6 (7.8/B-10/C-22): the ONE sibling-root resolution.
   const topologyModule = await import(pathToFileURL(path.join(compileRoot, 'core', 'policy', 'sourceTopology.js')).href);
@@ -186,7 +204,12 @@ async function main() {
   process.stdout.write(`${JSON.stringify({ outputPath, changesetId: changeset.changesetId, selectedJourneys: selection.selectedJourneys.map((journey) => journey.journeyId), priorityOrder: selection.priorityOrder, fallbackTriggered: selection.fallbackTriggered, dirtyFiles: changeset.dirtyFiles.length }, null, 2)}\n`);
 }
 
-main().catch((error) => {
-  process.stderr.write(`change-intelligence shadow failed: ${error instanceof Error ? error.message : String(error)}\n`);
-  process.exitCode = 1;
-});
+if (cli.stop) {
+  // The shared parser answered --help/--print-metadata or refused an argument;
+  // nothing was compiled and no report was written.
+} else {
+  main().catch((error) => {
+    process.stderr.write(`change-intelligence shadow failed: ${error instanceof Error ? error.message : String(error)}\n`);
+    process.exitCode = 1;
+  });
+}

@@ -57,7 +57,7 @@ ledger, and end at `PROJECT_COMPLETE_AND_CI_CERTIFIED` under D-129 with a
 ## Current Milestone
 
 M9 D-129 CLI contract and bin type-check (group 10, tasks 10.1-10.6): 10.1
-DONE, 10.2 IN PROGRESS (61/76 declared, 4 library-retained, 11 pending). The
+DONE, 10.2 IN PROGRESS (65/76 declared, 4 library-retained, 7 pending). The
 corrective child campaign (`nightwatch-final-completion-corrections-v1`) is
 CLOSED and archived; the parent resumed at "M9 task 10.2 remainder" in the
 fresh C-00 session `sess-83d720703401` (worktree
@@ -148,7 +148,7 @@ remaining 12 pending bins are named in tasks.md 10.2.
 
 **Current (2026-10-01):** the parent resumed at M9 task 10.2: operator-CLI conformance is **61/76 declared** (4 library-retained, 11 pending; next bin `change-intelligence`). The log below is HISTORICAL and is not the current state.
 
-**Current (2026-10-01):** the review-4 child campaign is CLOSED and the parent resumed at M9 task 10.2; operator-CLI conformance is 61/76 declared (4 library-retained, 11 pending; next bin `change-intelligence`). The log below is HISTORICAL (M7 onward, oldest first) and is not the current state.
+**Current (2026-10-01):** the review-4 child campaign is CLOSED and the parent resumed at M9 task 10.2; operator-CLI conformance is 65/76 declared (4 library-retained, 7 pending; next bin `nightwatch-agent`). The log below is HISTORICAL (M7 onward, oldest first) and is not the current state.
 
 - M7 (tasks 8.1-8.5) is in progress; 8.1 is implemented and committed: the
   `.env` layer is parsed FAIL CLOSED (a malformed line, an undeclared key and a
@@ -551,6 +551,14 @@ exactly as in M4/M5.
 
 ## Validation Ledger
 
+- 2026-10-01 — M9 10.2 RESUME BATCH 3 (parent). Four bins migrated to the
+  shared operator-CLI contract: `change-intelligence` (no flags),
+  `hardening-check` (six modes; the full run, `--only=…`, `--list-rules` and
+  the 245-probe campaign re-verified through the shared parser),
+  `review-mutation-campaign` (`--plan`) and `w11-historical-arm` (`--case`,
+  `--out`). Registry counts 65/4/7. Focused: `operatorCliSurface` +
+  `cliImplementationContract` 46/46; `hardening:check` PASS; `typecheck` clean;
+  `hardening:rules` 245/245.
 - 2026-10-01 — M9 10.2 RESUME BATCH 2 (parent). `bin/auth-configure.mjs`
   migrated to the shared operator-CLI contract: the metadata declares no flags
   and no positionals (no argument may carry or name a credential), `--help` and
@@ -575,8 +583,8 @@ exactly as in M4/M5.
   (`openspec/changes/archive/2026-10-01-nightwatch-final-completion-review4-v1/`,
   spec published as `openspec/specs/review4-closure/`), its session branch is
   deleted, and this campaign is active again, canonical-routed, at the recorded
-  resume point: M9 task 10.2 remainder (61/76 declared after resume batch 2;
-  next bin `change-intelligence`), then 10.3-10.6, M10-M14 and the 13-section
+  resume point: M9 task 10.2 remainder (65/76 declared after resume batch 3;
+  next bin `nightwatch-agent`), then 10.3-10.6, M10-M14 and the 13-section
   final report.
   D-150 (OD-5/OD-6) and D-151 (proxy liveness) were added by the child.
 - 2026-10-01 — PARENT PAUSED (review-4 preconditions). Exact-head CI run
@@ -1090,7 +1098,7 @@ named in the routing block; integration is fast-forward only.
 
 ## Completion Snapshot
 
-Not complete. M9 task 10.2 is IN PROGRESS at 61/76 declared (11 pending).
+Not complete. M9 task 10.2 is IN PROGRESS at 65/76 declared (7 pending).
 Terminal snapshot is written at M14: all 228 census items
 dispositioned (OD-1), `PROJECT_COMPLETE_AND_CI_CERTIFIED` under D-129 with CI
 `EXECUTED_PASS` at S (OD-2), operator proofs recorded, ledger closed, and a
