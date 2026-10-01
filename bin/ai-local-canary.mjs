@@ -28,8 +28,8 @@ const CLI_METADATA = {
   purpose: 'Run one fixed synthetic local-model canary against a strict loopback provider and report only sanitized metadata.',
   group: 'validate',
   flags: [
-    { name: '--endpoint', shape: 'string', summary: 'loopback v1 chat-completions endpoint' },
-    { name: '--model', shape: 'string', summary: 'model identifier' },
+    { name: '--endpoint', shape: 'string', required: true, summary: 'loopback v1 chat-completions endpoint' },
+    { name: '--model', shape: 'string', required: true, summary: 'model identifier' },
     { name: '--timeout-ms', shape: 'integer', summary: 'bounded timeout 1-5000 ms' },
   ],
   json: false,
@@ -42,11 +42,6 @@ if (cli.stop) {
   // The shared parser answered --help/--print-metadata or refused an unknown
   // option; the canary must not execute.
 } else {
-
-function usage() {
-  console.log('Usage: npm run ai:local-canary -- --endpoint <loopback-v1-chat-completions-url> --model <model-id> [--timeout-ms <1-5000>]');
-  console.log('The command performs one fixed synthetic L2 BUG_CANDIDATE review and never accepts prompt or input text.');
-}
 
 /** @param {typeof import('../src/core/aiReview/localCanary')} service @param {string | undefined} modelIdentifier */
 function printUnexpectedFailure(service, modelIdentifier) {
@@ -82,6 +77,10 @@ async function main() {
     return;
   }
 
+  // R4-18 / review-4 task 4.5: `--help`/`-h` and `--print-metadata` are
+  // answered by the shared parser above, so no help branch can be reached
+  // here; `parseLocalCanaryArgs` keeps its own `--help` result for direct
+  // callers, and this wrapper never consults it.
   let parsed;
   try {
     parsed = service.parseLocalCanaryArgs(process.argv.slice(2));

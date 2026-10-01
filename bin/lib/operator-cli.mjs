@@ -193,7 +193,12 @@ function declarationUsage(metadata) {
   for (const flag of metadata.flags ?? []) {
     if (flag.name === '--json' && metadata.json === true) continue;
     const value = flag.shape === 'boolean' ? '' : flag.shape === 'enum' ? `=<${(flag.values ?? []).join('|')}>` : '=<value>';
-    parts.push(flag.repeatable === true ? `[${flag.name}${value}]...` : `[${flag.name}${value}]`);
+    // R4-18 / review-4 task 4.5: a flag declared `required: true` is rendered
+    // WITHOUT the optional brackets, so the usage line never marks a required
+    // flag optional. The declaration is documentation; each entry point keeps
+    // its own enforcement.
+    const rendered = `${flag.name}${value}`;
+    parts.push(flag.repeatable === true ? `[${rendered}]...` : flag.required === true ? rendered : `[${rendered}]`);
   }
   const positionals = metadata.positionals;
   if (positionals !== undefined && (positionals.max ?? 0) > 0) {
@@ -234,7 +239,7 @@ export function renderOperatorHelp(metadata) {
     for (const flag of flags) {
       if (flag.name === '--json' && metadata.json === true) continue;
       const shape = flag.shape === 'enum' ? `=<${(flag.values ?? []).join('|')}>` : flag.shape === 'boolean' ? '' : `=<${flag.shape}>`;
-      lines.push(`  ${`${flag.name}${shape}`.padEnd(24)} ${flag.summary}`);
+      lines.push(`  ${`${flag.name}${shape}`.padEnd(24)} ${flag.required === true ? 'REQUIRED. ' : ''}${flag.summary}`);
     }
     if (metadata.json === true) lines.push(`  ${'--json'.padEnd(24)} emit exactly one JSON document on stdout`);
   }

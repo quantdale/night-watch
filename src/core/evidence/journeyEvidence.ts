@@ -22,6 +22,21 @@ export function parseJourneyEvidence(value: unknown): JourneyEvidence {
        candidate.captureFailureCodes.some((code) => !isJourneyCaptureFailureCode(code)))) {
     throw new Error('journey evidence captureFailureCodes is invalid');
   }
+  // R4-14 / review-4 task 4.1 (D-149): the recorded run summary must carry the
+  // refusal COUNT. The keys are the closed capture-failure vocabulary and every
+  // count is a bounded non-negative integer, so a malformed record fails closed
+  // instead of being silently dropped from the summary.
+  if (candidate.captureFailureCounts !== undefined) {
+    const counts = candidate.captureFailureCounts;
+    if (counts === null || typeof counts !== 'object' || Array.isArray(counts)) {
+      throw new Error('journey evidence captureFailureCounts is invalid');
+    }
+    for (const [code, count] of Object.entries(counts as Record<string, unknown>)) {
+      if (!isJourneyCaptureFailureCode(code) || typeof count !== 'number' || !Number.isInteger(count) || count < 0) {
+        throw new Error('journey evidence captureFailureCounts is invalid');
+      }
+    }
+  }
   if (typeof candidate.passed !== 'boolean' || typeof candidate.finalRouteClass !== 'string' ||
       typeof candidate.globalShellReady !== 'boolean' || typeof candidate.journeyMarkers !== 'object' ||
       !Array.isArray(candidate.stepResults) || !Array.isArray(candidate.semanticRuleIds) ||
@@ -70,7 +85,7 @@ export function parseJourneyEvidence(value: unknown): JourneyEvidence {
     'evidenceSchemaVersion', 'contractVersion', 'contractDigest', 'oracleVersion',
     'semanticRequests', 'safetyCounts', 'boundedVariance', 'oracleObservations',
     'anomalyFingerprints', 'failureAttribution', 'resourceObservations',
-    'containmentCounts', 'captureStatus', 'observationSettlement', 'captureFailureCodes', 'environmentInputDigest',
+    'containmentCounts', 'captureStatus', 'observationSettlement', 'captureFailureCodes', 'captureFailureCounts', 'environmentInputDigest',
   ] as const;
   for (const key of optionalKeys) {
     if (candidate[key] !== undefined) safe[key] = candidate[key];

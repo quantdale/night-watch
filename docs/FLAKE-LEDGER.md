@@ -252,3 +252,38 @@ VC-07 asked for a flake ledger that is honest about what was reproduced. It is
 now: both entries carry a status, the two inaccurate statements are corrected,
 and the unreproduced entry is closed as unreproduced rather than presented as
 fixed. Task 3.7 stays ticked on that basis.
+
+**Correction (2026-10-01, R4-15 / review-4 task 4.2 — appended, never
+rewritten).** Two statements in FLAKE-003 are wrong, and two contributing
+mechanisms are now fixed.
+
+1. **"no failing surface was touched" is inaccurate.** The 15 child-campaign
+   commits DID change `src/browser/observers/networkObserver.ts` (M8 task 9.6,
+   bounded body-read acquisition) and added tests that drive the MODULE-GLOBAL
+   `bodyReadsInFlight` counter. That counter is process-wide, so a test that
+   leaves a reader held makes a LATER test in the same worker observe a
+   saturated gate and record `BODY_READ_ACQUISITION_BOUND` in its own run
+   summary: a shared-worker coupling, not host contention alone.
+2. **The `PROXY_LIVENESS_FAILED` identities had a mechanism, not only
+   contention.** `checkProxyHealth` is a single-shot probe with a 1 s timeout
+   polled every 100 ms, and the FIRST failure recorded the fatal
+   `PROXY_LIVENESS_FAILED`. Under a 5.1x-slow host one missed probe is
+   sufficient, which is exactly the recorded symptom (identities 1–3 of this
+   entry). Liveness now requires **3 consecutive failures OR 5000 ms from the
+   first failure** (`PROXY_LIVENESS_FAILURE_THRESHOLD` /
+   `PROXY_LIVENESS_DEADLINE_MS`, D-151), and a healthy probe resets the window.
+
+**Evidence (2026-10-01).** The FLAKE-003 identity files were re-run three times
+under 6-way CPU saturation on a 20-core host with the fixes in place:
+`tests/unit/authCaptureStages.test.ts`, `tests/unit/bodyReadAcquisition.test.ts`,
+`tests/smoke/passive-run.smoke.ts`, `tests/smoke/negative.smoke.ts` and
+`tests/smoke/proxy.smoke.ts` — **26 passed, 0 failed, three consecutive
+iterations** (20.6 s / 18.3 s / 18.9 s). `bodyReadAcquisition` now releases every
+held slot in `afterEach`, so a failed assertion cannot leak the counter into the
+next test in the same worker.
+
+**Status: still `OPEN`.** The fixes remove the two mechanisms above; the
+underlying 5.1x full-lane contention was never reproduced on demand, so the
+entry is kept rather than closed. The residual risk statement is narrowed: a
+run that misses three consecutive probes or 5 s of proxy liveness is still
+reported, and the full-lane contention cause remains unproven.

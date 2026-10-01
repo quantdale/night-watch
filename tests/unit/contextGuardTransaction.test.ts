@@ -5,6 +5,12 @@
 import { test, expect } from '@playwright/test';
 import fs from 'node:fs';
 import path from 'node:path';
+import {
+  PROXY_LIVENESS_INITIAL,
+  PROXY_LIVENESS_DEADLINE_MS,
+  PROXY_LIVENESS_FAILURE_THRESHOLD,
+  advanceProxyLiveness,
+} from '../../src/browser/context';
 
 const REPO_ROOT = path.resolve(__dirname, '..', '..');
 const CONTEXT_SOURCE = fs.readFileSync(path.join(REPO_ROOT, 'src', 'browser', 'context.ts'), 'utf8');
@@ -65,5 +71,51 @@ test.describe('browser context guard transaction integrity (9.5)', () => {
     expect(popupBody).toContain('installFetchGuard(context, p, {');
     expect(popupBody).toContain('admitRequest: network.admitRequest');
     expect(popupBody).toContain('bindRedirectFollowUp: network.bindRedirectFollowUp');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// R4-15 / review-4 task 4.2 — proxy liveness tolerates transient misses.
+//
+// The poll is one-shot with a 1 s timeout every 100 ms, so a first failure
+// used to be FATAL and a transient scheduling delay ended a legitimate run.
+// The window is now: N consecutive failures OR a bounded deadline from the
+// FIRST failure, whichever comes first, and a healthy probe resets it.
+// ---------------------------------------------------------------------------
+
+test.describe('proxy liveness window (R4-15)', () => {
+  test('the declared bounds are the tolerance policy', () => {
+    expect(PROXY_LIVENESS_FAILURE_THRESHOLD).toBe(3);
+    expect(PROXY_LIVENESS_DEADLINE_MS).toBe(5000);
+    expect(PROXY_LIVENESS_INITIAL).toEqual({ consecutiveFailures: 0, firstFailureAtMs: null });
+  });
+
+  test('a single missed probe is NOT fatal, and a success resets the window', () => {
+    const first = advanceProxyLiveness(PROXY_LIVENESS_INITIAL, false, 1_000);
+    expect(first.fatal).toBe(false);
+    expect(first.state).toEqual({ consecutiveFailures: 1, firstFailureAtMs: 1_000 });
+    // The next probe succeeds well inside the deadline: healthy, window reset.
+    const recovered = advanceProxyLiveness(first.state, true, 1_400);
+    expect(recovered).toEqual({ state: PROXY_LIVENESS_INITIAL, fatal: false });
+    // A later miss starts a FRESH window rather than continuing the old one.
+    const later = advanceProxyLiveness(recovered.state, false, 9_000);
+    expect(later).toEqual({ state: { consecutiveFailures: 1, firstFailureAtMs: 9_000 }, fatal: false });
+  });
+
+  test('a sustained outage is fatal within the declared threshold or deadline', () => {
+    let state = PROXY_LIVENESS_INITIAL;
+    for (let index = 0; index < PROXY_LIVENESS_FAILURE_THRESHOLD - 1; index += 1) {
+      const step = advanceProxyLiveness(state, false, 1_000 + index * 100);
+      expect(step.fatal).toBe(false);
+      state = step.state;
+    }
+    // The threshold probe is fatal even inside the deadline.
+    expect(advanceProxyLiveness(state, false, 2_000).fatal).toBe(true);
+    // The deadline is fatal on its own, however few probes were missed.
+    const sparse = advanceProxyLiveness({ consecutiveFailures: 1, firstFailureAtMs: 1_000 }, false, 1_000 + PROXY_LIVENESS_DEADLINE_MS);
+    expect(sparse.fatal).toBe(true);
+    // Just inside the deadline is still tolerated.
+    const inside = advanceProxyLiveness({ consecutiveFailures: 1, firstFailureAtMs: 1_000 }, false, 1_000 + PROXY_LIVENESS_DEADLINE_MS - 1);
+    expect(inside.fatal).toBe(false);
   });
 });

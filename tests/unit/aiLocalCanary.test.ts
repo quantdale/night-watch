@@ -110,10 +110,22 @@ test.describe('Phase 7B.3 bounded canary arguments and endpoint', () => {
       timeoutMs: 100,
     });
     expect(parseLocalCanaryArgs(['--help'])).toEqual({ help: true });
+    // R4-18 / review-4 task 4.5: the shared operator-CLI contract advertises
+    // `--flag=<value>`, so BOTH forms are accepted and mean the same thing.
+    expect(parseLocalCanaryArgs(['--endpoint=http://127.0.0.1:1234/v1/chat/completions', '--model=local.fixture.v1'])).toEqual({
+      endpoint: 'http://127.0.0.1:1234/v1/chat/completions',
+      modelIdentifier: 'local.fixture.v1',
+      timeoutMs: 5000,
+    });
+    expect(parseLocalCanaryArgs(['--endpoint=http://127.0.0.1:1234/v1/chat/completions', '--model', 'local.fixture.v1', '--timeout-ms=100'])).toEqual({
+      endpoint: 'http://127.0.0.1:1234/v1/chat/completions',
+      modelIdentifier: 'local.fixture.v1',
+      timeoutMs: 100,
+    });
     for (const args of [
       [],
       ['--prompt', 'synthetic text'],
-      ['--endpoint=http://127.0.0.1:1234/v1/chat/completions', '--model', 'local.fixture.v1'],
+      ['--endpoint=', '--model', 'local.fixture.v1'],
       ['--endpoint', 'http://127.0.0.1:1234/v1/chat/completions', '--model', 'local fixture'],
       ['--endpoint', 'http://127.0.0.1:1234/v1/chat/completions', '--model', 'local.fixture.v1', '--timeout-ms', '5001'],
       ['--endpoint', 'http://127.0.0.1:1234/v1/chat/completions', '--model', 'local.fixture.v1', '--file', 'input.json'],

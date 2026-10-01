@@ -24,6 +24,8 @@ import path from 'node:path';
 
 const REPO_ROOT = path.resolve(__dirname, '..', '..');
 const BIOME_ENTRY = createRequire(path.join(REPO_ROOT, 'package.json')).resolve('@biomejs/biome/bin/biome');
+/** The harness's own Prettier, installed outside the repository. */
+const PRETTIER_TOOLS_ENTRY = path.join(os.homedir(), '.pi-lens', 'tools', 'node_modules', 'prettier', 'bin', 'prettier.cjs');
 const MISFORMATTED_PROBE = "const x = 'a'\nconst y   =   1;\nexport { x, y };\n";
 const CONTROL_CONFIG = `${JSON.stringify(
   {
@@ -35,6 +37,17 @@ const CONTROL_CONFIG = `${JSON.stringify(
   null,
   2,
 )}\n`;
+
+/**
+ * R4-17 / review-4 task 4.4 — a probe INSIDE the repository (gitignored via
+ * `.tmp-*`) so the repository's own `.prettierignore` / `.prettierrc` govern
+ * it. A scratch file outside the tree is governed by no repository config at
+ * all, so it cannot prove that the policy neutralises an in-repo run.
+ */
+function repoProbe(name: string): string {
+  const file = path.join(REPO_ROOT, `.tmp-prettier-probe-${process.pid}-${name}.ts`);
+  return file;
+}
 
 function scratch(): string {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'nw-formatter-policy-'));
@@ -65,10 +78,23 @@ function runBiome(args: string[], cwd: string) {
 // Prettier binary is available; otherwise its absence is declared explicitly.
 // ---------------------------------------------------------------------------
 
+/**
+ * R4-17 / review-4 task 4.4 — find a REAL Prettier.
+ *
+ * The previous resolver looked only at `NIGHTWATCH_PRETTIER_BIN` and the repo's
+ * `node_modules/.bin/prettier`, so on every host without a local install it
+ * returned null, the behavioural control skipped, and the parent-cwd control
+ * ran a `node -e` one-liner instead of Prettier. `prettier` is now a declared
+ * devDependency (so CI installs it), and the harness's own tools path is a
+ * last-resort fallback so a checkout that was never `npm install`ed still
+ * exercises the control.
+ */
 function resolvePrettierBinary(): string | null {
   const candidates = [
     process.env.NIGHTWATCH_PRETTIER_BIN ?? '',
     path.join(REPO_ROOT, 'node_modules', '.bin', process.platform === 'win32' ? 'prettier.cmd' : 'prettier'),
+    path.join(REPO_ROOT, 'node_modules', 'prettier', 'bin', 'prettier.cjs'),
+    PRETTIER_TOOLS_ENTRY,
   ].filter((candidate) => candidate !== '');
   for (const candidate of candidates) {
     try {
@@ -112,32 +138,62 @@ test.describe('Prettier neutralisation (R3-14)', () => {
     expect(nearest?.path).toBe(path.join(REPO_ROOT, '.prettierrc'));
     expect(nearest?.config.requirePragma).toBe(true);
     // A run FROM the parent directory resolves the same per-file config: the
-    // old `.prettierignore`-only neutralisation did not.
-    const fromParent = spawnSync('node', ['-e', `process.stdout.write(require(${JSON.stringify(path.join(REPO_ROOT, 'package.json'))}).name ?? '')`], { cwd: path.dirname(REPO_ROOT), encoding: 'utf8' });
-    expect(fromParent.status).toBe(0);
+    // old `.prettierignore`-only neutralisation did not. R4-17: this control
+    // runs PRETTIER ITSELF from the parent cwd, not a node one-liner — the
+    // per-file `requirePragma` config is what neutralises it there.
     expect(nearestPrettierConfig(target)?.config.requirePragma).toBe(true);
+    const prettier = resolvePrettierBinary();
+    if (prettier === null) {
+      // Declared absence, never a silent pass: the lane's skip identity names
+      // PRETTIER_BINARY_ABSENT, and the config assertions above still hold.
+      expect(fs.existsSync(path.join(REPO_ROOT, 'node_modules', 'prettier')) || process.env.NIGHTWATCH_PRETTIER_BIN !== undefined).toBe(false);
+    } else {
+      const probe = repoProbe('parent-cwd');
+      try {
+        fs.writeFileSync(probe, MISFORMATTED_PROBE);
+        const before = fs.readFileSync(probe, 'utf8');
+        const parentRun = run(prettier, ['--write', probe], path.dirname(REPO_ROOT));
+        expect(parentRun.status, String(parentRun.stderr)).toBe(0);
+        expect(fs.readFileSync(probe, 'utf8')).toBe(before);
+      } finally {
+        fs.rmSync(probe, { force: true });
+      }
+    }
   });
 
   const prettier = resolvePrettierBinary();
   test('a Prettier run leaves an unmarked probe untouched and formats a pragma-marked one', () => {
     test.skip(prettier === null, 'PRETTIER_BINARY_ABSENT: no Prettier executable on this host; the requirePragma config and the file-relative resolution are asserted above, and this control runs wherever a binary is available');
+    // R4-17: the NEGATIVE control is an IN-REPO probe (the repository's own
+    // `.prettierignore`/`.prettierrc` govern it), run from a PARENT working
+    // directory — the R3-14 regression. Inside the repository nothing is
+    // formattable at all, so the PRAGMA positive control uses a scratch
+    // directory that carries the repository's own `.prettierrc`.
+    const unmarked = repoProbe('unmarked');
     const directory = scratch();
     try {
-      const unmarked = path.join(directory, 'unmarked.ts');
-      const marked = path.join(directory, 'marked.ts');
       fs.writeFileSync(unmarked, MISFORMATTED_PROBE);
-      fs.writeFileSync(marked, `/** @format */\n${MISFORMATTED_PROBE}`);
       const beforeUnmarked = fs.readFileSync(unmarked, 'utf8');
-      const beforeMarked = fs.readFileSync(marked, 'utf8');
-      // Run from a PARENT working directory (the R3-14 regression): the
-      // per-file config still governs.
       const parentRun = run(prettier as string, ['--write', unmarked], path.dirname(REPO_ROOT));
       expect(parentRun.status, String(parentRun.stderr)).toBe(0);
       expect(fs.readFileSync(unmarked, 'utf8')).toBe(beforeUnmarked);
-      const rootRun = run(prettier as string, ['--write', marked], REPO_ROOT);
-      expect(rootRun.status, String(rootRun.stderr)).toBe(0);
-      expect(fs.readFileSync(marked, 'utf8')).not.toBe(beforeMarked);
+      // The positive control: the repository's own requirePragma config, run
+      // from the directory that carries it, formats a pragma-marked file and
+      // leaves an unmarked one alone — so the negative control above cannot be
+      // an inert or absent tool.
+      fs.copyFileSync(path.join(REPO_ROOT, '.prettierrc'), path.join(directory, '.prettierrc'));
+      const pragmaMarked = path.join(directory, 'marked.ts');
+      const pragmaUnmarked = path.join(directory, 'unmarked.ts');
+      fs.writeFileSync(pragmaMarked, `/** @format */\n${MISFORMATTED_PROBE}`);
+      fs.writeFileSync(pragmaUnmarked, MISFORMATTED_PROBE);
+      const beforeMarked = fs.readFileSync(pragmaMarked, 'utf8');
+      const beforePragmaUnmarked = fs.readFileSync(pragmaUnmarked, 'utf8');
+      const controlRun = run(prettier as string, ['--write', 'marked.ts', 'unmarked.ts'], directory);
+      expect(controlRun.status, String(controlRun.stderr)).toBe(0);
+      expect(fs.readFileSync(pragmaMarked, 'utf8')).not.toBe(beforeMarked);
+      expect(fs.readFileSync(pragmaUnmarked, 'utf8')).toBe(beforePragmaUnmarked);
     } finally {
+      fs.rmSync(unmarked, { force: true });
       fs.rmSync(directory, { recursive: true, force: true });
     }
   });

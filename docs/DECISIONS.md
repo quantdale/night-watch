@@ -5548,3 +5548,34 @@ that same classifier, so it can no longer contradict certification.
 Revisit if a successor review shows the subject/kind/schema/verdict binding is
 insufficient for an honest system, or if the owner authorizes cryptographic
 receipt authentication. This entry does NOT authorize that; OD-5 declines it.
+
+## D-151 — a proxy-liveness miss is tolerated until the declared threshold or deadline (R4-15)
+
+Source: review-4 finding R4-15 and task 4.2 of
+`nightwatch-final-completion-review4-v1`.
+
+`checkProxyHealth` is a single-shot probe with a 1 s timeout, polled every
+100 ms. The poll recorded the FATAL `PROXY_LIVENESS_FAILED` on the FIRST failed
+probe, so on a contended host (the FLAKE-003 5.1x slowdown) one missed probe
+ended a legitimate run and three `authCaptureStages` identities, the passive-run
+smoke and the negative smoke failed for a reason unrelated to what they test.
+
+**Decision.** Liveness requires N CONSECUTIVE failures or a bounded deadline
+from the FIRST failure, whichever comes first, and a healthy probe resets the
+window. The bounds are declared constants and are the whole tolerance policy:
+
+- `PROXY_LIVENESS_FAILURE_THRESHOLD = 3` (consecutive failed probes)
+- `PROXY_LIVENESS_DEADLINE_MS = 5000` (ms from the first failure)
+
+A process that has EXITED is still fatal immediately (`PROXY_PROCESS_EXITED`):
+tolerance is for an unanswered probe, never for a dead proxy. The pure
+`advanceProxyLiveness` owns the judgement; `src/browser/context.ts` consumes it.
+
+**Also decided here.** The module-global `bodyReadsInFlight` counter is released
+on every exit path, and the body-read acquisition tests release every held slot
+in `afterEach`, so a failed assertion cannot leak a saturated gate into a later
+test in the same worker (the second mechanism behind FLAKE-003).
+
+**Revisit trigger.** Revisit if a legitimate run is reported with
+`PROXY_LIVENESS_FAILED` despite three healthy probes inside 5 s, or if the
+threshold/deadline is ever changed without new measurements.

@@ -457,7 +457,10 @@ export async function runDeclarativeJourney(
       captureFailureCodes: ctx.network.captureFailureCodes?.() ?? [],
       captureFailureCounts: ctx.network.captureFailureCounts?.() ?? {},
     };
-    ctx.recorder.addManifestEntry('journeyEvidence', { journeyId: evidence.journeyId, contractSourceSha: evidence.contractSourceSha, passed: false, authValid: false, failureAttribution: evidence.failureAttribution, evidenceSchemaVersion: evidence.evidenceSchemaVersion, contractVersion: evidence.contractVersion, contractDigest: evidence.contractDigest, oracleVersion: evidence.oracleVersion, captureStatus: evidence.captureStatus, observationSettlement: evidence.observationSettlement, captureFailureCodes: evidence.captureFailureCodes });
+    // R4-14 / review-4 task 4.1: D-149's refusal count is part of the run
+    // summary on EVERY exit path, so the auth-invalid manifest entry carries it
+    // too (the observer is not the record).
+    ctx.recorder.addManifestEntry('journeyEvidence', { journeyId: evidence.journeyId, contractSourceSha: evidence.contractSourceSha, passed: false, authValid: false, failureAttribution: evidence.failureAttribution, evidenceSchemaVersion: evidence.evidenceSchemaVersion, contractVersion: evidence.contractVersion, contractDigest: evidence.contractDigest, oracleVersion: evidence.oracleVersion, captureStatus: evidence.captureStatus, observationSettlement: evidence.observationSettlement, captureFailureCodes: evidence.captureFailureCodes, captureFailureCounts: evidence.captureFailureCounts });
     return evidence;
   }
 
@@ -588,6 +591,9 @@ export async function runDeclarativeJourney(
     captureStatus,
     observationSettlement,
     captureFailureCodes: ctx.network.captureFailureCodes?.() ?? [],
+    // R4-14 / review-4 task 4.1: D-149's refusal count reaches the RECORDED
+    // run summary on the main path, not only the auth-invalid early return.
+    captureFailureCounts: ctx.network.captureFailureCounts?.() ?? {},
   };
   ctx.recorder.addManifestEntry('journeyEvidence', {
     journeyId: evidence.journeyId,
@@ -617,6 +623,7 @@ export async function runDeclarativeJourney(
     captureStatus: evidence.captureStatus,
     observationSettlement: evidence.observationSettlement,
     captureFailureCodes: evidence.captureFailureCodes,
+    captureFailureCounts: evidence.captureFailureCounts,
   });
   ctx.recorder.event({
     type: 'journey',
@@ -639,6 +646,7 @@ export async function runDeclarativeJourney(
       captureStatus: evidence.captureStatus,
       observationSettlement: evidence.observationSettlement,
       captureFailureCodes: evidence.captureFailureCodes,
+      captureFailureCounts: evidence.captureFailureCounts,
     },
   });
   return evidence;

@@ -233,24 +233,37 @@ export function parseLocalCanaryArgs(args: readonly string[]): ParsedLocalCanary
   let modelIdentifier: string | undefined;
   let timeoutMs: number = AI_REVIEW_BUDGET.perCallTimeoutMs;
   for (let index = 0; index < args.length; index += 1) {
-    const argument = args[index];
-    if (argument === '--endpoint') {
+    const argument = args[index] as string;
+    // R4-18 / review-4 task 4.5: the shared operator-CLI contract advertises
+    // `--flag=<value>`, so BOTH forms are accepted here. `--flag=value` is
+    // consumed from this argument; `--flag value` from the next, exactly as
+    // before.
+    const equals = argument.startsWith('--') ? argument.indexOf('=') : -1;
+    const name = equals === -1 ? argument : argument.slice(0, equals);
+    const inlineValue = equals === -1 ? undefined : argument.slice(equals + 1);
+    if (inlineValue !== undefined && inlineValue === '') throw new LocalCanaryUsageError();
+    const value = (): string => {
+      if (inlineValue !== undefined) return inlineValue;
+      if (index + 1 >= args.length) throw new LocalCanaryUsageError();
+      return nextArgument(args, index);
+    };
+    if (name === '--endpoint') {
       if (endpoint !== undefined) throw new LocalCanaryUsageError();
-      endpoint = nextArgument(args, index);
-      index += 1;
-    } else if (argument === '--model') {
+      endpoint = value();
+      if (inlineValue === undefined) index += 1;
+    } else if (name === '--model') {
       if (modelIdentifier !== undefined) throw new LocalCanaryUsageError();
-      modelIdentifier = nextArgument(args, index);
+      modelIdentifier = value();
       assertModelIdentifier(modelIdentifier);
-      index += 1;
-    } else if (argument === '--timeout-ms') {
-      if (timeoutMs !== AI_REVIEW_BUDGET.perCallTimeoutMs || index + 1 >= args.length) throw new LocalCanaryUsageError();
-      const raw = nextArgument(args, index);
+      if (inlineValue === undefined) index += 1;
+    } else if (name === '--timeout-ms') {
+      if (timeoutMs !== AI_REVIEW_BUDGET.perCallTimeoutMs) throw new LocalCanaryUsageError();
+      const raw = value();
       if (!/^\d+$/.test(raw)) throw new LocalCanaryUsageError();
       timeoutMs = Number(raw);
       if (!Number.isSafeInteger(timeoutMs)) throw new LocalCanaryUsageError();
       assertTimeout(timeoutMs);
-      index += 1;
+      if (inlineValue === undefined) index += 1;
     } else {
       throw new LocalCanaryUsageError();
     }

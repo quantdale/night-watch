@@ -304,13 +304,16 @@ test.describe('skip-count agreement and the VC-01 pin', () => {
   });
 
   test('R3-13: the VC-01 per-test execution proof reads the published report', () => {
-    const titles = [
-      'source-approved login helper fills the synthetic form once without evidence plumbing',
-      'a replaced login document invalidates the one-shot binding before secret input',
-      'a changed form action invalidates the one-shot binding',
-      'non-DEV target is rejected before the credential provider is consulted',
+    // R4-16 / review-4 task 4.3: the four are the three devLoginSecurity cases
+    // and the storage-state LIVE COOKIE READABILITY test (browser-backed), each
+    // from its own pinned file.
+    const titles: Array<[string, string]> = [
+      ['tests/unit/devLoginSecurity.test.ts', 'source-approved login helper fills the synthetic form once without evidence plumbing'],
+      ['tests/unit/devLoginSecurity.test.ts', 'a replaced login document invalidates the one-shot binding before secret input'],
+      ['tests/unit/devLoginSecurity.test.ts', 'a changed form action invalidates the one-shot binding'],
+      ['tests/unit/storageState.test.ts', 'live browser readability (configured Chrome channel) > page-readability: live browser document.cookie distinguishes fresh and expired cookies'],
     ];
-    const report = { executedSecurity: titles.map((title) => ({ file: 'tests/unit/devLoginSecurity.test.ts', titlePath: [title] })) };
+    const report = { executedSecurity: titles.map(([file, title]) => ({ file, titlePath: title.split(' > ') })) };
     expect(vc01ExecutionFailure(report)).toBeNull();
     expect(vc01ExecutionFailure({ executedSecurity: report.executedSecurity.slice(0, 3) })).toContain('VC01_EXECUTION_MISSING');
     expect(vc01ExecutionFailure({})).toBe('VC01_EXECUTION_UNRECORDED');

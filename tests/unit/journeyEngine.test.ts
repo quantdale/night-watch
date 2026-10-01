@@ -220,6 +220,37 @@ test('expired or page-unreadable auth is an auth-state result before any journey
   expect(run.server.requests.filter((item) => item.url.includes('/m/'))).toHaveLength(0);
 });
 
+// R4-14 / review-4 task 4.1 — D-149's refusal count belongs to the RECORDED run
+// summary on every exit path. The assertion reads the recorder's own manifest
+// and event stream, never the observer: a summary that omits the counts is a
+// lost-oracle-coverage claim the operator cannot see.
+test('the recorded run summary carries captureFailureCounts on both exit paths', async ({ browser }) => {
+  const readRecorded = (directory: string) => {
+    const manifest = JSON.parse(fs.readFileSync(path.join(directory, 'manifest.json'), 'utf8')) as Record<string, unknown>;
+    const entry = manifest.journeyEvidence as Record<string, unknown> | undefined;
+    const events = fs.readFileSync(path.join(directory, 'events.jsonl'), 'utf8')
+      .split('\n').filter(Boolean).map((line) => JSON.parse(line) as { type?: string; data?: Record<string, unknown> });
+    // The LAST 'journey'-typed event is the engine's completion event; the
+    // observer also emits a journey-scoped event earlier in the stream.
+    const journey = events.filter((event) => event.type === 'journey').at(-1);
+    return { entry, journey };
+  };
+  const main = await runFixture(browser, 'good');
+  const mainRecorded = readRecorded(main.recorder.dir);
+  expect(mainRecorded.entry).toBeDefined();
+  expect(Object.prototype.hasOwnProperty.call(mainRecorded.entry, 'captureFailureCounts')).toBe(true);
+  expect(typeof mainRecorded.entry!.captureFailureCounts).toBe('object');
+  expect(mainRecorded.journey).toBeDefined();
+  expect(Object.prototype.hasOwnProperty.call(mainRecorded.journey!.data, 'captureFailureCounts')).toBe(true);
+  // The auth-invalid early return records the counts too, on its own manifest
+  // entry.
+  const invalid = await runFixture(browser, 'good', undefined, false, false);
+  const invalidRecorded = readRecorded(invalid.recorder.dir);
+  expect(invalidRecorded.entry).toBeDefined();
+  expect(invalidRecorded.entry!.authValid).toBe(false);
+  expect(Object.prototype.hasOwnProperty.call(invalidRecorded.entry, 'captureFailureCounts')).toBe(true);
+});
+
 test('fresh replay comparator accepts bounded timing/request variance', () => {
   const definition = getRippleJourneyDefinition('ripple-payer-exchange-read');
   const base = {

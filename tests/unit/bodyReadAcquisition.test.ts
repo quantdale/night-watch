@@ -51,6 +51,16 @@ test.describe('bounded response-body acquisition (9.6)', () => {
 // RV-12 / corrections task 7.10 — the bound proven by BEHAVIOUR: hold
 // MAX_CONCURRENT_BODY_READS reads open, fire one more, and observe the refusal.
 test.describe('bounded response-body acquisition — behaviour (7.10)', () => {
+  /**
+   * R4-15 / review-4 task 4.2 — every held body-read slot is released, even
+   * when an assertion fails. `bodyReadsInFlight` is module-global, so a leaked
+   * slot made a LATER test in the same worker observe a saturated gate: the
+   * shared-worker coupling behind FLAKE-003.
+   */
+  const created: Array<{ release: (value: string) => void }> = [];
+  test.afterEach(() => {
+    while (created.length > 0) created.pop()!.release('drained by afterEach');
+  });
   const held = () => {
     let release: (value: string) => void = () => undefined;
     let fail: (reason: Error) => void = () => undefined;
@@ -58,7 +68,9 @@ test.describe('bounded response-body acquisition — behaviour (7.10)', () => {
       release = resolve;
       fail = reject;
     });
-    return { promise, release, fail };
+    const handle = { promise, release, fail };
+    created.push(handle);
+    return handle;
   };
 
   test('the read past the bound is refused as { acquired: false }, and a freed slot is reusable', async () => {

@@ -101,7 +101,7 @@ an observed green exact-head CI at the tip that contains its close-out.
 - Objective: carry D-149's refusal count into the recorded summary; tolerate
   transient proxy-probe misses; restore the VC-01 list; run real Prettier in a
   CI lane; accurate `ai-local-canary` help.
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE (2026-10-01; implemented, exact-head CI pending)
 
 ### M5 — Ledger and records (group 5: 5.1-5.2)
 

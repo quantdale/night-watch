@@ -2,5 +2,7 @@
 # formatter run — an editor integration, a harness post-write hook — once rewrote
 # 16 tracked files in the canonical checkout in Prettier's default style. This
 # file makes any Prettier run a no-op for the whole repository, exactly as
-# biome.json does for Biome (task 6.1). There is deliberately no .prettierrc.
+# biome.json does for Biome (task 6.1). R4-17 / review-4 task 4.4: the
+# repository DOES carry a `.prettierrc` ({"requirePragma": true}) as the
+# file-relative second lock, so this comment no longer claims otherwise.
 *

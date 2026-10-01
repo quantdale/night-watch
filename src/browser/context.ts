@@ -105,6 +105,45 @@ interface NightwatchContextOptions {
   semanticAcceptanceClass?: SemanticEvidenceAcceptanceClass;
 }
 
+/**
+ * R4-15 / review-4 task 4.2 — proxy liveness tolerance.
+ *
+ * A single missed health probe used to be FATAL: the poll is one-shot with a
+ * 1 s timeout every 100 ms, so a transient scheduling delay (the shared-worker
+ * shard under load, FLAKE-003) ended a legitimate run with
+ * `PROXY_LIVENESS_FAILED`. Liveness now requires either N CONSECUTIVE failures
+ * or a bounded deadline from the FIRST failure, whichever comes first. Both
+ * bounds are declared here and recorded in DECISIONS (D-151). A probe that
+ * succeeds resets the window, so one miss is never fatal.
+ */
+export const PROXY_LIVENESS_FAILURE_THRESHOLD = 3;
+export const PROXY_LIVENESS_DEADLINE_MS = 5000;
+
+export interface ProxyLivenessState {
+  readonly consecutiveFailures: number;
+  readonly firstFailureAtMs: number | null;
+}
+
+export const PROXY_LIVENESS_INITIAL: ProxyLivenessState = Object.freeze({ consecutiveFailures: 0, firstFailureAtMs: null });
+
+/**
+ * Advance the liveness window by one probe result. Pure: the caller supplies
+ * the clock. A healthy probe resets the window; a failed probe extends it and
+ * reports FATAL only when the threshold or the deadline is reached.
+ */
+export function advanceProxyLiveness(
+  previous: ProxyLivenessState,
+  healthy: boolean,
+  nowMs: number,
+): { state: ProxyLivenessState; fatal: boolean } {
+  if (healthy) return { state: PROXY_LIVENESS_INITIAL, fatal: false };
+  const firstFailureAtMs = previous.firstFailureAtMs ?? nowMs;
+  const consecutiveFailures = previous.consecutiveFailures + 1;
+  const fatal = consecutiveFailures >= PROXY_LIVENESS_FAILURE_THRESHOLD
+    || nowMs - firstFailureAtMs >= PROXY_LIVENESS_DEADLINE_MS;
+  return { state: { consecutiveFailures, firstFailureAtMs }, fatal };
+}
+
 export interface NightwatchContext {
   context: BrowserContext;
   page: Page;
@@ -377,6 +416,10 @@ export async function createNightwatchContext(
   let proxyPollStopped = false;
   let proxyHealthCheckInFlight = false;
   let proxyDownRecorded = false;
+  // R4-15: the liveness window (consecutive failures + the first failure's
+  // instant), so a transient miss is tolerated and only a sustained outage is
+  // fatal.
+  let proxyLiveness: ProxyLivenessState = PROXY_LIVENESS_INITIAL;
   let lifecycleStopping = false;
   let lifecycleFailureRecorded = false;
 
@@ -439,7 +482,16 @@ export async function createNightwatchContext(
         }
       })
       .then(({ healthy, processAlive }) => {
-        if (healthy || proxyPollStopped || proxyDownRecorded) return;
+        if (proxyPollStopped || proxyDownRecorded) return;
+        // A dead process is fatal immediately; a failed probe needs either the
+        // consecutive-failure threshold or the bounded deadline.
+        if (processAlive) {
+          const advanced = advanceProxyLiveness(proxyLiveness, healthy, Date.now());
+          proxyLiveness = advanced.state;
+          if (healthy || !advanced.fatal) return;
+        } else if (healthy) {
+          return;
+        }
         proxyDownRecorded = true;
         const monitorReason = processAlive ? 'PROXY_LIVENESS_FAILED' : 'PROXY_PROCESS_EXITED';
         const failureEvent = recorder.event({

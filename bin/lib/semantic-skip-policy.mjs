@@ -133,11 +133,18 @@ export function skipCountDisagreement(reporterSkipped, identityReportSkipped) {
 // R3-13 / corrections task 8.12 — the VC-01 per-test CI proof: the four
 // browser-backed DEV-login tests must have EXECUTED (passed) in this lane, as
 // recorded per test in the published identity report.
+//
+// R4-16 / review-4 task 4.3: the list must name the four BROWSER-BACKED tests
+// whose silent skipping VC-01 exists to prevent — the three
+// tests/unit/devLoginSecurity.test.ts cases and the storage-state LIVE COOKIE
+// READABILITY test. The previous list substituted a non-browser devLogin case
+// (`non-DEV target is rejected …`), so the live cookie-readability test could
+// have skipped again without the pin noticing.
 export const VC01_REQUIRED_TITLES = Object.freeze([
   'source-approved login helper fills the synthetic form once without evidence plumbing',
   'a replaced login document invalidates the one-shot binding before secret input',
   'a changed form action invalidates the one-shot binding',
-  'non-DEV target is rejected before the credential provider is consulted',
+  'page-readability: live browser document.cookie distinguishes fresh and expired cookies',
 ]);
 
 /**

@@ -7,9 +7,9 @@ Phase: COMPLETION_REVIEW4_V1
 CHILD OF: nightwatch-final-product-completion-v1
 Status: IN_PROGRESS
 TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1
-TASK_GROUPS_COMPLETE: 1,2,3
-TASK_GROUP_NEXT: 4
-TASK_NEXT_ID: 4.1
+TASK_GROUPS_COMPLETE: 1,2,3,4
+TASK_GROUP_NEXT: 5
+TASK_NEXT_ID: 5.1
 Starting SHA: 67eb30981b4bb4d6bb6959b9afee9345938f5750
 Last validated implementation SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
 Last substantive checkpoint SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
@@ -50,13 +50,13 @@ sync, and ACTIVE_TASK routed back to the parent at "M9 task 10.2 remainder
 
 ## Current Milestone
 
-group 4 — Product correctness, tasks 4.1-4.5: carry `captureFailureCounts`
-into the main-path journey evidence, its manifest entry and journey event
-(4.1); make proxy liveness tolerate transient misses with declared constants
-(4.2); restore the VC-01 required list (4.3); run real Prettier in a CI lane
-for the formatter policy (4.4); accurate `ai-local-canary` help (4.5).
-Groups 1-3 are COMPLETE (implemented; CI pending): certification soundness
-(1.1-1.8), guard robustness (2.1-2.2) and CI truth (3.1-3.4).
+group 5 — Ledger and records, tasks 5.1-5.2: `TASK_GROUP_TASK_RE` accepts
+suffixed IDs with a regression for an open `9.5b` (5.1); the corrections-v1
+REPORT is corrected by appended dated annotations with a per-ID disposition
+table for all 71 IDs (5.2).
+Groups 1-4 are COMPLETE (implemented; CI pending): certification soundness
+(1.1-1.8), guard robustness (2.1-2.2), CI truth (3.1-3.4) and product
+correctness (4.1-4.5).
 
 ## Completed Milestones
 
@@ -67,17 +67,16 @@ Groups 1-3 are COMPLETE (implemented; CI pending): certification soundness
 
 ## Work In Progress
 
-Groups 1-3 are implemented and locally validated; group 4 (product correctness) is the next unit of work.
+Groups 1-4 are implemented and locally validated; group 5 (ledger and records) is the next unit of work.
 
 ## Exact Next Action
 
-Implement task 4.1 (R4-14): carry `captureFailureCounts` (including
-BODY_READ_ACQUISITION_BOUND) into the main journey path's evidence,
-`addManifestEntry('journeyEvidence')` and the journey event, and into the
-auth-invalid manifest entry, and assert the RECORDED summary rather than the
-observer. Then 4.2 (proxy liveness threshold + deadline, FLAKE-003 correction
-and the load re-run), 4.3 (VC-01 list), 4.4 (formatter policy) and 4.5
-(`ai-local-canary` help).
+Implement task 5.1 (R4-19): make `TASK_GROUP_TASK_RE` in
+`bin/agent-state.mjs` accept suffixed task IDs (`9.5b`), add a regression that
+an open suffixed task keeps its group incomplete, and declare
+`TASK_GROUP_DEFERRED: 9` (carried by 14.1/14.2) or drop 9 from the parent's
+COMPLETE list. Then 5.2 (the corrections-v1 REPORT record corrections by
+appended dated annotations with a per-ID disposition table for all 71 IDs).
 
 ## Files Changed
 
@@ -89,6 +88,14 @@ and the load re-run), 4.3 (VC-01 list), 4.4 (formatter policy) and 4.5
 
 ## Validation Ledger
 
+- 2026-10-01 — GROUP 4 (product correctness). `npm run hardening:check` PASS;
+  `npm run typecheck` clean; the focused suites green (`journeyEngine` with the
+  recorded-summary test, `bodyReadAcquisition` 7/7 with the `afterEach` drain,
+  `contextGuardTransaction` 8/8 with the liveness window, `semanticSkipIdentity`
+  18/18 with the restored VC-01 list, `formatterPolicy` 9/9 with real Prettier
+  controls, `aiLocalCanary` 10/10 with the `--flag=value` form and the accurate
+  help). The FLAKE-003 identities passed 3/3 under 6-way CPU saturation and D-151
+  records the liveness policy.
 - 2026-10-01 — GROUP 3 (CI truth). `npm run hardening:check` PASS;
   `npm run typecheck` clean; `node bin/hardening-check.mjs --probe-campaign`
   rules=93 probes=235 detected=235 undetected=0; focused suites green
