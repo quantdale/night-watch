@@ -41,8 +41,8 @@
 
 ## 7. Close-out
 
-- [ ] 7.1 Focused suites + `gate:dev` + `gate:milestone` + `hardening:rules` PASS (with every §5 mutant family DETECTED); commit.
-- [ ] 7.2 Full authoritative set (see prompt §2.5); every command exit 0.
+- [x] 7.1 Focused suites + `gate:dev` + `gate:milestone` + `hardening:rules` PASS (with every §5 mutant family DETECTED); commit. — DONE: `gate:dev` PASS (affected-shards 5865/0, every step exit=0) and `gate:milestone` PASS (5865/0 with typecheck-bin, the full hardening probe campaign at 245/245, project-check and workspace-check exit=0); every §5 mutant family is DETECTED.
+- [x] 7.2 Full authoritative set (see prompt §2.5); every command exit 0. — DONE: `npm test` 5865/0 (5898 executed, 33 declared skips), `gate:local` PASS 15/15 (receipt `receipt:sha256:2a04b2cfdc9591076a9f174d`, persisted to the repository-ignored directory, TOPOLOGY `PROVEN`/certifying), `typecheck`, `typecheck:bin`, UI 105/105, `schema:check` PASS (427/404/113), `hardening:check` PASS, `hardening:rules` 245/245, `validation:universe` PASS, `agent:check` PASS, `agent:audit` PASS, `project:check` PASS, `workspace:check` PASS, `session:check` PASS, `campaign:synthetic` PASS (in gate:local), `openspec validate --all --strict` 125/125 — every command exit 0 at `77dd9970`.
 - [ ] 7.3 Integrate; observe exact-head CI green; record the run; release; remove with `--delete-branch`; gate:clean from canonical with no live session.
 - [ ] 7.4 REPORT with a per-ID disposition table for R4-01..R4-24; archive with spec sync; route ACTIVE_TASK back to the parent ("M9 10.2 remainder").
 - [ ] 7.5 Replace the Claude session UUID/transcript path in DECISIONS with a non-identifying provenance reference (date, question text, answer text) via an appended correction, and record that CI artifacts are public while the repository is (R4-24).

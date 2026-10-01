@@ -23,10 +23,11 @@ and lies on the certification path. Review-5 does not exist by default. The
 parent `nightwatch-final-product-completion-v1` stays paused; on close-out
 ACTIVE_TASK routes back to it at "M9 task 10.2 remainder (60/76 declared; next
 bin `auth-configure`)".
-Current milestone: group 7 — Close-out, tasks 7.1-7.6; task 7.1 is next.
-Next action: implement task 7.1 — run the focused suites, `gate:dev`,
-`gate:milestone` and `hardening:rules` (every mutant family DETECTED), then
-commit; then 7.2-7.6.
+Current milestone: group 7 — Close-out, tasks 7.1-7.6; 7.1 and 7.2 are DONE at
+`77dd9970` (the full authoritative set is green). Task 7.3 is next.
+Next action: integrate (`--expect-head 77dd9970`), observe exact-head CI green,
+then release, `remove --delete-branch` and run `gate:clean` from canonical;
+then 7.4-7.6.
 Authorization class: COMPLETION_REVIEW4_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2

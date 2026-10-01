@@ -107,6 +107,18 @@ owner revert-to-private line).
   operations are recorded in the parent STATE's Validation Ledger as well.
   `gate:clean` receipts now record `sourceWorktreePathClass`,
   `liveSessionCount` and `declaredSessionWorktree`.
+- 2026-10-01 — GROUP 7 VALIDATION (7.1, 7.2). At `77dd9970`:
+  `npm test` 5865 passed / 0 failed / 33 declared skips (5898 executed);
+  `gate:dev` PASS (all steps exit=0); `gate:milestone` PASS; `gate:local` PASS
+  15/15 with receipt `receipt:sha256:2a04b2cfdc9591076a9f174d` persisted to the
+  REPOSITORY_IGNORED `artifacts/receipts/` directory (R4-07 verified end to end)
+  and TOPOLOGY `PROVEN`/`topologyCertifying: true`; `npm run typecheck`
+  clean; `npm run typecheck:bin` PASS; UI 105/105; `schema:check` PASS;
+  `hardening:check` PASS; `hardening:rules` 93 rules / 245 probes / 245
+  DETECTED; `validation:universe` PASS; `agent:check` PASS; `agent:audit`
+  PASS; `project:check` PASS; `workspace:check` PASS; `session:check` PASS;
+  `openspec validate --all --strict` 125/125. The dependency record was
+  re-verified after the `prettier` addition (lockfile byte-identical).
 - 2026-10-01 — GROUP 6 (hygiene and continuity). `agent:check` PASS with the
   two new prose-drift refusals (`ACTIVE_TASK_ROUTING_LIVE_SESSION_PROSE_DRIFT`,
   `TASK_GROUP_LEDGER_PROGRESS_PROSE_DRIFT`) and their regressions;
