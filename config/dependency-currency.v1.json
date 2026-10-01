@@ -55,10 +55,10 @@
   },
   "lockfileVerification": {
     "command": "npm ci --offline --no-audit --no-fund in a disposable directory containing only package.json and package-lock.json (npm cache only; no network)",
-    "date": "2026-09-28",
+    "date": "2026-10-01",
     "intervalDays": 30,
-    "result": "PASS — added 10 packages (the closure grew with the formatter-policy tool @biomejs/biome@2.5.14); package-lock.json byte-identical before and after (sha256 compared); one expected warning: vue@2.6.12 END OF LIFE. Re-verified after the corrections-task-6.1 dependency addition; the previous 2026-09-12 verification covered the 7-package closure.",
-    "lockfileSha256": "sha256:439934954d1bf8c4066f0d8efede3ced2cad7da756e040fab7fe1c52b6aea690"
+    "result": "PASS — added 11 packages (the closure grew with the formatter-policy tools @biomejs/biome@2.5.14 and, for review-4 task 4.4, prettier@3.6.2 so the formatter-policy behavioural controls run on every host); package-lock.json byte-identical before and after (sha256 compared); one expected warning: vue@2.6.12 END OF LIFE. Re-verified offline in a disposable directory after the review-4 dependency addition; the previous 2026-09-28 verification covered the 10-package closure.",
+    "lockfileSha256": "sha256:a09126434daf81a978f261a53a742893b47fe322aa0e1161e5f55f69ae30c94a"
   },
   "probes": [
     {
