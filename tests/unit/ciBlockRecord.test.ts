@@ -32,10 +32,18 @@ test.describe('CI block record completeness and staleness', () => {
     expect(judgement.errors).toEqual([]);
     expect(RECORD.runId).toMatch(/^\d+$/);
     expect(RECORD.jobId).toMatch(/^\d+$/);
-    // D-03 / R2-61: the record's top level is the latest observed executed
-    // run; the billing block is retained as history instead.
-    expect(RECORD.blockClass).toBe('EXECUTED_PASS');
-    expect(RECORD.history.map((entry: { classification: string }) => entry.classification)).toContain('NO_STEPS_BILLING_OR_PLATFORM_BLOCK');
+    // D-03 / R2-61 + R4-12: the record's top level IS the latest observation,
+    // whatever its class — the billing block is retained as history instead, and
+    // a later RED run must be promotable without editing anything else. The
+    // property is therefore "the top level is the newest recorded observation
+    // and its class is a declared class", never a pinned class.
+    const history = RECORD.history as Array<{ runId: string; observedDate: string; classification: string }>;
+    const newest = history.map((entry) => entry.observedDate).sort().at(-1) as string;
+    expect(RECORD.observedDate).toBe(newest);
+    const topLevelEntry = history.find((entry) => entry.runId === RECORD.runId);
+    expect(topLevelEntry).toBeDefined();
+    expect(RECORD.blockClass).toBe(topLevelEntry!.classification);
+    expect(history.map((entry) => entry.classification)).toContain('NO_STEPS_BILLING_OR_PLATFORM_BLOCK');
     expect(RECORD.ownerAction.length).toBeGreaterThan(12);
     expect(RECORD.revisitCondition.length).toBeGreaterThan(12);
   });

@@ -335,7 +335,11 @@ test.describe('operator entry point', () => {
     const receipt = JSON.parse(result.stdout);
     expect(receipt.schemaVersion).toBe('nightwatch.gate-topology-receipt.v1');
     expect(receipt.mode).toBe('static');
-    expect(receipt.ciBlockRecord.blockClass).toBe('EXECUTED_PASS');
+    // The receipt carries the LIVE record's class (R4-12: the top level is the
+    // latest observation, so a later red run is promoted without a code edit);
+    // the class is never a pinned literal here.
+    const liveRecord = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, 'config', 'ci-block-record.v1.json'), 'utf8')) as { blockClass: string };
+    expect(receipt.ciBlockRecord.blockClass).toBe(liveRecord.blockClass);
     expect(receipt.defectClasses.historicalRun).toBe('33572572053');
     expect(receipt.inverseSelfTest.ok).toBe(true);
     // RV-09: the hard-coded githubExecutionProven literal is gone; the claim
