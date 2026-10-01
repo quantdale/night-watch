@@ -24,26 +24,6 @@
         ]
       },
       {
-        "id": "HC-200",
-        "ops": [
-          {
-            "file": "bin/phase23-dev.mjs",
-            "search": "fail('FLAGS_REQUIRE_EQUALS')",
-            "replace": "fail('FLAGS_ARE_FREE')"
-          }
-        ]
-      },
-      {
-        "id": "HC-209",
-        "ops": [
-          {
-            "file": "bin/phase23-dev.mjs",
-            "search": "try {\n  const args = parseArgs(process.argv.slice(2));",
-            "replace": "spawnSync('true', []);\ntry {\n  const args = parseArgs(process.argv.slice(2));"
-          }
-        ]
-      },
-      {
         "id": "HC-210",
         "ops": [
           {

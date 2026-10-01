@@ -272,14 +272,11 @@ export function checkDevLauncherMetadataShortCircuit() {
   // that proves it refuses unrecognised flags AND the dispatch statement that
   // short-circuits help/metadata — anchoring on the parsed field (args.help in
   // parseArgs) instead of the dispatch left the whole top level unguarded.
-  const ownParser = new Map([['bin/phase23-dev.mjs', {
-    permissive: "fail('FLAGS_REQUIRE_EQUALS')",
-    shortCircuit: 'if (args.help || args._.length === 0) help();',
-    // A DECLARED pure local helper: the launcher must parse its own arguments
-    // to KNOW whether help/metadata was requested, so the argument parser is
-    // exempt by name. Any other local call is an effect (R4-09).
-    pureLocals: ['parseArgs'],
-  }]]);;
+  // R4-09 / review-4 task 2.2 + 10.2: bin/phase23-dev.mjs was the last
+  // own-parser DEV launcher; it now declares the shared operator-CLI contract,
+  // so the map is empty and every DEV launcher reaches the shared-parser
+  // branch (guard first, then the `.stop` short-circuit, then the effect scan).
+  const ownParser = new Map();
   const launchers = gitFiles().filter((file) => /^bin\/[^/]+\.mjs$/.test(file) && read(file).includes('guardDevLane('));
   if (launchers.length === 0) fail('DEV_LAUNCHER_SHORT_CIRCUIT_VACUOUS no launcher calls guardDevLane(; the rule found nothing to check');
   for (const file of launchers) {

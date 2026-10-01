@@ -17,29 +17,49 @@ import { fileURLToPath } from 'node:url';
 import { buildChildEnvironment } from './child-environment.mjs';
 import { loadTypeScriptModule as loadRuntimeTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
 import { guardDevLane } from './lib/dev-lane-precondition.mjs';
+import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 // M8 (9.1): the DEV operator surface refuses while a DEV-lane precondition is OPEN.
 guardDevLane({ root: ROOT, launcher: 'phase23-dev.mjs', args: process.argv.slice(2), devOnly: true });
+
+// A-12 / 10.2: the shared operator-CLI contract, declared AFTER the DEV-lane
+// guard so the guard still runs first, and used for the help/metadata
+// short-circuit so nothing is built before an operator question is answered.
+/** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
+const CLI_METADATA = {
+  schemaVersion: OPERATOR_CLI_SCHEMA,
+  name: 'phase23-dev',
+  entry: 'bin/phase23-dev.mjs',
+  purpose: 'Phase 23 DEV operator surface: compile a frozen manifest, dry-run it, or execute it against an external CI observation, all under the DEV-lane guard.',
+  group: 'run-scenario',
+  commands: [
+    { name: 'manifest', summary: 'compile a frozen manifest from an exact source snapshot and gate receipt' },
+    { name: 'dry-run', summary: 'evaluate the manifest without any DEV contact' },
+    { name: 'execute', summary: 'execute the bounded DEV lane for a manifest' },
+  ],
+  commandRequired: true,
+  flags: [
+    { name: '--snapshot', shape: 'path', summary: 'exact source snapshot directory (absolute, external)' },
+    { name: '--source-sha', shape: 'string', summary: 'the 40-hex source sha for the snapshot' },
+    { name: '--gate-receipt', shape: 'path', summary: 'absolute external gate receipt JSON' },
+    { name: '--manifest', shape: 'path', summary: 'absolute external manifest JSON' },
+    { name: '--env', shape: 'string', summary: 'target environment (DEV only)' },
+    { name: '--storage-state', shape: 'path', summary: 'absolute external owner-captured storage state' },
+    { name: '--ci-observation', shape: 'path', summary: 'absolute external CI observation JSON' },
+    { name: '--out', shape: 'path', summary: 'absolute external output path (mode 0600)' },
+  ],
+  json: true,
+  authorization: 'LOCAL_ONLY',
+  artifacts: [],
+};
+const cli = defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url });
+
 const WORKSPACE_ROOT = path.resolve(ROOT, '..', '..');
 
 function fail(code) {
   throw new Error(`PHASE23_OPERATOR_BLOCKED:${code}`);
-}
-
-function parseArgs(argv) {
-  const args = { _: [] };
-  for (const arg of argv) {
-    if (arg === '--help' || arg === '-h') { args.help = true; continue; }
-    if (!arg.startsWith('--')) { args._.push(arg); continue; }
-    const index = arg.indexOf('=');
-    if (index < 0) fail('FLAGS_REQUIRE_EQUALS');
-    const key = arg.slice(2, index);
-    if (!/^[a-z][a-z0-9-]{0,48}$/.test(key) || Object.hasOwn(args, key)) fail('UNKNOWN_OR_DUPLICATE_FLAG');
-    args[key] = arg.slice(index + 1);
-  }
-  return args;
 }
 
 function loadTypeScriptModule(file) {
@@ -359,19 +379,28 @@ function execute(args) {
   }
 }
 
-function help() {
-  process.stdout.write('Usage: node bin/phase23-dev.mjs manifest --snapshot=/external/source --source-sha=<40hex> --gate-receipt=/external/gate.json [--out=/external/manifest.json]\n');
-  process.stdout.write('       node bin/phase23-dev.mjs dry-run --manifest=/external/manifest.json [--out=/external/dry-run.json]\n');
-  process.stdout.write('       node bin/phase23-dev.mjs execute --env=dev --storage-state=/external/state.json --manifest=/external/manifest.json --ci-observation=/external/ci.json\n');
-}
-
 try {
-  const args = parseArgs(process.argv.slice(2));
-  if (args.help || args._.length === 0) help();
-  else if (args._[0] === 'manifest') buildManifest(args);
-  else if (args._[0] === 'dry-run') dryRun(args);
-  else if (args._[0] === 'execute') execute(args);
-  else fail('UNKNOWN_COMMAND');
+  if (cli.ok !== true || cli.stop === true) {
+    // The shared parser answered --help/--print-metadata or refused an
+    // argument; the DEV-lane guard above still ran first.
+  } else {
+    const flags = cli.flags;
+    const args = {
+      _: cli.positionals,
+      snapshot: flags['--snapshot'],
+      'source-sha': flags['--source-sha'],
+      'gate-receipt': flags['--gate-receipt'],
+      manifest: flags['--manifest'],
+      env: flags['--env'],
+      'storage-state': flags['--storage-state'],
+      'ci-observation': flags['--ci-observation'],
+      out: flags['--out'],
+    };
+    if (cli.command === 'manifest') buildManifest(args);
+    else if (cli.command === 'dry-run') dryRun(args);
+    else if (cli.command === 'execute') execute(args);
+    else fail('UNKNOWN_COMMAND');
+  }
 } catch (error) {
   process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
   process.exitCode = 1;

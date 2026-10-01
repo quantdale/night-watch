@@ -159,7 +159,7 @@
     },
     {
       "file": "bin/phase23-dev.mjs",
-      "disposition": "PENDING_OPERATOR_CLI"
+      "disposition": "OPERATOR_CLI"
     },
     {
       "file": "bin/phase23-predev.mjs",
@@ -313,8 +313,8 @@
   ],
   "counts": {
     "total": 76,
-    "operatorCli": 68,
+    "operatorCli": 69,
     "libraryRetained": 4,
-    "pending": 4
+    "pending": 3
   }
 }
