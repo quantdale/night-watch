@@ -11,16 +11,21 @@ TASK_NEXT_ID: 10.2
 Task directory: .agent/tasks/nightwatch-final-product-completion-v1
 Starting SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
 Last validated implementation SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
-Last checkpoint: 2026-10-01 — CHILD CLOSED; M9 10.2 REMAINDER IS NEXT. The
-corrective child campaign `nightwatch-final-completion-corrections-v1` is
-COMPLETE and archived (`2026-10-01-nightwatch-final-completion-corrections-v1`,
-`--skip-specs`): all 73 tasks, `npm test` 5848/0/34, `gate:local` 15/15
-(receipt `receipt:sha256:030bc83d1ef06cc219167f3d`), `gate:clean` PASS at
-`b4d0c611` (`clean-receipt:sha256:bdae336ff5a8c9a182ac9430`), exact-head CI
-green at `f887e76b`, `027367d9`, `14efed2e` and `b4d0c611`. The child session
-was released and removed; this parent has NO live session (create one with
-`session start --task nightwatch-final-product-completion-v1`). Resume at M9
-task 10.2 remainder (59/76 declared), then 10.3-10.6, M10-M14 and the
+Last checkpoint: 2026-10-01 — PARENT PAUSED AT A CLEAN CHECKPOINT FOR
+REVIEW-4. The corrective child campaign
+`nightwatch-final-completion-corrections-v1` is COMPLETE and archived
+(`2026-10-01-nightwatch-final-completion-corrections-v1`, `--skip-specs`): all
+73 tasks, `npm test` 5848/0/34, `gate:local` 15/15 (receipt
+`receipt:sha256:030bc83d1ef06cc219167f3d`), `gate:clean` PASS at `b4d0c611`
+(`clean-receipt:sha256:bdae336ff5a8c9a182ac9430`), exact-head CI green at
+`f887e76b`, `027367d9`, `14efed2e` and `b4d0c611`. The parent then resumed in
+session `sess-83d720703401` and completed M9 10.2 resume batch 1
+(`ai-local-canary` migrated to the shared operator-CLI contract; conformance
+60/76 declared, 4 library-retained, 12 pending), with exact-head CI green at
+`07dd9506` (run 36808189880) and at `ce289948` (run 36809415911). It is now
+paused for the bounded review-4 child campaign
+`nightwatch-final-completion-review4-v1`. RESUME POINT: M9 task 10.2 remainder
+(60/76 declared; next bin `auth-configure`), then 10.3-10.6, M10-M14 and the
 13-section final report.
 Previous checkpoint: 2026-09-27 — M8 COMPLETE (9.1-9.13): DEV-lane
 preconditions + launcher guard, credential effect binding, bundle
@@ -50,16 +55,16 @@ Previous checkpoint: 2026-09-26 — M4 COMPLETE (5.1-5.7): six release probes wi
 states + the CI block-record single authority (`a784e668`), and the final
 integration `137207b1` after reconciling origin/main `946b52c4` and restoring
 the ledger-governed README status block; gate:dev/gate:milestone 5520/0.
-Current milestone: M9 task 10.2 remainder (59/76 declared)
-10.2 IN PROGRESS (59/76 declared, 4 library-retained, 13 pending), then
-10.3-10.6. The corrections child campaign
-(`nightwatch-final-completion-corrections-v1`) runs after this checkpoint per
-RESUME_PROMPT: re-verify all 31 findings at the new base first.
-Next action: M9 task 10.2 remainder — start a fresh C-00 parent session (`session start --task nightwatch-final-product-completion-v1`, then `claim --adopt`), finish the 13 pending 10.2 declarations, then 10.3-10.6, M10-M14 and the 13-section final report.
-follow-through) with `--expect-head`, observe exact-head CI, release+remove
-the parent session, then re-verify the 31 corrections findings at `df0a6d35`
-lineage and run the corrective child campaign (task 6.1 formatter policy
-first), then resume the parent at M9 10.2 remainder.
+Current milestone: M9 task 10.2 remainder (60/76 declared)
+10.2 IN PROGRESS (60/76 declared, 4 library-retained, 12 pending), then
+10.3-10.6. The bounded review-4 child campaign
+(`nightwatch-final-completion-review4-v1`) resolves the 24 review-4 findings
+and then routes this campaign back to the resume point recorded above.
+Next action: M9 task 10.2 remainder — the next bin is `auth-configure`, then
+`change-intelligence`, `hardening-check`, `nightwatch-agent`,
+`nightwatch-intelligence`, `phase22-dev`, `phase23-ci`, `phase23-dev`,
+`phase23-predev`, `portfolio`, `review-mutation-campaign` and
+`w11-historical-arm`; then 10.3-10.6, M10-M14 and the 13-section final report.
 
 Authorization class: FINAL_PRODUCT_COMPLETION_V1
 PROJECT_VERDICT_EFFECT: PRESERVE

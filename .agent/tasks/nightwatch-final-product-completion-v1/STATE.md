@@ -11,16 +11,25 @@ TASK_GROUP_NEXT: 10
 TASK_NEXT_ID: 10.2
 Starting SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
 Last validated implementation SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
-Last substantive checkpoint SHA: 321800018bc819465326ba7c0556bac31e565da4
+Last substantive checkpoint SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-final-product-complet-e3ce743d
-Last checkpoint: 2026-09-28 — M9 10.2 IN PROGRESS (59/76 declared, 4
-library-retained, 13 pending): the Phase 0 formatter blocker is RESOLVED
-(owner disposition of the 16 disposable files, harness formatter/autofix
-disabled, canonical clean at `df0a6d35`, workspace:check PASS); the two
-10.2 follow-through commits (`0a436f12`, `09c50277`) plus the lint and
-continuity follow-through are being checkpointed. Previous: 2026-09-27 —
+Last checkpoint: 2026-10-01 — PARENT PAUSED AT A CLEAN CHECKPOINT FOR
+REVIEW-4 (60/76 declared, 4 library-retained, 12 pending). After the
+corrective child campaign `nightwatch-final-completion-corrections-v1` closed
+and archived, the parent resumed in session `sess-83d720703401` and completed
+M9 10.2 resume batch 1: `ai-local-canary` was migrated to the shared
+operator-CLI contract (3 flags, group `validate`), so conformance advanced
+55 → 60 of 76 declared. Exact-head CI is GREEN at `07dd9506` (run
+36808189880) and at `ce289948` (run 36809415911). RESUME POINT: M9 task 10.2
+remainder (60/76 declared; next bin `auth-configure`), then 10.3-10.6, M10-M14
+and the 13-section final report. Previous: 2026-09-28 — M9 10.2 IN PROGRESS
+(59/76 declared, 4 library-retained, 13 pending): the Phase 0 formatter
+blocker is RESOLVED (owner disposition of the 16 disposable files, harness
+formatter/autofix disabled, canonical clean at `df0a6d35`, workspace:check
+PASS); the two 10.2 follow-through commits (`0a436f12`, `09c50277`) plus the
+lint and continuity follow-through were checkpointed. Previous: 2026-09-27 —
 M8 COMPLETE (9.1-9.13) with gate pair 5712/0 and exact-head CI green (run
 36349771611 @ `badb6f88`); M7 COMPLETE (8.1-8.5) at 5645/0 (run
 36321415439 @ `995378d2`); M6 COMPLETE (7.1-7.11); M5 COMPLETE (6.1-6.17);
@@ -136,7 +145,7 @@ remaining 12 pending bins are named in tasks.md 10.2.
 
 ## Work In Progress
 
-**Current (2026-09-30):** the parent is paused at M9 task 10.2 (59/76 declared) for the corrective child campaign; nothing is uncommitted here. The log below is HISTORICAL (M7 onward, oldest first) and is not the current state.
+**Current (2026-10-01):** the parent is paused at M9 task 10.2 (60/76 declared, 12 pending) for the bounded review-4 child campaign `nightwatch-final-completion-review4-v1`; nothing is uncommitted here. The log below is HISTORICAL (M7 onward, oldest first) and is not the current state.
 
 - M7 (tasks 8.1-8.5) is in progress; 8.1 is implemented and committed: the
   `.env` layer is parsed FAIL CLOSED (a malformed line, an undeclared key and a
@@ -490,7 +499,7 @@ agent:check PASS (86 warnings).
 
 ## Exact Next Action
 
-M9 task 10.2 remainder. When the corrective child campaign closes (its ACTIVE_TASK route returns here at IN_PROGRESS): start a fresh C-00 parent session (`session start --task nightwatch-final-product-completion-v1`, then `claim --adopt`), finish the 13 pending 10.2 declarations (59/76 declared), then 10.3-10.6, M10-M14, and the 13-section final report. Sequencing constraint recorded in D-148: run the paid proof (12.3) after the last substantive fix so G12's receipt binds to S.
+M9 task 10.2 remainder. When the review-4 child campaign closes (its ACTIVE_TASK route returns here at IN_PROGRESS): start a fresh C-00 parent session (`session start --task nightwatch-final-product-completion-v1`, then `claim --adopt`), finish the 12 pending 10.2 declarations (60/76 declared; next bin `auth-configure`), then 10.3-10.6, M10-M14, and the 13-section final report. Sequencing constraint recorded in D-148: run the paid proof (12.3) after the last substantive fix so G12's receipt binds to S.
 
 ## Superseded Next Action (8.1, complete)
 
