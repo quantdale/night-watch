@@ -213,9 +213,8 @@ export function checkAgentContinuityIntegrity() {
     ['const stateProgress = progressIn(stateText);', 'the STATE progress scan'],
     ['(\\d{1,3})\\/(\\d{1,3})\\s+declared', 'the progress figure pattern'],
   ]) {
-    if (!agentStateCode.includes(needle)) {
-      fail(`bin/agent-state.mjs no longer carries ${what} (${needle})`);
-    }
+    if (typeof needle === 'string' && agentStateCode.includes(needle)) continue;
+    fail(`bin/agent-state.mjs no longer carries ${what} (${String(needle)})`);
   }
   const pkg = readDataFile('package.json');
   if (!/"agent:audit"\s*:\s*"node bin\/agent-state\.mjs --audit-history"/.test(pkg)) {
