@@ -14,7 +14,7 @@ Last validated implementation SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
 Last substantive checkpoint SHA: 321800018bc819465326ba7c0556bac31e565da4
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
-Branch: main
+Branch: session/nightwatch-final-product-complet-e3ce743d
 Last checkpoint: 2026-09-28 — M9 10.2 IN PROGRESS (59/76 declared, 4
 library-retained, 13 pending): the Phase 0 formatter blocker is RESOLVED
 (owner disposition of the 16 disposable files, harness formatter/autofix

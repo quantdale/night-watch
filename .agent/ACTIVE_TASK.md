@@ -93,7 +93,7 @@ reconcile every operator-truth surface, close the ledger, and end with a
 ```text
 CAMPAIGN: nightwatch-final-product-completion-v1
 CHILD TASK: NONE
-SESSION WORKTREE: NONE
+SESSION WORKTREE: session/nightwatch-final-product-complet-e3ce743d
 
 IMPLEMENTATION AUTHORIZED:
   Nightwatch source, tests, hardening rules/probes, schemas/configuration,
@@ -106,8 +106,9 @@ EXTERNAL CONTACT AUTHORIZED (OD-3 ONLY):
   provider proof run; one npm registry advisory query.
 
 CURRENT STATUS:
-  IN_PROGRESS — the corrective child campaign is CLOSED and archived; M9 task
-  10.2 remainder (59/76 declared) is next in a fresh C-00 parent session.
+  IN_PROGRESS — the corrective child campaign is CLOSED and archived; the
+  parent resumed at M9 task 10.2 remainder in session
+  `sess-83d720703401` (60/76 declared; 12 pending).
 
 ALPHAUS DEV / NEXT / PRODUCTION CONTACT:   NOT AUTHORIZED
 AUTHENTICATED ALPHAUS RUNTIME:             NOT AUTHORIZED
