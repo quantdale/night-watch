@@ -551,6 +551,19 @@ exactly as in M4/M5.
 
 ## Validation Ledger
 
+- 2026-10-01 — M9 10.2 BATCH 3 CI CHAIN. Two red exact-head runs were
+  recorded and repaired forward, both inside this campaign's scope and both
+  now green: run **36867934911** at `ae1ff3a6` (BIN_TYPECHECK_CEILING — the
+  four migrated bins introduced bin diagnostics, because `cli.stop` does not
+  narrow the `OperatorCliParseResult` union; repaired by narrowing on
+  `cli.ok !== true || cli.stop === true` and typing the mutation-campaign
+  entry parameter, with `typecheck:bin` PASS at 1446 and every ceiling
+  unchanged) and run **36869760469** at `011c408b` (SYNTHETIC_CAMPAIGN — two
+  tests pinned the live `blockClass` to `EXECUTED_PASS` and so failed on the
+  honest promotion of the red run; repaired by asserting the newest-observation
+  property instead). Exact-head CI is GREEN at run **36875579501** on
+  `f5c5c8da`; the ci-block-record top level records it, and every run is in the
+  record's history.
 - 2026-10-01 — M9 10.2 RESUME BATCH 3 (parent). Four bins migrated to the
   shared operator-CLI contract: `change-intelligence` (no flags),
   `hardening-check` (six modes; the full run, `--only=…`, `--list-rules` and

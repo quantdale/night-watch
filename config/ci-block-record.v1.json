@@ -2,10 +2,10 @@
   "schemaVersion": "nightwatch.ci-block-record.v1",
   "definitionName": "Nightwatch exact-head CI block record (F-02)",
   "note": "The block is RETIRED: GitHub Actions executes the hardening workflow on every push, and the record's top level is the latest observed executed run (D-03 / R2-61). The block-record judgements stay load-bearing as the single CI authority shared by agent:check, project:check and gate:topology; the revisit date keeps the record from going stale. Candidate routes remain recorded with their trade-offs, and the materialised owner route is the restored GitHub-hosted execution.",
-  "runId": "36867934911",
-  "jobId": "110375824527",
-  "observedSha": "ae1ff3a67c5cade13f97f01f264a05ef67438685",
-  "blockClass": "EXECUTED_TEST_FAILURE",
+  "runId": "36875579501",
+  "jobId": "110414021893",
+  "observedSha": "f5c5c8da31ba87033edf52156f2e3d873e917439",
+  "blockClass": "EXECUTED_PASS",
   "observedDate": "2026-10-01",
   "ownerAction": "None required while the hardening workflow executes on every push; re-observe the next exact-head run and refresh this record before the revisit date.",
   "revisitCondition": "Re-observe each push: refresh runId, jobId, observedSha and observedDate from the latest hardening run, and record any red run with its classification.",
@@ -161,6 +161,30 @@
       "observedDate": "2026-10-01",
       "classification": "EXECUTED_PASS",
       "detail": "the corrective child campaign's close-out head: the run that certifies the anchor 027367d9 recorded in the project-state block (CI_EXECUTED_SHA). Recorded so the block's execution claim is supported by an observation at that exact SHA (R4-11/R4-12)."
+    },
+    {
+      "runId": "36869760469",
+      "jobId": "110394710341",
+      "observedSha": "011c408be77060308f74f9dd255ccaba670624cc",
+      "observedDate": "2026-10-01",
+      "classification": "EXECUTED_TEST_FAILURE",
+      "detail": "SYNTHETIC_CAMPAIGN failed with 2 tests: tests/unit/ciBlockRecord.test.ts:30 and tests/unit/gateTopology.test.ts:332 both pinned the live blockClass to EXECUTED_PASS and so failed on the honest promotion of run 36867934911. Repaired forward by asserting the newest-observation property instead (both suites are now 55/55).",
+      "defectClasses": [
+        {
+          "class": "RECORD_BRITTLE_ASSERTION",
+          "suite": "tests/unit/ciBlockRecord.test.ts, tests/unit/gateTopology.test.ts",
+          "detail": "two tests asserted a pinned CI blockClass rather than the newest-observation property R4-12 requires"
+        }
+      ]
+    },
+    {
+      "runId": "36875579501",
+      "jobId": "110414021893",
+      "observedSha": "f5c5c8da31ba87033edf52156f2e3d873e917439",
+      "observedDate": "2026-10-01",
+      "classification": "EXECUTED_PASS",
+      "detail": "green at the M9 10.2 resume batch 3 tip (BIN_TYPECHECK_CEILING, SYNTHETIC_CAMPAIGN and every other group PASS) after repairing both red runs recorded above",
+      "defectClasses": []
     }
   ],
   "routeSelection": {
