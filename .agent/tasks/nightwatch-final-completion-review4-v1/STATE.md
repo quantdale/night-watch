@@ -5,11 +5,11 @@
 Task ID: nightwatch-final-completion-review4-v1
 Phase: COMPLETION_REVIEW4_V1
 CHILD OF: nightwatch-final-product-completion-v1
-Status: IN_PROGRESS
+Status: COMPLETE
 TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1
-TASK_GROUPS_COMPLETE: 1,2,3,4,5,6
-TASK_GROUP_NEXT: 7
-TASK_NEXT_ID: 7.3
+TASK_GROUPS_COMPLETE: 1,2,3,4,5,6,7
+TASK_GROUP_NEXT: NONE
+TASK_NEXT_ID: NONE
 Starting SHA: 67eb30981b4bb4d6bb6959b9afee9345938f5750
 Last validated implementation SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
 Last substantive checkpoint SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
@@ -37,7 +37,7 @@ LAST_VALIDATED_IMPLEMENTATION_SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_COMPLETION_REVIEW4_V1_STATUS: IN_PROGRESS
+PHASE_COMPLETION_REVIEW4_V1_STATUS: COMPLETE
 
 ## Objective
 
@@ -50,17 +50,11 @@ sync, and ACTIVE_TASK routed back to the parent at "M9 task 10.2 remainder
 
 ## Current Milestone
 
-group 7 — Close-out, tasks 7.1-7.6: the focused suites, `gate:dev`,
-`gate:milestone` and `hardening:rules` PASS with every mutant family DETECTED
-(7.1); the full authoritative set exit 0 (7.2); integrate with exact-head CI
-green, release, remove with `--delete-branch` and `gate:clean` from canonical
-(7.3); the REPORT with a per-ID disposition table for R4-01..R4-24, archival
-with spec sync and the route back to the parent (7.4); the DECISIONS
-session-identity correction and the public-CI-artifact record (7.5); and the
-parent group-15 owner revert-to-private line (7.6).
-Groups 1-6 are COMPLETE (implemented; CI pending): certification soundness
-(1.1-1.8), guard robustness (2.1-2.2), CI truth (3.1-3.4), product correctness
-(4.1-4.5), ledger/records (5.1-5.2) and hygiene/continuity (6.1-6.2).
+COMPLETE — group 7 closed at `17391ae673644d67226de4fadea81d1f4b0b1912`.
+All seven groups are ticked, every review-4 finding is dispositioned, the full
+authoritative set is green, exact-head CI run `36855178941` is GREEN, the
+session is released and removed, `gate:clean` PASS with no live session, and
+the change is archived with spec sync.
 
 ## Completed Milestones
 
@@ -71,16 +65,17 @@ Groups 1-6 are COMPLETE (implemented; CI pending): certification soundness
 
 ## Work In Progress
 
-Groups 1-6 are implemented and locally validated; group 7 (close-out) is the next unit of work.
+None — the campaign is COMPLETE and nothing is uncommitted.
 
 ## Exact Next Action
 
-Implement task 7.3: integrate the validated head (`--expect-head
-<the 40-hex HEAD>`), observe exact-head CI green and record the run, then
-release, `remove --delete-branch` and run `gate:clean` from canonical with no
-live session. Then 7.4 (the REPORT close-out record, the archive with spec sync
-and the route back to the parent), 7.5 and 7.6 are recorded in the same
-close-out commit.
+NONE — the campaign is COMPLETE. Closed at
+`17391ae673644d67226de4fadea81d1f4b0b1912`: exact-head CI run **36855178941**
+green (15/15 groups), the session released and removed with its branch deleted,
+`gate:clean` PASS from canonical with no live session
+(`clean-receipt:sha256:c3c54d0540df6e7440fd7077`), the change archived with spec
+sync, and ACTIVE_TASK routed to `nightwatch-final-product-completion-v1`, which
+owns the remaining work (M9 task 10.2 remainder through M14).
 
 ## Files Changed
 
@@ -195,17 +190,24 @@ C-00 fast-forward pushes of validated checkpoints and `gh` CI observations.
 
 ## Resume Recipe
 
-Resume from this file: read `.agent/ACTIVE_TASK.md`, then `SPEC.md`, `PLAN.md`
-and this STATE, reconcile against `git status`/`git log` and the session
-record, run the smallest decisive validation, and continue the Exact Next
-Action. All work happens in the session worktree named in the routing block;
-integration is fast-forward only.
+Task complete; do not resume it. A future task requires a new authorization
+and a fresh C-00 session; this record is read-only historical truth.
 
 ## Completion Snapshot
 
-Not complete. Terminal snapshot is written at close-out: all 29 tasks ticked,
-every review-4 finding dispositioned with evidence, all mutant families
-DETECTED, the full authoritative set exit 0, exact-head CI green at the
-integrated tip, the session released and removed with its branch deleted,
-`gate:clean` PASS from canonical with no live session, and ACTIVE_TASK routed
-back to the parent.
+COMPLETE. All 29 tasks ticked; every review-4 finding R4-01..R4-24 has exactly
+one recorded disposition with evidence (the REPORT's per-ID table); every §5
+mutant family is DETECTED (`hardening:rules` 93 rules / 245 probes / 245
+detected / 0 undetected); the full authoritative set is green (`npm test`
+5865/0, `gate:dev` PASS, `gate:milestone` PASS, `gate:local` 15/15 with receipt
+`receipt:sha256:2a04b2cfdc9591076a9f174d`, UI 105/105, `openspec validate --all
+--strict` 125/125); the integrated tip
+`17391ae673644d67226de4fadea81d1f4b0b1912` carries exact-head CI run
+**36855178941** GREEN; `gate:clean` PASS from canonical with no live session
+(`clean-receipt:sha256:c3c54d0540df6e7440fd7077`); the change is archived with
+spec sync; ACTIVE_TASK routes to the parent at "M9 task 10.2 remainder".
+Recorded limits: receipts are tamper-evident, not tamper-proof (OD-5);
+`autonomous-yield-proof` is honestly NOT MET until the parent's 12.3 paid run;
+the local topology receipt for the project's certified checkpoint is still
+absent, so the exact-head CI condition reports `TOPOLOGY_RECEIPT_ABSENT` (OD-6b,
+fail closed).

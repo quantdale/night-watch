@@ -1,6 +1,6 @@
 # Report — review-4 corrective campaign
 
-Status: IN_PROGRESS (close-out in progress; the close-out record is appended at task 7.4)
+Status: COMPLETE
 Task ID: nightwatch-final-completion-review4-v1
 Phase: COMPLETION_REVIEW4_V1
 CHILD OF: nightwatch-final-product-completion-v1
@@ -70,5 +70,35 @@ assessed in `docs/HOST-CAPABILITY-MATRIX.md` and neutralised by
 
 ## Close-out record
 
-(appended at task 7.4 with the CI run, the integration head and the
-`gate:clean` receipt)
+- Integrated tip: `17391ae673644d67226de4fadea81d1f4b0b1912` (fast-forward; no
+  force push, no history rewrite). Local `HEAD == origin/main`.
+- Exact-head CI: run **36855178941** at that head — **GREEN**, all 15 groups
+  (`gh run watch 36855178941 --exit-status`).
+- Authoritative validation at `77dd9970` (the substantive tip the documentary
+  close-out commits descend from): `npm test` 5865 passed / 0 failed / 33
+  declared skips (5898 executed); `gate:dev` PASS; `gate:milestone` PASS;
+  `gate:local` PASS 15/15 with receipt `receipt:sha256:2a04b2cfdc9591076a9f174d`
+  persisted to `artifacts/receipts/` (REPOSITORY_IGNORED — R4-07 verified end to
+  end) and TOPOLOGY `PROVEN`/`topologyCertifying: true`; `typecheck`,
+  `typecheck:bin`, UI_CONTROL_CENTER 105/105, `schema:check` PASS (427/404/113),
+  `hardening:check` PASS, `hardening:rules` 93 rules / 245 probes / 245
+  DETECTED / 0 undetected with every mutation restored, `validation:universe`
+  PASS, `agent:check` PASS, `agent:audit` PASS, `project:check` PASS,
+  `workspace:check` PASS, `session:check` PASS, `openspec validate --all
+  --strict` 125/125.
+- Session: released and removed with `--delete-branch`
+  (`SESSION_BRANCH_DELETED: session/nightwatch-final-completion-revi-be20f537`,
+  `SESSION_WORKTREE_REMOVED: … contained=true`).
+- `gate:clean` from canonical with no live session: PASS
+  (`clean-receipt:sha256:c3c54d0540df6e7440fd7077`), with
+  `sourceWorktreePathClass = CANONICAL_CHECKOUT`, `liveSessionCount = 0` and
+  `declaredSessionWorktree = NONE` recorded in the receipt.
+- Archive: this change moved byte-identically to
+  `openspec/changes/archive/2026-10-01-nightwatch-final-completion-review4-v1/`
+  with spec sync; `config/task-id-ledger.v1.json` keeps its bootstrap entry
+  (archived changes are skipped by the ledger).
+- Route: `.agent/ACTIVE_TASK.md` returns to
+  `nightwatch-final-product-completion-v1`, resuming at M9 task 10.2 remainder
+  (60/76 declared; next bin `auth-configure`) with `9.5b` deferred to 14.1/14.2.
+- Scope discipline: no finding outside review-4 was added to this campaign; the
+  review-4 scope is closed and there is no review-5.

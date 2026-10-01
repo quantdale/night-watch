@@ -1,72 +1,107 @@
 # Active Task
 
-Task ID: nightwatch-final-completion-review4-v1
-Phase: COMPLETION_REVIEW4_V1
-Title: Review-4 corrective campaign (bounded child of the terminal campaign)
+Task ID: nightwatch-final-product-completion-v1
+Phase: FINAL_PRODUCT_COMPLETION_V1
+Title: Final product completion (terminal campaign)
 Status: IN_PROGRESS
 TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1
-TASK_GROUPS_COMPLETE: NONE
-TASK_GROUP_NEXT: 1
-TASK_NEXT_ID: 1.1
-Task directory: .agent/tasks/nightwatch-final-completion-review4-v1
-Starting SHA: 67eb30981b4bb4d6bb6959b9afee9345938f5750
+TASK_GROUPS_COMPLETE: 1,2,3,4,5,6,7,8,9
+TASK_GROUP_NEXT: 10
+TASK_NEXT_ID: 10.2
+Task directory: .agent/tasks/nightwatch-final-product-completion-v1
+Starting SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
 Last validated implementation SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
-Last checkpoint: 2026-10-01 — BOOTSTRAP. This bounded child campaign was created
-from the canonical-routed parent checkpoint `67eb3098` (= `origin/main`,
-exact-head CI run 36832639979 GREEN, no live session): the change
-`openspec/changes/nightwatch-final-completion-review4-v1/` (proposal, design,
-audit = the 24 review-4 findings verbatim, tasks = the seven task groups
-verbatim, one spec requirement per group) and this continuity v2 record are the
-single bootstrap commit. Scope is closed: every R4-01..R4-24 finding is
-resolved by groups 1-7; a new finding enters scope only if it is high severity
-and lies on the certification path. Review-5 does not exist by default. The
-parent `nightwatch-final-product-completion-v1` stays paused; on close-out
-ACTIVE_TASK routes back to it at "M9 task 10.2 remainder (60/76 declared; next
-bin `auth-configure`)".
-Current milestone: group 7 — Close-out, tasks 7.1-7.6; 7.1 and 7.2 are DONE at
-`77dd9970` (the full authoritative set is green). Task 7.3 is next.
-Next action: integrate (`--expect-head 77dd9970`), observe exact-head CI green,
-then release, `remove --delete-branch` and run `gate:clean` from canonical;
-then 7.4-7.6.
-Authorization class: COMPLETION_REVIEW4_V1
+Last checkpoint: 2026-10-01 — PARENT RESUMED AFTER THE REVIEW-4 CHILD
+CAMPAIGN CLOSED (all 24 findings dispositioned; exact-head CI run 36855178941
+green at `17391ae6`; `gate:clean` `clean-receipt:sha256:c3c54d0540df6e7440fd7077`)
+— the parent is once again paused canonical-routed at the same resume point. The corrective child campaign
+`nightwatch-final-completion-corrections-v1` is COMPLETE and archived
+(`2026-10-01-nightwatch-final-completion-corrections-v1`, `--skip-specs`): all
+73 tasks, `npm test` 5848/0/34, `gate:local` 15/15 (receipt
+`receipt:sha256:030bc83d1ef06cc219167f3d`), `gate:clean` PASS at `b4d0c611`
+(`clean-receipt:sha256:bdae336ff5a8c9a182ac9430`), exact-head CI green at
+`f887e76b`, `027367d9`, `14efed2e` and `b4d0c611`. The parent then resumed in
+session `sess-83d720703401` and completed M9 10.2 resume batch 1
+(`ai-local-canary` migrated to the shared operator-CLI contract; conformance
+60/76 declared, 4 library-retained, 12 pending), with exact-head CI green at
+`07dd9506` (run 36808189880) and at `ce289948` (run 36809415911). It is now
+paused for the bounded review-4 child campaign
+`nightwatch-final-completion-review4-v1` (canonical-routed: `SESSION WORKTREE:
+NONE`, `Branch: main`, no live session). RESUME POINT: M9 task 10.2 remainder
+(60/76 declared; next bin `auth-configure`), then 10.3-10.6, M10-M14 and the
+13-section final report.
+Previous checkpoint: 2026-09-27 — M8 COMPLETE (9.1-9.13): DEV-lane
+preconditions + launcher guard, credential effect binding, bundle
+transactions, PREPARED/TERMINAL records, guard acquisitions, bounded
+body-read, run evidence, per-start nonce, relay invocation credential,
+ChangeSet validation, child-process census, M8 guard totality, gate pair
+5712/0 and exact-head CI green (run 36349771611 @ `badb6f88`).
+Previous checkpoint: 2026-09-27 — M6 COMPLETE (7.1-7.11): the derived protocol
+dossier readiness, the total Control Center status mapping, role-typed replay
+contexts, the campaign-state subtree with dossier-family-first findings, the
+newest-N run window, the read-only agent-campaign view, the measured Safety
+Center, one resolveSiblingRoot() with a hardening rule and probe, the
+SYNTHETIC_PREVIEW labelling, the status:local auth heading, and the UI/browser
+coverage of the new view.
+Previous checkpoint: 2026-09-27 — M5 COMPLETE (6.1-6.17): the durable
+identity-bound agent finding record with its atomic store and verbatim
+terminated resume, the full reasoner identity, resumed-budget conservation,
+provider attribution with the honest termination class, tier-scaled failure
+ceilings with bounded backoff, the `failures` rename, the streaming dispatcher
+with signal-driven pause, HEAD-bound Git reproduction, environment-signature
+refusal, the product run receipt, measured findings surfaces, malformed-state
+refusal with marked presentation defaults, the bounded operator launch and the
+synthetic hunt suite registered in the gate.
+Previous checkpoint: 2026-09-26 — M4 COMPLETE (5.1-5.7): six release probes wired
+(`d595c7c8`), the G20 accessibility record with its fail-closed parser
+(`cab67d76`), the `implemented` honesty rule + X-04 demotion + A-19/A-20 schema
+states + the CI block-record single authority (`a784e668`), and the final
+integration `137207b1` after reconciling origin/main `946b52c4` and restoring
+the ledger-governed README status block; gate:dev/gate:milestone 5520/0.
+Current milestone: M9 task 10.2 remainder (60/76 declared)
+10.2 IN PROGRESS (60/76 declared, 4 library-retained, 12 pending), then
+10.3-10.6. The bounded review-4 child campaign
+(`nightwatch-final-completion-review4-v1`) resolves the 24 review-4 findings
+and then routes this campaign back to the resume point recorded above.
+Next action: M9 task 10.2 remainder — the next bin is `auth-configure`, then
+`change-intelligence`, `hardening-check`, `nightwatch-agent`,
+`nightwatch-intelligence`, `phase22-dev`, `phase23-ci`, `phase23-dev`,
+`phase23-predev`, `portfolio`, `review-mutation-campaign` and
+`w11-historical-arm`; then 10.3-10.6, M10-M14 and the 13-section final report.
+
+Authorization class: FINAL_PRODUCT_COMPLETION_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
-STARTING_SHA: 67eb30981b4bb4d6bb6959b9afee9345938f5750
+STARTING_SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
 LAST_VALIDATED_IMPLEMENTATION_SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
 LIVE_HEAD_AUTHORITY: GIT
-PHASE_COMPLETION_REVIEW4_V1_STATUS: IN_PROGRESS
+PHASE_FINAL_PRODUCT_COMPLETION_V1_STATUS: IN_PROGRESS
 
 ## Mission
 
-Resolve every finding of the independent review-4 (`audit.md`, verbatim from
-`RESUME_PROMPT_4.md` §3) so the parent terminal campaign can resume on a sound
-certification path: complete receipt verification (OD-5), make certification
-reachable through S or a documentary-only descendant of S (OD-6c), keep
-`autonomous-yield-proof` required and honest (OD-6a), make topology
-certification a conjunction that fails closed (OD-6b), kill every surviving
-guard mutant with a registered mutant family, record CI truth instead of
-bending it, fix the five product defects with their evidence, and leave the
-ledgers, records and continuity truthful. Close the child with the full
-authoritative validation set, exact-head CI green, `gate:clean` from canonical,
-a per-ID disposition table for R4-01..R4-24, archival with spec sync, and
-ACTIVE_TASK routed back to the parent.
+Execute the single terminal campaign that makes an honest
+`PROJECT_COMPLETE_AND_CI_CERTIFIED` verdict reachable and stable (OD-1/OD-2):
+disposition every audited census item, make the certification spine
+checkpoint-neutral and CI-green, persist truthful autonomous-hunt results,
+reconcile every operator-truth surface, close the ledger, and end with a
+`main`-only clean topology equal to `origin/main`.
 
 ## Read order
 
-1. `.agent/tasks/nightwatch-final-completion-review4-v1/{SPEC,PLAN,STATE}.md`
-2. `openspec/changes/nightwatch-final-completion-review4-v1/{proposal,design,audit,tasks}.md`
-3. `AGENTS.md`, `docs/CURRENT_STATE.md`, `docs/SAFETY_MODEL.md`,
-   `docs/DECISIONS.md`, `docs/FLAKE-LEDGER.md`
-4. The cited live source for each finding
+1. `.agent/tasks/nightwatch-final-product-completion-v1/{SPEC,PLAN,STATE}.md`
+2. `openspec/changes/nightwatch-final-product-completion-v1/{proposal,design,audit,tasks}.md`
+3. `AGENTS.md`, `docs/CURRENT_STATE.md`, `docs/SAFETY_MODEL.md`, and
+   `docs/DECISIONS.md`
+4. Current audit/OpenSpec ledgers and cited live source
 
 ## Routing and safety
 
 ```text
-CAMPAIGN: nightwatch-final-completion-review4-v1
+CAMPAIGN: nightwatch-final-product-completion-v1
 CHILD TASK: NONE
-SESSION WORKTREE: session/nightwatch-final-completion-revi-be20f537
+SESSION WORKTREE: NONE
 
 IMPLEMENTATION AUTHORIZED:
   Nightwatch source, tests, hardening rules/probes, schemas/configuration,
@@ -75,11 +110,19 @@ IMPLEMENTATION AUTHORIZED:
   C-00 commits and fast-forward integration from this session only.
 
 EXTERNAL CONTACT AUTHORIZED (OD-3 ONLY):
-  GitHub Actions read/observe; C-00 fast-forward pushes.
+  GitHub Actions read/observe; C-00 fast-forward pushes; one bounded paid
+  provider proof run; one npm registry advisory query.
 
 CURRENT STATUS:
-  IN_PROGRESS — groups 1-6 are implemented and locally validated (93 rules /
-  245 probes / 245 DETECTED); group 7 (close-out) is next.
+  IN_PROGRESS — PAUSED AT A CLEAN, CANONICAL-ROUTED CHECKPOINT (60/76
+  declared; 12 pending) after the review-4 child campaign closed. The corrective child campaign is CLOSED and
+  archived; the resume-batch-1 session `sess-83d720703401` was released and
+  its worktree removed with `--delete-branch` on 2026-10-01, after exact-head
+  CI went green at `aea15b47` (run 36830613569). This campaign therefore has
+  NO live session, and the canonical checkout is clean at `origin/main`. The
+  bounded review-4 child campaign `nightwatch-final-completion-review4-v1`
+  runs next and routes this campaign back to "M9 task 10.2 remainder
+  (60/76 declared; next bin `auth-configure`)".
 
 ALPHAUS DEV / NEXT / PRODUCTION CONTACT:   NOT AUTHORIZED
 AUTHENTICATED ALPHAUS RUNTIME:             NOT AUTHORIZED

@@ -549,6 +549,19 @@ exactly as in M4/M5.
 
 ## Validation Ledger
 
+- 2026-10-01 — REVIEW-4 CHILD CLOSED. The bounded child campaign
+  `nightwatch-final-completion-review4-v1` resolved all 24 review-4 findings and
+  closed at `17391ae673644d67226de4fadea81d1f4b0b1912` (exact-head CI run
+  **36855178941** GREEN, 15/15 groups; `npm test` 5865/0/33; `gate:local` 15/15
+  receipt `receipt:sha256:2a04b2cfdc9591076a9f174d`; `gate:clean`
+  `clean-receipt:sha256:c3c54d0540df6e7440fd7077` from canonical with no live
+  session; harden:rules 93/245/245). Its change is archived
+  (`openspec/changes/archive/2026-10-01-nightwatch-final-completion-review4-v1/`,
+  spec published as `openspec/specs/review4-closure/`), its session branch is
+  deleted, and this campaign is active again, canonical-routed, at the recorded
+  resume point: M9 task 10.2 remainder (60/76 declared; next bin
+  `auth-configure`), then 10.3-10.6, M10-M14 and the 13-section final report.
+  D-150 (OD-5/OD-6) and D-151 (proxy liveness) were added by the child.
 - 2026-10-01 — PARENT PAUSED (review-4 preconditions). Exact-head CI run
   **36830613569** at `aea15b47` is GREEN (15/15 groups) — the continuity-sync
   commit that recorded resume batch 1 and the stale-prose repairs. The parent
