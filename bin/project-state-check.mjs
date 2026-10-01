@@ -30,7 +30,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
 import { loadTypeScriptModule as loadRuntimeTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
-import { evidenceLaneDisagreements, loadReleaseEvidenceBindings, resolveEvidenceShaForSubject, verifyPersistedReceipt } from './lib/release-evidence.mjs';
+import { evidenceLaneDisagreements, loadReleaseEvidenceBindings, productionBindingReceiptVerifier, resolveEvidenceShaForSubject, verifyPersistedReceipt } from './lib/release-evidence.mjs';
 import { ACCESSIBILITY_RECORD_PATH, parseAccessibilityCertificationRecord } from './lib/accessibility-record.mjs';
 import { UI_HARNESS_FILE, UI_HARNESS_RECEIPT_PATH, UI_HARNESS_TYPES_PATH, evaluateUiHarnessReceipt, extractApiErrorKinds } from './lib/ui-harness-receipt.mjs';
 import { evidenceArtifactExistsAtSha, laneArtifactDemotions } from './lib/evidence-artifact.mjs';
@@ -39,7 +39,7 @@ import { bindTreeProbe, receiptBindingRelation, receiptNotAtCheckpoint, resolveP
 import { classifyCheckpointRange } from './lib/checkpoint-range.mjs';
 import { classifyCertificationDemotion } from './lib/certification-demotion.mjs';
 import { collectCiBlockStale, validateCiBlockRecord } from './lib/ci-block-record.mjs';
-import { topologyCertificationForCheckpoint } from './lib/topology-receipts.mjs';
+import { topologyCertificationForCheckpoint, topologyCertificationVerdict } from './lib/topology-receipts.mjs';
 import { checkpointRoleViolations } from './lib/checkpoint-role.mjs';
 import {
   findDuplicateFields,
@@ -281,6 +281,19 @@ const RULE_QUANTIFIERS = new Set(['TOTALITY', 'EXISTENCE']);
 const ZERO_LANE_COUNTS = Object.freeze({ proven: 0, externallyBlocked: 0, neverAttempted: 0, staleEvidence: 0 });
 const HEX40 = /^[0-9a-f]{40}$/i;
 
+/**
+ * R4-01 / review-4 task 1.1 — the production binding-receipt verifier this
+ * checker hands to `checkpointRoleViolations`. Without it, ANY commit that
+ * records or refreshes a `receiptDigest` is classified substantive
+ * (`BINDING_RECEIPT_UNVERIFIED`), so every descendant of the certified
+ * checkpoint that binds evidence made all tree-bound probes
+ * NOT_AT_CHECKPOINT and certification was unreachable.
+ * @param {string} root
+ */
+function bindingReceiptVerifier(root) {
+  return productionBindingReceiptVerifier(root);
+}
+
 function readJsonAt(root, relative) {
   try {
     return JSON.parse(fs.readFileSync(path.join(root, relative), 'utf8'));
@@ -377,11 +390,17 @@ function probeCiBlockRecord(root, blockFields) {
   if (status === 'EXECUTED_PASS' && HEX40.test(executed) && executed === checkpoint) {
     // R3-09 / corrections task 8.8: a CI run whose topology receipt is not
     // certifying (PROVEN_DEGRADED) is recorded evidence, not certification.
-    const topology = topologyCertificationForCheckpoint(readTopologyReceipts(root), executed);
-    if (topology.checked && !topology.certifying) {
-      return { state: 'UNMET', detail: `TOPOLOGY_NOT_CERTIFYING: ${topology.detail}; the exact-head CI run at ${executed} is not certifying` };
-    }
-    return { state: 'MET', detail: `exact-head CI executed PASS at ${executed}; block record ${record.runId} class=${record.blockClass}; topology ${topology.detail}` };
+    //
+    // R4-04 / review-4 task 1.4 + OD-6(b): the decision is the CONJUNCTION in
+    // `topologyCertificationVerdict` — a local Bubblewrap-backed PROVEN
+    // topology receipt AT S, plus this exact-head CI execution at S. A missing
+    // receipt is NOT MET (fail closed) and the detail text reports the LOCAL
+    // envelope proof and the CI execution as separate facts; it never
+    // attributes a topology class to the CI run (the runner has no bwrap).
+    return topologyCertificationVerdict(
+      topologyCertificationForCheckpoint(readTopologyReceipts(root), executed),
+      { ciStatus: status, executedSha: executed, checkpointSha: checkpoint, runId: record.runId, blockClass: record.blockClass },
+    );
   }
   return {
     state: 'UNMET',
@@ -964,11 +983,11 @@ function certificationDemotionFor(root, advanceClaimed, certifiedCheckpointSha, 
     && liveHeadSha !== certifiedCheckpointSha) {
     isAncestor = gitReadOnly(root, ['merge-base', '--is-ancestor', certifiedCheckpointSha, liveHeadSha]) !== null;
     if (isAncestor) {
-      const changed = gitReadOnly(root, ['diff', '--name-only', `${certifiedCheckpointSha}..${liveHeadSha}`]);
+      const changed = gitReadOnly(root, ['diff', '--name-only', '--no-renames', `${certifiedCheckpointSha}..${liveHeadSha}`]);
       if (changed !== null) {
         const files = changed.split('\n').map((line) => line.trim()).filter(Boolean);
         changedFiles = files;
-        substantivePaths = checkpointRoleViolations(root, files, { kind: 'range', from: certifiedCheckpointSha, to: liveHeadSha });
+        substantivePaths = checkpointRoleViolations(root, files, { kind: 'range', from: certifiedCheckpointSha, to: liveHeadSha, verifyBindingReceipt: bindingReceiptVerifier(root) });
       }
     }
   }
@@ -1042,12 +1061,12 @@ function collectReleaseCheckOutputs(root, blockFields, agentText, substantiveSha
     headSha,
     isAncestor,
     changedFiles: (from, to) => {
-      const output = gitReadOnly(root, ['diff', '--name-only', `${from}..${to}`]);
+      const output = gitReadOnly(root, ['diff', '--name-only', '--no-renames', `${from}..${to}`]);
       return output === null ? null : output.split('\n').map((line) => line.trim()).filter((line) => line !== '');
     },
     checkpointRoleViolations: (files) => {
       try {
-        return checkpointRoleViolations(root, files, { kind: 'range', from: substantiveSha, to: headSha ?? substantiveSha });
+        return checkpointRoleViolations(root, files, { kind: 'range', from: substantiveSha, to: headSha ?? substantiveSha, verifyBindingReceipt: bindingReceiptVerifier(root) });
       } catch {
         return null;
       }
@@ -1306,14 +1325,14 @@ function main() {
       // different condition and is not this check's business.
       && gitReadOnly(root, ['merge-base', '--is-ancestor', substantiveSha, taskValidatedSha]) !== null
     ) {
-      const changed = gitReadOnly(root, ['diff', '--name-only', substantiveSha, taskValidatedSha]);
+      const changed = gitReadOnly(root, ['diff', '--name-only', '--no-renames', substantiveSha, taskValidatedSha]);
       if (changed === null) {
         // Ancestry held but the range could not be classified. Fail closed:
         // an unclassifiable range must not be assumed documentation-only.
         fail(errors, 'PROJECT_STATE_SUBSTANTIVE_BASELINE_UNVERIFIABLE');
       } else {
         const files = changed.split('\n').map((line) => line.trim()).filter(Boolean);
-        const substantive = checkpointRoleViolations(root, files, { kind: 'range', from: substantiveSha, to: taskValidatedSha });
+        const substantive = checkpointRoleViolations(root, files, { kind: 'range', from: substantiveSha, to: taskValidatedSha, verifyBindingReceipt: bindingReceiptVerifier(root) });
         if (substantive.length > 0) {
           // The active task validated an implementation strictly newer than the
           // project baseline. The baseline is stale even if every field in the
@@ -1345,10 +1364,10 @@ function main() {
       && executedSha !== taskValidatedSha
       && gitReadOnly(root, ['merge-base', '--is-ancestor', executedSha, taskValidatedSha]) !== null
     ) {
-      const changed = gitReadOnly(root, ['diff', '--name-only', executedSha, taskValidatedSha]);
+      const changed = gitReadOnly(root, ['diff', '--name-only', '--no-renames', executedSha, taskValidatedSha]);
       if (changed !== null) {
         const files = changed.split('\n').map((line) => line.trim()).filter(Boolean);
-        if (checkpointRoleViolations(root, files, { kind: 'range', from: executedSha, to: taskValidatedSha }).length > 0) {
+        if (checkpointRoleViolations(root, files, { kind: 'range', from: executedSha, to: taskValidatedSha, verifyBindingReceipt: bindingReceiptVerifier(root) }).length > 0) {
           fail(errors, 'PROJECT_STATE_CI_BASELINE_STALE');
         }
       }
@@ -1561,12 +1580,12 @@ function main() {
           const substantiveSha = blockFields.get('LAST_SUBSTANTIVE_IMPLEMENTATION_SHA');
           const liveHeadSha = gitReadOnly(root, ['rev-parse', 'HEAD'])?.trim() ?? null;
           if (HEX40.test(substantiveSha ?? '')) {
-            const changed = gitReadOnly(root, ['diff-tree', '--root', '--no-commit-id', '--name-only', '-r', substantiveSha]);
+            const changed = gitReadOnly(root, ['diff-tree', '--root', '--no-commit-id', '--name-only', '--no-renames', '-r', substantiveSha]);
             if (changed === null) {
               fail(errors, 'PROJECT_STATE_IMPLEMENTATION_ANCHOR_UNVERIFIABLE');
             } else {
               const files = changed.split('\n').map((line) => line.trim()).filter(Boolean);
-              if (files.length > 0 && checkpointRoleViolations(root, files, { kind: 'commit', commit: substantiveSha }).length === 0) {
+              if (files.length > 0 && checkpointRoleViolations(root, files, { kind: 'commit', commit: substantiveSha, verifyBindingReceipt: bindingReceiptVerifier(root) }).length === 0) {
                 fail(errors, 'PROJECT_STATE_IMPLEMENTATION_ANCHOR_DOCUMENTATION_ONLY');
               }
             }
@@ -1642,7 +1661,7 @@ function main() {
             // when a persisted receipt re-read AT CHECK TIME re-derives it and
             // is bound to the same SHA. A hand-written digest resolves the
             // condition EVIDENCE_RECEIPT_ABSENT, never MET.
-            verifyEvidenceReceipt: (/** @type {string} */ subject, /** @type {string} */ digest, /** @type {string} */ evidenceSha) => verifyPersistedReceipt(root, digest, evidenceSha).verified,
+            verifyEvidenceReceipt: (/** @type {string} */ subject, /** @type {string} */ digest, /** @type {string} */ evidenceSha) => verifyPersistedReceipt(root, subject, digest, evidenceSha).verified,
             resolveEvidenceRelation: (resolvedEvidenceSha, checkpoint) => {
               const headAfter = gitReadOnly(root, ['rev-parse', 'HEAD'])?.trim() ?? null;
               if (headBefore !== null && headAfter !== null && headBefore !== headAfter) {

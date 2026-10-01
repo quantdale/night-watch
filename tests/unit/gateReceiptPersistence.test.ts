@@ -157,17 +157,56 @@ test.describe('R-11 receipt destination confinement', () => {
     }
   });
 
-  test('an absent explicit path resolves to a confined per-mode, per-head default', () => {
+  test('an absent explicit path falls back to a confined per-mode, per-head default outside any repository', () => {
+    // A non-repository root (or a repository that does not ignore
+    // artifacts/receipts) keeps the confined temporary default.
+    const outside = scratch('not-a-repository');
+    try {
+      const target = resolveGateReceiptTarget({ environment: {}, repositoryRoot: outside, mode: 'local', gitHead: 'd'.repeat(40) });
+      expect(target.error).toBeUndefined();
+      expect(target.origin).toBe('DEFAULT');
+      expect(path.isAbsolute(target.file as string)).toBe(true);
+      // Durability is automatic, because the failure being eliminated was an
+      // operator losing the only copy — a mechanism you must remember would not
+      // have prevented OBS-C105-1.
+      expect(path.basename(target.file as string)).toBe(`local-${'d'.repeat(12)}.json`);
+      const roots = gateReceiptPermittedRoots({});
+      expect(roots.some((root) => (target.file as string).startsWith(`${root}${path.sep}`))).toBe(true);
+    } finally {
+      fs.rmSync(outside, { recursive: true, force: true });
+    }
+  });
+
+  // R4-07 / review-4 task 1.7 — the receipt must land where the verifier reads
+  // it. `verifyPersistedReceipt` re-reads a `receipt:` digest from
+  // artifacts/receipts/, so a receipt written only to the operator's tmpdir was
+  // never consumable as evidence and every commit that bound it was classified
+  // substantive forever. The repository-local directory is used ONLY when Git
+  // provably ignores it, so the gate can never dirty a tracked path.
+  test('the default prefers the Git-ignored artifacts/receipts directory of a real repository', () => {
     const target = resolveGateReceiptTarget({ environment: {}, repositoryRoot: ROOT, mode: 'local', gitHead: 'd'.repeat(40) });
     expect(target.error).toBeUndefined();
-    expect(target.origin).toBe('DEFAULT');
-    expect(path.isAbsolute(target.file as string)).toBe(true);
-    // Durability is automatic, because the failure being eliminated was an
-    // operator losing the only copy — a mechanism you must remember would not
-    // have prevented OBS-C105-1.
-    expect(path.basename(target.file as string)).toBe(`local-${'d'.repeat(12)}.json`);
-    const roots = gateReceiptPermittedRoots({});
-    expect(roots.some((root) => (target.file as string).startsWith(`${root}${path.sep}`))).toBe(true);
+    expect(target.origin).toBe('REPOSITORY_IGNORED');
+    expect(target.file).toBe(path.join(fs.realpathSync(ROOT), 'artifacts', 'receipts', `local-${'d'.repeat(12)}.json`));
+    // The tracked tree stays clean: the directory is ignored, not merely untracked.
+    const ignored = spawnSync('git', ['check-ignore', '--quiet', '--', 'artifacts/receipts'], { cwd: ROOT, shell: false, encoding: 'utf8' });
+    expect(ignored.status).toBe(0);
+    const status = spawnSync('git', ['status', '--porcelain'], { cwd: ROOT, shell: false, encoding: 'utf8' });
+    expect(status.stdout ?? '').not.toContain('artifacts/receipts');
+  });
+
+  test('a repository that does not ignore artifacts/receipts falls back to the confined temporary default', () => {
+    const repo = scratch('unignored-repo');
+    try {
+      spawnSync('git', ['init', '--quiet', '-b', 'main'], { cwd: repo, shell: false, encoding: 'utf8' });
+      const target = resolveGateReceiptTarget({ environment: {}, repositoryRoot: repo, mode: 'local', gitHead: 'd'.repeat(40) });
+      expect(target.error).toBeUndefined();
+      expect(target.origin).toBe('DEFAULT');
+      const roots = gateReceiptPermittedRoots({});
+      expect(roots.some((root) => (target.file as string).startsWith(`${root}${path.sep}`))).toBe(true);
+    } finally {
+      fs.rmSync(repo, { recursive: true, force: true });
+    }
   });
 
   test('the default path distinguishes gate modes and heads so runs cannot overwrite each other', () => {

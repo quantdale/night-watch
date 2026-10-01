@@ -171,6 +171,9 @@ export function buildUiHarnessReceipt(input) {
   const harnessSource = typeof input.harnessSource === 'string' && input.harnessSource !== '' ? input.harnessSource : null;
   const body = {
     schemaVersion: UI_HARNESS_RECEIPT_SCHEMA,
+    // R4-03 / review-4 task 1.3: the subject this receipt was produced for,
+    // so a UI receipt can never be bound to a different subject's condition.
+    subject: 'ui-error-taxonomy-rendering',
     nightwatchSha: typeof input.headSha === 'string' && SHA_RE.test(input.headSha) ? input.headSha.toLowerCase() : null,
     treeClean: input.treeClean === true,
     executedAt: input.executedAt,

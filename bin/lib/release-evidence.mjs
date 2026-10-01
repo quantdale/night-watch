@@ -11,6 +11,13 @@
 //   config/release-evidence.v1.json        — VALUES_ONLY_BINDINGS
 //   config/document-role-corrections.v1.json — APPEND_ONLY_CORRECTIONS
 //
+// THREAT MODEL (OD-5, D-150): a receiptDigest is TAMPER-EVIDENT under the
+// cooperative same-OS-user model, NOT tamper-proof. The verifier is complete
+// for an honest system (subject, kind, schema, SHA, PASS verdict, clean emit,
+// content digest) so a mistaken, stale, failed or mismatched receipt can never
+// certify; it deliberately builds no cryptographic authentication. Never call
+// a receipt forgery-proof or unforgeable.
+//
 // A guarded path is documentation-only for a commit only when the guard holds
 // for that commit's exact byte diff. Adding, deleting, renaming, reordering,
 // re-keying, or otherwise structurally touching either file is SUBSTANTIVE,
@@ -84,6 +91,52 @@ export const GUARD_CLASSES = Object.freeze({
   'config/release-evidence.v1.json': 'VALUES_ONLY_BINDINGS',
   'config/document-role-corrections.v1.json': 'APPEND_ONLY_CORRECTIONS',
 });
+
+/**
+ * R4-03 / review-4 task 1.3 — the closed receipt-kind table.
+ *
+ * The digest PREFIX names the kind, and the kind fixes the directory the
+ * receipt lives in, the schema versions it may carry, the verdict fields that
+ * must be PASS, whether a clean emit is required, and (when non-null) the only
+ * subjects that kind may certify. This is the subject -> receipt-kind mapping:
+ * a clean-checkout receipt certifies exactly one subject, and a gate receipt
+ * certifies only subjects it declares.
+ */
+export const RECEIPT_KINDS = Object.freeze({
+  clean: Object.freeze({
+    digestPrefix: 'clean-receipt:',
+    directory: 'artifacts/gate-receipts',
+    schemas: Object.freeze(['nightwatch.clean-checkout-receipt.v1']),
+    verdictFields: Object.freeze(['gateResult', 'finalResult']),
+    requireCleanEmit: true,
+    subjects: Object.freeze(['clean-checkout']),
+  }),
+  gate: Object.freeze({
+    digestPrefix: 'receipt:',
+    directory: 'artifacts/receipts',
+    schemas: Object.freeze(['nightwatch.quality-gate-receipt.v1', 'nightwatch.ui-harness-receipt.v1']),
+    verdictFields: Object.freeze(['finalResult', 'gateResult', 'result']),
+    requireCleanEmit: false,
+    subjects: null,
+  }),
+});
+
+/**
+ * The subjects one receipt body declares it was produced for. A receipt with
+ * no declared subject verifies for NOTHING (fail closed, R4-03).
+ * @param {Record<string, unknown>} body
+ * @returns {string[]}
+ */
+export function receiptDeclaredSubjects(body) {
+  const declared = [];
+  if (typeof body.subject === 'string' && body.subject.trim() !== '') declared.push(body.subject.trim());
+  if (Array.isArray(body.subjects)) {
+    for (const entry of body.subjects) {
+      if (typeof entry === 'string' && entry.trim() !== '') declared.push(entry.trim());
+    }
+  }
+  return declared;
+}
 
 /** @param {string} file */
 export function guardClassForPath(file) {
@@ -432,28 +485,61 @@ export function isAppendOnlyCorrectionsChange(beforeText, afterText) {
  *
  * The scan is bounded (two directories, `.json` entries) and every failure is
  * a plain non-verification, never a throw.
+ *
+ * R4-03 / review-4 task 1.3 (OD-5): the verifier is COMPLETE for an honest
+ * system. It checks the SUBJECT (the receipt must declare the subject it was
+ * produced for), the KIND implied by the digest prefix, the receipt SCHEMA
+ * declared for that kind, the SHA binding, the PASS verdict field(s) for that
+ * kind, a clean emit where the kind requires one, and the re-derived content
+ * digest. A mistaken, stale, failed or mismatched receipt therefore never
+ * verifies.
+ *
+ * THREAT MODEL (OD-5, D-150): receipts are TAMPER-EVIDENT under the
+ * cooperative same-OS-user model, NOT tamper-proof. There is no signature, no
+ * key material and no MAC here, and `docs/SAFETY_MODEL.md`, `docs/DECISIONS.md`
+ * (D-150) and this header state that limit explicitly. Never describe a
+ * receipt as forgery-proof or unforgeable.
+ *
  * @param {string} root
+ * @param {string} subject
  * @param {string} digest
  * @param {string | null} sha
  * @returns {{ verified: boolean, reason: string }}
  */
-export function verifyPersistedReceipt(root, digest, sha) {
+export function verifyPersistedReceipt(root, subject, digest, sha) {
+  const wantedSubject = typeof subject === 'string' ? subject.trim() : '';
+  if (wantedSubject === '' || !SUBJECT_RE.test(wantedSubject)) {
+    return { verified: false, reason: 'RECEIPT_SUBJECT_INVALID' };
+  }
   if (typeof digest !== 'string' || typeof sha !== 'string' || !SHA40_RE.test(sha)) {
     return { verified: false, reason: 'RECEIPT_INPUT_INVALID' };
   }
-  const clean = digest.startsWith('clean-receipt:');
-  const quality = digest.startsWith('receipt:');
-  if (!clean && !quality) return { verified: false, reason: 'RECEIPT_KIND_UNSUPPORTED' };
-  const prefix = clean ? 'clean-receipt:' : 'receipt:';
+  const kindName = digest.startsWith(RECEIPT_KINDS.clean.digestPrefix) ? 'clean'
+    : digest.startsWith(RECEIPT_KINDS.gate.digestPrefix) ? 'gate'
+      : null;
+  if (kindName === null) return { verified: false, reason: 'RECEIPT_KIND_UNSUPPORTED' };
+  const kind = RECEIPT_KINDS[kindName];
+  // The subject -> receipt-kind mapping: a clean-checkout receipt may certify
+  // ONLY a subject whose evidence is a clean checkout; every other subject is
+  // certified by a gate receipt that names it.
+  if (kind.subjects !== null && !kind.subjects.includes(wantedSubject)) {
+    return { verified: false, reason: 'RECEIPT_SUBJECT_KIND_MISMATCH' };
+  }
+  const prefix = kind.digestPrefix;
   const marker = `${prefix}sha256:`;
   if (!digest.startsWith(marker)) return { verified: false, reason: 'RECEIPT_DIGEST_MALFORMED' };
-  const directory = clean ? 'artifacts/gate-receipts' : 'artifacts/receipts';
+  const directory = kind.directory;
   let entries;
   try {
     entries = fs.readdirSync(path.join(root, directory));
   } catch {
     return { verified: false, reason: 'RECEIPT_DIRECTORY_ABSENT' };
   }
+  /** @type {string | null} */
+  let firstRefusal = null;
+  const refuse = (reason) => {
+    if (firstRefusal === null) firstRefusal = reason;
+  };
   for (const entry of entries.slice().sort()) {
     if (!entry.endsWith('.json')) continue;
     let text;
@@ -472,20 +558,63 @@ export function verifyPersistedReceipt(root, digest, sha) {
     if (typeof body.receiptDigest !== 'string') continue;
     const recordedSha = typeof body.sourceHead === 'string' ? body.sourceHead
       : typeof body.gitHead === 'string' ? body.gitHead
-        : null;
+        : typeof body.nightwatchSha === 'string' ? body.nightwatchSha
+          : null;
     if (recordedSha === null || recordedSha.toLowerCase() !== sha.toLowerCase()) continue;
+    // The candidate is SHA-bound. Re-derive its content digest FIRST: only the
+    // receipt whose digest equals the requested digest IS the receipt under
+    // verification, so its own failures are the ones reported. Refusals from
+    // unrelated candidates are never allowed to shadow it.
     const clone = { ...body };
     delete clone.receiptDigest;
-    let candidate;
-    if (clean) {
-      if (body.sourceRootCleanAtEmit !== true) continue;
-      candidate = `${prefix}sha256:${crypto.createHash('sha256').update(JSON.stringify(clone), 'utf8').digest('hex').slice(0, 24)}`;
-    } else {
-      candidate = `${prefix}sha256:${crypto.createHash('sha256').update(stableCanonical(clone), 'utf8').digest('hex').slice(0, 24)}`;
+    const candidate = kindName === 'clean'
+      ? `${prefix}sha256:${crypto.createHash('sha256').update(JSON.stringify(clone), 'utf8').digest('hex').slice(0, 24)}`
+      : `${prefix}sha256:${crypto.createHash('sha256').update(stableCanonical(clone), 'utf8').digest('hex').slice(0, 24)}`;
+    if (candidate !== digest) {
+      refuse('RECEIPT_DIGEST_MISMATCH');
+      continue;
     }
-    if (candidate === digest) return { verified: true, reason: 'VERIFIED' };
+    // This IS the receipt the digest names: every remaining property is now
+    // REQUIRED (R4-03 / OD-5).
+    if (typeof body.schemaVersion !== 'string' || !kind.schemas.includes(body.schemaVersion)) {
+      return { verified: false, reason: `RECEIPT_SCHEMA_UNSUPPORTED:${String(body.schemaVersion)}` };
+    }
+    const declared = receiptDeclaredSubjects(body);
+    if (declared.length === 0) return { verified: false, reason: 'RECEIPT_SUBJECT_ABSENT' };
+    if (!declared.includes(wantedSubject)) return { verified: false, reason: `RECEIPT_SUBJECT_MISMATCH:${declared.join(',')}` };
+    const presentVerdicts = kind.verdictFields.filter((field) => typeof body[field] === 'string');
+    if (presentVerdicts.length === 0) return { verified: false, reason: 'RECEIPT_VERDICT_MISSING' };
+    const failedVerdict = presentVerdicts.find((field) => body[field] !== 'PASS');
+    if (failedVerdict !== undefined) return { verified: false, reason: `RECEIPT_VERDICT_NOT_PASS:${failedVerdict}=${String(body[failedVerdict])}` };
+    if (kind.requireCleanEmit && body.sourceRootCleanAtEmit !== true) return { verified: false, reason: 'RECEIPT_CLEAN_EMIT_UNPROVEN' };
+    return { verified: true, reason: 'VERIFIED' };
   }
-  return { verified: false, reason: 'RECEIPT_NOT_FOUND_OR_UNBOUND' };
+  return { verified: false, reason: firstRefusal ?? 'RECEIPT_NOT_FOUND_OR_UNBOUND' };
+}
+
+/**
+ * R4-01 / review-4 task 1.1 — the ONE production binding-receipt verifier.
+ *
+ * `checkpointRoleViolations` classifies a binding-file touch as documentary
+ * only when the receipt it records verifies. Before this, no production caller
+ * passed a verifier at all (only hardening fixtures passed `() => true`), so
+ * every commit that bound a receipt was substantive and each descendant of S
+ * that bound evidence made all tree-bound probes `NOT_AT_CHECKPOINT`.
+ *
+ * Fail-closed on every path: a missing subject, a missing directory, a
+ * malformed receipt or a thrown error is `false`, never an accidental pass.
+ *
+ * @param {string} root
+ * @returns {(subject: string, digest: string, sha: string) => boolean}
+ */
+export function productionBindingReceiptVerifier(root) {
+  return (subject, digest, sha) => {
+    try {
+      return verifyPersistedReceipt(root, subject, digest, sha).verified === true;
+    } catch {
+      return false;
+    }
+  };
 }
 
 /**

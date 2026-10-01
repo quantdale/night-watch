@@ -13,6 +13,7 @@
 // representation here and cannot pass through by accident.
 
 import crypto from 'node:crypto';
+import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -245,6 +246,25 @@ export function parseSafeDetails(output) {
 
 export const GATE_RECEIPT_PATH_ENV = 'NIGHTWATCH_GATE_RECEIPT_PATH';
 export const GATE_RECEIPT_DEFAULT_DIRECTORY = 'nightwatch-gate-receipts';
+/**
+ * R4-07 / review-4 task 1.7 — the repository-local receipt directory the
+ * release-evidence verifier reads a `receipt:` digest from. It is gitignored
+ * (`artifacts/*`), so persisting there cannot dirty a tracked path.
+ */
+export const GATE_RECEIPT_REPO_DIRECTORY = 'artifacts/receipts';
+
+/**
+ * Git must PROVABLY ignore a repository-local receipt directory before the
+ * gate writes there; an unignored path is refused, never guessed at.
+ * @param {string} repositoryRoot
+ * @param {string} relative
+ */
+function repositoryPathIsIgnored(repositoryRoot, relative) {
+  const result = spawnSync('git', ['check-ignore', '--quiet', '--', relative], {
+    cwd: repositoryRoot, shell: false, encoding: 'utf8', timeout: 10_000,
+  });
+  return result.status === 0;
+}
 
 function realPathOrNull(candidate) {
   try {
@@ -294,6 +314,24 @@ export function resolveGateReceiptTarget(options) {
 
   if (typeof requested !== 'string' || requested.trim() === '') {
     const head = typeof gitHead === 'string' && /^[0-9a-f]{40}$/.test(gitHead) ? gitHead.slice(0, 12) : 'unknown-head';
+    // R4-07 / review-4 task 1.7: prefer the repository-local, Git-ignored
+    // artifacts/receipts directory, because that is exactly where
+    // `verifyPersistedReceipt` re-reads a `receipt:` digest. A receipt written
+    // only to the operator's tmpdir was never consumable as evidence, so a
+    // commit that bound it was classified substantive forever.
+    try {
+      if (repositoryPathIsIgnored(repositoryRoot, GATE_RECEIPT_REPO_DIRECTORY)) {
+        const repoDirectory = path.join(repositoryRoot, GATE_RECEIPT_REPO_DIRECTORY);
+        fs.mkdirSync(repoDirectory, { recursive: true, mode: 0o700 });
+        const repoReal = realPathOrNull(repoDirectory);
+        const rootReal = realPathOrNull(repositoryRoot);
+        if (repoReal !== null && rootReal !== null && isWithin(rootReal, repoReal)) {
+          return { file: path.join(repoReal, `${String(mode).toLowerCase()}-${head}.json`), origin: 'REPOSITORY_IGNORED' };
+        }
+      }
+    } catch {
+      // Any failure falls through to the confined temp-directory default.
+    }
     const directory = path.join(permittedRoots[0], GATE_RECEIPT_DEFAULT_DIRECTORY);
     try {
       fs.mkdirSync(directory, { recursive: true, mode: 0o700 });

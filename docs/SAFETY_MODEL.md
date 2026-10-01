@@ -1654,3 +1654,33 @@ no declaration, startup validation refuses a malformed declared value before
 any browser, subprocess or socket, and `npm run nightwatch -- config` prints
 the effective configuration with per-variable source and secret-bearing values
 redacted to presence only.
+
+## 24. Release-evidence receipts are tamper-evident, never tamper-proof (OD-5 / D-150)
+
+A `receiptDigest` in `config/release-evidence.v1.json` binds a certification
+subject to a persisted receipt: `receipt:` resolves in `artifacts/receipts/`
+(the quality gate's receipt and the UI-harness execution receipt) and
+`clean-receipt:` resolves in `artifacts/gate-receipts/` (the clean-checkout
+receipt). `bin/lib/release-evidence.mjs` verifies a bound receipt COMPLETELY
+for an honest system: the subject it declares, the receipt kind implied by the
+digest prefix, the schema declared for that kind, the 40-hex SHA binding, the
+PASS verdict field(s) for that kind, a clean emit where the kind requires one,
+and the re-derived content digest. A mistaken, stale, failed or mismatched
+receipt therefore never certifies.
+
+**The limit is explicit and permanent.** Receipts are **tamper-evident under
+the cooperative same-OS-user model, not tamper-proof** — exactly how the
+session protocol already treats session IDs. There is no signature, no key
+material and no message authentication code, and no wording anywhere in this
+repository may describe a receipt as forgery-proof or unforgeable. Nothing in
+this model protects against a hostile same-OS-user process that can rewrite a
+receipt and recompute its digest; it protects the certification decision from
+an honest mistake, a stale file, a failed run, or a receipt produced for a
+different subject, kind, schema or SHA.
+
+**Where receipts may be written.** Gate receipts default to the
+repository-local, Git-ignored `artifacts/receipts/` so the verifier can re-read
+them; an explicit `NIGHTWATCH_GATE_RECEIPT_PATH` stays confined to the
+operator's temporary roots and is refused inside the repository, and the
+repository-local default is used only when Git provably ignores it. Tests never
+write receipts into the real checkout: collector tests use a fixture root.

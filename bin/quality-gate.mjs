@@ -364,7 +364,7 @@ function main(cli) {
   }
   if (!head || packageLock === null || nodeMajor < 20 || ((mode === 'ci' || mode === 'clean') && nodeMajor !== 22)) {
     // An environment rejection is exactly the kind of result worth persisting.
-    const receipt = { schemaVersion: 'nightwatch.quality-gate-receipt.v1', gateDefinitionDigest: `sha256:${sha256(canonical(definition))}`, gitHead: head, packageLockDigest: packageLock === null ? null : `sha256:${sha256(packageLock)}`, nodeMajor, nodeVersion, npmVersion, environmentClass: mode.toUpperCase(), receiptPersistenceRequested: true, groups: [], finalResult: 'ENVIRONMENT_MISMATCH' };
+    const receipt = { schemaVersion: 'nightwatch.quality-gate-receipt.v1', subject: 'authoritative-gate', gateDefinitionDigest: `sha256:${sha256(canonical(definition))}`, gitHead: head, packageLockDigest: packageLock === null ? null : `sha256:${sha256(packageLock)}`, nodeMajor, nodeVersion, npmVersion, environmentClass: mode.toUpperCase(), receiptPersistenceRequested: true, groups: [], finalResult: 'ENVIRONMENT_MISMATCH' };
     emitReceipt(receipt, target, 1);
     return;
   }
@@ -386,6 +386,9 @@ function main(cli) {
   const gateDurationMs = Number((process.hrtime.bigint() - gateStartedAt) / 1_000_000n);
   const receipt = {
     schemaVersion: 'nightwatch.quality-gate-receipt.v1',
+    // R4-03: the subject this receipt was produced for; the release-evidence
+    // verifier refuses a receipt that does not declare the subject it binds.
+    subject: 'authoritative-gate',
     gateDefinitionDigest: `sha256:${sha256(canonical(definition))}`,
     gitHead: head,
     packageLockDigest: `sha256:${sha256(packageLock)}`,

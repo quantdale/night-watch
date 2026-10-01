@@ -5457,3 +5457,94 @@ chosen follow-up IS implemented: the observer exposes `captureFailureCounts()`
 carries `captureFailureCounts` into the recorded run summary, and the observer
 refusal test asserts the count is at least 1. This appended correction governs;
 the earlier sentence is preserved as the historical record.
+
+## D-150 — review-4 corrections: the receipt threat model, what 16/16 requires, and the guards that decide "documentary"
+
+Source: the owner-reviewed corrective campaign prompt
+`RESUME_PROMPT_4.md` §1 (sha256-addressed owner decision record for the review-4
+corrective campaign `nightwatch-final-completion-review4-v1`; the file lives in
+the owner's local scratchpad and is cited by name, never by path). The owner
+decisions are recorded VERBATIM below and bind every fix in this campaign.
+
+### OD-5 (receipt threat model) — verbatim
+
+> - **OD-5 (receipt threat model).** Receipts are **tamper-evident under the
+>   cooperative same-OS-user model, not tamper-proof**. This matches how
+>   AGENTS.md already treats session IDs.
+>   - Do not build cryptographic receipt authentication.
+>   - DO make verification complete for an honest system. Verification checks
+>     the subject, the receipt kind and schema, the SHA, the PASS verdict, a
+>     clean emit and the content digest. That way a mistaken, stale, failed or
+>     mismatched receipt can never certify.
+>   - DO state this limit wherever receipts are described (SAFETY_MODEL,
+>     DECISIONS, the release-evidence module header). No DONE note or commit
+>     message may call receipts "forgery-proof" or "unforgeable".
+
+### OD-6 (what 16/16 requires) — verbatim
+
+> - **OD-6 (what 16/16 requires).**
+>   - (a) **`autonomous-yield-proof` becomes certifying** only from the yield
+>     receipt produced by the authorized single paid provider run (parent task
+>     12.3). It requires a completed campaign at S with recorded provider calls.
+>     Until that run exists, the condition is honestly NOT MET; it is never
+>     demoted out of the required set.
+>   - (b) **Topology certification means:** a local, Bubblewrap-backed PROVEN
+>     topology receipt at S, plus exact-head CI `EXECUTED_PASS` at S. CI's
+>     degraded topology is recorded as evidence but is never certifying. A
+>     missing topology receipt is NOT MET (fail closed).
+>   - (c) **Certification is reachable only via** S itself, or a
+>     documentary-only descendant of S with a clean tree. Every guard that
+>     decides "documentary" must be the same classifier, applied with the
+>     production receipt verifier wired in.
+
+### What D-150 decides, and why
+
+**The verifier is complete and the limit is stated.** `verifyPersistedReceipt`
+now checks the subject a receipt declares, the kind implied by the digest
+prefix, the schema declared for that kind, the SHA binding, the PASS verdict
+field(s) for that kind, a clean emit where the kind requires one, and the
+re-derived content digest. The threat model (tamper-evident, not tamper-proof)
+is stated in `docs/SAFETY_MODEL.md` §24 and in the
+`bin/lib/release-evidence.mjs` module header. No cryptographic authentication
+was built, and one production verifier
+(`productionBindingReceiptVerifier`) is handed to every production
+`checkpointRoleViolations` caller.
+
+**The deadlock is gone.** Every production caller of `checkpointRoleViolations`
+now passes that verifier. A commit at a descendant of S that records or
+refreshes a genuinely persisted, subject-matching, schema-valid, PASS receipt
+is DOCUMENTARY, so the tree-bound probes stay AT the checkpoint and
+certification is reachable — while a receipt that is missing, stale, failed or
+bound to another subject still makes the commit substantive.
+
+**Rename detection is off for classification.** Every `git diff` / `diff-tree`
+name listing used to decide what a commit or a range touched carries
+`--no-renames`, so `git mv src/... .agent/...` in a `docs:` commit is a
+deletion, classified SUBSTANTIVE.
+
+**Topology is a conjunction.** The exact-head CI condition resolves MET only
+with a LOCAL `PROVEN` topology receipt at the certified checkpoint AND the
+recorded exact-head CI status word being the executed-pass one, with the
+executed SHA equal to the certified checkpoint. A missing receipt is `TOPOLOGY_RECEIPT_ABSENT` (NOT MET); a
+degraded envelope is `TOPOLOGY_NOT_CERTIFYING` and is recorded as
+non-certifying evidence; the detail text never attributes a topology class to
+the CI run, whose runner has no Bubblewrap.
+
+**The yield proof stays required and stays honest.**
+`autonomous-yield-proof` declares `certifying: true` (it was `false`, which
+made 16/16 unreachable by construction) and resolves MET only from the
+authorized single paid provider run's yield receipt — a completed campaign at
+S with recorded provider calls. Until that run exists — the parent owns it as
+task 12.3 — the condition is honestly NOT MET and certification is refused.
+
+**Reachability is the documented relaxation.** Certification is reachable via
+S itself or a documentary-only descendant of S with a clean tree, decided by
+ONE classifier (`classifyCheckpointRange`) applied with the production receipt
+verifier wired in. The real-tree checkpoint test derives its expectation from
+that same classifier, so it can no longer contradict certification.
+
+### Revisit trigger
+
+Revisit if a successor review shows the subject/kind/schema/verdict binding is
+insufficient for an honest system, or if the owner authorizes cryptographic
+receipt authentication. This entry does NOT authorize that; OD-5 declines it.

@@ -379,6 +379,8 @@ if (!head || !sourceStart.ok || !sourceStart.clean || installTimeout === null ||
             });
             emit({
               schemaVersion: CLEAN_RECEIPT_SCHEMA,
+              // R4-03: the subject this receipt was produced for.
+              subject: 'clean-checkout',
               sourceHead: head,
               packageLockDigest: `sha256:${sha256(fs.readFileSync(path.join(clone, 'package-lock.json'), 'utf8'))}`,
               nodeMajor: toolchain.nodeMajor,

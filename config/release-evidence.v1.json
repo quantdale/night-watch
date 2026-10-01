@@ -30,7 +30,7 @@
       "observedAt": null,
       "executor": null,
       "artifactPaths": [],
-      "certifying": false
+      "certifying": true
     },
     {
       "subject": "completion-ledger-truth",

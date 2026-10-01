@@ -44,3 +44,48 @@ export function topologyCertificationForCheckpoint(receipts, checkpointSha) {
     detail: `${topologyClass}${certifying ? '' : ' (non-certifying)'} at ${checkpointSha.slice(0, 8)}`,
   };
 }
+
+/**
+ * R4-04 / review-4 task 1.4 + OD-6(b) — the release CONDITION's conjunction.
+ *
+ * Exact-head CI certification is TWO facts, never one and never a fallback:
+ * a LOCAL Bubblewrap-backed PROVEN topology receipt at the certified
+ * checkpoint S, AND the recorded exact-head CI status word being the
+ * executed-pass one with its executed SHA equal to S. CI's own envelope is
+ * degraded (the runner has no Bubblewrap), so a CI run can never supply the
+ * topology half — that is exactly why a missing local receipt is NOT MET
+ * rather than a pass by absence.
+ *
+ * Pure: it renders the decision and its detail from the two inputs and holds
+ * no filesystem, process, network or clock authority.
+ *
+ * @param {{ checked: boolean, certifying: boolean, detail: string }} topology
+ * @param {{ ciStatus: string | null, executedSha: string | null, checkpointSha: string | null, runId?: unknown, blockClass?: unknown }} input
+ * @returns {{ state: 'MET' | 'UNMET', detail: string }}
+ */
+export function topologyCertificationVerdict(topology, input) {
+  const { ciStatus, executedSha, checkpointSha, runId, blockClass } = input;
+  const record = `block record ${String(runId ?? 'UNKNOWN')} class=${String(blockClass ?? 'UNKNOWN')}`;
+  if (ciStatus !== 'EXECUTED_PASS' || typeof executedSha !== 'string' || !SHA_RE.test(executedSha) || executedSha !== checkpointSha) {
+    return {
+      state: 'UNMET',
+      detail: `the exact-head CI half is not satisfied (status word ${String(ciStatus ?? 'ABSENT')}, executed ${String(executedSha ?? 'NONE')}, checkpoint ${String(checkpointSha ?? 'NONE')}; ${record})`,
+    };
+  }
+  if (!topology.checked) {
+    return {
+      state: 'UNMET',
+      detail: `TOPOLOGY_RECEIPT_ABSENT: no local topology receipt at the certified checkpoint ${executedSha.slice(0, 8)}; exact-head CI is EXECUTED_PASS but a run envelope is not local proof (${record})`,
+    };
+  }
+  if (!topology.certifying) {
+    return {
+      state: 'UNMET',
+      detail: `TOPOLOGY_NOT_CERTIFYING: local topology receipt is ${topology.detail}; the exact-head CI run at ${executedSha.slice(0, 8)} is not certifying on its own (${record})`,
+    };
+  }
+  return {
+    state: 'MET',
+    detail: `exact-head CI executed PASS at ${executedSha.slice(0, 8)} (${record}); local topology receipt ${topology.detail}`,
+  };
+}

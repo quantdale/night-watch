@@ -48,9 +48,9 @@ import {
   resolveProbeBinding,
 } from '../../bin/lib/probe-binding.mjs';
 import { classifyCheckpointRange } from '../../bin/lib/checkpoint-range.mjs';
-import { stableCanonical, verifyPersistedReceipt } from '../../bin/lib/release-evidence.mjs';
+import { stableCanonical, productionBindingReceiptVerifier, verifyPersistedReceipt } from '../../bin/lib/release-evidence.mjs';
 import { laneArtifactDemotions } from '../../bin/lib/evidence-artifact.mjs';
-import { topologyCertificationForCheckpoint } from '../../bin/lib/topology-receipts.mjs';
+import { topologyCertificationForCheckpoint, topologyCertificationVerdict } from '../../bin/lib/topology-receipts.mjs';
 import { checkpointRoleViolations } from '../../bin/lib/checkpoint-role.mjs';
 import {
   UI_HARNESS_FILE,
@@ -1916,6 +1916,35 @@ test.describe('topology certification consumer (R3-09)', () => {
     // A malformed checkpoint never resolves.
     expect(topologyCertificationForCheckpoint(degraded, 'HEAD')).toMatchObject({ checked: false });
   });
+
+  // R4-04 / review-4 task 1.4 + OD-6(b): certification is the CONJUNCTION of a
+  // LOCAL PROVEN receipt at S and this CI execution at S. A missing or degraded
+  // receipt is NOT MET (fail closed); it never falls through to MET, and the
+  // detail never attributes a topology class to the CI run.
+  test('a missing or degraded local receipt never falls through to MET', () => {
+    const proven = topologyCertificationForCheckpoint([{ gitHead: S, generatedAt: '2026-09-30T00:00:00.000Z', runnerTopologyClass: 'PROVEN', ciClaim: { certifying: true } }], S);
+    const degradedTopology = topologyCertificationForCheckpoint([{ gitHead: S, generatedAt: '2026-09-30T00:00:00.000Z', runnerTopologyClass: 'PROVEN_DEGRADED', ciClaim: { certifying: false } }], S);
+    const absent = topologyCertificationForCheckpoint([], S);
+    const ci = { ciStatus: 'EXECUTED_PASS', executedSha: S, checkpointSha: S, runId: 123, blockClass: 'NONE' };
+    expect(topologyCertificationVerdict(proven, ci)).toMatchObject({ state: 'MET' });
+    // The absent-receipt mutant from review-4: `checked:false` must NOT pass.
+    expect(topologyCertificationVerdict(absent, ci).state).toBe('UNMET');
+    expect(topologyCertificationVerdict(absent, ci).detail).toContain('TOPOLOGY_RECEIPT_ABSENT');
+    expect(topologyCertificationVerdict(degradedTopology, ci).state).toBe('UNMET');
+    expect(topologyCertificationVerdict(degradedTopology, ci).detail).toContain('TOPOLOGY_NOT_CERTIFYING');
+    // The conjunction: a PROVEN local receipt without the exact-head CI half
+    // (a missing status word, a different executed SHA, or a checkpoint the
+    // executed SHA does not equal) is not MET either.
+    expect(topologyCertificationVerdict(proven, { ...ci, ciStatus: 'NOT_OBSERVED' }).state).toBe('UNMET');
+    expect(topologyCertificationVerdict(proven, { ...ci, executedSha: OTHER }).state).toBe('UNMET');
+    expect(topologyCertificationVerdict(proven, { ...ci, checkpointSha: OTHER }).state).toBe('UNMET');
+    expect(topologyCertificationVerdict(proven, { ...ci, ciStatus: null }).state).toBe('UNMET');
+    // The MET detail names the LOCAL envelope proof and the CI run separately;
+    // the CI half never claims a topology class.
+    const met = topologyCertificationVerdict(proven, ci);
+    expect(met.detail).toContain('local topology receipt PROVEN');
+    expect(met.detail).toContain('block record 123');
+  });
 });
 
 test.describe('lane artifact wiring and non-certifying subjects (R3-08)', () => {
@@ -1998,31 +2027,59 @@ test.describe('RV-02 — a SHA without a receipt is a claim, not an observation'
     expect(verdict.certificationRefused).toBe(true);
   });
 
-  test('a persisted receipt verifies only when it re-derives AND is bound to the same SHA', () => {
+  test('a persisted receipt verifies only when subject, kind, schema, SHA, verdict, clean emit and digest all hold', () => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-receipt-verify-'));
     const sha = 'a'.repeat(40);
     const other = 'b'.repeat(40);
     try {
       // clean-receipt: order-preserving JSON.stringify over the body.
       fs.mkdirSync(path.join(root, 'artifacts/gate-receipts'), { recursive: true });
-      const cleanBody = { schemaVersion: 'nightwatch.clean-checkout-receipt.v1', sourceHead: sha, sourceRootCleanAtEmit: true, finalResult: 'PASS' };
+      const cleanBody = { schemaVersion: 'nightwatch.clean-checkout-receipt.v1', subject: 'clean-checkout', sourceHead: sha, sourceRootCleanAtEmit: true, gateResult: 'PASS', finalResult: 'PASS' };
       const cleanDigest = `clean-receipt:sha256:${createHash('sha256').update(JSON.stringify(cleanBody)).digest('hex').slice(0, 24)}`;
       fs.writeFileSync(path.join(root, 'artifacts/gate-receipts/clean.json'), `${JSON.stringify({ ...cleanBody, receiptDigest: cleanDigest })}\n`);
-      expect(verifyPersistedReceipt(root, cleanDigest, sha)).toEqual({ verified: true, reason: 'VERIFIED' });
-      expect(verifyPersistedReceipt(root, cleanDigest, other).verified).toBe(false);
-      expect(verifyPersistedReceipt(root, `clean-receipt:sha256:${'0'.repeat(24)}`, sha).verified).toBe(false);
-      // receipt: stable-canonical body, gitHead-bound.
+      expect(verifyPersistedReceipt(root, 'clean-checkout', cleanDigest, sha)).toEqual({ verified: true, reason: 'VERIFIED' });
+      expect(verifyPersistedReceipt(root, 'clean-checkout', cleanDigest, other).verified).toBe(false);
+      expect(verifyPersistedReceipt(root, 'clean-checkout', `clean-receipt:sha256:${'0'.repeat(24)}`, sha).verified).toBe(false);
+      // R4-03: the subject -> receipt-kind mapping. A clean-checkout receipt
+      // may certify ONLY the clean-checkout subject.
+      expect(verifyPersistedReceipt(root, 'root-compile', cleanDigest, sha)).toEqual({ verified: false, reason: 'RECEIPT_SUBJECT_KIND_MISMATCH' });
+      // An invalid subject is refused before any scan.
+      expect(verifyPersistedReceipt(root, 'NOT A SUBJECT', cleanDigest, sha)).toEqual({ verified: false, reason: 'RECEIPT_SUBJECT_INVALID' });
+      // receipt: stable-canonical body, gitHead-bound, subject-declaring.
       fs.mkdirSync(path.join(root, 'artifacts/receipts'), { recursive: true });
-      const gateBody = { schemaVersion: 'nightwatch.quality-gate-receipt.v1', gitHead: sha, finalResult: 'PASS' };
+      const gateBody = { schemaVersion: 'nightwatch.quality-gate-receipt.v1', subject: 'authoritative-gate', gitHead: sha, finalResult: 'PASS' };
       const gateDigest = `receipt:sha256:${createHash('sha256').update(stableCanonical(gateBody)).digest('hex').slice(0, 24)}`;
       fs.writeFileSync(path.join(root, 'artifacts/receipts/gate.json'), `${JSON.stringify({ ...gateBody, receiptDigest: gateDigest })}\n`);
-      expect(verifyPersistedReceipt(root, gateDigest, sha).verified).toBe(true);
-      expect(verifyPersistedReceipt(root, gateDigest, other).verified).toBe(false);
-      // A receipt whose clean flag is false is not clean evidence.
+      expect(verifyPersistedReceipt(root, 'authoritative-gate', gateDigest, sha).verified).toBe(true);
+      expect(verifyPersistedReceipt(root, 'authoritative-gate', gateDigest, other).verified).toBe(false);
+      // R4-03: a receipt that declares ANOTHER subject never certifies this one.
+      expect(verifyPersistedReceipt(root, 'root-compile', gateDigest, sha)).toEqual({ verified: false, reason: 'RECEIPT_SUBJECT_MISMATCH:authoritative-gate' });
+      // R4-03: a hand-written FAIL receipt with a correctly recomputed digest
+      // still never verifies — the verdict is part of the check.
+      const failBody = { ...gateBody, finalResult: 'FAIL' };
+      const failDigest = `receipt:sha256:${createHash('sha256').update(stableCanonical(failBody)).digest('hex').slice(0, 24)}`;
+      fs.writeFileSync(path.join(root, 'artifacts/receipts/fail.json'), `${JSON.stringify({ ...failBody, receiptDigest: failDigest })}\n`);
+      expect(verifyPersistedReceipt(root, 'authoritative-gate', failDigest, sha)).toEqual({ verified: false, reason: 'RECEIPT_VERDICT_NOT_PASS:finalResult=FAIL' });
+      // R4-03: a subject-less receipt verifies for NOTHING (fail closed).
+      const anonymousBody = { schemaVersion: 'nightwatch.quality-gate-receipt.v1', gitHead: sha, finalResult: 'PASS' };
+      const anonymousDigest = `receipt:sha256:${createHash('sha256').update(stableCanonical(anonymousBody)).digest('hex').slice(0, 24)}`;
+      fs.writeFileSync(path.join(root, 'artifacts/receipts/anonymous.json'), `${JSON.stringify({ ...anonymousBody, receiptDigest: anonymousDigest })}\n`);
+      expect(verifyPersistedReceipt(root, 'authoritative-gate', anonymousDigest, sha)).toEqual({ verified: false, reason: 'RECEIPT_SUBJECT_ABSENT' });
+      // R4-03: the schema is checked against the kind's declared schemas.
+      const unknownSchemaBody = { ...gateBody, schemaVersion: 'nightwatch.other-receipt.v1' };
+      const unknownSchemaDigest = `receipt:sha256:${createHash('sha256').update(stableCanonical(unknownSchemaBody)).digest('hex').slice(0, 24)}`;
+      fs.writeFileSync(path.join(root, 'artifacts/receipts/unknown-schema.json'), `${JSON.stringify({ ...unknownSchemaBody, receiptDigest: unknownSchemaDigest })}\n`);
+      expect(verifyPersistedReceipt(root, 'authoritative-gate', unknownSchemaDigest, sha)).toEqual({ verified: false, reason: 'RECEIPT_SCHEMA_UNSUPPORTED:nightwatch.other-receipt.v1' });
+      // A clean receipt whose clean flag is false is not clean evidence.
       const dirtyBody = { ...cleanBody, sourceRootCleanAtEmit: false };
       const dirtyDigest = `clean-receipt:sha256:${createHash('sha256').update(JSON.stringify(dirtyBody)).digest('hex').slice(0, 24)}`;
       fs.writeFileSync(path.join(root, 'artifacts/gate-receipts/dirty.json'), `${JSON.stringify({ ...dirtyBody, receiptDigest: dirtyDigest })}\n`);
-      expect(verifyPersistedReceipt(root, dirtyDigest, sha).verified).toBe(false);
+      expect(verifyPersistedReceipt(root, 'clean-checkout', dirtyDigest, sha)).toEqual({ verified: false, reason: 'RECEIPT_CLEAN_EMIT_UNPROVEN' });
+      // A clean receipt whose verdict is not PASS is not evidence either.
+      const cleanFailBody = { ...cleanBody, finalResult: 'FAIL' };
+      const cleanFailDigest = `clean-receipt:sha256:${createHash('sha256').update(JSON.stringify(cleanFailBody)).digest('hex').slice(0, 24)}`;
+      fs.writeFileSync(path.join(root, 'artifacts/gate-receipts/clean-fail.json'), `${JSON.stringify({ ...cleanFailBody, receiptDigest: cleanFailDigest })}\n`);
+      expect(verifyPersistedReceipt(root, 'clean-checkout', cleanFailDigest, sha).verified).toBe(false);
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
     }
@@ -2704,11 +2761,43 @@ test.describe('release probe wiring (M4 task 5.1, corrected by VD-01..VD-05)', (
     }
     expect(states.size).toBe(16);
     for (const state of states.values()) expect((RELEASE_CONDITION_STATES as readonly string[]).includes(state)).toBe(true);
-    // VD-01: a D3 probe resolves MET only at HEAD == S with a clean tree (or
-    // from a receipt bound to S). Derive the facts independently here.
+    // VD-01: a D3 probe resolves MET only at the certified checkpoint with a
+    // clean tree — where "at the checkpoint" is EXACTLY the production
+    // classifier's answer: HEAD == S, or a DOCUMENTARY descendant of S
+    // (S an ancestor of HEAD, S..HEAD documentation-only) with a clean tree.
+    //
+    // R4-06 / review-4 task 1.6: this expectation is now DERIVED from
+    // `classifyCheckpointRange` with the production receipt verifier wired in
+    // (the same classifier and verifier certification uses). The previous
+    // `!(head === checkpoint && clean)` form asserted NOT MET precisely when a
+    // legitimate documentary descendant certifies, so the guard contradicted
+    // certification and went red on the only reachable success case.
     const head = git(REPO_ROOT, ['rev-parse', 'HEAD']);
     const clean = git(REPO_ROOT, ['status', '--porcelain']) === '';
-    if (!(head === checkpoint && clean)) {
+    const isAncestor = (ancestor: string, descendant: string): boolean => {
+      const probe = spawnSync('git', ['-C', REPO_ROOT, 'merge-base', '--is-ancestor', ancestor, descendant], {
+        cwd: REPO_ROOT, env: gitEnv(REPO_ROOT), shell: false, encoding: 'utf8', timeout: 10_000,
+      });
+      return probe.status === 0;
+    };
+    const rangeClass = checkpoint === '' ? 'UNKNOWN' : classifyCheckpointRange({
+      certifiedCheckpointSha: checkpoint,
+      headSha: head,
+      isAncestor,
+      changedFiles: (from, to) => {
+        try {
+          const listed = git(REPO_ROOT, ['diff', '--name-only', '--no-renames', `${from}..${to}`]);
+          return listed === '' ? [] : listed.split('\n');
+        } catch {
+          return null;
+        }
+      },
+      checkpointRoleViolations: (files) => checkpointRoleViolations(REPO_ROOT, files, {
+        kind: 'range', from: checkpoint, to: head, verifyBindingReceipt: productionBindingReceiptVerifier(REPO_ROOT),
+      }),
+    });
+    const atCheckpoint = clean && (head === checkpoint || rangeClass === 'DOCUMENTARY_DESCENDANT');
+    if (!atCheckpoint) {
       const conditionsByCheck = new Map<string, string>();
       for (const condition of liveDefinition().conditions) conditionsByCheck.set(condition.check, condition.id);
       for (const check of D3_BOUND_CHECKS) {
@@ -2878,6 +2967,32 @@ test.describe('checkpoint range classification (R3-03)', () => {
 
 test.describe('fixture-root collector receipts (R3-07)', () => {
   const REPO = path.join(__dirname, '..', '..');
+  /**
+   * R4-07 / review-4 task 1.7 — the fixture root the collector tests write
+   * into. It is a SHARED clone of the checkout at the live HEAD (its own index
+   * and object alternates, no artifacts/ scratch), so a receipt is written
+   * into a fixture root and NEVER into the real checkout, while the checker
+   * under test is still the real one at the real HEAD.
+   */
+  let FIXTURE_ROOT = '';
+
+  test.beforeAll(() => {
+    const head = spawnSync('git', ['-C', REPO, 'rev-parse', 'HEAD'], { cwd: REPO, env: gitEnv(REPO), encoding: 'utf8' }).stdout?.trim() ?? '';
+    expect(head).not.toBe('');
+    FIXTURE_ROOT = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-collector-fixture-'));
+    const clone = spawnSync('git', ['clone', '--shared', '--no-checkout', '--quiet', REPO, FIXTURE_ROOT], { cwd: REPO, env: gitEnv(REPO), encoding: 'utf8', timeout: 300_000 });
+    expect(`${clone.stdout ?? ''}${clone.stderr ?? ''}`).toBe('');
+    const checkout = spawnSync('git', ['-C', FIXTURE_ROOT, 'checkout', '--quiet', '--detach', head], { cwd: FIXTURE_ROOT, env: gitEnv(FIXTURE_ROOT), encoding: 'utf8', timeout: 300_000 });
+    expect(checkout.status).toBe(0);
+    // The fixture root needs the installed dependencies (the checker loads TS
+    // modules through bin/lib/typescript-runtime-loader.mjs). node_modules is
+    // gitignored, so a symlink keeps the fixture tree clean.
+    fs.symlinkSync(path.join(REPO, 'node_modules'), path.join(FIXTURE_ROOT, 'node_modules'), 'dir');
+  });
+
+  test.afterAll(() => {
+    if (FIXTURE_ROOT !== '') fs.rmSync(FIXTURE_ROOT, { recursive: true, force: true });
+  });
 
   function runChecker(root: string): string {
     const result = spawnSync(process.execPath, [path.join(root, 'bin/project-state-check.mjs'), '--root', root], {
@@ -2961,24 +3076,17 @@ test.describe('fixture-root collector receipts (R3-07)', () => {
       harnessSource: harnessAtS,
       executedAt: '2026-09-30T00:00:00.000Z',
     });
-    const target = path.join(REPO, 'artifacts/receipts/ui-harness-receipt.v1.json');
-    let backup: string | null = null;
-    try {
-      backup = fs.readFileSync(target, 'utf8');
-    } catch {
-      backup = null;
-    }
+    const target = path.join(FIXTURE_ROOT, 'artifacts/receipts/ui-harness-receipt.v1.json');
     try {
       fs.mkdirSync(path.dirname(target), { recursive: true });
       fs.writeFileSync(target, `${JSON.stringify(build(s), null, 2)}\n`);
-      const bound = runChecker(REPO);
+      const bound = runChecker(FIXTURE_ROOT);
       expect(conditionCheckState(bound, 'ui-error-taxonomy-rendering'), bound).toBe('MET');
       fs.writeFileSync(target, `${JSON.stringify(build('b'.repeat(40)), null, 2)}\n`);
-      const other = runChecker(REPO);
+      const other = runChecker(FIXTURE_ROOT);
       expect(conditionCheckState(other, 'ui-error-taxonomy-rendering'), other).toBe('NOT_AT_CHECKPOINT');
     } finally {
-      if (backup === null) fs.rmSync(target, { force: true });
-      else fs.writeFileSync(target, backup);
+      fs.rmSync(target, { force: true });
     }
   });
 
@@ -3010,17 +3118,17 @@ test.describe('fixture-root collector receipts (R3-07)', () => {
       campaignKind: 'PRINT_CLI_PROVIDER',
       reasonerIdentity: { kind: 'PRINT_CLI_PROVIDER', identityDigest: `rid:sha256:${'a'.repeat(24)}`, printCliDigest: `sha256:${'b'.repeat(24)}` },
     });
-    const dir = path.join(REPO, `artifacts/nightwatch-fixture-${process.pid}-${Date.now()}`);
+    const dir = path.join(FIXTURE_ROOT, `artifacts/nightwatch-fixture-${process.pid}-${Date.now()}`);
     try {
       fs.mkdirSync(dir, { recursive: true });
       fs.writeFileSync(path.join(dir, 'manifest.json'), `${JSON.stringify({ runId: 'fixture-run', product: 'campaign', nightwatchSha: s })}\n`);
       fs.writeFileSync(path.join(dir, 'summary.json'), `${JSON.stringify({ passed: true })}\n`);
       fs.writeFileSync(path.join(dir, 'product-run-receipt.json'), `${JSON.stringify(build(s), null, 2)}\n`);
-      const bound = runChecker(REPO);
+      const bound = runChecker(FIXTURE_ROOT);
       expect(conditionCheckState(bound, 'autonomous-yield-proof'), bound).toBe('MET');
       fs.writeFileSync(path.join(dir, 'manifest.json'), `${JSON.stringify({ runId: 'fixture-run', product: 'campaign', nightwatchSha: 'b'.repeat(40) })}\n`);
       fs.writeFileSync(path.join(dir, 'product-run-receipt.json'), `${JSON.stringify(build('b'.repeat(40)), null, 2)}\n`);
-      const other = runChecker(REPO);
+      const other = runChecker(FIXTURE_ROOT);
       expect(conditionCheckState(other, 'autonomous-yield-proof'), other).toBe('NOT_AT_CHECKPOINT');
     } finally {
       fs.rmSync(dir, { recursive: true, force: true });

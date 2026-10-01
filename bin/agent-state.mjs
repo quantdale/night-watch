@@ -24,6 +24,7 @@ import {
 } from './agent-continuity-protocol.mjs';
 import { inspectWorkspace, listWorktreeBranches } from './workspace-integrity.mjs';
 import { checkpointRoleViolations } from './lib/checkpoint-role.mjs';
+import { productionBindingReceiptVerifier } from './lib/release-evidence.mjs';
 import { validateProgrammeState } from './lib/programme-state.mjs';
 import { collectCiBlockStale, validateCiBlockRecord } from './lib/ci-block-record.mjs';
 import {
@@ -500,14 +501,27 @@ function committedPathsForCommit(root, commit) {
   };
 }
 
+/**
+ * R4-01 / review-4 task 1.1 — the production receipt verifier handed to every
+ * checkpoint/range classification in this checker. The `() => true` shortcut
+ * survives only inside hardening/test fixtures.
+ * @param {string} root
+ */
+function bindingReceiptVerifier(root) {
+  return productionBindingReceiptVerifier(root);
+}
+
 function classifyCommitRole(root, commit) {
   const inspected = committedPathsForCommit(root, commit);
   if (inspected.status !== 'KNOWN') return { ...inspected, role: 'AMBIGUOUS' };
   const paths = inspected.paths;
   if (paths.length === 0) return { ...inspected, role: 'DOCUMENTATION_ONLY', reason: 'commit changes no paths' };
   // A-01: approval is path eligibility AND, for the binding files, the
-  // diff-shape guard evaluated over this exact commit.
-  const substantivePaths = checkpointRoleViolations(root, paths, { kind: 'commit', commit });
+  // diff-shape guard evaluated over this exact commit. R4-01 / review-4 task
+  // 1.1: the guard is given the PRODUCTION receipt verifier, so a commit that
+  // records a genuinely persisted, subject-matching, PASS receipt stays
+  // documentary instead of making every descendant of S substantive.
+  const substantivePaths = checkpointRoleViolations(root, paths, { kind: 'commit', commit, verifyBindingReceipt: bindingReceiptVerifier(root) });
   return {
     ...inspected,
     role: substantivePaths.length === 0 ? 'DOCUMENTATION_ONLY' : 'IMPLEMENTATION',
@@ -559,7 +573,7 @@ function checkContinuity(stateFields, root, head, errors, warnings) {
 
   if (validatedOk && substantiveOk && validated !== substantive) {
     const rolePaths = isAncestor(root, substantive, validated) ? committedChangedPaths(root, substantive, validated) : null;
-    const roleViolations = rolePaths === null ? null : checkpointRoleViolations(root, rolePaths, { kind: 'range', from: substantive, to: validated });
+    const roleViolations = rolePaths === null ? null : checkpointRoleViolations(root, rolePaths, { kind: 'range', from: substantive, to: validated, verifyBindingReceipt: bindingReceiptVerifier(root) });
     const docsOnly = roleViolations !== null && roleViolations.length === 0;
     errors.push(
       docsOnly
@@ -596,7 +610,7 @@ function checkContinuity(stateFields, root, head, errors, warnings) {
         if (documentationPaths === null) {
           errors.push('INVALID_DOCUMENTATION_CHECKPOINT: unable to inspect the checkpoint range');
         } else {
-          const disallowed = checkpointRoleViolations(root, documentationPaths, { kind: 'range', from: substantive, to: documentation });
+          const disallowed = checkpointRoleViolations(root, documentationPaths, { kind: 'range', from: substantive, to: documentation, verifyBindingReceipt: bindingReceiptVerifier(root) });
           if (disallowed.length > 0) {
             errors.push(`INVALID_DOCUMENTATION_CHECKPOINT: range contains non-documentation paths: ${disallowed.join(', ')}`);
           }
@@ -886,7 +900,7 @@ export function classifySha(root, recordedSha, suppliedHead = null) {
   }
 
   const paths = changedPaths(root, recordedSha, head);
-  const disallowed = checkpointRoleViolations(root, paths, { kind: 'range', from: recordedSha, to: head });
+  const disallowed = checkpointRoleViolations(root, paths, { kind: 'range', from: recordedSha, to: head, verifyBindingReceipt: bindingReceiptVerifier(root) });
   if (disallowed.length > 0) {
     return {
       status: 'STALE',

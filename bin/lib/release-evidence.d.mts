@@ -53,7 +53,17 @@ export function guardHoldsForChange(
   afterText: string | null,
   options?: { verifyReceipt?: BindingReceiptVerifier | undefined },
 ): boolean;
-export function verifyPersistedReceipt(root: string, digest: string, sha: string | null): { verified: boolean; reason: string };
+export const RECEIPT_KINDS: Readonly<Record<'clean' | 'gate', {
+  digestPrefix: string;
+  directory: string;
+  schemas: readonly string[];
+  verdictFields: readonly string[];
+  requireCleanEmit: boolean;
+  subjects: readonly string[] | null;
+}>>;
+export function receiptDeclaredSubjects(body: Record<string, unknown>): string[];
+export function verifyPersistedReceipt(root: string, subject: string, digest: string, sha: string | null): { verified: boolean; reason: string };
+export function productionBindingReceiptVerifier(root: string): (subject: string, digest: string, sha: string) => boolean;
 export function stableCanonical(value: unknown): string;
 export function parseEvidenceBinding(record: unknown): { ok: boolean; errors: string[]; binding: EvidenceBinding | null };
 export function parseReleaseEvidence(record: unknown): { ok: boolean; errors: string[]; bindings: EvidenceBinding[] };

@@ -6,6 +6,7 @@
 // and an expired revisit date is reported.
 
 import { test, expect } from '@playwright/test';
+import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -26,8 +27,11 @@ import {
   lineSha256Prefix,
   loadDocumentRoleCorrections,
   parseDocumentRoleCorrections,
+  productionBindingReceiptVerifier,
+  stableCanonical,
 } from '../../bin/lib/release-evidence.mjs';
 import { checkpointRoleViolations, correctionPairingViolations, removedLineDigests, removedLineDigestsFromDiff, unpairedCorrectionsInRange } from '../../bin/lib/checkpoint-role.mjs';
+import { classifyCheckpointRange } from '../../bin/lib/checkpoint-range.mjs';
 import { evidenceArtifactExistsAtSha } from '../../bin/lib/evidence-artifact.mjs';
 import { loadReleaseEvidenceBindings, resolveEvidenceShaForSubject } from '../../bin/lib/release-evidence.mjs';
 import { isApprovedCheckpointPath } from '../../bin/agent-continuity-protocol.mjs';
@@ -267,6 +271,106 @@ test.describe('validation lane state', () => {
       expect(git(['diff-tree', '--root', '--no-commit-id', '--name-only', '--no-renames', '-r', mergedStructural]).stdout).not.toContain('config/release-evidence.v1.json');
       expect(checkpointRoleViolations(root, ['config/release-evidence.v1.json'], { kind: 'commit', commit: mergedStructural }))
         .toEqual(['config/release-evidence.v1.json']);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('R4-01: the PRODUCTION verifier makes a receipt-binding commit documentary (and its absence keeps it substantive)', () => {
+    const os = require('node:os') as typeof import('node:os');
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'nw-r401-'));
+    const git = (args: string[]) => spawnSync('git', args, { cwd: root, encoding: 'utf8', shell: false });
+    const write = (file: string, text: string) => {
+      fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
+      fs.writeFileSync(path.join(root, file), text);
+    };
+    const receiptDigest = (subject: string) => {
+      const body = { schemaVersion: 'nightwatch.quality-gate-receipt.v1', subject, gitHead: 'b'.repeat(40), finalResult: 'PASS' };
+      return `receipt:sha256:${createHash('sha256').update(stableCanonical(body)).digest('hex').slice(0, 24)}`;
+    };
+    const persistReceipt = (subject: string, name: string) => {
+      const body = { schemaVersion: 'nightwatch.quality-gate-receipt.v1', subject, gitHead: 'b'.repeat(40), finalResult: 'PASS' };
+      write(`artifacts/receipts/${name}.json`, `${JSON.stringify({ ...body, receiptDigest: receiptDigest(subject) })}\n`);
+    };
+    const binding = (sha: string | null, receipt: string | null) => `${JSON.stringify({ schemaVersion: 'nightwatch.release-evidence.v1', bindings: [{ subject: 'root-compile', evidenceSha: sha, receiptDigest: receipt, observedAt: receipt === null ? null : '2026-09-30T00:00:00.000Z', executor: receipt === null ? null : 'gate:local', artifactPaths: [], certifying: true }] }, null, 2)}\n`;
+    try {
+      git(['init', '--quiet', '-b', 'main']);
+      git(['config', 'user.email', 'probe@nightwatch.local']);
+      git(['config', 'user.name', 'probe']);
+      write('config/release-evidence.v1.json', binding('a'.repeat(40), null));
+      write('docs/other.md', 'prose\n');
+      git(['add', '--all']);
+      git(['commit', '--quiet', '--no-gpg-sign', '-m', 'base']);
+      const base = git(['rev-parse', 'HEAD']).stdout!.trim();
+      // A binding commit that records a VERIFIED receipt is documentary: the
+      // receipt is persisted, subject-matching, schema-valid, PASS and
+      // digest-matching for the bound SHA. Without the production verifier it
+      // is substantive (the fail-closed direction R4-01 broke in production).
+      persistReceipt('root-compile', 'gate-root-compile');
+      write('config/release-evidence.v1.json', binding('b'.repeat(40), receiptDigest('root-compile')));
+      git(['add', '--all']);
+      git(['commit', '--quiet', '--no-gpg-sign', '-m', 'verified receipt binding']);
+      const verified = git(['rev-parse', 'HEAD']).stdout!.trim();
+      const verifier = productionBindingReceiptVerifier(root);
+      expect(checkpointRoleViolations(root, ['config/release-evidence.v1.json'], { kind: 'commit', commit: verified, verifyBindingReceipt: verifier })).toEqual([]);
+      // The deadlock regression: the whole RANGE from the base commit to this
+      // descendant stays DOCUMENTARY with the production verifier wired in.
+      expect(checkpointRoleViolations(root, ['config/release-evidence.v1.json'], { kind: 'range', from: base, to: verified, verifyBindingReceipt: verifier })).toEqual([]);
+      // Fail-closed without a verifier, and fail-closed for a MISMATCHED
+      // subject: a receipt that names another subject never certifies this one.
+      expect(checkpointRoleViolations(root, ['config/release-evidence.v1.json'], { kind: 'commit', commit: verified })).toEqual(['config/release-evidence.v1.json']);
+      expect(verifier('root-compile', receiptDigest('root-compile'), 'b'.repeat(40))).toBe(true);
+      persistReceipt('authoritative-gate', 'gate-other-subject');
+      expect(verifier('root-compile', receiptDigest('authoritative-gate'), 'b'.repeat(40))).toBe(false);
+      expect(checkpointRoleViolations(root, ['config/release-evidence.v1.json'], { kind: 'range', from: base, to: verified, verifyBindingReceipt: () => false })).toEqual(['config/release-evidence.v1.json']);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('R4-02: a rename cannot hide a source deletion — `git mv` is a delete plus an add', () => {
+    const os = require('node:os') as typeof import('node:os');
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'nw-r402-'));
+    const git = (args: string[]) => spawnSync('git', args, { cwd: root, encoding: 'utf8', shell: false });
+    const write = (file: string, text: string) => {
+      fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
+      fs.writeFileSync(path.join(root, file), text);
+    };
+    try {
+      git(['init', '--quiet', '-b', 'main']);
+      git(['config', 'user.email', 'probe@nightwatch.local']);
+      git(['config', 'user.name', 'probe']);
+      write('src/realSource.ts', 'export const real = 1;\n');
+      git(['add', '--all']);
+      git(['commit', '--quiet', '--no-gpg-sign', '-m', 'implement the source file']);
+      const base = git(['rev-parse', 'HEAD']).stdout!.trim();
+      // A "docs:" commit that MOVES the source file into an approved
+      // documentation path. Git's rename detection reports only the approved
+      // destination, so a classifier without `--no-renames` sees a
+      // documentation-only commit.
+      fs.mkdirSync(path.join(root, '.agent/tasks/fixture'), { recursive: true });
+      const moveResult = git(['mv', 'src/realSource.ts', '.agent/tasks/fixture/PLAN.md']);
+      expect(moveResult.status).toBe(0);
+      const commitResult = git(['commit', '--quiet', '--no-gpg-sign', '-m', 'docs: relocate the plan note']);
+      expect(commitResult.status).toBe(0);
+      const moved = git(['rev-parse', 'HEAD']).stdout!.trim();
+      const withRenameDetection = git(['diff', '--name-only', `${base}..${moved}`]).stdout!.trim().split('\n').filter(Boolean);
+      const withoutRenameDetection = git(['diff', '--name-only', '--no-renames', `${base}..${moved}`]).stdout!.trim().split('\n').filter(Boolean);
+      expect(withRenameDetection).toEqual(['.agent/tasks/fixture/PLAN.md']);
+      expect(withoutRenameDetection).toContain('src/realSource.ts');
+      // The classifier receives the honest list, so the commit is SUBSTANTIVE.
+      expect(checkpointRoleViolations(root, withoutRenameDetection, { kind: 'commit', commit: moved })).toContain('src/realSource.ts');
+      // Range classification: the naive (rename-detecting) file list would call
+      // the range DOCUMENTARY; the `--no-renames` list is SUBSTANTIVE.
+      const rangeClass = (files: string[]) => classifyCheckpointRange({
+        certifiedCheckpointSha: base,
+        headSha: moved,
+        isAncestor: () => true,
+        changedFiles: () => files,
+        checkpointRoleViolations: (listed) => checkpointRoleViolations(root, listed, { kind: 'commit', commit: moved }),
+      });
+      expect(rangeClass(withRenameDetection)).toBe('DOCUMENTARY_DESCENDANT');
+      expect(rangeClass(withoutRenameDetection)).toBe('SUBSTANTIVE_DESCENDANT');
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
     }
