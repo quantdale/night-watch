@@ -394,7 +394,9 @@ export function checkNameListingRenameTotality() {
   let totalListings = 0;
   const seenIn = new Set();
   for (const file of gitFiles()) {
-    if (!/^(?:bin\/.*\.mjs|src\/.*\.ts)$/.test(file) || isRuleEngineSource(file)) continue;
+    // The scanner's own source holds the deliberately-bad SAMPLES of its self-test; it
+    // contains no real git invocation, so it is the one file excluded by name.
+    if (!/^(?:bin\/.*\.mjs|src\/.*\.ts)$/.test(file) || isRuleEngineSource(file) || file === 'bin/lib/name-listing-scan.mjs') continue;
     scannedFiles += 1;
     const renameAware = Object.hasOwn(RENAME_AWARE_LISTINGS, file);
     const result = scanRenameBlindListings(read(file), file, { renameAware });

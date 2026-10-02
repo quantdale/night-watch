@@ -69,7 +69,7 @@ test.describe('R5-02 name-listing rename totality', () => {
     let listings = 0;
     const seen = new Set<string>();
     for (const file of files) {
-      if (!/^(?:bin\/.*\.mjs|src\/.*\.ts)$/.test(file) || file.startsWith('bin/lib/hardening/') || file === 'bin/hardening-check.mjs') continue;
+      if (!/^(?:bin\/.*\.mjs|src\/.*\.ts)$/.test(file) || file.startsWith('bin/lib/hardening/') || file === 'bin/hardening-check.mjs' || file === 'bin/lib/name-listing-scan.mjs') continue;
       if (!fs.existsSync(path.join(REPO_ROOT, file))) continue;
       const result = scanRenameBlindListings(fs.readFileSync(path.join(REPO_ROOT, file), 'utf8'), file, { renameAware: Object.hasOwn(RENAME_AWARE_LISTINGS, file) });
       expect(result.violations, file).toEqual([]);

@@ -42,7 +42,7 @@ function literalText(node) {
  * Pure scanner (exported for the unit tests and the rule's own self-test).
  * @param {string} sourceText
  * @param {string} fileName
- * @param {{ renameAware?: boolean }} [options]
+ * @param {Partial<{ renameAware: boolean }>} [options]
  * @returns {{ violations: Array<{ line: number, detail: string }>, listings: number, renameAwareListings: number }}
  */
 export function scanRenameBlindListings(sourceText, fileName, options = {}) {

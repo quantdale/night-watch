@@ -23,3 +23,6 @@ export function checkpointRoleViolations(
 // R4-13 / review-4 task 3.4 (bin/lib/checkpoint-role.mjs).
 export const ARCHIVE_MOVE_PATH_RE: RegExp;
 export function archiveMoveHolds(root: string, commit: string, file: string): boolean;
+// R5-01 / review-5 task A1.1 (bin/lib/checkpoint-role.mjs).
+export const UNLISTABLE_RANGE_VIOLATION: string;
+export function commitTouchedPaths(root: string, commit: string): string[] | null;
