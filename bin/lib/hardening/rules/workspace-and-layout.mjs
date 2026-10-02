@@ -17,8 +17,10 @@ import {
   read,
   readDataFile,
   gitFiles,
+  isRuleEngineSource,
 } from '../kernel.mjs';
 import { loadTypeScriptModule } from '../../typescript-runtime-loader.mjs';
+import { RENAME_AWARE_LISTINGS, RENAME_SCAN_SELF_TEST, scanRenameBlindListings } from '../../name-listing-scan.mjs';
 
 export function checkHostCapabilityMatrix() {
   const matrixFile = 'docs/HOST-CAPABILITY-MATRIX.md';
@@ -365,5 +367,55 @@ export function checkRootOutputConfigLiteral() {
   }
   if (configs.length > 0 && resolved === 0) {
     fail('ROOT_OUTPUT_CONFIG_LITERAL no root playwright config resolves output through resolvePlaywrightOutputDir; the detector is broken rather than the layout clean');
+  }
+}
+
+/**
+ * R5-02 / review-5 task A2.1 — the rename-blind name-listing TOTALITY rule. The
+ * pure scanner lives in `bin/lib/name-listing-scan.mjs` (no engine dependency,
+ * so a unit test can drive it); this rule applies it to every tracked source.
+ */
+export function checkNameListingRenameTotality() {
+  for (const sample of RENAME_SCAN_SELF_TEST) {
+    const result = scanRenameBlindListings(sample.code, 'sample.mjs');
+    if (result.violations.length !== sample.expect) {
+      fail(`NAME_LISTING_RENAME_SCANNER_STUBBED the scanner classified '${sample.name}' as ${result.violations.length} violation(s), expected ${sample.expect}`);
+    }
+  }
+  const awareSample = scanRenameBlindListings("run(['diff', '--name-status', '--find-renames', a, b]);", 'sample.mjs', { renameAware: true });
+  if (awareSample.violations.length !== 0 || awareSample.renameAwareListings !== 1) {
+    fail('NAME_LISTING_RENAME_SCANNER_STUBBED a declared rename-aware listing (--find-renames) was not recognised as exempt');
+  }
+  const unnamedAware = scanRenameBlindListings("run(['diff', '--name-status', a, b]);", 'sample.mjs', { renameAware: true });
+  if (unnamedAware.violations.length !== 1) {
+    fail('NAME_LISTING_RENAME_SCANNER_STUBBED an exempt file may only skip --no-renames when the listing names --find-renames explicitly');
+  }
+  let scannedFiles = 0;
+  let totalListings = 0;
+  const seenIn = new Set();
+  for (const file of gitFiles()) {
+    if (!/^(?:bin\/.*\.mjs|src\/.*\.ts)$/.test(file) || isRuleEngineSource(file)) continue;
+    scannedFiles += 1;
+    const renameAware = Object.hasOwn(RENAME_AWARE_LISTINGS, file);
+    const result = scanRenameBlindListings(read(file), file, { renameAware });
+    totalListings += result.listings;
+    if (result.listings > 0) seenIn.add(file);
+    for (const violation of result.violations) {
+      fail(`NAME_LISTING_RENAME_BLIND ${file}:${violation.line} ${violation.detail}`);
+    }
+    if (renameAware && result.renameAwareListings === 0) {
+      fail(`NAME_LISTING_RENAME_EXEMPTION_STALE ${file} is declared rename-aware but carries no --find-renames listing; remove the exemption`);
+    }
+  }
+  for (const file of Object.keys(RENAME_AWARE_LISTINGS)) {
+    if (!gitFiles().includes(file)) fail(`NAME_LISTING_RENAME_EXEMPTION_STALE ${file} is declared rename-aware but is not a tracked file`);
+  }
+  // A rule that scans nothing proves nothing: the known classification and
+  // deletion listings must actually have been read.
+  for (const required of ['bin/workspace-integrity.mjs', 'bin/project-state-check.mjs', 'bin/agent-state.mjs', 'bin/lib/checkpoint-role.mjs', 'src/core/provenance/localGit.ts', 'src/core/benchmark/preFixSource.ts']) {
+    if (!seenIn.has(required)) fail(`NAME_LISTING_RENAME_SCAN_BLIND the scan found no name listing in ${required}; the scanner no longer reads the sites it exists for`);
+  }
+  if (scannedFiles < 40 || totalListings < 12) {
+    fail(`NAME_LISTING_RENAME_SCAN_BLIND only ${scannedFiles} file(s) and ${totalListings} listing(s) were scanned`);
   }
 }

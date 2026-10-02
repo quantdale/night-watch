@@ -125,7 +125,7 @@ export function collectChangeset(options: CollectOptions): ChangeSet {
   const headSha = requireSha(options.headSha, 'headSha');
   verifyCommit(options.repoPath, baseSha, 'baseSha');
   verifyCommit(options.repoPath, headSha, 'headSha');
-  const files = parseNameStatus(options.repoId, requireGit(runGit(options.repoPath, ['diff', '--name-status', '--find-renames', '-z', baseSha, headSha, '--']), ['diff', '--name-status']));
+  const files = parseNameStatus(options.repoId, requireGit(runGit(options.repoPath, ['diff', '--name-status', '--find-renames', '-z', baseSha, headSha, '--']), ['diff', '--name-status', '--find-renames']));
   const dirtyFiles = parseDirtyStatus(options.repoId, requireGit(runGit(options.repoPath, ['status', '--porcelain=v1', '-z']), ['status', '--porcelain=v1']));
   const commits = parseCommits(requireGit(runGit(options.repoPath, ['log', '--format=%H%x00%cI', `${baseSha}..${headSha}`]), ['log', '--format=<sha><timestamp>', '<range>']));
   const baseline: RepoBaseline = {

@@ -783,6 +783,10 @@
       "class": "PARALLEL_SAFE",
       "signals": []
     },
+    "tests/unit/nameListingRenameTotality.test.ts": {
+      "class": "PARALLEL_SAFE",
+      "signals": []
+    },
     "tests/unit/networkObserverSettlement.test.ts": {
       "class": "PARALLEL_SAFE",
       "signals": []

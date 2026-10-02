@@ -2805,6 +2805,108 @@
           }
         ]
       }
+    ],
+    "checkNameListingRenameTotality": [
+      {
+        "id": "HC-256",
+        "ops": [
+          {
+            "file": "bin/workspace-integrity.mjs",
+            "search": "['diff', '--diff-filter=D', '--name-only', '--no-renames', base]",
+            "replace": "['diff', '--diff-filter=D', '--name-only', base]"
+          }
+        ]
+      },
+      {
+        "id": "HC-257",
+        "ops": [
+          {
+            "file": "bin/project-state-check.mjs",
+            "search": "['diff', '--name-only', '--no-renames', `${certifiedCheckpointSha}..${liveHeadSha}`]",
+            "replace": "['diff', '--name-only', `${certifiedCheckpointSha}..${liveHeadSha}`]"
+          }
+        ]
+      },
+      {
+        "id": "HC-258",
+        "ops": [
+          {
+            "file": "bin/agent-state.mjs",
+            "search": "['diff', '--name-only', '--no-renames', `${from}..${to}`]",
+            "replace": "['diff', '--name-only', `${from}..${to}`]"
+          }
+        ]
+      },
+      {
+        "id": "HC-259",
+        "ops": [
+          {
+            "file": "src/core/provenance/localGit.ts",
+            "search": "['diff', '--name-only', '--no-renames', fromSha, toSha]",
+            "replace": "['diff', '--name-only', fromSha, toSha]"
+          }
+        ]
+      },
+      {
+        "id": "HC-260",
+        "ops": [
+          {
+            "file": "src/core/benchmark/preFixSource.ts",
+            "search": "'--name-only', '--no-renames', '-r'",
+            "replace": "'--name-only', '-r'"
+          }
+        ]
+      },
+      {
+        "id": "HC-261",
+        "ops": [
+          {
+            "file": "bin/affected-tests.mjs",
+            "search": "['diff', '--name-only', '--no-renames', base]",
+            "replace": "['diff', '--name-only', base]"
+          }
+        ]
+      },
+      {
+        "id": "HC-262",
+        "ops": [
+          {
+            "file": "bin/lib/name-listing-scan.mjs",
+            "search": "  return { violations, listings, renameAwareListings };",
+            "replace": "  return { violations: [], listings, renameAwareListings };"
+          }
+        ]
+      },
+      {
+        "id": "HC-263",
+        "ops": [
+          {
+            "file": "bin/lib/name-listing-scan.mjs",
+            "search": "export const RENAME_AWARE_LISTINGS = Object.freeze({\n",
+            "replace": "export const RENAME_AWARE_LISTINGS = Object.freeze({\n  'bin/workspace-integrity.mjs': 'widened exemption',\n"
+          }
+        ]
+      },
+      {
+        "id": "HC-264",
+        "ops": [
+          {
+            "file": "bin/lib/name-listing-scan.mjs",
+            "search": "        if (siblings.includes('--no-renames')) {",
+            "replace": "        if (siblings.length >= 0) {"
+          }
+        ]
+      },
+      {
+        "id": "HC-265",
+        "ops": [
+          {
+            "file": "bin/workspace-integrity.mjs",
+            "search": "['diff', '--diff-filter=D', '--name-only', '--no-renames', base]",
+            "replace": "['diff', '--diff-filter=D', '--name-only', ...['--no-renames'], base]"
+          }
+        ]
+      }
     ]
   }
 }

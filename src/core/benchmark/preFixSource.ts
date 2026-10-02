@@ -89,7 +89,7 @@ export function extractPreFixSnapshot(repoPath: string, fixSha: string): PreFixS
   try {
     parent = runGit(repoPath, ['rev-parse', '--verify', `${sha}^`]);
     if (parent.status !== 0) return blocked('PARENT_UNAVAILABLE');
-    names = runGit(repoPath, ['diff-tree', '--no-commit-id', '--name-only', '-r', `${sha}^`, sha]);
+    names = runGit(repoPath, ['diff-tree', '--no-commit-id', '--name-only', '--no-renames', '-r', `${sha}^`, sha]);
     if (names.status !== 0) return blocked('DIFF_UNAVAILABLE');
   } catch {
     return blocked('GIT_READ_FAILED');

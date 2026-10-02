@@ -761,7 +761,7 @@ function checkDeclaredDeletions(root, self, policy, errors, warnings) {
     }
     return { id: 'WORKSPACE_DECLARED_DELETIONS', status: 'NOT_APPLICABLE', baseKind, deletionCount: null, undeclared: [] };
   }
-  const result = git(root, ['diff', '--diff-filter=D', '--name-only', base]);
+  const result = git(root, ['diff', '--diff-filter=D', '--name-only', '--no-renames', base]);
   if (!result.ok) {
     errors.push({ code: 'WORKSPACE_DELETION_DIFF_FAILED', detail: `git diff against ${baseKind} failed` });
     return { id: 'WORKSPACE_DECLARED_DELETIONS', status: 'VIOLATED', baseKind, deletionCount: null, undeclared: [] };

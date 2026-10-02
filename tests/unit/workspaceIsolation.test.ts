@@ -512,6 +512,53 @@ test.describe('C-00 adversarial matrix — deletions', () => {
     }
   });
 
+  // R5-02 / review-5 task A2.1 — Git's rename detection reports a moved file as
+  // ONE entry at its destination, so a deletion check without --no-renames never
+  // saw a `git mv` of a tracked source disappear.
+  test('R5-02. a committed `git mv` of a tracked source is an undeclared deletion', () => {
+    const { base, canonical } = fixture();
+    try {
+      const owned = startOwnedSession(canonical, base, 'synthetic-task');
+      gitOk(owned.path, ['mv', 'victim.txt', 'relocated-victim.txt']);
+      gitOk(owned.path, ['commit', '-m', 'relocate another session\'s file']);
+      const failed = integrityJson(owned.path);
+      expect(failed.status).toBe(1);
+      expect(codes(failed.report)).toContain('WORKSPACE_UNDECLARED_TRACKED_DELETION');
+      expect(JSON.stringify(failed.report)).toContain('victim.txt');
+    } finally {
+      cleanup(base);
+    }
+  });
+
+  test('R5-02. an uncommitted staged `git mv` of a tracked source is caught before it is committed', () => {
+    const { base, canonical } = fixture();
+    try {
+      const owned = startOwnedSession(canonical, base, 'synthetic-task');
+      gitOk(owned.path, ['mv', 'victim.txt', 'relocated-victim.txt']);
+      const failed = integrityJson(owned.path);
+      expect(failed.status).toBe(1);
+      expect(codes(failed.report)).toContain('WORKSPACE_UNDECLARED_TRACKED_DELETION');
+    } finally {
+      cleanup(base);
+    }
+  });
+
+  test('R5-02. moving a file the session itself created is no net deletion', () => {
+    const { base, canonical } = fixture();
+    try {
+      const owned = startOwnedSession(canonical, base, 'synthetic-task');
+      fs.writeFileSync(path.join(owned.path, 'scratch.txt'), 'created in this session\n');
+      gitOk(owned.path, ['add', 'scratch.txt']);
+      gitOk(owned.path, ['commit', '-m', 'create']);
+      gitOk(owned.path, ['mv', 'scratch.txt', 'scratch-renamed.txt']);
+      gitOk(owned.path, ['commit', '-m', 'rename']);
+      const result = integrityJson(owned.path);
+      expect(codes(result.report)).not.toContain('WORKSPACE_UNDECLARED_TRACKED_DELETION');
+    } finally {
+      cleanup(base);
+    }
+  });
+
   test('F. an uncommitted tracked-file deletion is caught before it is committed', () => {
     const { base, canonical } = fixture();
     try {

@@ -127,6 +127,7 @@
     "tests/unit/localInvestigationProviders.test.ts": 284,
     "tests/unit/minedCases.test.ts": 340,
     "tests/unit/monitor.test.ts": 8,
+    "tests/unit/nameListingRenameTotality.test.ts": 2,
     "tests/unit/networkObserverSettlement.test.ts": 12303,
     "tests/unit/nightwatchHygiene.test.ts": 1936,
     "tests/unit/nw01ClosedVocabularies.test.ts": 96,

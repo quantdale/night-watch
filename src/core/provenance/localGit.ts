@@ -216,8 +216,8 @@ function parseNameOnly(stdout: string): readonly string[] {
 export function readWorkingTreeStatus(options: LocalProvenanceOptions = {}): WorkingTreeStatus {
   const root = canonicalRoot(options.repositoryRoot ?? path.resolve(__dirname, '../../..'));
   requireHead(root);
-  const unstaged = runGit(root, ['diff', '--name-only']).stdout;
-  const staged = runGit(root, ['diff', '--cached', '--name-only']).stdout;
+  const unstaged = runGit(root, ['diff', '--name-only', '--no-renames']).stdout;
+  const staged = runGit(root, ['diff', '--cached', '--name-only', '--no-renames']).stdout;
   const untracked = runGit(root, ['ls-files', '--others', '--exclude-standard']).stdout;
   return {
     unstagedFiles: parseNameOnly(unstaged),
@@ -250,7 +250,7 @@ export function currentHeadShaUnchecked(repositoryRoot: string): string {
 export function changedFilesBetweenCommits(repositoryRoot: string, fromSha: string, toSha: string): readonly string[] {
   const root = canonicalRoot(repositoryRoot);
   if (!SHA_RE.test(fromSha) || !SHA_RE.test(toSha)) throw new LocalProvenanceError('BASELINE_NOT_FOUND');
-  const result = runGit(root, ['diff', '--name-only', fromSha, toSha]);
+  const result = runGit(root, ['diff', '--name-only', '--no-renames', fromSha, toSha]);
   return parseNameOnly(result.stdout);
 }
 
