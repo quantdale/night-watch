@@ -2596,8 +2596,8 @@
         "ops": [
           {
             "file": "bin/lib/checkpoint-role.mjs",
-            "search": "&& !ARCHIVE_MOVE_PATH_RE.test(file));",
-            "replace": ");"
+            "search": "&& !ARCHIVE_MOVE_PATH_RE.test(file);",
+            "replace": ";"
           }
         ]
       },
@@ -2606,8 +2606,8 @@
         "ops": [
           {
             "file": "bin/lib/checkpoint-role.mjs",
-            "search": "  if (guarded.size === 0 && archived.size === 0) return [...new Set(violations)];",
-            "replace": "  if (guarded.size === 0) return [...new Set(violations)];"
+            "search": "  if (!perCommitJudgement && aggregateGuarded.size === 0 && aggregateArchived.size === 0) return [...new Set(violations)];",
+            "replace": "  if (!perCommitJudgement && aggregateGuarded.size === 0) return [...new Set(violations)];"
           }
         ]
       },
@@ -2618,6 +2618,56 @@
             "file": "bin/lib/checkpoint-role.mjs",
             "search": "      if (!archiveMoveHolds(root, commit, file)) violations.push(file);",
             "replace": "      void file;"
+          }
+        ]
+      },
+      {
+        "id": "HC-251",
+        "ops": [
+          {
+            "file": "bin/lib/checkpoint-role.mjs",
+            "search": "  if (before !== after) return false;\n",
+            "replace": ""
+          }
+        ]
+      },
+      {
+        "id": "HC-252",
+        "ops": [
+          {
+            "file": "bin/lib/checkpoint-role.mjs",
+            "search": "  const perCommitJudgement = context.kind === 'range';",
+            "replace": "  const perCommitJudgement = false;"
+          }
+        ]
+      },
+      {
+        "id": "HC-253",
+        "ops": [
+          {
+            "file": "bin/lib/checkpoint-role.mjs",
+            "search": "((?:(?:proposal|design|audit|tasks)\\.md)|(?:\\.openspec\\.yaml)|(?:specs\\/[^/]+\\/spec\\.md))$/;",
+            "replace": "(.+)$/;"
+          }
+        ]
+      },
+      {
+        "id": "HC-254",
+        "ops": [
+          {
+            "file": "bin/lib/checkpoint-role.mjs",
+            "search": "      for (const file of touchedPaths) if (pathAloneViolation(file)) violations.push(file);",
+            "replace": "      void touchedPaths;"
+          }
+        ]
+      },
+      {
+        "id": "HC-255",
+        "ops": [
+          {
+            "file": "bin/lib/checkpoint-role.mjs",
+            "search": "    if (listed === null) return [...new Set([...violations, ...files, UNLISTABLE_RANGE_VIOLATION])];",
+            "replace": "    if (listed === null) return [...new Set([...violations])];"
           }
         ]
       }

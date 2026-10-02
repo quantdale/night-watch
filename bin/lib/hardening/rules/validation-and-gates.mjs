@@ -29,7 +29,7 @@ import {
 } from '../kernel.mjs';
 import { validateCampaignCertification } from '../../campaign-certification.mjs';
 import { evidenceArtifactExistsAtSha, laneArtifactDemotions } from '../../evidence-artifact.mjs';
-import { checkpointRoleViolations, unpairedCorrectionsInRange } from '../../checkpoint-role.mjs';
+import { UNLISTABLE_RANGE_VIOLATION, checkpointRoleViolations, unpairedCorrectionsInRange } from '../../checkpoint-role.mjs';
 import { findBinsWithoutExecutingTest, verifyCliImplementationContract } from '../../cli-implementation-contract.mjs';
 import { classifyValidationTruth, extractTestMatchGlobs } from '../../validation-classification.mjs';
 import {
@@ -1282,6 +1282,76 @@ function verifyCheckpointRoleClassifierFixture() {
     const edited = (run(['rev-parse', 'HEAD']).stdout ?? '').trim();
     if (checkpointRoleViolations(directory, ['openspec/changes/archive/2026-10-01-fixture-change/tasks.md'], { kind: 'commit', commit: edited }).length === 0) {
       fail('CHECKPOINT_ROLE_GUARD_STUBBED an EDIT of an archived file was classified documentary');
+    }
+    // R5-01 / review-5 task A1.1 — the archive move is approved only for the
+    // approved planning shapes, a SINGLE non-identical move is substantive, and a
+    // RANGE is judged commit by commit (never through its aggregate diff).
+    const archiveShape = 'openspec/changes/archive/2026-10-01-fixture-two/tasks.md';
+    fs.mkdirSync(path.join(directory, 'openspec/changes/fixture-two'), { recursive: true });
+    fs.writeFileSync(path.join(directory, 'openspec/changes/fixture-two/tasks.md'), '# tasks\n');
+    run(['add', '.']);
+    run(['commit', '--quiet', '--no-gpg-sign', '-m', 'seed a change for a non-identical move']);
+    fs.mkdirSync(path.join(directory, 'openspec/changes/archive/2026-10-01-fixture-two'), { recursive: true });
+    fs.rmSync(path.join(directory, 'openspec/changes/fixture-two/tasks.md'));
+    fs.writeFileSync(path.join(directory, archiveShape), '# tasks (edited while moving)\n');
+    run(['add', '.']);
+    run(['commit', '--quiet', '--no-gpg-sign', '-m', 'move with changed bytes']);
+    const changedMove = (run(['rev-parse', 'HEAD']).stdout ?? '').trim();
+    if (checkpointRoleViolations(directory, [archiveShape], { kind: 'commit', commit: changedMove }).length === 0) {
+      fail('CHECKPOINT_ROLE_GUARD_STUBBED a single-commit archive move that CHANGED the bytes was classified documentary');
+    }
+    const rangeBase = (run(['rev-parse', 'HEAD']).stdout ?? '').trim();
+    fs.mkdirSync(path.join(directory, 'openspec/changes/fixture-three/tests'), { recursive: true });
+    fs.writeFileSync(path.join(directory, 'openspec/changes/fixture-three/tests/evil.test.ts'), "import { test } from '@playwright/test';\ntest('smuggled', () => {});\n");
+    run(['add', '.']);
+    run(['commit', '--quiet', '--no-gpg-sign', '-m', 'add a test file under a change directory']);
+    const smuggledArchive = 'openspec/changes/archive/2026-10-01-fixture-three/tests/evil.test.ts';
+    fs.mkdirSync(path.join(directory, 'openspec/changes/archive/2026-10-01-fixture-three/tests'), { recursive: true });
+    fs.renameSync(path.join(directory, 'openspec/changes/fixture-three/tests/evil.test.ts'), path.join(directory, smuggledArchive));
+    run(['add', '.']);
+    run(['commit', '--quiet', '--no-gpg-sign', '-m', 'archive the test file']);
+    const smuggledHead = (run(['rev-parse', 'HEAD']).stdout ?? '').trim();
+    if (checkpointRoleViolations(directory, [smuggledArchive], { kind: 'range', from: rangeBase, to: smuggledHead }).length === 0) {
+      fail('CHECKPOINT_ROLE_GUARD_STUBBED a test file smuggled through an archive move (added in one commit, archived in the next) was classified documentary');
+    }
+    if (checkpointRoleViolations(directory, [], { kind: 'range', from: rangeBase, to: smuggledHead }).length === 0) {
+      fail('CHECKPOINT_ROLE_GUARD_STUBBED a range with no net aggregate files but a non-documentary commit was classified documentary (the range must be judged commit by commit)');
+    }
+    // A change created and archived INSIDE one range is documentary: every
+    // path it ever touched is an approved planning shape.
+    const legitBase = smuggledHead;
+    fs.mkdirSync(path.join(directory, 'openspec/changes/fixture-four'), { recursive: true });
+    fs.writeFileSync(path.join(directory, 'openspec/changes/fixture-four/tasks.md'), '# tasks\n');
+    run(['add', '.']);
+    run(['commit', '--quiet', '--no-gpg-sign', '-m', 'create a planning change']);
+    fs.mkdirSync(path.join(directory, 'openspec/changes/archive/2026-10-01-fixture-four'), { recursive: true });
+    fs.renameSync(path.join(directory, 'openspec/changes/fixture-four/tasks.md'), path.join(directory, 'openspec/changes/archive/2026-10-01-fixture-four/tasks.md'));
+    run(['add', '.']);
+    run(['commit', '--quiet', '--no-gpg-sign', '-m', 'archive the planning change byte-identically']);
+    const legitHead = (run(['rev-parse', 'HEAD']).stdout ?? '').trim();
+    // The two earlier smuggle commits are excluded by the base, so only the
+    // legitimate create-then-archive pair is judged.
+    if (checkpointRoleViolations(directory, ['openspec/changes/archive/2026-10-01-fixture-four/tasks.md'], { kind: 'range', from: legitBase, to: legitHead }).length !== 0) {
+      fail('CHECKPOINT_ROLE_GUARD_STUBBED a planning change created and byte-identically archived inside one range was classified substantive');
+    }
+    // A byte-identical move of a NON-planning file is substantive even when the
+    // caller lists only the archived destination: the destination shape alone
+    // decides it (a shape-loosened archive pattern would approve it).
+    fs.mkdirSync(path.join(directory, 'openspec/changes/fixture-six/tests'), { recursive: true });
+    fs.writeFileSync(path.join(directory, 'openspec/changes/fixture-six/tests/keep.test.ts'), 'export {};\n');
+    run(['add', '.']);
+    run(['commit', '--quiet', '--no-gpg-sign', '-m', 'seed a non-planning file under a change']);
+    const nonPlanningArchive = 'openspec/changes/archive/2026-10-01-fixture-six/tests/keep.test.ts';
+    fs.mkdirSync(path.join(directory, 'openspec/changes/archive/2026-10-01-fixture-six/tests'), { recursive: true });
+    fs.renameSync(path.join(directory, 'openspec/changes/fixture-six/tests/keep.test.ts'), path.join(directory, nonPlanningArchive));
+    run(['add', '.']);
+    run(['commit', '--quiet', '--no-gpg-sign', '-m', 'move the non-planning file byte-identically']);
+    const nonPlanningMove = (run(['rev-parse', 'HEAD']).stdout ?? '').trim();
+    if (checkpointRoleViolations(directory, [nonPlanningArchive], { kind: 'commit', commit: nonPlanningMove }).length === 0) {
+      fail('CHECKPOINT_ROLE_GUARD_STUBBED a byte-identical archive move of a NON-planning file (tests/keep.test.ts) was classified documentary');
+    }
+    if (!checkpointRoleViolations(directory, [], { kind: 'range', from: '0'.repeat(40), to: legitHead }).includes(UNLISTABLE_RANGE_VIOLATION)) {
+      fail('CHECKPOINT_ROLE_GUARD_STUBBED a range that cannot be listed did not fail closed');
     }
     // The merge hook and the fail-closed touched-null branch stay present: a
     // merge must be judged against EVERY parent, and an unreadable diff must

@@ -158,15 +158,24 @@ export function unpairedCorrectionsInRange(root, fromExclusive, toInclusive, cor
 }
 
 /**
- * R4-13 / review-4 task 3.4 — `openspec/changes/archive/<dated>-<change>/<rest>`
- * is a MOVED planning artifact. It is documentary ONLY when the same commit
- * ADDS the archived path byte-identically and REMOVES the source
- * `openspec/changes/<change>/<rest>` in that same commit. An edit, a copy, an
+ * R4-13 / review-4 task 3.4, tightened by R5-01 / review-5 task A1.1 —
+ * `openspec/changes/archive/<dated>-<change>/<rest>` is a MOVED planning
+ * artifact. It is documentary ONLY when (a) `<rest>` is one of the APPROVED
+ * PLANNING SHAPES (`proposal|design|audit|tasks.md`, `.openspec.yaml`,
+ * `specs/<capability>/spec.md`) — never any other file at any depth or with any
+ * extension, because a tree file such as `…/tests/evil.test.ts` is picked up by
+ * test discovery once it exists; (b) the SOURCE path `openspec/changes/<change>/
+ * <rest>` is itself an approved checkpoint path (guaranteed by construction —
+ * every shape above is an approved planning path under `openspec/changes/<one
+ * directory>/` — and pinned by a test, not re-checked at run time, so there is no
+ * redundant guard for a mutant to be equivalent to); and (c) the same commit ADDS
+ * the archived path byte-identically and REMOVES that source. An edit, a copy, an
  * addition from elsewhere, or a change that leaves the source in place is
- * substantive. Enumerating the archive prefix exactly keeps the rule from
- * approving any other path.
+ * substantive. Enumerating the shapes exactly keeps the rule from approving any
+ * other path.
  */
-export const ARCHIVE_MOVE_PATH_RE = /^openspec\/changes\/archive\/(\d{4}-\d{2}-\d{2})-(.+)\/(.+)$/;
+export const ARCHIVE_MOVE_PATH_RE =
+  /^openspec\/changes\/archive\/(\d{4}-\d{2}-\d{2})-([^/]+)\/((?:(?:proposal|design|audit|tasks)\.md)|(?:\.openspec\.yaml)|(?:specs\/[^/]+\/spec\.md))$/;
 
 /**
  * @param {string} root
@@ -186,26 +195,73 @@ export function archiveMoveHolds(root, commit, file) {
   return blobAt(root, commit, source) === null;
 }
 
+/**
+ * R5-01 — every path ONE commit touches (a merge against each parent), exactly
+ * as Git names them (NUL-separated, so no path is quoted away or mistaken for
+ * a header). `null` when the commit cannot be listed (fail closed).
+ * @param {string} root
+ * @param {string} commit
+ * @returns {string[] | null}
+ */
+export function commitTouchedPaths(root, commit) {
+  const output = gitText(root, ['diff-tree', '--root', '--no-commit-id', '--name-only', '--no-renames', '-m', '-r', '-z', commit]);
+  if (output === null) return null;
+  return [...new Set(output.split('\0').filter((entry) => entry !== ''))];
+}
+
+/** The sentinel a range that cannot be listed contributes: never an approvable path. */
+export const UNLISTABLE_RANGE_VIOLATION = '<unlistable-range>';
+
+/**
+ * Whether one PATH, judged alone, makes a commit non-documentary. Guarded
+ * binding files and archive-move shapes are decided by their own diff-shape
+ * checks, not here.
+ * @param {string} file
+ */
+function pathAloneViolation(file) {
+  return guardClassForPath(file) === null && !isApprovedCheckpointPath(file) && !ARCHIVE_MOVE_PATH_RE.test(file);
+}
+
 export function checkpointRoleViolations(root, files, context) {
   // VB-06: guarded paths are excluded from the path-alone filter — their
   // admissibility is decided exclusively by their diff-shape guard below.
-  const violations = files.filter((file) => guardClassForPath(file) === null && !isApprovedCheckpointPath(file) && !ARCHIVE_MOVE_PATH_RE.test(file));
-  const guarded = new Set(files.filter((file) => guardClassForPath(file) !== null));
-  const archived = new Set(files.filter((file) => ARCHIVE_MOVE_PATH_RE.test(file)));
-  if (guarded.size === 0 && archived.size === 0) return [...new Set(violations)];
-
+  const violations = files.filter((file) => pathAloneViolation(file));
   /** @type {string[]} */
   let commits;
   if (context.kind === 'commit') {
     commits = [context.commit];
   } else {
     const listed = gitText(root, ['rev-list', `${context.from}..${context.to}`]);
-    if (listed === null) return [...new Set([...violations, ...guarded, ...archived])];
+    // An unlistable range fails closed for EVERY path, not only the guarded
+    // ones: nothing can be proven about commits that cannot be enumerated.
+    if (listed === null) return [...new Set([...violations, ...files, UNLISTABLE_RANGE_VIOLATION])];
     commits = listed.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
     // A range from A to B is classified over every commit in it; commits
     // before `from` are the checkpoint itself and not part of the range.
   }
+  const aggregateGuarded = new Set(files.filter((file) => guardClassForPath(file) !== null));
+  const aggregateArchived = new Set(files.filter((file) => ARCHIVE_MOVE_PATH_RE.test(file)));
+  // R5-01: a range is classified COMMIT BY COMMIT, never through its aggregate
+  // diff. A path that one commit adds and a later commit removes (or moves) has
+  // no net entry in the aggregate, yet it existed in the history under judgement.
+  const perCommitJudgement = context.kind === 'range';
+  if (!perCommitJudgement && aggregateGuarded.size === 0 && aggregateArchived.size === 0) return [...new Set(violations)];
+
   for (const commit of commits) {
+    /** @type {Set<string>} */
+    let guarded = aggregateGuarded;
+    /** @type {Set<string>} */
+    let archived = aggregateArchived;
+    if (perCommitJudgement) {
+      const touchedPaths = commitTouchedPaths(root, commit);
+      if (touchedPaths === null) {
+        violations.push(UNLISTABLE_RANGE_VIOLATION, ...files);
+        continue;
+      }
+      for (const file of touchedPaths) if (pathAloneViolation(file)) violations.push(file);
+      guarded = new Set(touchedPaths.filter((file) => guardClassForPath(file) !== null));
+      archived = new Set(touchedPaths.filter((file) => ARCHIVE_MOVE_PATH_RE.test(file)));
+    }
     const touched = touchedGuardedFiles(root, commit, guarded);
     if (touched === null) {
       violations.push(...guarded);

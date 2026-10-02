@@ -133,6 +133,12 @@
         "owner-local-state"
       ]
     },
+    "tests/unit/archiveMoveIntegrity.test.ts": {
+      "class": "PARALLEL_SAFE",
+      "signals": [
+        "isolated-scratch"
+      ]
+    },
     "tests/unit/authBundleTransaction.test.ts": {
       "class": "PARALLEL_SAFE",
       "signals": [

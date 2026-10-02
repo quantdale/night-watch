@@ -27,6 +27,7 @@
     "tests/unit/aiReviewLoopback.test.ts": 270,
     "tests/unit/alphausFindingHandoff.test.ts": 170,
     "tests/unit/alphausHandoffProperties.test.ts": 514,
+    "tests/unit/archiveMoveIntegrity.test.ts": 2,
     "tests/unit/authCaptureLauncher.test.ts": 2796,
     "tests/unit/authCaptureStages.test.ts": 8455,
     "tests/unit/autonomousFinding.test.ts": 53,

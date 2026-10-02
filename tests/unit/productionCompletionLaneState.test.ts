@@ -299,6 +299,10 @@ test.describe('validation lane state', () => {
       git(['config', 'user.name', 'probe']);
       write('config/release-evidence.v1.json', binding('a'.repeat(40), null));
       write('docs/other.md', 'prose\n');
+      // As in the real repository, persisted receipts are Git-ignored host files:
+      // R5-01 judges a range commit by commit, so a COMMITTED receipt file would
+      // (correctly) be a non-documentary path.
+      write('.gitignore', 'artifacts/\n');
       git(['add', '--all']);
       git(['commit', '--quiet', '--no-gpg-sign', '-m', 'base']);
       const base = git(['rev-parse', 'HEAD']).stdout!.trim();
