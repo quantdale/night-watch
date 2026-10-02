@@ -12,7 +12,7 @@ const OBSERVER = fs.readFileSync(path.join(REPO_ROOT, 'src', 'browser', 'observe
 test.describe('bounded response-body acquisition (9.6)', () => {
   test('the acquisition gate bounds concurrent reads and refuses rather than queues', () => {
     expect(OBSERVER).toContain('export const MAX_CONCURRENT_BODY_READS = 4;');
-    expect(OBSERVER).toMatch(/if \(bodyReadsInFlight >= MAX_CONCURRENT_BODY_READS\) return \{ acquired: false \};/);
+    expect(OBSERVER).toMatch(/if \(bodyReadsInFlight >= MAX_CONCURRENT_BODY_READS\) \{[^}]*return \{ acquired: false \};/);
     // The refusal is a distinct outcome, not a timeout.
     expect(OBSERVER).toContain("if ('acquired' in bodyResult) {");
     expect(OBSERVER).toContain("noteCaptureFailure('BODY_READ_ACQUISITION_BOUND')");
@@ -37,7 +37,7 @@ test.describe('bounded response-body acquisition (9.6)', () => {
   });
 
   test('the acquisition slot is taken before the race and released on success, timeout and rejection', () => {
-    const gate = OBSERVER.indexOf('if (bodyReadsInFlight >= MAX_CONCURRENT_BODY_READS) return { acquired: false };');
+    const gate = OBSERVER.indexOf('if (bodyReadsInFlight >= MAX_CONCURRENT_BODY_READS) {');
     const increment = OBSERVER.indexOf('bodyReadsInFlight += 1;');
     const race = OBSERVER.indexOf('return await Promise.race([');
     expect(gate).toBeGreaterThan(0);
@@ -97,6 +97,27 @@ test.describe('bounded response-body acquisition — behaviour (7.10)', () => {
       if (index === 0) continue;
       read.release(`r${index}`);
     }
+    await Promise.all(inflight);
+  });
+
+  // A refused read's operation is never awaited; without a handler its later rejection (page or
+  // context teardown) is an unhandled rejection that Playwright blames on whichever test is running.
+  test('a refused read whose operation later rejects raises no unhandled rejection', async () => {
+    const reads = Array.from({ length: MAX_CONCURRENT_BODY_READS }, () => held());
+    const inflight = reads.map((read) => boundedResponseOperation(read.promise, 60_000));
+    const unhandled: unknown[] = [];
+    const listener = (reason: unknown) => { unhandled.push(reason); };
+    process.on('unhandledRejection', listener);
+    try {
+      const refusedOperation = held();
+      expect(await boundedResponseOperation(refusedOperation.promise, 60_000)).toEqual({ acquired: false });
+      refusedOperation.fail(new Error('Target page, context or browser has been closed'));
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect(unhandled).toEqual([]);
+    } finally {
+      process.off('unhandledRejection', listener);
+    }
+    for (const read of reads) read.release('drained');
     await Promise.all(inflight);
   });
 

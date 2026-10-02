@@ -139,7 +139,12 @@ export async function boundedResponseOperation<T>(
   operation: Promise<T>,
   timeoutMs: number,
 ): Promise<{ completed: true; value: T } | { completed: false } | { acquired: false }> {
-  if (bodyReadsInFlight >= MAX_CONCURRENT_BODY_READS) return { acquired: false };
+  if (bodyReadsInFlight >= MAX_CONCURRENT_BODY_READS) {
+    // The caller already created `operation` (e.g. response.body()); a refused read is never awaited,
+    // so its eventual rejection (context teardown) would be UNHANDLED and surface in an unrelated test.
+    operation.then(() => undefined, () => undefined);
+    return { acquired: false };
+  }
   bodyReadsInFlight += 1;
   let settled = false;
   let timer: ReturnType<typeof setTimeout> | undefined;

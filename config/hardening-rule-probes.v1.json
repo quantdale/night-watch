@@ -3069,7 +3069,8 @@
     "R5-17/no-live-session-case",
     "R5-17/previous-paragraph-exempt",
     "R5-17/progress-form",
-    "R5-17/plan-progress"
+    "R5-17/plan-progress",
+    "R5-10/refused-read-unhandled"
   ],
   "behaviouralMutants": [
     {
@@ -4280,6 +4281,23 @@
       "focusedTests": [
         {
           "file": "tests/unit/agent-state.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-071",
+      "finding": "R5-10/refused-read-unhandled",
+      "guard": "a refused body read swallows its later rejection",
+      "ops": [
+        {
+          "file": "src/browser/observers/networkObserver.ts",
+          "search": "    operation.then(() => undefined, () => undefined);\n    return { acquired: false };",
+          "replace": "    return { acquired: false };"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/bodyReadAcquisition.test.ts"
         }
       ]
     }

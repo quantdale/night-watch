@@ -132,6 +132,8 @@ completed honestly is a STOP.
   `TASK_GROUPS_COMPLETE: NONE` is parsed as the empty set. Tests:
   `agent-state.test.ts` letter-group test and `productionCompletionOpenWork`.
 
+- D-2 (A9 validation) — the A8.1 response-burst test exposed a real defect: a body read REFUSED by the acquisition bound left `response.body()` with no rejection handler, so its rejection at context teardown was an unhandled rejection that Playwright blamed on whichever test was running (a baseline failure of `journeyEngine` inside the mutation harness, passing alone). Fixed in `networkObserver.boundedResponseOperation` (the refused operation now swallows its rejection); regression test in `bodyReadAcquisition.test.ts`; mutant BM-071. Also found by the first full harness run: BM-037 and BM-047 were equivalent/ineffective mutants (a second guard also exited 2; a `throw` is not an effect) and were repaired, and probes HC-234/HC-243 anchored text the A7/A9.4 refactors had changed.
+
 ## Blockers
 
 (none)
