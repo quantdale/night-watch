@@ -64,6 +64,8 @@ export function cleanCheckoutExecutedSubjects(body) {
 export function uiHarnessExecutedSubjects(body) {
   const harness = body.harness;
   if (!isRecord(harness) || !Array.isArray(harness.tests) || harness.tests.length === 0) return [];
+  // R5-14: executed means every recorded harness test passed, not merely that one was recorded.
+  if (!harness.tests.every((test) => isRecord(test) && test.status === 'PASS')) return [];
   return ['ui-error-taxonomy-rendering'];
 }
 

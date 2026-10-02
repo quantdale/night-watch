@@ -3087,7 +3087,11 @@
     "R5-13/publish-immutable",
     "R5-13/verify-binding",
     "R5-12/schema-subject-union",
-    "R5-12/matrix-totality"
+    "R5-12/matrix-totality",
+    "R5-14/ui-digest-prefix",
+    "R5-14/ui-verdict-derived",
+    "R5-14/ui-executed-all-pass",
+    "R5-14/ui-verdict-rederived"
   ],
   "behaviouralMutants": [
     {
@@ -4655,6 +4659,74 @@
         },
         {
           "file": "tests/unit/certifyEvidence.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-089",
+      "finding": "R5-14/ui-digest-prefix",
+      "guard": "the UI receipt digest carries the receipt: prefix",
+      "ops": [
+        {
+          "file": "bin/lib/ui-harness-receipt.mjs",
+          "search": "  return `receipt:sha256:${createHash('sha256').update(canonicalJson(clone))",
+          "replace": "  return `sha256:${createHash('sha256').update(canonicalJson(clone))"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/releaseReceiptProbes.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-090",
+      "finding": "R5-14/ui-verdict-derived",
+      "guard": "the UI receipt verdict is PASS only when every harness test passed",
+      "ops": [
+        {
+          "file": "bin/lib/ui-harness-receipt.mjs",
+          "search": "    result: harnessTests.length > 0 && harnessTests.every((test) => test.status === 'PASS') ? 'PASS' : 'FAIL',",
+          "replace": "    result: 'PASS',"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/releaseReceiptProbes.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-091",
+      "finding": "R5-14/ui-executed-all-pass",
+      "guard": "the UI receipt executes its subject only when every harness test passed",
+      "ops": [
+        {
+          "file": "bin/lib/receipt-schemas.mjs",
+          "search": "  if (!harness.tests.every((test) => isRecord(test) && test.status === 'PASS')) return [];\n",
+          "replace": "\n"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/releaseReceiptProbes.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-092",
+      "finding": "R5-14/ui-verdict-rederived",
+      "guard": "the evaluator re-derives the UI verdict from the recorded tests",
+      "ops": [
+        {
+          "file": "bin/lib/ui-harness-receipt.mjs",
+          "search": "  if (record.result !== derivedResult) errors.push(",
+          "replace": "  if (false) errors.push("
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/releaseReceiptProbes.test.ts"
         }
       ]
     }

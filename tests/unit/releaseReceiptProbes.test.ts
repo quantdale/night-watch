@@ -16,6 +16,8 @@ import { ACCESSIBILITY_RECORD_PATH } from '../../bin/lib/accessibility-record.mj
 import { probeAccessibility, probeUiErrorTaxonomy, probeYieldCampaignResult } from '../../bin/lib/release-receipt-probes.mjs';
 import { UI_HARNESS_FILE, UI_HARNESS_RECEIPT_PATH, UI_HARNESS_REQUIRED_TESTS, UI_HARNESS_SUITE, buildUiHarnessReceipt } from '../../bin/lib/ui-harness-receipt.mjs';
 import { buildProductRunReceipt } from '../../src/core/agentRuntime/productRunReceipt';
+import { uiHarnessReceiptDigest } from '../../bin/lib/ui-harness-receipt.mjs';
+import { verifyPersistedReceipt } from '../../bin/lib/release-evidence.mjs';
 
 const REPO = path.join(__dirname, '..', '..');
 const S = 'a'.repeat(40);
@@ -82,7 +84,7 @@ test.describe('G20 accessibility certification probe', () => {
 });
 
 test.describe('G18 UI-harness probe', () => {
-  function uiFixture(): { root: string; cleanup: () => void; build: (sha: string) => unknown; head: string } {
+  function uiFixture(): { root: string; cleanup: () => void; build: (sha: string, failFirst?: boolean) => unknown; head: string } {
     const s = scratchRoot();
     const environment = { PATH: process.env.PATH ?? '', HOME: s.root, GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_NOSYSTEM: '1', GIT_AUTHOR_NAME: 'nw', GIT_AUTHOR_EMAIL: 'nw@example.invalid', GIT_COMMITTER_NAME: 'nw', GIT_COMMITTER_EMAIL: 'nw@example.invalid' };
     const git = (args: string[]) => spawnSync('git', args, { cwd: s.root, env: environment, encoding: 'utf8', shell: false });
@@ -111,7 +113,12 @@ test.describe('G18 UI-harness probe', () => {
         { type: 'suite', name: 'control center render truth', tasks: otherSuite.map((entry) => ({ type: 'test', name: `${entry.titlePrefix} (fixture)`, result: { state: 'pass' } })) },
       ],
     };
-    const build = (sha: string) => buildUiHarnessReceipt({ files: [vitestFile], headSha: sha, treeClean: true, typesSource, harnessSource, executedAt: '2026-09-30T00:00:00.000Z' });
+    const build = (sha: string, failFirst = false) => {
+      const files = failFirst
+        ? [{ ...vitestFile, tasks: [{ ...vitestFile.tasks[0]!, tasks: (vitestFile.tasks[0] as { tasks: Array<Record<string, unknown>> }).tasks.map((task, index) => (index === 0 ? { ...task, result: { state: 'fail' } } : task)) }, vitestFile.tasks[1]!] }]
+        : [vitestFile];
+      return buildUiHarnessReceipt({ files, headSha: sha, treeClean: true, typesSource, harnessSource, executedAt: '2026-09-30T00:00:00.000Z' });
+    };
     return { root: s.root, cleanup: s.cleanup, build, head };
   }
 
@@ -125,6 +132,55 @@ test.describe('G18 UI-harness probe', () => {
       writeJson(f.root, UI_HARNESS_RECEIPT_PATH, { ...(f.build(f.head) as Record<string, unknown>), receiptDigest: `sha256:${'0'.repeat(24)}` });
       expect(probeUiErrorTaxonomy(f.root, f.head).state).toBe('UNMET');
       fs.rmSync(path.join(f.root, UI_HARNESS_RECEIPT_PATH));
+      expect(probeUiErrorTaxonomy(f.root, f.head).state).toBe('UNMET');
+    } finally {
+      f.cleanup();
+    }
+  });
+
+  // R5-14 — the UI receipt could never verify: its digest lacked the `receipt:` prefix
+  // (RECEIPT_KIND_UNSUPPORTED) and, once prefixed, it had no verdict field
+  // (RECEIPT_VERDICT_MISSING). The proof here is REAL producer output through the REAL verifier.
+  test('the producer output verifies for ui-error-taxonomy-rendering at its SHA, and only then', () => {
+    const f = uiFixture();
+    try {
+      const receipt = f.build(f.head) as Record<string, unknown>;
+      expect(receipt.result).toBe('PASS');
+      expect(String(receipt.receiptDigest)).toMatch(/^receipt:sha256:[0-9a-f]{24}$/);
+      writeJson(f.root, UI_HARNESS_RECEIPT_PATH, receipt);
+      expect(verifyPersistedReceipt(f.root, 'ui-error-taxonomy-rendering', String(receipt.receiptDigest), f.head)).toEqual({ verified: true, reason: 'VERIFIED' });
+      expect(verifyPersistedReceipt(f.root, 'ui-error-taxonomy-rendering', String(receipt.receiptDigest), OTHER).verified).toBe(false);
+      expect(verifyPersistedReceipt(f.root, 'completion-ledger-truth', String(receipt.receiptDigest), f.head).verified).toBe(false);
+    } finally {
+      f.cleanup();
+    }
+  });
+
+  test('a recorded verdict that disagrees with the recorded tests is rejected by the evaluator in either direction', () => {
+    const f = uiFixture();
+    try {
+      const inconsistent = { ...(f.build(f.head) as Record<string, unknown>), result: 'FAIL' };
+      (inconsistent as Record<string, unknown>).receiptDigest = uiHarnessReceiptDigest(inconsistent);
+      writeJson(f.root, UI_HARNESS_RECEIPT_PATH, inconsistent);
+      const probed = probeUiErrorTaxonomy(f.root, f.head);
+      expect(probed.state).toBe('UNMET');
+      expect(probed.detail).toContain('UI_HARNESS_RECEIPT_RESULT_MISMATCH');
+    } finally {
+      f.cleanup();
+    }
+  });
+
+  test('a failing harness test yields a FAIL receipt, and a forged PASS over it never verifies or probes MET', () => {
+    const f = uiFixture();
+    try {
+      expect((f.build(f.head, true) as Record<string, unknown>).result).toBe('FAIL');
+      const good = f.build(f.head) as { harness: { tests: Array<{ status: string }> } } & Record<string, unknown>;
+      const failed = { ...good, harness: { ...good.harness, tests: good.harness.tests.map((test, index) => (index === 0 ? { ...test, status: 'FAIL' } : test)) }, result: 'PASS' } as Record<string, unknown>;
+      failed.receiptDigest = uiHarnessReceiptDigest(failed);
+      writeJson(f.root, UI_HARNESS_RECEIPT_PATH, failed);
+      const verdict = verifyPersistedReceipt(f.root, 'ui-error-taxonomy-rendering', String(failed.receiptDigest), f.head);
+      expect(verdict.verified).toBe(false);
+      expect(verdict.reason).toBe('RECEIPT_SUBJECT_NOT_EXECUTED:ui-error-taxonomy-rendering');
       expect(probeUiErrorTaxonomy(f.root, f.head).state).toBe('UNMET');
     } finally {
       f.cleanup();

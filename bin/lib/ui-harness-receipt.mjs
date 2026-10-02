@@ -120,7 +120,9 @@ export function countHarnessTests(source) {
 export function uiHarnessReceiptDigest(body) {
   const clone = { ...body };
   delete clone.receiptDigest;
-  return `sha256:${createHash('sha256').update(canonicalJson(clone)).digest('hex').slice(0, 24)}`;
+  // R5-14: the digest carries the `receipt:` prefix the release-evidence verifier selects the
+  // receipt kind by; the unprefixed form was refused as RECEIPT_KIND_UNSUPPORTED.
+  return `receipt:sha256:${createHash('sha256').update(canonicalJson(clone)).digest('hex').slice(0, 24)}`;
 }
 
 /**
@@ -176,6 +178,9 @@ export function buildUiHarnessReceipt(input) {
     subject: 'ui-error-taxonomy-rendering',
     nightwatchSha: typeof input.headSha === 'string' && SHA_RE.test(input.headSha) ? input.headSha.toLowerCase() : null,
     treeClean: input.treeClean === true,
+    // R5-14: the verdict field the verifier requires. PASS only when at least one harness test ran and
+    // every one passed; the evaluator re-derives it from the recorded tests, never trusts it.
+    result: harnessTests.length > 0 && harnessTests.every((test) => test.status === 'PASS') ? 'PASS' : 'FAIL',
     executedAt: input.executedAt,
     harness: { file: UI_HARNESS_FILE, tests: harnessTests },
     // R3-06 / corrections task 8.5: the receipt is tied to the harness CONTENT
@@ -236,6 +241,9 @@ export function evaluateUiHarnessReceipt(raw, context) {
     tests.push({ suite: test.suite, title: test.title, status: test.status });
   }
   if (malformed) errors.push('UI_HARNESS_RECEIPT_TEST_MALFORMED');
+  // R5-14: the recorded verdict must equal the one the recorded tests derive.
+  const derivedResult = tests.length > 0 && !malformed && tests.every((test) => test.status === 'PASS') ? 'PASS' : 'FAIL';
+  if (record.result !== derivedResult) errors.push(`UI_HARNESS_RECEIPT_RESULT_MISMATCH:${String(record.result)}`);
   if (tests.length === 0) {
     errors.push('UI_HARNESS_RECEIPT_NO_HARNESS_TESTS');
   } else if (!malformed) {
