@@ -7,9 +7,9 @@ Phase: COMPLETION_REVIEW5_V1
 CHILD OF: nightwatch-final-product-completion-v1
 Status: IN_PROGRESS
 TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1
-TASK_GROUPS_COMPLETE: A1,A2,A3,A4,A5,A6,A7,A8,A9,B1
-TASK_GROUP_NEXT: B2
-TASK_NEXT_ID: B2.1
+TASK_GROUPS_COMPLETE: A1,A2,A3,A4,A5,A6,A7,A8,A9,B1,B2,B3,B4,B5,B6
+TASK_GROUP_NEXT: C
+TASK_NEXT_ID: C.1
 Starting SHA: d68bb1a7c7cf244da654815a1e7f266e1985f30c
 Last validated implementation SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
 Last substantive checkpoint SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
@@ -43,12 +43,11 @@ ACTIVE_TASK routed back to the parent at "M9 task 10.4".
 
 ## Current Milestone
 
-group B2 — the producers (tasks B2.1-B2.2, R5-12/R5-14): implement
-`certify:evidence` and the closed receipt-table extension per the Producer Matrix
-in `design.md`, with end-to-end tests that use REAL producer output; then repair
-the UI receipt (verdict field, `receipt:` prefix). Track A (A1-A9) is integrated
-at `4f4d7bfd`; B1 (the matrix, D-152 mechanism) is implemented at `440cf888`
-(CI pending). A1-A3 are CI-observed green.
+group C — close-out (tasks C.1-C.4): the focused suites, `gate:dev`/`gate:milestone` with the mutation
+harness at zero survivors and `hardening:rules`; the full authoritative set; the Track B integration with
+exact-head CI green; then the REPORT with the per-ID disposition table, archive with spec sync and the
+route back to the parent at M9 task 10.4. Track A (A1-A9) is integrated and CI-green at `4f4d7bfd`
+(run 37044532848); Track B (B1-B6) is implemented locally and not yet integrated.
 
 ## Completed Milestones
 
@@ -63,11 +62,11 @@ after the Track A integration and its exact-head CI observation.
 
 ## Exact Next Action
 
-Observe exact-head CI for the Track A integration (`4f4d7bfd`) and record it in
-the CI block record. Then B2.1: the approved-path and content-guard groundwork is
-B3.1, but the receipt schema, the closed subject table and `certify:evidence`
-come first (B2.1) so B3.1 has real output to guard; B2.2 repairs the UI receipt.
-Each lands with real-producer-output tests and registered behavioural mutants.
+C.1: run `npm run prepush`, `npm run hardening:rules` and `npm run hardening:mutants` on the committed
+Track B tree (all must be green, zero survivors), then C.2 the full authoritative set (`gate:local`,
+`npm test`, the UI gate, `openspec validate --all --strict`, `agent:check`, `project:check`), then C.3
+integrate via `nightwatch-session.mjs integrate` and observe exact-head CI, release and remove the
+session, and run `gate:clean` from canonical; then C.4 the REPORT, archive and the route back to the parent.
 
 ## Files Changed
 
