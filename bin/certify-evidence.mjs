@@ -9,7 +9,9 @@
 // receipts of S into the TRACKED `evidence/certification/<S>/` directory, ready
 // to be committed in a documentary descendant of S. `import` stages an existing
 // host receipt (gate, clean checkout, UI harness) byte-for-byte after the real
-// verifier accepts it. `verify` re-derives every tracked receipt of S offline.
+// verifier accepts it. `bind` rewrites ONLY the value keys (evidenceSha, receiptDigest, observedAt,
+// executor) of each binding that has a verified tracked receipt of S. `verify` re-derives every
+// tracked receipt of S offline.
 //
 // Receipts are tamper-evident, not tamper-proof (OD-5): no signature, key or
 // MAC. Nothing here contacts an Alphaus system; the only external read is the
@@ -45,6 +47,7 @@ const CLI_METADATA = {
     { name: 'produce', summary: 'measure one subject at the certified checkpoint and stage its receipt (git-ignored)' },
     { name: 'import', summary: 'stage a verified host receipt (gate, clean checkout or UI harness) of the certified checkpoint verbatim' },
     { name: 'publish', summary: 'copy the staged verified receipts of the certified checkpoint into the tracked evidence directory' },
+    { name: 'bind', summary: 'rebind each subject of config/release-evidence.v1.json to its verified tracked receipt of the certified checkpoint (values only)' },
     { name: 'verify', summary: 'offline re-derivation of every tracked receipt of the certified checkpoint' },
   ],
   commandRequired: true,
@@ -247,6 +250,54 @@ function publish(root) {
   if (skipped.length > 0) process.exitCode = 1;
 }
 
+/** The only identity a bind records: a machine token naming this tool (never free text). */
+const BIND_EXECUTOR = 'certify-evidence';
+
+/** @param {string} root */
+function bind(root) {
+  const sha = certifiedCheckpoint(root);
+  if (sha === null) {
+    process.stdout.write(`${JSON.stringify({ ok: false, code: 'CERTIFY_CHECKPOINT_UNRESOLVED' })}\n`);
+    process.exitCode = 3;
+    return;
+  }
+  const file = path.join(root, 'config', 'release-evidence.v1.json');
+  /** @type {unknown} */
+  let document = null;
+  try { document = JSON.parse(fs.readFileSync(file, 'utf8')); } catch { document = null; }
+  const bindings = document !== null && typeof document === 'object' ? /** @type {Record<string, unknown>} */ (document)['bindings'] : null;
+  if (!Array.isArray(bindings)) {
+    process.stdout.write(`${JSON.stringify({ ok: false, code: 'CERTIFY_BINDINGS_UNREADABLE' })}\n`);
+    process.exitCode = 3;
+    return;
+  }
+  const observedAt = new Date().toISOString();
+  const bound = [];
+  const unbound = [];
+  const directory = path.join(root, CERTIFICATION_EVIDENCE_DIRECTORY, sha);
+  for (const name of jsonFiles(directory)) {
+    const subject = name.slice(0, -'.json'.length);
+    /** @type {unknown} */
+    let body = null;
+    try { body = JSON.parse(fs.readFileSync(path.join(directory, name), 'utf8')); } catch { body = null; }
+    const digest = body !== null && typeof body === 'object' ? /** @type {Record<string, unknown>} */ (body)['receiptDigest'] : null;
+    if (typeof digest !== 'string' || !verifyReceiptBody(body, subject, digest, sha).verified) {
+      unbound.push(subject);
+      continue;
+    }
+    const binding = bindings.find((entry) => entry !== null && typeof entry === 'object' && /** @type {Record<string, unknown>} */ (entry)['subject'] === subject);
+    if (binding === undefined) {
+      unbound.push(subject);
+      continue;
+    }
+    Object.assign(/** @type {Record<string, unknown>} */ (binding), { evidenceSha: sha, receiptDigest: digest, observedAt, executor: BIND_EXECUTOR });
+    bound.push(subject);
+  }
+  fs.writeFileSync(file, `${JSON.stringify(document, null, 2)}\n`);
+  process.stdout.write(`${JSON.stringify({ ok: unbound.length === 0, sourceHead: sha, bound, unbound })}\n`);
+  if (unbound.length > 0) process.exitCode = 1;
+}
+
 /** @param {string} root */
 function verify(root) {
   const sha = certifiedCheckpoint(root);
@@ -290,5 +341,6 @@ if (cli.ok === true && cli.stop !== true) {
       process.exitCode = 2;
     } else importHostReceipt(root, subject);
   } else if (cli.command === 'publish') publish(root);
+  else if (cli.command === 'bind') bind(root);
   else if (cli.command === 'verify') verify(root);
 }

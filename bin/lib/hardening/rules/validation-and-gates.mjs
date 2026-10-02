@@ -1158,6 +1158,22 @@ function verifyD3ProbeBinding(collectorSource, collectorBody) {
     const match = new RegExp(`^\\s*'${id}':\\s*(.+?),\\s*$`, 'm').exec(collectorBody);
     return match === null ? null : unwrapConsumer((match[1] ?? '').trim());
   };
+  // R5-13: the four host-bound checks consume the COMMITTED measurement of S when the host
+  // capability is absent, each wrapped with its own subject (a clean clone must not read UNMET where
+  // the host reads MET).
+  const hostBoundWrappers = {
+    'ci-block-record': 'exact-head-ci-authority',
+    'dependency-advisory-lane': 'dependency-supply-chain-currency',
+    'accessibility-certification': 'accessibility-certification',
+    'yield-campaign-result': 'autonomous-yield-proof',
+  };
+  for (const [id, subject] of Object.entries(hostBoundWrappers)) {
+    const match = new RegExp(`^\\s*'${id}':\\s*(.+?),\\s*$`, 'm').exec(collectorBody);
+    const raw = match === null ? '' : (match[1] ?? '').trim();
+    if (!raw.startsWith(`consumeCommittedMeasurement(root, '${subject}', substantiveSha, `)) {
+      fail(`HOST_BOUND_CHECK_NOT_CONSUMING: ${id} must be wrapped as consumeCommittedMeasurement(root, '${subject}', substantiveSha, ...) so a clean clone consumes the committed measurement (found: ${raw})`);
+    }
+  }
   for (const id of treeBound) {
     const expression = entryFor(id);
     if (expression === null) {

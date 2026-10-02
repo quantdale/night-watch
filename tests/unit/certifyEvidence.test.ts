@@ -230,6 +230,40 @@ test.describe('certify-evidence produce / publish / verify (real CLI, synthetic 
     }
   });
 
+  test('bind rewrites only the value keys of bindings that have a verified tracked receipt', () => {
+    const fx = fixture({ typecheck: 'node -e "process.exit(0)"', 'typecheck:bin': 'node -e "process.exit(0)"' });
+    try {
+      const binding = (subject: string) => ({ subject, evidenceSha: null, receiptDigest: null, observedAt: null, executor: null, artifactPaths: ['tsconfig.json'], certifying: true });
+      const file = path.join(fx.root, 'config', 'release-evidence.v1.json');
+      fs.mkdirSync(path.dirname(file), { recursive: true });
+      fs.writeFileSync(file, `${JSON.stringify({ schemaVersion: 'nightwatch.release-evidence.v1', bindings: [binding('root-compile'), binding('structural-invariants')] }, null, 2)}\n`);
+      fx.git(['add', '--all']);
+      fx.git(['-c', 'user.name=nw', '-c', 'user.email=nw@example.invalid', 'commit', '--quiet', '--no-gpg-sign', '-m', 'bindings']);
+      const head = fx.git(['rev-parse', 'HEAD']);
+      fx.verdict([], head);
+      expect(fx.run(['produce', '--subject', 'root-compile']).status).toBe(0);
+      expect(fx.run(['produce', '--subject', 'bin-parse']).status).toBe(0);
+      expect(fx.run(['publish']).status).toBe(0);
+      const bound = fx.run(['bind']);
+      // bin-parse has a verified receipt but no binding; structural-invariants has a binding but no receipt.
+      expect(bound.json).toMatchObject({ ok: false, bound: ['root-compile'], unbound: ['bin-parse'] });
+      const document = JSON.parse(fs.readFileSync(file, 'utf8')) as { bindings: Array<Record<string, unknown>> };
+      const rootCompile = document.bindings.find((entry) => entry.subject === 'root-compile')!;
+      const tracked = JSON.parse(fs.readFileSync(path.join(fx.root, 'evidence', 'certification', head, 'root-compile.json'), 'utf8')) as { receiptDigest: string };
+      expect(rootCompile).toMatchObject({ evidenceSha: head, receiptDigest: tracked.receiptDigest, executor: 'certify-evidence', artifactPaths: ['tsconfig.json'], certifying: true });
+      expect(String(rootCompile.observedAt)).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
+      expect(document.bindings.find((entry) => entry.subject === 'structural-invariants')).toMatchObject({ evidenceSha: null, receiptDigest: null });
+      // A tampered tracked receipt is never bound.
+      const trackedFile = path.join(fx.root, 'evidence', 'certification', head, 'root-compile.json');
+      fs.writeFileSync(trackedFile, fs.readFileSync(trackedFile, 'utf8').replace('"MET"', '"UNMET"'));
+      fs.writeFileSync(file, `${JSON.stringify({ schemaVersion: 'nightwatch.release-evidence.v1', bindings: [binding('root-compile')] }, null, 2)}\n`);
+      expect(fx.run(['bind']).json).toMatchObject({ ok: false, bound: [], unbound: expect.arrayContaining(['root-compile']) });
+      expect((JSON.parse(fs.readFileSync(file, 'utf8')) as { bindings: Array<Record<string, unknown>> }).bindings[0]).toMatchObject({ evidenceSha: null });
+    } finally {
+      fx.cleanup();
+    }
+  });
+
   test('the CI observation subject is NOT_MET without a GitHub run at S (never fabricated)', () => {
     const fx = fixture();
     try {

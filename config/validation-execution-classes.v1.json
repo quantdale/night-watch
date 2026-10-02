@@ -417,6 +417,13 @@
         "isolated-scratch"
       ]
     },
+    "tests/unit/certificationReachability.test.ts": {
+      "class": "PROCESS_ISOLATED_ONLY",
+      "signals": [
+        "isolated-scratch",
+        "artifacts-write"
+      ]
+    },
     "tests/unit/changeIntelligence.test.ts": {
       "class": "PARALLEL_SAFE",
       "signals": [

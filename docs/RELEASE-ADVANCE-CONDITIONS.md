@@ -104,6 +104,33 @@ claims after integration. Until then the verdict reports the certification
 refused, which is the intended consequence, not a gate failure: unmet and
 stale conditions fail `project:check` only when an advance status is claimed.
 
+## Producing and committing the evidence (review-5, D-152)
+
+Evidence is produced at the certified checkpoint S, on a clean tree with `HEAD == S`, by
+`npm run certify:evidence`:
+
+1. `produce --subject <id>` measures one subject (a condition's live check, a fixed command, or
+   the GitHub Actions run at S) and STAGES one allowlisted receipt under the git-ignored
+   `artifacts/certification-staging/<S>/`. A non-MET measurement writes a `NOT_MET` receipt that
+   never verifies. `import --subject <id>` stages an existing host receipt (gate, clean checkout,
+   UI harness) byte-for-byte once the real verifier accepts it.
+2. `publish` copies the staged receipts the real verifier accepts into the TRACKED
+   `evidence/certification/<S>/<subject>.json`; `bind` then rewrites only the value keys
+   (`evidenceSha`, `receiptDigest`, `observedAt`, `executor`) of each binding that has a verified
+   receipt. Both land in a documentary descendant of S: the receipt path is add-only and
+   content-verified, and the binding change is values-only with a verifying receipt.
+3. A clean clone or CI runner verifies exactly what the host produced: the verifier reads the tracked
+   directory, and the four host-bound checks (exact-head CI authority, autonomous yield, dependency
+   assessment, accessibility record) consume the committed measurement of S where the host
+   capability is absent. The autonomous yield run additionally qualifies only against the GRANTED
+   record in `config/yield-run-authorization.v1.json` (NOT_GRANTED by default) with its declared
+   print CLI, provider and model.
+
+Receipts are tamper-evident, not tamper-proof: there is no signature, key or MAC, and nothing in
+them is a path, host, cookie, header or customer value. They certify that a measurement was taken at
+S; they never replace the live checks, and no receipt can upgrade a check outside the four host-bound
+subjects.
+
 ## A documentation-only descendant is not the implementation anchor
 
 A documentation-only commit remains a checkpoint advance. It is never

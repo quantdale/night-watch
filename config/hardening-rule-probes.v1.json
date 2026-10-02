@@ -2108,8 +2108,8 @@
         "ops": [
           {
             "file": "bin/project-state-check.mjs",
-            "search": "'yield-campaign-result': probeYieldCampaignResult(root, substantiveSha),",
-            "replace": "'yield-campaign-result': probeYieldCampaignResult(root, null),"
+            "search": "'yield-campaign-result': consumeCommittedMeasurement(root, 'autonomous-yield-proof', substantiveSha, probeYieldCampaignResult(root, substantiveSha)),",
+            "replace": "'yield-campaign-result': consumeCommittedMeasurement(root, 'autonomous-yield-proof', substantiveSha, probeYieldCampaignResult(root, null)),"
           }
         ]
       },
@@ -2170,6 +2170,16 @@
             "file": "bin/project-state-check.mjs",
             "search": "  const laneArtifactEvaluation = laneArtifactDemotions(reported, laneBindings.bySubject ?? new Map(), (sha, artifactPath) => evidenceArtifactExistsAtSha(root, sha, artifactPath));",
             "replace": "  const laneArtifactEvaluation = { demoted: new Set(), findings: [] };"
+          }
+        ]
+      },
+      {
+        "id": "HC-282",
+        "ops": [
+          {
+            "file": "bin/project-state-check.mjs",
+            "search": "'ci-block-record': consumeCommittedMeasurement(root, 'exact-head-ci-authority', substantiveSha, bindTreeProbe(binding, probeCiBlockRecord(root, blockFields))),",
+            "replace": "'ci-block-record': bindTreeProbe(binding, probeCiBlockRecord(root, blockFields)),"
           }
         ]
       }
@@ -3113,7 +3123,9 @@
     "R5-15/yield-model-bound",
     "R5-15/yield-budget",
     "R5-15/auth-granted-full-identity",
-    "R5-15/auth-not-granted-empty"
+    "R5-15/auth-not-granted-empty",
+    "R5-12/bind-executor",
+    "R5-13/bind-verified"
   ],
   "behaviouralMutants": [
     {
@@ -5183,6 +5195,46 @@
         },
         {
           "file": "tests/unit/releaseReceiptProbes.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-115",
+      "finding": "R5-12/bind-executor",
+      "guard": "a bind records the executor token a rebind requires",
+      "ops": [
+        {
+          "file": "bin/certify-evidence.mjs",
+          "search": "observedAt, executor: BIND_EXECUTOR });",
+          "replace": "observedAt, executor: null });"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/certifyEvidence.test.ts"
+        },
+        {
+          "file": "tests/unit/certificationReachability.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-116",
+      "finding": "R5-13/bind-verified",
+      "guard": "a bind rebinds only a verified tracked receipt",
+      "ops": [
+        {
+          "file": "bin/certify-evidence.mjs",
+          "search": "    if (typeof digest !== 'string' || !verifyReceiptBody(body, subject, digest, sha).verified) {\n      unbound.push(subject);",
+          "replace": "    if (typeof digest !== 'string') {\n      unbound.push(subject);"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/certifyEvidence.test.ts"
+        },
+        {
+          "file": "tests/unit/certificationReachability.test.ts"
         }
       ]
     }
