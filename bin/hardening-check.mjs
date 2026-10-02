@@ -23,6 +23,7 @@ import { fileURLToPath } from 'node:url';
 import { errors, readDataFile, PROBE_REGISTRY_PATH } from './lib/hardening/kernel.mjs';
 import { REGISTERED_RULES } from './lib/hardening/registry.mjs';
 import { runRuleProbeCampaign } from './lib/hardening/probe-campaign.mjs';
+import { runMutationHarness } from './lib/hardening/mutation-harness.mjs';
 import {
   evaluateReferenceGraph,
   readReferenceGraphConfig,
@@ -47,6 +48,8 @@ const CLI_METADATA = {
     { name: '--family', shape: 'string', repeatable: true, summary: 'run only rules in the named famil(ies)' },
     { name: '--list-rules', shape: 'boolean', summary: 'print the registered rule registry as one JSON document' },
     { name: '--probe-campaign', shape: 'boolean', summary: 'run the rule mutation campaign (every probe must be DETECTED)' },
+    { name: '--mutation-harness', shape: 'boolean', summary: 'run the behavioural mutation harness on a scratch copy (every registered mutant must be DETECTED)' },
+    { name: '--mutant', shape: 'string', summary: 'with --mutation-harness: run one mutant id only' },
     { name: '--report-reachability', shape: 'boolean', summary: 'report source reachability findings without failing' },
     { name: '--report-documentation-currency', shape: 'boolean', summary: 'report documentation-currency findings without failing' },
   ],
@@ -90,6 +93,9 @@ if (cli.flags['--list-rules'] === true) {
   process.exit(0);
 } else if (cli.flags['--probe-campaign'] === true) {
   runRuleProbeCampaign(REGISTERED_RULES, onlyRule, fileURLToPath(import.meta.url));
+} else if (cli.flags['--mutation-harness'] === true) {
+  const outcome = await runMutationHarness(typeof cli.flags['--mutant'] === 'string' ? { onlyMutant: cli.flags['--mutant'] } : {});
+  process.exitCode = outcome.ok ? 0 : 1;
 } else if (cli.flags['--report-reachability'] === true) {
   const config = readReferenceGraphConfig('SOURCE_REACHABILITY');
   const graph = referenceGraph();

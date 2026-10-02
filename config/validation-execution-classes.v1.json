@@ -783,6 +783,12 @@
       "class": "PARALLEL_SAFE",
       "signals": []
     },
+    "tests/unit/mutationHarness.test.ts": {
+      "class": "PARALLEL_SAFE",
+      "signals": [
+        "isolated-scratch"
+      ]
+    },
     "tests/unit/nameListingRenameTotality.test.ts": {
       "class": "MUTATION_CAMPAIGN_EXCLUSIVE",
       "signals": [

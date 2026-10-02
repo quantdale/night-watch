@@ -2,7 +2,7 @@
   "schemaVersion": "nightwatch.validation-universe.v1",
   "definitionName": "Nightwatch validation universe classification (NW-08)",
   "note": "Every discovered executable test or check belongs to exactly one class. AUTHORITATIVE_GATE is DERIVED from what the required gate lanes actually select and is therefore not declarable here; every other discovered file must appear below exactly once, with the reason it is not in the gate and the evidence lane that does cover it. A newly added test that is in no lane and no class fails the gate rather than joining the repository silently.",
-  "inventoryDigest": "sha256:b5bbebc6b245f7ce8fc0d6f4",
+  "inventoryDigest": "sha256:37a1d2b49530c5aa8a917fd4",
   "classes": {
     "FULL_REGRESSION": {
       "reason": "Offline, deterministic suites that the full canonical regression executes. They are not in a required gate lane because the authoritative gate is bounded for CI runtime; leaving them unclassified is what made the gap invisible.",
@@ -88,6 +88,7 @@
         "tests/unit/localCampaignByteAccounting.test.ts",
         "tests/unit/minedCases.test.ts",
         "tests/unit/monitor.test.ts",
+        "tests/unit/mutationHarness.test.ts",
         "tests/unit/nameListingRenameTotality.test.ts",
         "tests/unit/networkObserverSettlement.test.ts",
         "tests/unit/observationSettlement.test.ts",
@@ -276,6 +277,7 @@
         "bin/lib/gate-child-environment.mjs",
         "bin/lib/gate-receipt.mjs",
         "bin/lib/hardening/kernel.mjs",
+        "bin/lib/hardening/mutation-harness.mjs",
         "bin/lib/hardening/probe-campaign.mjs",
         "bin/lib/hardening/registry.mjs",
         "bin/lib/hardening/rules/ai-and-self-dev.mjs",

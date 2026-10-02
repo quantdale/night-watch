@@ -70,6 +70,9 @@ export const VALIDATION_LANE_DEFINITIONS: Readonly<Record<LaneId, ValidationLane
       ...CHEAP_STATIC_STEPS,
       { id: 'typecheck-bin', kind: 'command', summary: 'bin JavaScript declaration conformance report', command: ['npm', 'run', 'typecheck:bin'] },
       { id: 'hardening-rules', kind: 'command', summary: 'hardening rule probe campaign (94 probes)', command: ['npm', 'run', 'hardening:rules'] },
+      // R5-05 / review-5 A4.3: the behavioural mutation harness (scratch copy; every
+      // registered mutant must be DETECTED by its focused tests or hardening:check).
+      { id: 'mutation-harness', kind: 'command', summary: 'behavioural mutation harness (zero survivors)', command: ['npm', 'run', 'hardening:mutants'] },
       ...GOVERNANCE_STEPS,
       { id: 'affected-tests', kind: 'affected-tests', summary: 'deterministic affected-test selection from the explicit base' },
       { id: 'affected-shards', kind: 'shards', summary: 'concurrent serial shards over the selected tests' },
@@ -82,7 +85,7 @@ export interface LaneDefinitionViolation {
   readonly detail: string;
 }
 
-const FORBIDDEN_IN_DEV = ['hardening:rules', 'gate:local', 'gate:clean', 'gate:ci'];
+const FORBIDDEN_IN_DEV = ['hardening:rules', 'hardening:mutants', 'gate:local', 'gate:clean', 'gate:ci'];
 
 /** Mechanical composition rules; a violation refuses the lane definition. */
 export function validateLaneDefinitions(): { readonly ok: boolean; readonly violations: readonly LaneDefinitionViolation[] } {

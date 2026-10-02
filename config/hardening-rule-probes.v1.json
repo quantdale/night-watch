@@ -2978,5 +2978,149 @@
         ]
       }
     ]
-  }
+  },
+  "behaviouralMutantRequirements": [
+    "R5-01/move-bytes-equal",
+    "R5-01/range-per-commit",
+    "R5-01/unlistable-range-open",
+    "R5-01/shape-loosened",
+    "R5-02/gate-no-renames",
+    "R5-03/dirty-receipt-verifies",
+    "R5-04/foreign-subject-verifies",
+    "R5-04/unexecuted-subject-verifies"
+  ],
+  "behaviouralMutants": [
+    {
+      "id": "BM-001",
+      "finding": "R5-01/move-bytes-equal",
+      "guard": "archiveMoveHolds byte-identity",
+      "ops": [
+        {
+          "file": "bin/lib/checkpoint-role.mjs",
+          "search": "  if (before !== after) return false;\n",
+          "replace": ""
+        }
+      ],
+      "focusedTests": [
+        "tests/unit/archiveMoveIntegrity.test.ts"
+      ]
+    },
+    {
+      "id": "BM-002",
+      "finding": "R5-01/range-per-commit",
+      "guard": "range judged per commit",
+      "ops": [
+        {
+          "file": "bin/lib/checkpoint-role.mjs",
+          "search": "  const perCommitJudgement = context.kind === 'range';",
+          "replace": "  const perCommitJudgement = false;"
+        }
+      ],
+      "focusedTests": [
+        "tests/unit/archiveMoveIntegrity.test.ts"
+      ]
+    },
+    {
+      "id": "BM-003",
+      "finding": "R5-01/unlistable-range-open",
+      "guard": "unlistable range fails closed",
+      "ops": [
+        {
+          "file": "bin/lib/checkpoint-role.mjs",
+          "search": "    if (listed === null) return [...new Set([...violations, ...files, UNLISTABLE_RANGE_VIOLATION])];",
+          "replace": "    if (listed === null) return [...new Set([...violations])];"
+        }
+      ],
+      "focusedTests": [
+        "tests/unit/archiveMoveIntegrity.test.ts"
+      ]
+    },
+    {
+      "id": "BM-004",
+      "finding": "R5-01/shape-loosened",
+      "guard": "archive destination shape",
+      "ops": [
+        {
+          "file": "bin/lib/checkpoint-role.mjs",
+          "search": "((?:(?:proposal|design|audit|tasks)\\.md)|(?:\\.openspec\\.yaml)|(?:specs\\/[^/]+\\/spec\\.md))$/;",
+          "replace": "(.+)$/;"
+        }
+      ],
+      "focusedTests": [
+        "tests/unit/archiveMoveIntegrity.test.ts"
+      ]
+    },
+    {
+      "id": "BM-005",
+      "finding": "R5-02/gate-no-renames",
+      "guard": "declared-deletion gate rename detection",
+      "ops": [
+        {
+          "file": "bin/workspace-integrity.mjs",
+          "search": "['diff', '--diff-filter=D', '--name-only', '--no-renames', base]",
+          "replace": "['diff', '--diff-filter=D', '--name-only', base]"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/workspaceIsolation.test.ts",
+          "grep": "R5-02"
+        }
+      ]
+    },
+    {
+      "id": "BM-006",
+      "finding": "R5-03/dirty-receipt-verifies",
+      "guard": "gate kind requires a clean emit",
+      "ops": [
+        {
+          "file": "bin/lib/release-evidence.mjs",
+          "search": "    requireCleanEmit: true,\n    // R5-04: the closed union",
+          "replace": "    requireCleanEmit: false,\n    // R5-04: the closed union"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/projectState.test.ts",
+          "grep": "persisted receipt verifies only when"
+        }
+      ]
+    },
+    {
+      "id": "BM-007",
+      "finding": "R5-04/foreign-subject-verifies",
+      "guard": "closed subject set",
+      "ops": [
+        {
+          "file": "bin/lib/release-evidence.mjs",
+          "search": "    if (foreign.length > 0) return { verified: false,",
+          "replace": "    if (false) return { verified: false,"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/projectState.test.ts",
+          "grep": "persisted receipt verifies only when"
+        }
+      ]
+    },
+    {
+      "id": "BM-008",
+      "finding": "R5-04/unexecuted-subject-verifies",
+      "guard": "executed-subject derivation",
+      "ops": [
+        {
+          "file": "bin/lib/release-evidence.mjs",
+          "search": "    if (!schema.executed(body).includes(wantedSubject)) return {",
+          "replace": "    if (false) return {"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/projectState.test.ts",
+          "grep": "persisted receipt verifies only when"
+        }
+      ]
+    }
+  ]
 }
