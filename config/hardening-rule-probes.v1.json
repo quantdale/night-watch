@@ -2890,8 +2890,8 @@
         "ops": [
           {
             "file": "config/operator-cli-surface.v1.json",
-            "search": "\"operatorCli\": 72",
-            "replace": "\"operatorCli\": 71"
+            "search": "\"operatorCli\": 73",
+            "replace": "\"operatorCli\": 72"
           }
         ]
       },

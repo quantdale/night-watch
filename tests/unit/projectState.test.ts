@@ -3155,9 +3155,23 @@ test.describe('fixture-root collector receipts (R3-07)', () => {
       leakScan: { result: 'CLEAN', findings: 0, scannedChars: 10 },
       nightwatchIdentity: { sha, treeClean: true },
       campaignKind: 'PRINT_CLI_PROVIDER',
-      reasonerIdentity: { kind: 'PRINT_CLI_PROVIDER', identityDigest: `rid:sha256:${'a'.repeat(24)}`, printCliDigest: `sha256:${'b'.repeat(24)}` },
+      reasonerIdentity: { kind: 'PRINT_CLI_PROVIDER', identityDigest: `rid:sha256:${'a'.repeat(24)}`, printCliDigest: `sha256:${'b'.repeat(24)}`, provider: 'test-provider', model: 'test-model' },
     });
     const dir = path.join(FIXTURE_ROOT, `artifacts/nightwatch-fixture-${process.pid}-${Date.now()}`);
+    // R5-15: the yield run qualifies only against a GRANTED authorization of the single paid run. The
+    // fixture root is a throwaway clone, so the GRANTED record is COMMITTED there (a clean tree) and
+    // the commit is undone afterwards.
+    const authorizationFile = path.join(FIXTURE_ROOT, 'config/yield-run-authorization.v1.json');
+    const original = fs.readFileSync(authorizationFile, 'utf8');
+    const fixtureGit = (args: string[]) => spawnSync('git', ['-c', 'user.name=nw', '-c', 'user.email=nw@example.invalid', '-C', FIXTURE_ROOT, ...args], { cwd: FIXTURE_ROOT, env: gitEnv(FIXTURE_ROOT), encoding: 'utf8' });
+    fs.writeFileSync(authorizationFile, `${JSON.stringify({
+      schemaVersion: 'nightwatch.yield-run-authorization.v1',
+      grantId: 'parent-12.3',
+      state: 'GRANTED',
+      maxQualifyingRuns: 1,
+      declared: { printCliDigest: `sha256:${'b'.repeat(24)}`, provider: 'test-provider', model: 'test-model' },
+    }, null, 2)}\n`);
+    expect(fixtureGit(['commit', '--quiet', '--no-gpg-sign', '-am', 'fixture: GRANTED yield authorization']).status).toBe(0);
     try {
       fs.mkdirSync(dir, { recursive: true });
       fs.writeFileSync(path.join(dir, 'manifest.json'), `${JSON.stringify({ runId: 'fixture-run', product: 'campaign', nightwatchSha: s })}\n`);
@@ -3171,6 +3185,8 @@ test.describe('fixture-root collector receipts (R3-07)', () => {
       expect(conditionCheckState(other, 'autonomous-yield-proof'), other).toBe('NOT_AT_CHECKPOINT');
     } finally {
       fs.rmSync(dir, { recursive: true, force: true });
+      expect(fixtureGit(['reset', '--quiet', '--hard', 'HEAD~1']).status).toBe(0);
+      expect(fs.readFileSync(authorizationFile, 'utf8')).toBe(original);
     }
   });
 });
