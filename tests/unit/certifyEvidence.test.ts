@@ -10,6 +10,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { test, expect } from '@playwright/test';
+import { buildCertificationReceipt } from '../../bin/lib/certification-evidence.mjs';
 import { commandDigest, produceCertificationReceipt, selectCiObservation } from '../../bin/lib/certify-producers.mjs';
 import { verifyPersistedReceipt } from '../../bin/lib/release-evidence.mjs';
 
@@ -144,6 +145,26 @@ test.describe('certify-evidence produce / publish / verify (real CLI, synthetic 
       expect(fx.run(['publish']).json).toMatchObject({ ok: false, code: 'CERTIFY_PUBLISH_WOULD_OVERWRITE' });
       expect(fx.run(['verify']).json).toMatchObject({ ok: false, invalid: ['root-compile'] });
       expect(fx.run(['verify']).status).toBe(1);
+    } finally {
+      fx.cleanup();
+    }
+  });
+
+  test('verify rejects a valid receipt filed under another subject name or bound to another checkpoint', () => {
+    const fx = fixture();
+    try {
+      fx.verdict([]);
+      expect(fx.run(['produce', '--subject', 'root-compile']).status).toBe(0);
+      expect(fx.run(['publish']).status).toBe(0);
+      const directory = path.join(fx.root, 'evidence', 'certification', fx.head);
+      // The same valid receipt copied under a different subject file name.
+      fs.copyFileSync(path.join(directory, 'root-compile.json'), path.join(directory, 'bin-parse.json'));
+      expect(fx.run(['verify']).json).toMatchObject({ ok: false, valid: ['root-compile'], invalid: ['bin-parse'] });
+      fs.rmSync(path.join(directory, 'bin-parse.json'));
+      // A receipt that validates but is bound to ANOTHER checkpoint, filed in this one's directory.
+      const other = buildCertificationReceipt({ subject: 'root-compile', sourceHead: 'c'.repeat(40), observedAtHead: fx.head, sourceRootCleanAtEmit: true, checkId: 'cmd-root-compile', checkState: 'MET', producer: 'COMMAND' });
+      fs.writeFileSync(path.join(directory, 'root-compile.json'), `${JSON.stringify(other, null, 2)}\n`);
+      expect(fx.run(['verify']).json).toMatchObject({ ok: false, invalid: ['root-compile'] });
     } finally {
       fx.cleanup();
     }

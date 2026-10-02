@@ -7,6 +7,7 @@ import path from 'node:path';
 import { test, expect } from '@playwright/test';
 import {
   buildCertificationReceipt,
+  certificationReceiptDigest,
   certificationReceiptPath,
   validateCertificationReceipt,
 } from '../../bin/lib/certification-evidence.mjs';
@@ -106,6 +107,20 @@ test.describe('the real verifier over real builder output', () => {
     const root = persist(body);
     try {
       expect(verifyPersistedReceipt(root, 'documentation-currency', String(body.receiptDigest), S)).toEqual({ verified: true, reason: 'VERIFIED' });
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  // The executed-subject derivation is its own guard: a body that CLAIMS PASS while its recorded
+  // check was not MET (re-digested so every earlier check is satisfied) must still execute nothing.
+  test('a receipt claiming PASS over a non-MET check, with a re-derived digest, certifies nothing', () => {
+    const forged: Record<string, unknown> = { ...receipt({ checkState: 'UNMET' }), result: 'PASS' };
+    forged.receiptDigest = certificationReceiptDigest(forged);
+    const root = persist(forged);
+    try {
+      const verdict = verifyPersistedReceipt(root, 'documentation-currency', String(forged.receiptDigest), S);
+      expect(verdict).toEqual({ verified: false, reason: 'RECEIPT_SUBJECT_NOT_EXECUTED:documentation-currency' });
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
     }
