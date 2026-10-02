@@ -274,6 +274,7 @@ function makeFixture(options: FixtureOptions = {}): Fixture {
     'bin/lib/checkpoint-role.mjs',
     'bin/lib/programme-state.mjs',
     'bin/lib/openspec-ledger.mjs',
+    'bin/lib/claim-journal.mjs',
     'bin/lib/openspec-archive-index.mjs',
     'bin/lib/operator-cli.mjs',
     'bin/lib/release-evidence.mjs',

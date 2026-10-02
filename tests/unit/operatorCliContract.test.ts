@@ -260,7 +260,10 @@ test.describe('derived operator command listing', () => {
     expect(listing.bins.length).toBeGreaterThan(50);
     expect(listing.text).toContain('quality-gate');
     expect(listing.text).toContain('nightwatch');
-    expect(listing.text).toContain('Undeclared metadata');
+    // R5-08: at 76/76 conformance no bin is undeclared; the retained library modules are
+    // listed apart, so the old "Undeclared metadata" section must be ABSENT, not required.
+    expect(listing.text).toContain('Library modules, retained under bin/ (not commands)');
+    expect(listing.text).not.toContain('Undeclared metadata');
   });
 });
 
