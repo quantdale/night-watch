@@ -11,6 +11,10 @@
       "bootstrapSha": "caa69d502943f0963a48059c92cb00c453842ec7"
     },
     {
+      "changeId": "nightwatch-final-completion-review5-v1",
+      "bootstrapSha": "385fe4a94d08f45105d28a3c0b1528ae4035e62a"
+    },
+    {
       "changeId": "nightwatch-agent-tool-fixture-fallback-integrity-v1",
       "bootstrapSha": "2afc54dec00fd21731889532d3606e4e2628e7ff"
     },
