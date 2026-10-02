@@ -11,7 +11,54 @@
  * and the CI path consume one answer.
  */
 
+import crypto from 'node:crypto';
+import { TOPOLOGY_GATE_SCHEMA, topologyReceiptDigest } from './topology-gate.mjs';
+
 const SHA_RE = /^[0-9a-f]{40}$/i;
+const TOPOLOGY_CLASSES = Object.freeze(['PROVEN', 'PROVEN_DEGRADED', 'NOT_PROVEN']);
+
+/**
+ * R5-16 / review-5 task B5.1 — one topology receipt is ADMISSIBLE only when it is internally
+ * consistent: the schema is the gate's, the `topology-receipt:` digest re-derives over the body,
+ * the commit is a full SHA, the class is one of the three, `ciClaim` repeats the class, `certifying`
+ * is exactly "the class is PROVEN", and a PROVEN class carries the evidence that makes it PROVEN
+ * (a non-static run, a PASS result, the Bubblewrap envelope and no unexercised absence). A
+ * hand-written `{ gitHead, ciClaim: { certifying: true } }`, or a degraded receipt relabelled as
+ * certifying, is rejected here and never reaches the certification judgement.
+ * (OD-5: tamper-evident, not tamper-proof; the digest is not a signature.)
+ *
+ * @param {unknown} entry
+ * @returns {{ ok: boolean, reason: string }}
+ */
+export function verifyTopologyReceipt(entry) {
+  if (entry === null || typeof entry !== 'object' || Array.isArray(entry)) return { ok: false, reason: 'TOPOLOGY_RECEIPT_NOT_AN_OBJECT' };
+  const record = /** @type {Record<string, unknown>} */ (entry);
+  if (record['schemaVersion'] !== TOPOLOGY_GATE_SCHEMA) return { ok: false, reason: 'TOPOLOGY_RECEIPT_SCHEMA_UNSUPPORTED' };
+  if (typeof record['receiptDigest'] !== 'string') return { ok: false, reason: 'TOPOLOGY_RECEIPT_DIGEST_MISSING' };
+  const body = { ...record };
+  delete body['receiptDigest'];
+  if (record['receiptDigest'] !== topologyReceiptDigest(body, (value) => crypto.createHash('sha256').update(value, 'utf8').digest('hex'))) {
+    return { ok: false, reason: 'TOPOLOGY_RECEIPT_DIGEST_MISMATCH' };
+  }
+  if (typeof record['gitHead'] !== 'string' || !SHA_RE.test(record['gitHead'])) return { ok: false, reason: 'TOPOLOGY_RECEIPT_GIT_HEAD_INVALID' };
+  const topologyClass = record['runnerTopologyClass'];
+  if (typeof topologyClass !== 'string' || !TOPOLOGY_CLASSES.includes(topologyClass)) return { ok: false, reason: 'TOPOLOGY_RECEIPT_CLASS_UNKNOWN' };
+  const claim = record['ciClaim'];
+  if (claim === null || typeof claim !== 'object' || Array.isArray(claim)) return { ok: false, reason: 'TOPOLOGY_RECEIPT_CLAIM_MISSING' };
+  const ciClaim = /** @type {Record<string, unknown>} */ (claim);
+  if (ciClaim['runnerTopologyClass'] !== topologyClass) return { ok: false, reason: 'TOPOLOGY_RECEIPT_CLASS_DISAGREES' };
+  if (typeof ciClaim['certifying'] !== 'boolean' || ciClaim['certifying'] !== (topologyClass === 'PROVEN')) {
+    return { ok: false, reason: 'TOPOLOGY_RECEIPT_CERTIFYING_INCONSISTENT' };
+  }
+  if (topologyClass === 'PROVEN') {
+    const unexercised = ciClaim['unexercisedAbsences'];
+    if (record['mode'] === 'static' || record['result'] !== 'PASS' || ciClaim['runnerTopologyEnvelope'] !== 'BUBBLEWRAP'
+      || !Array.isArray(unexercised) || unexercised.length !== 0) {
+      return { ok: false, reason: 'TOPOLOGY_RECEIPT_PROVEN_WITHOUT_EVIDENCE' };
+    }
+  }
+  return { ok: true, reason: 'ADMISSIBLE' };
+}
 
 /**
  * @param {ReadonlyArray<unknown>} receipts parsed topology receipts
@@ -24,13 +71,20 @@ export function topologyCertificationForCheckpoint(receipts, checkpointSha) {
   }
   /** @type {Record<string, unknown>[]} */
   const matching = [];
+  /** @type {string[]} */
+  const rejected = [];
   for (const entry of receipts) {
     if (entry === null || typeof entry !== 'object' || Array.isArray(entry)) continue;
     const record = /** @type {Record<string, unknown>} */ (entry);
-    if (typeof record.gitHead === 'string' && record.gitHead.toLowerCase() === checkpointSha.toLowerCase()) matching.push(record);
+    if (typeof record.gitHead !== 'string' || record.gitHead.toLowerCase() !== checkpointSha.toLowerCase()) continue;
+    // R5-16: only an admissible (consistent, digest-verified) receipt is ever considered.
+    const admitted = verifyTopologyReceipt(record);
+    if (admitted.ok) matching.push(record);
+    else rejected.push(admitted.reason);
   }
   if (matching.length === 0) {
-    return { checked: false, certifying: false, detail: `no topology receipt for ${checkpointSha.slice(0, 8)}` };
+    const note = rejected.length === 0 ? '' : `; ${rejected.length} receipt(s) rejected (${rejected[0]})`;
+    return { checked: false, certifying: false, detail: `no admissible topology receipt for ${checkpointSha.slice(0, 8)}${note}` };
   }
   matching.sort((left, right) => String(right.generatedAt ?? '').localeCompare(String(left.generatedAt ?? '')));
   const receipt = matching[0];

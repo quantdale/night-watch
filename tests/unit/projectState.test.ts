@@ -51,6 +51,7 @@ import { classifyCheckpointRange } from '../../bin/lib/checkpoint-range.mjs';
 import { stableCanonical, productionBindingReceiptVerifier, verifyPersistedReceipt } from '../../bin/lib/release-evidence.mjs';
 import { laneArtifactDemotions } from '../../bin/lib/evidence-artifact.mjs';
 import { topologyCertificationForCheckpoint, topologyCertificationVerdict } from '../../bin/lib/topology-receipts.mjs';
+import { topologyReceiptDigest } from '../../bin/lib/topology-gate.mjs';
 import { checkpointRoleViolations } from '../../bin/lib/checkpoint-role.mjs';
 import {
   UI_HARNESS_FILE,
@@ -1897,21 +1898,35 @@ function definitionWithExactEvidence(
 test.describe('topology certification consumer (R3-09)', () => {
   const S = 'a'.repeat(40);
   const OTHER = 'b'.repeat(40);
+  // R5-16: a topology receipt is admissible only when consistent and digest-sealed, exactly as the
+  // gate emits it. `sealed` builds the same body the producer builds and seals it with the producer's digest.
+  const sealed = (head: string, topologyClass: 'PROVEN' | 'PROVEN_DEGRADED', generatedAt = '2026-09-30T00:00:00.000Z') => {
+    const proven = topologyClass === 'PROVEN';
+    const body = {
+      schemaVersion: 'nightwatch.gate-topology-receipt.v1',
+      generatedAt,
+      mode: 'all',
+      lane: 'capability',
+      runnerTopologyClass: topologyClass,
+      gitHead: head,
+      ciClaim: { runnerTopologyClass: topologyClass, runnerTopologyEnvelope: proven ? 'BUBBLEWRAP' : 'BWRAP_UNAVAILABLE_DEGRADED', unexercisedAbsences: proven ? [] : ['bwrap'], certifying: proven },
+      findings: [],
+      result: 'PASS',
+    };
+    return { ...body, receiptDigest: topologyReceiptDigest(body, (value) => createHash('sha256').update(value, 'utf8').digest('hex')) };
+  };
 
   test('only a receipt bound to the checkpoint with certifying true certifies', () => {
     expect(topologyCertificationForCheckpoint([], S)).toMatchObject({ checked: false, certifying: false });
-    const degraded = [{ gitHead: S, generatedAt: '2026-09-30T00:00:00.000Z', runnerTopologyClass: 'PROVEN_DEGRADED', ciClaim: { certifying: false } }];
+    const degraded = [sealed(S, 'PROVEN_DEGRADED')];
     expect(topologyCertificationForCheckpoint(degraded, S)).toMatchObject({ checked: true, certifying: false });
     expect(topologyCertificationForCheckpoint(degraded, S).detail).toContain('PROVEN_DEGRADED (non-certifying)');
-    const proven = [{ ...degraded[0], runnerTopologyClass: 'PROVEN', ciClaim: { certifying: true } }];
+    const proven = [sealed(S, 'PROVEN')];
     expect(topologyCertificationForCheckpoint(proven, S)).toMatchObject({ checked: true, certifying: true });
     // Another commit's receipt is not this checkpoint's evidence.
     expect(topologyCertificationForCheckpoint(degraded, OTHER)).toMatchObject({ checked: false, certifying: false });
     // The newest receipt for the checkpoint wins.
-    const newest = [
-      { gitHead: S, generatedAt: '2026-01-01T00:00:00.000Z', runnerTopologyClass: 'PROVEN_DEGRADED', ciClaim: { certifying: false } },
-      { gitHead: S, generatedAt: '2026-02-01T00:00:00.000Z', runnerTopologyClass: 'PROVEN', ciClaim: { certifying: true } },
-    ];
+    const newest = [sealed(S, 'PROVEN_DEGRADED', '2026-01-01T00:00:00.000Z'), sealed(S, 'PROVEN', '2026-02-01T00:00:00.000Z')];
     expect(topologyCertificationForCheckpoint(newest, S)).toMatchObject({ certifying: true });
     // A malformed checkpoint never resolves.
     expect(topologyCertificationForCheckpoint(degraded, 'HEAD')).toMatchObject({ checked: false });
@@ -1922,8 +1937,8 @@ test.describe('topology certification consumer (R3-09)', () => {
   // receipt is NOT MET (fail closed); it never falls through to MET, and the
   // detail never attributes a topology class to the CI run.
   test('a missing or degraded local receipt never falls through to MET', () => {
-    const proven = topologyCertificationForCheckpoint([{ gitHead: S, generatedAt: '2026-09-30T00:00:00.000Z', runnerTopologyClass: 'PROVEN', ciClaim: { certifying: true } }], S);
-    const degradedTopology = topologyCertificationForCheckpoint([{ gitHead: S, generatedAt: '2026-09-30T00:00:00.000Z', runnerTopologyClass: 'PROVEN_DEGRADED', ciClaim: { certifying: false } }], S);
+    const proven = topologyCertificationForCheckpoint([sealed(S, 'PROVEN')], S);
+    const degradedTopology = topologyCertificationForCheckpoint([sealed(S, 'PROVEN_DEGRADED')], S);
     const absent = topologyCertificationForCheckpoint([], S);
     const ci = { ciStatus: 'EXECUTED_PASS', executedSha: S, checkpointSha: S, runId: 123, blockClass: 'NONE' };
     expect(topologyCertificationVerdict(proven, ci)).toMatchObject({ state: 'MET' });

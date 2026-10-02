@@ -475,6 +475,12 @@
         "child-process"
       ]
     },
+    "tests/unit/committedMeasurement.test.ts": {
+      "class": "PROCESS_ISOLATED_ONLY",
+      "signals": [
+        "isolated-scratch"
+      ]
+    },
     "tests/unit/containedTestReplay.test.ts": {
       "class": "PARALLEL_SAFE",
       "signals": [
@@ -2164,6 +2170,12 @@
     },
     "tests/unit/testOracleQuality.test.ts": {
       "class": "PARALLEL_SAFE",
+      "signals": [
+        "isolated-scratch"
+      ]
+    },
+    "tests/unit/topologyReceiptVerification.test.ts": {
+      "class": "PROCESS_ISOLATED_ONLY",
       "signals": [
         "isolated-scratch"
       ]

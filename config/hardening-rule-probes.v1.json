@@ -3098,7 +3098,16 @@
     "R5-13/evidence-path-shape",
     "R5-13/verifier-reads-tracked",
     "R5-12/schema-strict-validation",
-    "R5-12/body-kind-mapping"
+    "R5-12/body-kind-mapping",
+    "R5-13/measurement-live-met",
+    "R5-13/measurement-host-bound-only",
+    "R5-13/measurement-verified",
+    "R5-16/topology-digest",
+    "R5-16/topology-certifying-consistency",
+    "R5-16/topology-proven-evidence",
+    "R5-16/topology-class-agreement",
+    "R5-16/topology-consumer-admits",
+    "R5-13/ui-tracked-fallback"
   ],
   "behaviouralMutants": [
     {
@@ -4895,6 +4904,159 @@
         },
         {
           "file": "tests/unit/certificationEvidence.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-100",
+      "finding": "R5-13/measurement-live-met",
+      "guard": "a live MET is never replaced",
+      "ops": [
+        {
+          "file": "bin/lib/committed-measurement.mjs",
+          "search": "  if (live.state === 'MET') return live;\n",
+          "replace": "\n"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/committedMeasurement.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-101",
+      "finding": "R5-13/measurement-host-bound-only",
+      "guard": "only the four host-bound subjects consume a committed measurement",
+      "ops": [
+        {
+          "file": "bin/lib/committed-measurement.mjs",
+          "search": "  if (!HOST_BOUND_SUBJECTS.includes(subject)) return live;\n",
+          "replace": "\n"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/committedMeasurement.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-102",
+      "finding": "R5-13/measurement-verified",
+      "guard": "a committed measurement is consumed only when the real judgement verifies it",
+      "ops": [
+        {
+          "file": "bin/lib/committed-measurement.mjs",
+          "search": "  if (!judged.verified) return { state: live.state, detail: `${live.detail}; committed receipt rejected: ${judged.reason}` };\n",
+          "replace": "\n"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/committedMeasurement.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-103",
+      "finding": "R5-16/topology-digest",
+      "guard": "a topology receipt digest re-derives over its body",
+      "ops": [
+        {
+          "file": "bin/lib/topology-receipts.mjs",
+          "search": "  if (record['receiptDigest'] !== topologyReceiptDigest(body, (value) => crypto.createHash('sha256').update(value, 'utf8').digest('hex'))) {",
+          "replace": "  if (false) {"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/topologyReceiptVerification.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-104",
+      "finding": "R5-16/topology-certifying-consistency",
+      "guard": "certifying is exactly \"the class is PROVEN\"",
+      "ops": [
+        {
+          "file": "bin/lib/topology-receipts.mjs",
+          "search": "  if (typeof ciClaim['certifying'] !== 'boolean' || ciClaim['certifying'] !== (topologyClass === 'PROVEN')) {",
+          "replace": "  if (typeof ciClaim['certifying'] !== 'boolean') {"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/topologyReceiptVerification.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-105",
+      "finding": "R5-16/topology-proven-evidence",
+      "guard": "a PROVEN class carries a non-static run",
+      "ops": [
+        {
+          "file": "bin/lib/topology-receipts.mjs",
+          "search": "    if (record['mode'] === 'static' || record['result'] !== 'PASS'",
+          "replace": "    if (record['result'] !== 'PASS'"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/topologyReceiptVerification.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-106",
+      "finding": "R5-16/topology-class-agreement",
+      "guard": "the claim repeats the receipt class",
+      "ops": [
+        {
+          "file": "bin/lib/topology-receipts.mjs",
+          "search": "  if (ciClaim['runnerTopologyClass'] !== topologyClass) return",
+          "replace": "  if (false) return"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/topologyReceiptVerification.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-107",
+      "finding": "R5-16/topology-consumer-admits",
+      "guard": "the consumer considers admissible receipts only",
+      "ops": [
+        {
+          "file": "bin/lib/topology-receipts.mjs",
+          "search": "    if (admitted.ok) matching.push(record);",
+          "replace": "    matching.push(record);"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/topologyReceiptVerification.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-108",
+      "finding": "R5-13/ui-tracked-fallback",
+      "guard": "a clean clone reads the tracked verbatim UI receipt",
+      "ops": [
+        {
+          "file": "bin/lib/release-receipt-probes.mjs",
+          "search": " ?? (trackedPath === null ? null : readJsonAt(root, trackedPath));",
+          "replace": ";"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/releaseReceiptProbes.test.ts"
         }
       ]
     }

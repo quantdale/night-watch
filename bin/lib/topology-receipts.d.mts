@@ -6,3 +6,4 @@ export declare function topologyCertificationVerdict(
   topology: { checked: boolean; certifying: boolean; detail: string },
   input: { ciStatus: string | null; executedSha: string | null; checkpointSha: string | null; runId?: unknown; blockClass?: unknown },
 ): { state: 'MET' | 'UNMET'; detail: string };
+export function verifyTopologyReceipt(entry: unknown): { ok: boolean; reason: string };

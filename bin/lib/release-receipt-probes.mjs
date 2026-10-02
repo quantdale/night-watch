@@ -12,6 +12,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { ACCESSIBILITY_RECORD_PATH, parseAccessibilityCertificationRecord } from './accessibility-record.mjs';
 import { UI_HARNESS_FILE, UI_HARNESS_RECEIPT_PATH, UI_HARNESS_TYPES_PATH, evaluateUiHarnessReceipt, extractApiErrorKinds } from './ui-harness-receipt.mjs';
+import { CERTIFICATION_EVIDENCE_DIRECTORY } from './certification-subjects.mjs';
 import { receiptBindingRelation, receiptNotAtCheckpoint } from './probe-binding.mjs';
 import { gitReadOnly, loadTypeScriptModule, readJsonAt } from './probe-io.mjs';
 
@@ -68,7 +69,11 @@ export /**
  * @returns {{state: string, detail: string}}
  */
 function probeUiErrorTaxonomy(root, certifiedCheckpointSha) {
-  const raw = readJsonAt(root, UI_HARNESS_RECEIPT_PATH);
+  // R5-13: the host-local receipt first; in a clean clone only the TRACKED verbatim copy of S exists.
+  const trackedPath = typeof certifiedCheckpointSha === 'string' && HEX40.test(certifiedCheckpointSha)
+    ? `${CERTIFICATION_EVIDENCE_DIRECTORY}/${certifiedCheckpointSha.toLowerCase()}/ui-error-taxonomy-rendering.json`
+    : null;
+  const raw = readJsonAt(root, UI_HARNESS_RECEIPT_PATH) ?? (trackedPath === null ? null : readJsonAt(root, trackedPath));
   if (raw === null) {
     return {
       state: 'UNMET',

@@ -39,6 +39,7 @@ import { bindTreeProbe } from './lib/probe-binding.mjs';
 import { classifyCertificationDemotion } from './lib/certification-demotion.mjs';
 import { collectCiBlockStale, validateCiBlockRecord } from './lib/ci-block-record.mjs';
 import { topologyCertificationForCheckpoint, topologyCertificationVerdict } from './lib/topology-receipts.mjs';
+import { consumeCommittedMeasurement } from './lib/committed-measurement.mjs';
 import { checkpointRoleViolations } from './lib/checkpoint-role.mjs';
 import { bindingReceiptVerifier, collectCheckpointBindingFacts } from './lib/checkpoint-binding.mjs';
 import { buildEvidenceEvaluationInputs } from './lib/evidence-evaluation-inputs.mjs';
@@ -872,16 +873,16 @@ function collectReleaseCheckOutputs(root, blockFields, agentText, substantiveSha
       // the same checkpoint relation — a measurement taken at a substantive
       // descendant (or an unclassifiable range) is not a measurement of S.
       'validation-lane-state': bindTreeProbe(binding, lane.output),
-      'ci-block-record': bindTreeProbe(binding, probeCiBlockRecord(root, blockFields)),
+      'ci-block-record': consumeCommittedMeasurement(root, 'exact-head-ci-authority', substantiveSha, bindTreeProbe(binding, probeCiBlockRecord(root, blockFields))),
       'ledger-agreement': bindTreeProbe(binding, probeLedgerAgreement(agentText)),
       'operator-cli-sweep': bindTreeProbe(binding, probeOperatorCli(root)),
       'documentation-currency-rules': bindTreeProbe(binding, probeDocumentationCurrency(root, rules.names)),
       'workspace-claims': bindTreeProbe(binding, probeWorkspaceClaims(agentText)),
-      'dependency-advisory-lane': bindTreeProbe(binding, probeDependencyAdvisory(root, today)),
+      'dependency-advisory-lane': consumeCommittedMeasurement(root, 'dependency-supply-chain-currency', substantiveSha, bindTreeProbe(binding, probeDependencyAdvisory(root, today))),
       'cli-implementation-contract': bindTreeProbe(binding, probeCliContract(root)),
       'structural-rule-registry': bindTreeProbe(binding, rules.output),
-      'accessibility-certification': probeAccessibility(root, substantiveSha),
-      'yield-campaign-result': probeYieldCampaignResult(root, substantiveSha),
+      'accessibility-certification': consumeCommittedMeasurement(root, 'accessibility-certification', substantiveSha, probeAccessibility(root, substantiveSha)),
+      'yield-campaign-result': consumeCommittedMeasurement(root, 'autonomous-yield-proof', substantiveSha, probeYieldCampaignResult(root, substantiveSha)),
       'dead-architecture-closure-check': bindTreeProbe(binding, probeDeadArchitectureClosure(root)),
       'schema-version-lifecycle-check': bindTreeProbe(binding, probeSchemaVersionLifecycle(root)),
       'ui-error-taxonomy-check': probeUiErrorTaxonomy(root, substantiveSha),

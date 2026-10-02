@@ -1148,9 +1148,15 @@ function verifyD3ProbeBinding(collectorSource, collectorBody) {
     'authenticated-capability-lifecycle-check',
   ];
   const receiptBound = ['ui-error-taxonomy-check', 'yield-campaign-result', 'accessibility-certification'];
+  // R5-13: a host-bound check may be wrapped by the committed-measurement consumer; the binding the
+  // rule verifies is the INNER expression (the wrapper never replaces the checkpoint binding).
+  const unwrapConsumer = (/** @type {string} */ expression) => {
+    const wrapped = /^consumeCommittedMeasurement\(root, '[a-z0-9-]+', substantiveSha, (.+)\)$/.exec(expression);
+    return wrapped === null ? expression : (wrapped[1] ?? '').trim();
+  };
   const entryFor = (/** @type {string} */ id) => {
     const match = new RegExp(`^\\s*'${id}':\\s*(.+?),\\s*$`, 'm').exec(collectorBody);
-    return match === null ? null : (match[1] ?? '').trim();
+    return match === null ? null : unwrapConsumer((match[1] ?? '').trim());
   };
   for (const id of treeBound) {
     const expression = entryFor(id);
@@ -1185,7 +1191,7 @@ function verifyD3ProbeBinding(collectorSource, collectorBody) {
   // working tree presented as a measurement of S.
   for (const match of collectorBody.matchAll(/^\s*'([a-z0-9-]+)':\s*(.+?),\s*$/gm)) {
     const id = match[1];
-    const expression = (match[2] ?? '').trim();
+    const expression = unwrapConsumer((match[2] ?? '').trim());
     if (id === undefined || receiptBound.includes(id)) continue;
     if (!/^bindTreeProbe\(binding,\s*[A-Za-z0-9_.()\[\]' ,]+?\)$/.test(expression)) {
       fail(`RELEASE_PROBE_NOT_CHECKPOINT_BOUND: ${id} is not bound through bindTreeProbe(binding, ...) (found: ${expression})`);

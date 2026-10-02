@@ -156,6 +156,27 @@ test.describe('G18 UI-harness probe', () => {
     }
   });
 
+  // R5-13 — in a clean clone the host-local receipt directory does not exist: the probe falls back to
+  // the TRACKED verbatim copy of S, evaluated by the same evaluator.
+  test('a clean clone resolves MET from the tracked verbatim receipt of S, and never from another checkpoint', () => {
+    const f = uiFixture();
+    try {
+      const tracked = (sha: string) => `evidence/certification/${sha}/ui-error-taxonomy-rendering.json`;
+      writeJson(f.root, tracked(f.head), f.build(f.head));
+      expect(fs.existsSync(path.join(f.root, UI_HARNESS_RECEIPT_PATH))).toBe(false);
+      expect(probeUiErrorTaxonomy(f.root, f.head).state).toBe('MET');
+      // The tracked file of ANOTHER checkpoint is not consulted for S.
+      fs.rmSync(path.join(f.root, tracked(f.head)));
+      writeJson(f.root, tracked(OTHER), f.build(OTHER));
+      expect(probeUiErrorTaxonomy(f.root, f.head).state).toBe('UNMET');
+      // A tampered tracked copy is rejected by the evaluator.
+      writeJson(f.root, tracked(f.head), { ...(f.build(f.head) as Record<string, unknown>), treeClean: false });
+      expect(probeUiErrorTaxonomy(f.root, f.head).state).toBe('UNMET');
+    } finally {
+      f.cleanup();
+    }
+  });
+
   test('a recorded verdict that disagrees with the recorded tests is rejected by the evaluator in either direction', () => {
     const f = uiFixture();
     try {
