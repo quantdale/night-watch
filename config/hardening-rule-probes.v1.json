@@ -1556,8 +1556,8 @@
         "ops": [
           {
             "file": "bin/lib/hardening/rules/documentation.mjs",
-            "search": "  return value;\n}",
-            "replace": "  return 'NOT_OBSERVED';\n}"
+            "search": "  return deriveCiStatusFromRecord({ value, observed, executed, record });",
+            "replace": "  return 'NOT_OBSERVED';"
           }
         ]
       },
@@ -3883,7 +3883,7 @@
         {
           "file": "bin/phase22-real.mjs",
           "search": "guardDevLane({ root: ROOT, launcher: 'phase22-real.mjs', args: process.argv.slice(2) });",
-          "replace": "guardDevLane({ root: ROOT, launcher: 'phase22-real.mjs', args: process.argv.slice(2) });\n(() => { throw new Error('effect'); })();"
+          "replace": "guardDevLane({ root: ROOT, launcher: 'phase22-real.mjs', args: process.argv.slice(2) });\n(() => { fs.rmSync('sweep-effect.txt', { force: true }); })();"
         }
       ],
       "focusedTests": [

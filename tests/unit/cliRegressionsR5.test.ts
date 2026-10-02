@@ -30,11 +30,13 @@ function metadata(bin: string): { flags: Array<{ name: string }>; authorization?
 
 test.describe('R5-07 nightwatch-agent', () => {
   test('an unknown command is a usage error (exit 2), never the default help (exit 0)', () => {
-    for (const word of ['bogus', 'campain', 'run']) {
+    // `bogus`/`campain` must be refused by the DECLARED CHOICES (a second guard, the stray-positional
+    // refusal, would also exit 2, so only the code tells the two apart and a removed `choices` is seen);
+    // `run` is a valid CAMPAIGN word but not a command, refused by the stray-positional guard.
+    for (const [word, code] of [['bogus', /CLI_ARGUMENT_INVALID/], ['campain', /CLI_ARGUMENT_INVALID/], ['run', /takes no argument/]] as const) {
       const result = run('nightwatch-agent.mjs', [word]);
       expect(result.status, word).toBe(2);
-      // `bogus`/`campain` fail the declared choices; `run` is a valid CAMPAIGN word but not a command.
-      expect(`${result.stderr}${result.stdout}`, word).toMatch(/CLI_ARGUMENT_INVALID|takes no argument/);
+      expect(`${result.stderr}${result.stdout}`, word).toMatch(code);
     }
   });
 

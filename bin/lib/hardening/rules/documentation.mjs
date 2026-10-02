@@ -212,6 +212,7 @@ export function checkAgentContinuityIntegrity() {
     ['ACTIVE_TASK_ROUTING_LIVE_SESSION_PROSE_DRIFT', 'the live-session prose drift code'],
     ['TASK_GROUP_LEDGER_PROGRESS_PROSE_DRIFT', 'the progress prose drift code'],
     ['const stateProgress = progressIn(stateText);', 'the STATE progress scan'],
+    ['figures[figures.length - 1] !== stateLast', 'the per-document progress comparison'],
     ['(?:\\/|\\s+of\\s+)', 'the progress figure pattern (every statement form)'],
   ]) {
     if (typeof needle === 'string' && agentStateCode.includes(needle)) continue;
