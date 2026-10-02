@@ -784,8 +784,11 @@
       "signals": []
     },
     "tests/unit/nameListingRenameTotality.test.ts": {
-      "class": "PARALLEL_SAFE",
-      "signals": []
+      "class": "MUTATION_CAMPAIGN_EXCLUSIVE",
+      "signals": [
+        "real-tree-hardening-check",
+        "isolated-scratch"
+      ]
     },
     "tests/unit/networkObserverSettlement.test.ts": {
       "class": "PARALLEL_SAFE",
