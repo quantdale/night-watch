@@ -7,9 +7,9 @@ Phase: COMPLETION_REVIEW5_V1
 CHILD OF: nightwatch-final-product-completion-v1
 Status: IN_PROGRESS
 TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1
-TASK_GROUPS_COMPLETE: NONE
-TASK_GROUP_NEXT: A1
-TASK_NEXT_ID: A1.1
+TASK_GROUPS_COMPLETE: A1,A2
+TASK_GROUP_NEXT: A3
+TASK_NEXT_ID: A3.1
 Starting SHA: d68bb1a7c7cf244da654815a1e7f266e1985f30c
 Last validated implementation SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
 Last substantive checkpoint SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
@@ -43,12 +43,12 @@ ACTIVE_TASK routed back to the parent at "M9 task 10.4".
 
 ## Current Milestone
 
-group A1 — Archive-move integrity (task A1.1, R5-01): approve archive moves
-only for approved planning shapes whose source path was approved and existed at
-the range base; classify every path in a range commit by commit, not via the
-aggregate diff; the two-commit smuggle fixture must be SUBSTANTIVE; R1 and a
-single-commit non-identical move are registered mutants and DETECTED. Track A
-(groups A1-A9) runs in order, then B1 before B2-B6, then C.
+group A3 — Receipt verification completeness (tasks A3.1-A3.2, R5-03/R5-04):
+gate receipts record tree cleanliness at emit and `requireCleanEmit` is true for
+every certifying kind (a `gate:local` receipt from a dirty tree is
+non-certifying); every receipt kind declares a closed subject set derived from
+what its producer executed (no `subjects: null`). Groups A1 and A2 are
+implemented (CI pending at their integration tip).
 
 ## Completed Milestones
 
@@ -62,17 +62,17 @@ Nothing in progress yet; group A1 is the next unit of work.
 
 ## Exact Next Action
 
-Implement task A1.1 (R5-01) in `bin/lib/checkpoint-role.mjs`: replace the
-permissive `ARCHIVE_MOVE_PATH_RE` with a check that the destination is an
-approved planning shape (`proposal|design|audit|tasks.md`, `.openspec.yaml`,
-`specs/<cap>/spec.md`) whose source path was approved and existed at the range
-base; classify every path in a range commit by commit (not via the aggregate
-diff); add the two-commit smuggle fixture (add a test file, then archive it →
-SUBSTANTIVE) and register R1 (`archiveMoveHolds` without `before !== after`)
-and a single-commit non-identical move as DETECTED probes. Before that, land
-the discovery D-1 prerequisite (the task-group/task-ID ledger patterns must
-accept letter-prefixed IDs such as `A1.1`, `B1.1`, `C.1`) as the first part of
-A9.4, with its tests. Then A1.1 → A2.1 → … in order.
+Implement task A3.1 (R5-03): in `bin/lib/release-evidence.mjs` and
+`bin/quality-gate.mjs` make the gate receipt record `treeClean` at emit,
+set `requireCleanEmit: true` for every certifying kind, and make a `gate:local`
+receipt from a dirty tree non-certifying (behavioural test: a dirty-tree gate
+receipt must NOT verify); then A3.2 (R5-04): a closed subject set per receipt
+kind derived from what its producer executed (no `subjects: null`; a receipt
+naming a subject its producer did not execute never verifies). Register each
+mutant as a probe and DETECTED by behaviour. Then A4.1 onward in order. Run the
+integrated tip's exact-head CI before closing A1/A2: the integration of groups
+A1+A2 is the next push; drop their `(implemented; CI pending)` markers by
+annotation once that CI is green.
 
 ## Files Changed
 
@@ -85,6 +85,23 @@ A9.4, with its tests. Then A1.1 → A2.1 → … in order.
 
 ## Validation Ledger
 
+- 2026-10-02 — A1.1 + A2.1 (local). `hardening:rules` 95 rules / 263 probes /
+  263 DETECTED (every mutation restored) after the A1/A2 guards were committed;
+  focused suites (archiveMoveIntegrity 7/7, nameListingRenameTotality 6/6,
+  workspaceIsolation incl. the three R5-02 tests, agent-state, projectState,
+  productionCompletionLaneState) pass; `typecheck`, `typecheck:bin` (1412, 14/76),
+  `hardening:check`, `agent:check`, `project:check`, `validation:universe` pass.
+  Process note (R5-11): one commit (the A2.1 first commit) was made before the
+  typecheck output was gated on its exit code; the declaration/ceiling repair
+  followed in the next commit and was never pushed red.
+- 2026-10-02 — parent pause and child bootstrap CI. Exact-head runs 37002989900
+  (`d68bb1a7`, the parent pause commit) and 37005160783 (`8f8693c2`, the child
+  bootstrap + ledger registration) both completed `success`. The parent session
+  `sess-ca2d77ccd304` was released and removed (`--delete-branch`) at
+  2026-10-02T12:06:15Z after ancestry was proven (`HEAD == origin/main ==
+  d68bb1a7`, 0 unique commits); canonical was fast-forwarded to `d68bb1a7`
+  (no canonical commit made). This child's session is `sess-931bc42f5779`
+  (claimed with `--adopt` from `sess-6d419d295e05`).
 - 2026-10-02 — bootstrap. Origin/main `d68bb1a7` is the parent's pause
   checkpoint (documentation-only; its own exact-head CI run is recorded below
   once observed); the last fully validated implementation head is `2e0cfda0`

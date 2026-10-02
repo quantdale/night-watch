@@ -5,9 +5,9 @@ Phase: COMPLETION_REVIEW5_V1
 Title: Review-5 corrective campaign (bounded child of the terminal campaign)
 Status: IN_PROGRESS
 TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1
-TASK_GROUPS_COMPLETE: NONE
-TASK_GROUP_NEXT: A1
-TASK_NEXT_ID: A1.1
+TASK_GROUPS_COMPLETE: A1,A2
+TASK_GROUP_NEXT: A3
+TASK_NEXT_ID: A3.1
 Task directory: .agent/tasks/nightwatch-final-completion-review5-v1
 Starting SHA: d68bb1a7c7cf244da654815a1e7f266e1985f30c
 Last validated implementation SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
@@ -23,11 +23,11 @@ resolved by groups A1-A9, B1-B6 and C; there is no review-6 by default (the
 exit rule: if Track B cannot make all 16 conditions reachable honestly, STOP
 and report). The parent `nightwatch-final-product-completion-v1` stays paused;
 on close-out ACTIVE_TASK routes back to it at "M9 task 10.4".
-Current milestone: group A1 — Archive-move integrity (task A1.1); Track A
-(A1-A9) runs first, then B1 (the Producer Matrix) before B2-B6, then C.
-Next action: implement task A1.1 (R5-01) — approve archive moves only for
-approved planning shapes, classify ranges commit by commit, and register the
-two-commit smuggle fixture and the R1/single-commit mutants.
+Current milestone: group A3 — Receipt verification completeness (A3.1-A3.2);
+groups A1 and A2 are implemented (CI pending at their integration tip).
+Next action: implement task A3.1 (R5-03) — gate receipts record tree
+cleanliness at emit and every certifying kind requires a clean emit; then A3.2
+(R5-04) closed subject sets.
 Authorization class: COMPLETION_REVIEW5_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
@@ -75,7 +75,7 @@ EXTERNAL CONTACT AUTHORIZED (OD-3 ONLY):
   GitHub Actions read/observe; C-00 fast-forward pushes.
 
 CURRENT STATUS:
-  IN_PROGRESS — bootstrap committed; group A1 (archive-move integrity) is next.
+  IN_PROGRESS — A1 and A2 implemented (CI pending); group A3 (receipt verification completeness) is next.
 
 ALPHAUS DEV / NEXT / PRODUCTION CONTACT:   NOT AUTHORIZED
 AUTHENTICATED ALPHAUS RUNTIME:             NOT AUTHORIZED
