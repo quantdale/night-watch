@@ -138,17 +138,35 @@ export function validateMutantRegistry(registry, isTracked, readFile) {
 function run(cwd, invocation, env) {
   const result = spawnSync(invocation.command, invocation.args, { cwd, env, encoding: 'utf8', timeout: DETECTION_TIMEOUT_MS, maxBuffer: 32 * 1024 * 1024, shell: false });
   const output = `${result.stdout ?? ''}\n${result.stderr ?? ''}`;
-  return { ok: result.status === 0 && result.error === undefined, status: result.status, tail: output.trim().split('\n').slice(-6).join('\n') };
+  return { ok: result.status === 0 && result.error === undefined, status: result.status, tail: output.trim().split("\n").slice(-40).join("\n") };
 }
 
 /**
  * Copy the tracked WORKING TREE into a fresh scratch git repository.
+ *
+ * When `root` is itself a Git repository the scratch is a SHARED CLONE of it
+ * (history and objects are reachable, so a focused test that reads a committed
+ * blob at the certified checkpoint behaves exactly as in the real tree) with the
+ * working-tree files overlaid and committed on top, so the scratch tree is clean.
+ * A non-Git root (a synthetic test fixture) falls back to a one-commit repository.
  * @param {string} root
  * @param {string[]} files
  * @returns {string} the scratch directory
  */
 function createScratch(root, files) {
   const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'nw-mutants-'));
+  const git = (/** @type {string[]} */ args, /** @type {string} */ cwd = scratch) => spawnSync('git', ['-c', 'user.email=mutants@nightwatch.local', '-c', 'user.name=mutants', ...args], { cwd, encoding: 'utf8', shell: false });
+  const isRepository = git(['rev-parse', '--git-dir'], root).status === 0;
+  if (isRepository) {
+    fs.rmSync(scratch, { recursive: true, force: true });
+    git(['clone', '--shared', '--no-checkout', '--quiet', root, scratch], os.tmpdir());
+    git(['checkout', '--quiet', '--detach', 'HEAD']);
+    // Remove tracked files the working tree no longer has (a declared deletion).
+    const present = new Set(files);
+    for (const tracked of (git(['ls-files', '-z']).stdout ?? '').split('\0').filter(Boolean)) {
+      if (!present.has(tracked)) fs.rmSync(path.join(scratch, tracked), { force: true });
+    }
+  }
   for (const file of files) {
     const destination = path.join(scratch, file);
     fs.mkdirSync(path.dirname(destination), { recursive: true });
@@ -160,12 +178,11 @@ function createScratch(root, files) {
       fs.symlinkSync(path.join(root, modules), path.join(scratch, modules));
     }
   }
-  const git = (/** @type {string[]} */ args) => spawnSync('git', ['-c', 'user.email=mutants@nightwatch.local', '-c', 'user.name=mutants', ...args], { cwd: scratch, encoding: 'utf8', shell: false });
-  git(['init', '--quiet', '-b', 'main']);
+  if (!isRepository) git(['init', '--quiet', '-b', 'main']);
   // node_modules is a symlink into the real tree: never part of the scratch commit.
   fs.appendFileSync(path.join(scratch, '.git', 'info', 'exclude'), 'node_modules\nui/control-center/node_modules\n');
   git(['add', '--all']);
-  git(['commit', '--quiet', '--no-gpg-sign', '-m', 'mutation harness scratch']);
+  git(['commit', '--quiet', '--no-gpg-sign', '--allow-empty', '-m', 'mutation harness scratch']);
   return scratch;
 }
 
@@ -248,6 +265,7 @@ export async function runMutationHarness(options = {}) {
       /** @type {Map<string, string>} */
       const originals = new Map();
       let verdict = 'SURVIVED';
+      let committed = false;
       try {
         for (const op of mutant.ops) {
           const absolute = path.join(scratch, op.file);
@@ -257,6 +275,11 @@ export async function runMutationHarness(options = {}) {
           if (current.split(op.search).length - 1 !== 1) throw new Error(`search literal is not unique in the scratch copy: ${op.file}`);
           fs.writeFileSync(absolute, current.replace(op.search, () => op.replace));
         }
+        // Commit the mutation IN THE SCRATCH REPOSITORY before any detector runs: several
+        // focused tests clone the repository at its committed HEAD (a shared fixture
+        // root) and so would otherwise exercise the UNMUTATED code and report a survivor.
+        spawnSync('git', ['-c', 'user.email=mutants@nightwatch.local', '-c', 'user.name=mutants', 'commit', '--quiet', '--no-gpg-sign', '--all', '-m', `mutant ${mutant.id}`], { cwd: scratch, encoding: 'utf8', shell: false });
+        committed = true;
         const tests = run(scratch, testInvocation(mutant.focusedTests), environment);
         if (!tests.ok) {
           verdict = 'DETECTED_BY_TESTS';
@@ -268,6 +291,7 @@ export async function runMutationHarness(options = {}) {
         verdict = 'PROBE_ERROR';
         errors.push(`MUTANT_APPLY_FAILED: ${mutant.id}: ${error instanceof Error ? error.message : String(error)}`);
       } finally {
+        if (committed) spawnSync('git', ['reset', '--quiet', '--hard', 'HEAD~1'], { cwd: scratch, encoding: 'utf8', shell: false });
         for (const [absolute, text] of originals) fs.writeFileSync(absolute, text);
       }
       if (verdict.startsWith('DETECTED')) detected += 1;

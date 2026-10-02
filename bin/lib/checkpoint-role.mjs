@@ -33,14 +33,6 @@ function blobAt(root, ref, file) {
   return result.stdout ?? '';
 }
 
-function touchedGuardedFiles(root, commit, guarded) {
-  // `-m` diffs a MERGE against EACH parent; without it a merge commit's
-  // touches are invisible and a merge could smuggle a guarded-file rewrite
-  // past the classifier (VB-06). Non-merges are unaffected by `-m`.
-  const output = gitText(root, ['diff-tree', '--root', '--no-commit-id', '--name-only', '--no-renames', '-m', '-r', commit]);
-  if (output === null) return null;
-  return output.split(/\r?\n/).map((line) => line.trim()).filter((line) => line !== '' && guarded.has(line));
-}
 
 /**
  * The digests of the lines a `git diff --unified=0` REMOVES. Removals are read
@@ -248,34 +240,29 @@ export function checkpointRoleViolations(root, files, context) {
   if (!perCommitJudgement && aggregateGuarded.size === 0 && aggregateArchived.size === 0) return [...new Set(violations)];
 
   for (const commit of commits) {
+    // ONE read of the commit's touched paths feeds every judgement below. An
+    // unreadable commit proves nothing: it is a violation for every listed path
+    // (guarded binding files AND archived paths alike), never a silent skip.
+    const touchedPaths = commitTouchedPaths(root, commit);
+    if (touchedPaths === null) {
+      violations.push(UNLISTABLE_RANGE_VIOLATION, ...files);
+      continue;
+    }
+    const touchedSet = new Set(touchedPaths);
     /** @type {Set<string>} */
     let guarded = aggregateGuarded;
     /** @type {Set<string>} */
     let archived = aggregateArchived;
     if (perCommitJudgement) {
-      const touchedPaths = commitTouchedPaths(root, commit);
-      if (touchedPaths === null) {
-        violations.push(UNLISTABLE_RANGE_VIOLATION, ...files);
-        continue;
-      }
       for (const file of touchedPaths) if (pathAloneViolation(file)) violations.push(file);
       guarded = new Set(touchedPaths.filter((file) => guardClassForPath(file) !== null));
       archived = new Set(touchedPaths.filter((file) => ARCHIVE_MOVE_PATH_RE.test(file)));
     }
-    const touched = touchedGuardedFiles(root, commit, guarded);
-    if (touched === null) {
-      violations.push(...guarded);
-      continue;
-    }
+    const touched = [...guarded].filter((file) => touchedSet.has(file));
     // R4-13: every archive-prefix path this commit touched must be a
     // byte-identical move of its named change's file.
     for (const file of archived) {
-      const touchedArchive = gitText(root, ['diff-tree', '--root', '--no-commit-id', '--name-only', '--no-renames', '-r', '-m', commit, '--', file]);
-      if (touchedArchive === null) {
-        violations.push(file);
-        continue;
-      }
-      if (touchedArchive.trim() === '') continue;
+      if (!touchedSet.has(file)) continue;
       if (!archiveMoveHolds(root, commit, file)) violations.push(file);
     }
     for (const file of touched) {

@@ -1,0 +1,187 @@
+// R5-05 / review-5 task A4.1 — the three receipt-consuming release probes,
+// driven directly with real receipts at a real checkpoint.
+//
+// G18 (UI harness), G12 (yield campaign) and G20 (accessibility) each resolve MET
+// only for a receipt whose recorded SHA is EXACTLY the certified checkpoint S. A
+// receipt rebound to S in memory (`parsed.summary.sha = S`, `raw.nightwatchSha ??
+// S`) or a relation overwritten to BOUND would certify evidence about another
+// commit; each such mutant fails an assertion here.
+
+import { test, expect } from '@playwright/test';
+import { spawnSync } from 'node:child_process';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { ACCESSIBILITY_RECORD_PATH } from '../../bin/lib/accessibility-record.mjs';
+import { probeAccessibility, probeUiErrorTaxonomy, probeYieldCampaignResult } from '../../bin/lib/release-receipt-probes.mjs';
+import { UI_HARNESS_FILE, UI_HARNESS_RECEIPT_PATH, UI_HARNESS_REQUIRED_TESTS, UI_HARNESS_SUITE, buildUiHarnessReceipt } from '../../bin/lib/ui-harness-receipt.mjs';
+import { buildProductRunReceipt } from '../../src/core/agentRuntime/productRunReceipt';
+
+const REPO = path.join(__dirname, '..', '..');
+const S = 'a'.repeat(40);
+const OTHER = 'b'.repeat(40);
+
+function scratchRoot(): { root: string; cleanup: () => void } {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'nw-receiptprobes-'));
+  return { root, cleanup: () => fs.rmSync(root, { recursive: true, force: true }) };
+}
+
+function writeJson(root: string, relative: string, value: unknown): void {
+  fs.mkdirSync(path.dirname(path.join(root, relative)), { recursive: true });
+  fs.writeFileSync(path.join(root, relative), `${JSON.stringify(value, null, 2)}\n`);
+}
+
+test.describe('G20 accessibility certification probe', () => {
+  const passSection = { status: 'PASS', executedAt: '2026-09-26T00:00:00.000Z' };
+  const record = (sha: string) => ({
+    schemaVersion: 'nightwatch.accessibility-certification.v1',
+    nightwatchSha: sha,
+    treeClean: true,
+    updatedAt: '2026-09-26T00:00:00.000Z',
+    sections: {
+      certification: { ...passSection, views: 8 },
+      keyboard: { ...passSection, walks: 14, focusIndicator: { measured: 12, minimum: 4.83, samples: [], violations: [] } },
+    },
+  });
+  function withLaneSources(root: string): void {
+    fs.mkdirSync(path.join(root, 'tests/unit'), { recursive: true });
+    fs.mkdirSync(path.join(root, 'tests/browser'), { recursive: true });
+    fs.writeFileSync(path.join(root, 'tests/unit/accessibilityAudit.test.ts'), '');
+    fs.writeFileSync(path.join(root, 'tests/browser/accessibilityCertification.browser.ts'), '');
+  }
+
+  test('a record bound to S is MET; a record bound to another commit is NOT_AT_CHECKPOINT, never MET', () => {
+    const s = scratchRoot();
+    try {
+      withLaneSources(s.root);
+      writeJson(s.root, ACCESSIBILITY_RECORD_PATH, record(S));
+      expect(probeAccessibility(s.root, S).state).toBe('MET');
+      writeJson(s.root, ACCESSIBILITY_RECORD_PATH, record(OTHER));
+      const other = probeAccessibility(s.root, S);
+      expect(other.state).toBe('NOT_AT_CHECKPOINT');
+      expect(other.detail).toContain(OTHER.slice(0, 8));
+    } finally {
+      s.cleanup();
+    }
+  });
+
+  test('an absent record, a rejected record and absent lane sources are UNMET', () => {
+    const s = scratchRoot();
+    try {
+      expect(probeAccessibility(s.root, S).state).toBe('UNMET');
+      withLaneSources(s.root);
+      expect(probeAccessibility(s.root, S).state).toBe('UNMET');
+      writeJson(s.root, ACCESSIBILITY_RECORD_PATH, { ...record(S), treeClean: false });
+      const rejected = probeAccessibility(s.root, S);
+      expect(rejected.state).toBe('UNMET');
+      expect(rejected.detail).toContain('rejected');
+    } finally {
+      s.cleanup();
+    }
+  });
+});
+
+test.describe('G18 UI-harness probe', () => {
+  function uiFixture(): { root: string; cleanup: () => void; build: (sha: string) => unknown; head: string } {
+    const s = scratchRoot();
+    const environment = { PATH: process.env.PATH ?? '', HOME: s.root, GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_NOSYSTEM: '1', GIT_AUTHOR_NAME: 'nw', GIT_AUTHOR_EMAIL: 'nw@example.invalid', GIT_COMMITTER_NAME: 'nw', GIT_COMMITTER_EMAIL: 'nw@example.invalid' };
+    const git = (args: string[]) => spawnSync('git', args, { cwd: s.root, env: environment, encoding: 'utf8', shell: false });
+    git(['init', '--quiet', '-b', 'main']);
+    const harnessSource = fs.readFileSync(path.join(REPO, 'ui/control-center/src/contractRender.test.tsx'), 'utf8');
+    const typesSource = fs.readFileSync(path.join(REPO, 'ui/control-center/src/types.ts'), 'utf8');
+    for (const [relative, text] of [['ui/control-center/src/contractRender.test.tsx', harnessSource], ['ui/control-center/src/types.ts', typesSource]] as const) {
+      fs.mkdirSync(path.dirname(path.join(s.root, relative)), { recursive: true });
+      fs.writeFileSync(path.join(s.root, relative), text);
+    }
+    git(['add', '--all']);
+    git(['commit', '--quiet', '--no-gpg-sign', '-m', 'S']);
+    const head = (git(['rev-parse', 'HEAD']).stdout ?? '').trim();
+    const harnessTests = (harnessSource.match(/^\s*(?:it|test)\(/gm) ?? []).length;
+    const harnessSuite = UI_HARNESS_REQUIRED_TESTS.filter((entry) => entry.suite === UI_HARNESS_SUITE);
+    const otherSuite = UI_HARNESS_REQUIRED_TESTS.filter((entry) => entry.suite !== UI_HARNESS_SUITE);
+    const extras = harnessTests - harnessSuite.length - 1 - otherSuite.length;
+    const vitestFile = {
+      filepath: `/repo/ui/control-center/${UI_HARNESS_FILE}`,
+      tasks: [
+        { type: 'suite', name: UI_HARNESS_SUITE, tasks: [
+          ...harnessSuite.map((entry) => ({ type: 'test', name: `${entry.titlePrefix} (fixture)`, result: { state: 'pass' } })),
+          { type: 'test', name: 'offers retry only for NETWORK, TIMEOUT, 408 and 429', result: { state: 'pass' } },
+          ...Array.from({ length: extras }, (_, index) => ({ type: 'test', name: `fixture remainder ${index}`, result: { state: 'pass' } })),
+        ] },
+        { type: 'suite', name: 'control center render truth', tasks: otherSuite.map((entry) => ({ type: 'test', name: `${entry.titlePrefix} (fixture)`, result: { state: 'pass' } })) },
+      ],
+    };
+    const build = (sha: string) => buildUiHarnessReceipt({ files: [vitestFile], headSha: sha, treeClean: true, typesSource, harnessSource, executedAt: '2026-09-30T00:00:00.000Z' });
+    return { root: s.root, cleanup: s.cleanup, build, head };
+  }
+
+  test('a receipt bound to S is MET; one bound to another commit is NOT_AT_CHECKPOINT; absent or tampered is UNMET', () => {
+    const f = uiFixture();
+    try {
+      writeJson(f.root, UI_HARNESS_RECEIPT_PATH, f.build(f.head));
+      expect(probeUiErrorTaxonomy(f.root, f.head).state).toBe('MET');
+      writeJson(f.root, UI_HARNESS_RECEIPT_PATH, f.build(OTHER));
+      expect(probeUiErrorTaxonomy(f.root, f.head).state).toBe('NOT_AT_CHECKPOINT');
+      writeJson(f.root, UI_HARNESS_RECEIPT_PATH, { ...(f.build(f.head) as Record<string, unknown>), receiptDigest: `sha256:${'0'.repeat(24)}` });
+      expect(probeUiErrorTaxonomy(f.root, f.head).state).toBe('UNMET');
+      fs.rmSync(path.join(f.root, UI_HARNESS_RECEIPT_PATH));
+      expect(probeUiErrorTaxonomy(f.root, f.head).state).toBe('UNMET');
+    } finally {
+      f.cleanup();
+    }
+  });
+});
+
+test.describe('G12 yield-campaign probe', () => {
+  const sibling = { repository: 'mobingilabs/ouchan', headSha: '1'.repeat(40), statusDigest: 'sha256:aa', diffDigest: 'sha256:bb' };
+  function runArtifacts(sha: string, runId: string) {
+    const observations = [sibling];
+    const receipt = buildProductRunReceipt({
+      campaignId: 'synthetic-yield',
+      generatedAt: '2026-09-30T00:00:00.000Z',
+      result: {
+        terminationReason: 'COMPLETE_NO_FINDING',
+        terminationCounts: { COMPLETE_NO_FINDING: 1 },
+        providerAttribution: { terminationClass: 'VALID_PROVIDER_RUN', totalCalls: 3, completedCalls: 3, failures: 0, byClass: {} } as never,
+        persistedFindings: [],
+        reproductionCount: 2,
+        toolActionCount: 5,
+      },
+      before: observations as never,
+      after: observations as never,
+      leakScan: { result: 'CLEAN', findings: 0, scannedChars: 10 },
+      nightwatchIdentity: { sha, treeClean: true },
+      campaignKind: 'PRINT_CLI_PROVIDER' as never,
+      reasonerIdentity: { kind: 'PRINT_CLI_PROVIDER', identityDigest: `rid:sha256:${'a'.repeat(24)}`, printCliDigest: `sha256:${'b'.repeat(24)}` } as never,
+    });
+    return { manifest: { runId, product: 'campaign', nightwatchSha: sha }, summary: { passed: true }, receipt };
+  }
+  function yieldRoot(sha: string): { root: string; cleanup: () => void } {
+    const s = scratchRoot();
+    // The probe loads the receipt evaluator as TypeScript FROM the root it is given.
+    fs.symlinkSync(path.join(REPO, 'src'), path.join(s.root, 'src'), 'dir');
+    const run = runArtifacts(sha, 'run-1');
+    writeJson(s.root, 'artifacts/nightwatch-run-1/manifest.json', run.manifest);
+    writeJson(s.root, 'artifacts/nightwatch-run-1/summary.json', run.summary);
+    writeJson(s.root, 'artifacts/nightwatch-run-1/product-run-receipt.json', run.receipt);
+    return s;
+  }
+
+  test('a campaign receipt at S is MET; one at another commit is NOT_AT_CHECKPOINT; none at all is UNMET', () => {
+    const bound = yieldRoot(S);
+    const other = yieldRoot(OTHER);
+    const empty = scratchRoot();
+    try {
+      fs.symlinkSync(path.join(REPO, 'src'), path.join(empty.root, 'src'), 'dir');
+      const met = probeYieldCampaignResult(bound.root, S);
+      expect(met.state, met.detail).toBe('MET');
+      const notAt = probeYieldCampaignResult(other.root, S);
+      expect(notAt.state, notAt.detail).toBe('NOT_AT_CHECKPOINT');
+      expect(probeYieldCampaignResult(empty.root, S).state).toBe('UNMET');
+    } finally {
+      bound.cleanup();
+      other.cleanup();
+      empty.cleanup();
+    }
+  });
+});

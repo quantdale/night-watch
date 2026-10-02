@@ -557,6 +557,12 @@
         "isolated-scratch"
       ]
     },
+    "tests/unit/devLauncherEffects.test.ts": {
+      "class": "MUTATION_CAMPAIGN_EXCLUSIVE",
+      "signals": [
+        "real-tree-hardening-check"
+      ]
+    },
     "tests/unit/devLoginSecurity.test.ts": {
       "class": "PARALLEL_SAFE",
       "signals": [
@@ -612,6 +618,12 @@
       ]
     },
     "tests/unit/evidence.test.ts": {
+      "class": "PARALLEL_SAFE",
+      "signals": [
+        "isolated-scratch"
+      ]
+    },
+    "tests/unit/evidenceEvaluationInputs.test.ts": {
       "class": "PARALLEL_SAFE",
       "signals": [
         "isolated-scratch"
@@ -1748,6 +1760,12 @@
       ]
     },
     "tests/unit/releaseFreshness.test.ts": {
+      "class": "PARALLEL_SAFE",
+      "signals": [
+        "isolated-scratch"
+      ]
+    },
+    "tests/unit/releaseReceiptProbes.test.ts": {
       "class": "PARALLEL_SAFE",
       "signals": [
         "isolated-scratch"

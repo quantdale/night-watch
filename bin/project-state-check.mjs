@@ -29,18 +29,19 @@ import { createRequire } from 'node:module';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
+import { gitEnv, gitReadOnly } from './lib/probe-io.mjs';
 import { loadTypeScriptModule as loadRuntimeTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
-import { evidenceLaneDisagreements, loadReleaseEvidenceBindings, resolveEvidenceShaForSubject, verifyPersistedReceipt } from './lib/release-evidence.mjs';
-import { ACCESSIBILITY_RECORD_PATH, parseAccessibilityCertificationRecord } from './lib/accessibility-record.mjs';
-import { UI_HARNESS_FILE, UI_HARNESS_RECEIPT_PATH, UI_HARNESS_TYPES_PATH, evaluateUiHarnessReceipt, extractApiErrorKinds } from './lib/ui-harness-receipt.mjs';
+import { probeAccessibility, probeUiErrorTaxonomy, probeYieldCampaignResult } from './lib/release-receipt-probes.mjs';
+import { evidenceLaneDisagreements, loadReleaseEvidenceBindings, resolveEvidenceShaForSubject } from './lib/release-evidence.mjs';
 import { evidenceArtifactExistsAtSha, laneArtifactDemotions } from './lib/evidence-artifact.mjs';
 import { exerciseConfigurationContract, exercisePreflightRefusal } from './lib/release-probe-exercises.mjs';
-import { bindTreeProbe, receiptBindingRelation, receiptNotAtCheckpoint } from './lib/probe-binding.mjs';
+import { bindTreeProbe } from './lib/probe-binding.mjs';
 import { classifyCertificationDemotion } from './lib/certification-demotion.mjs';
 import { collectCiBlockStale, validateCiBlockRecord } from './lib/ci-block-record.mjs';
 import { topologyCertificationForCheckpoint, topologyCertificationVerdict } from './lib/topology-receipts.mjs';
 import { checkpointRoleViolations } from './lib/checkpoint-role.mjs';
 import { bindingReceiptVerifier, collectCheckpointBindingFacts } from './lib/checkpoint-binding.mjs';
+import { buildEvidenceEvaluationInputs } from './lib/evidence-evaluation-inputs.mjs';
 import {
   findDuplicateFields,
   fieldValue,
@@ -167,40 +168,16 @@ function fail(errors, code) {
   errors.push(code);
 }
 
-function gitEnv(root = process.cwd()) {
-  const environment = {
-    PATH: '/usr/bin:/bin',
-    HOME: root,
-    GIT_CONFIG_GLOBAL: '/dev/null',
-    LANG: 'C',
-    LC_ALL: 'C',
-    GIT_OPTIONAL_LOCKS: '0',
-    GIT_CONFIG_NOSYSTEM: '1',
-  };
-  // D-04 / 4.10 — the gate-mode label is a non-secret classification input;
-  // the agent-state child must see the same mode its gate group runs in.
-  const gateEnvironment = process.env['NIGHTWATCH_GATE_ENVIRONMENT'];
-  if (gateEnvironment !== undefined && gateEnvironment !== '') {
-    environment['NIGHTWATCH_GATE_ENVIRONMENT'] = gateEnvironment;
-  }
-  return environment;
-}
-
-function gitReadOnly(root, args) {
-  const result = spawnSync('git', args, {
-    cwd: root,
-    env: gitEnv(root),
-    shell: false,
-    encoding: 'utf8',
-    timeout: 5_000,
-    maxBuffer: 512 * 1024,
-  });
-  if (result.status !== 0) return null;
-  return result.stdout ?? '';
-}
-
 function loadTypeScriptModule(root, file) {
   return loadRuntimeTypeScriptModule(file, { root });
+}
+
+function readJsonAt(root, relative) {
+  try {
+    return JSON.parse(fs.readFileSync(path.join(root, relative), 'utf8'));
+  } catch {
+    return null;
+  }
 }
 
 function parseKeyValueBlock(text, heading = BLOCK_SECTION_HEADING, ownedFields = OWNED_PROJECT_STATE_FIELDS) {
@@ -281,13 +258,6 @@ const RULE_QUANTIFIERS = new Set(['TOTALITY', 'EXISTENCE']);
 const ZERO_LANE_COUNTS = Object.freeze({ proven: 0, externallyBlocked: 0, neverAttempted: 0, staleEvidence: 0 });
 const HEX40 = /^[0-9a-f]{40}$/i;
 
-function readJsonAt(root, relative) {
-  try {
-    return JSON.parse(fs.readFileSync(path.join(root, relative), 'utf8'));
-  } catch {
-    return null;
-  }
-}
 
 function probeLaneState(root, substantiveSha, isAncestor, today) {
   const loaded = loadLaneState(root);
@@ -637,34 +607,6 @@ function probeRuleRegistry(root) {
   };
 }
 
-function probeAccessibility(root, certifiedCheckpointSha) {
-  const unit = fs.existsSync(path.join(root, 'tests/unit/accessibilityAudit.test.ts'));
-  const browser = fs.existsSync(path.join(root, 'tests/browser/accessibilityCertification.browser.ts'));
-  if (!unit || !browser) return { state: 'UNMET', detail: `check absent: unit=${unit} browser=${browser}` };
-  // G20 / R2-51 — the machine-readable certification record written by the
-  // control-center browser lane. A fresh clone has no record (the lane is a
-  // qualified-host browser lane), so this check honestly stays UNMET there.
-  // CF-02 / design D3 (b): the record's executed SHA must equal the certified
-  // checkpoint S; a record bound to any other commit is NOT_AT_CHECKPOINT.
-  const record = readJsonAt(root, ACCESSIBILITY_RECORD_PATH);
-  if (record === null) {
-    return {
-      state: 'UNMET',
-      detail: `no accessibility certification record at ${ACCESSIBILITY_RECORD_PATH}; the control-center browser lane (npm run control-center:ui:browser) has not completed on this host`,
-    };
-  }
-  const parsed = parseAccessibilityCertificationRecord(record);
-  if (!parsed.ok || parsed.summary === null) {
-    return { state: 'UNMET', detail: `accessibility certification record rejected: ${parsed.errors.slice(0, 3).join('; ')}` };
-  }
-  if (receiptBindingRelation(certifiedCheckpointSha, parsed.summary.sha) !== 'BOUND') {
-    return receiptNotAtCheckpoint('the accessibility certification record', parsed.summary.sha, certifiedCheckpointSha);
-  }
-  return {
-    state: 'MET',
-    detail: `certification + keyboard sections PASS at ${parsed.summary.sha.slice(0, 8)}; ${parsed.summary.measuredFocusIndicators} focus indicators measured, minimum contrast ${parsed.summary.minimumFocusContrast.toFixed(2)}:1`,
-  };
-}
 
 /**
  * G14 — dead-architecture closure (D3): the reachability report carries zero
@@ -786,49 +728,6 @@ function probeConfigurationContract(root) {
   }
 }
 
-/**
- * G18 — UI error taxonomy (D3 / VD-02): the F-18 differential render harness
- * drives every view through every ApiErrorKind member and requires distinct
- * renderings. This probe no longer trusts the presence of the harness file: it
- * consumes the UI-harness EXECUTION receipt the UI_GATE group's vitest
- * reporter writes (bin/lib/ui-harness-receipt.mjs), requires every harness
- * test recorded PASS from a clean tree, cross-checks the ApiErrorKind member
- * list against the one committed AT the certified checkpoint, and resolves
- * MET only when the receipt's SHA equals that checkpoint.
- * @param {string} root
- * @param {string | null} certifiedCheckpointSha
- * @returns {{state: string, detail: string}}
- */
-function probeUiErrorTaxonomy(root, certifiedCheckpointSha) {
-  const raw = readJsonAt(root, UI_HARNESS_RECEIPT_PATH);
-  if (raw === null) {
-    return {
-      state: 'UNMET',
-      detail: `no UI-harness execution receipt at ${UI_HARNESS_RECEIPT_PATH}; the UI_GATE group (npm run gate:ui) has not executed the F-18 harness on this host`,
-    };
-  }
-  let expectedKinds = null;
-  let harnessSourceAtS = null;
-  if (typeof certifiedCheckpointSha === 'string' && HEX40.test(certifiedCheckpointSha)) {
-    const typesAtCheckpoint = gitReadOnly(root, ['show', `${certifiedCheckpointSha}:${UI_HARNESS_TYPES_PATH}`]);
-    expectedKinds = typeof typesAtCheckpoint === 'string' ? extractApiErrorKinds(typesAtCheckpoint) : null;
-    // R3-06 / corrections task 8.5: the harness source committed AT S, for the
-    // digest and test-count cross-check.
-    const harnessAtCheckpoint = gitReadOnly(root, ['show', `${certifiedCheckpointSha}:ui/control-center/${UI_HARNESS_FILE}`]);
-    harnessSourceAtS = typeof harnessAtCheckpoint === 'string' ? harnessAtCheckpoint : null;
-  }
-  const evaluated = evaluateUiHarnessReceipt(raw, { certifiedCheckpointSha, expectedKinds, harnessSourceAtS });
-  if (!evaluated.ok || evaluated.summary === null) {
-    return { state: 'UNMET', detail: `UI-harness execution receipt rejected: ${evaluated.errors.slice(0, 3).join('; ')}` };
-  }
-  if (evaluated.relation !== 'BOUND') {
-    return receiptNotAtCheckpoint('the UI-harness execution receipt', evaluated.summary.sha, certifiedCheckpointSha);
-  }
-  return {
-    state: 'MET',
-    detail: `F-18 harness executed at ${evaluated.summary.sha.slice(0, 8)}: ${evaluated.summary.harnessTests} harness tests PASS over ${evaluated.summary.kinds} ApiErrorKind members (suite ${evaluated.summary.totalTests} tests, 0 failed, clean tree)`,
-  };
-}
 
 /**
  * G21 — authenticated capability lifecycle (D3): the single-evaluator rule
@@ -874,79 +773,7 @@ function probeAuthenticatedCapabilityLifecycle(root) {
 }
 
 
-/** Bound on how many newest run directories the G12 probe inspects. */
-const YIELD_RUN_SCAN_LIMIT = 50;
 
-/**
- * G12 — yield campaign result (D3 / VD-03 / CF-03): resolves ONLY from a
- * yield-campaign receipt — the D-7 manifest + summary + product-run receipt of
- * a run that passed, executed at a recorded clean Nightwatch commit through
- * the provider print adapter, with at least one completed provider call, an
- * unchanged sibling identity and a clean leak scan
- * (evaluateYieldCampaignEvidence). MET only when that commit is the certified
- * checkpoint. The historical W13 aggregate is context, never evidence: it is
- * not consulted here. The receipt is host-local by design (gitignored
- * artifacts/), so this check is NOT environment-independent: a fresh clone has
- * none and honestly stays UNMET.
- * @param {string} root
- * @param {string | null} certifiedCheckpointSha
- * @returns {{state: string, detail: string}}
- */
-function probeYieldCampaignResult(root, certifiedCheckpointSha) {
-  let receiptModule;
-  try {
-    receiptModule = loadTypeScriptModule(root, 'src/core/agentRuntime/productRunReceipt.ts');
-  } catch {
-    return { state: 'UNAVAILABLE_CAPABILITY', detail: 'product run receipt module unavailable' };
-  }
-  let entries;
-  try {
-    entries = fs.readdirSync(path.join(root, 'artifacts'));
-  } catch {
-    entries = [];
-  }
-  // R3-06 / corrections task 8.5: newest-by-TIME, not lexicographic — a run id
-  // is a name, and a hand-chosen name must not outrank a newer execution.
-  const runs = entries
-    .filter((entry) => entry.startsWith('nightwatch-'))
-    .map((entry) => {
-      let mtimeMs = 0;
-      try {
-        mtimeMs = fs.statSync(path.join(root, 'artifacts', entry)).mtimeMs;
-      } catch {
-        mtimeMs = 0;
-      }
-      return { entry, mtimeMs };
-    })
-    .sort((left, right) => (right.mtimeMs - left.mtimeMs) || (left.entry < right.entry ? 1 : -1))
-    .slice(0, YIELD_RUN_SCAN_LIMIT)
-    .map((run) => run.entry);
-  if (runs.length === 0) {
-    return { state: 'UNMET', detail: 'no yield-campaign receipt: no artifacts/nightwatch-* run exists on this host (the receipt is host-local; a fresh clone has none)' };
-  }
-  let boundToOther = null;
-  let firstRejection = null;
-  for (const entry of runs) {
-    const evaluated = receiptModule.evaluateYieldCampaignEvidence({
-      manifest: readJsonAt(root, `artifacts/${entry}/manifest.json`),
-      summary: readJsonAt(root, `artifacts/${entry}/summary.json`),
-      receipt: readJsonAt(root, `artifacts/${entry}/product-run-receipt.json`),
-    }, certifiedCheckpointSha);
-    if (!evaluated.ok || evaluated.summary === null) {
-      if (firstRejection === null) firstRejection = evaluated.errors.slice(0, 3).join('; ');
-      continue;
-    }
-    if (evaluated.relation === 'BOUND') {
-      return {
-        state: 'MET',
-        detail: `yield campaign ${evaluated.summary.runId} executed at ${evaluated.summary.sha.slice(0, 8)}: ${evaluated.summary.completedCalls} completed provider calls, ${evaluated.summary.reproductionCount} reproduction attempts, ${evaluated.summary.admissions} admissions, ${evaluated.summary.siblingsObserved} siblings observed, clean leak scan`,
-      };
-    }
-    if (boundToOther === null) boundToOther = evaluated.summary.sha;
-  }
-  if (boundToOther !== null) return receiptNotAtCheckpoint('the newest qualifying yield-campaign receipt', boundToOther, certifiedCheckpointSha);
-  return { state: 'UNMET', detail: `no qualifying yield-campaign receipt among the ${runs.length} newest runs; newest rejection: ${firstRejection ?? 'none'}` };
-}
 
 /**
  * X-04 — the Git-reading wrapper around the pure demotion classifier: it
@@ -1499,13 +1326,9 @@ function main() {
               }
             }
           }
-          const artifactPathsBySubject = new Map();
-          for (const [subject, binding] of evidenceBindingsForArtifacts.bySubject ?? []) {
-            artifactPathsBySubject.set(subject, Array.isArray(binding?.artifactPaths) ? binding.artifactPaths : []);
-          }
-          // Any git failure (absence, timeout, signal, spawn error) is ABSENT —
-          // never a silent pass.
-          const evidenceArtifactAtSha = (sha, artifactPath) => evidenceArtifactExistsAtSha(root, sha, artifactPath);
+          // R5-05 A4.1: the artifact paths, receipt digests, certifying flags and the receipt /
+          // artifact verifiers are derived by ONE importable module (tested), not inline.
+          const evidenceInputs = buildEvidenceEvaluationInputs({ root, bySubject: evidenceBindingsForArtifacts.bySubject ?? new Map() });
           for (const condition of boundDefinition.conditions) {
             if (condition.evidenceSha === null) continue;
             if (gitReadOnly(root, ['cat-file', '-e', `${condition.evidenceSha}^{commit}`]) === null) {
@@ -1610,17 +1433,11 @@ function main() {
               detail: external.detail,
             },
             definitionDigest,
-            resolveEvidenceArtifactAtSha: evidenceArtifactAtSha,
-            evidenceArtifactPaths: Object.fromEntries(artifactPathsBySubject),
-            // RV-02: a SHA with no receipt is a claim, not an observation.
-            evidenceReceiptDigests: Object.fromEntries([...(evidenceBindingsForArtifacts.bySubject ?? [])].map(([subject, binding]) => [subject, binding?.receiptDigest ?? null])),
-            // R3-08 / corrections task 8.7: the recorded certifying flags.
-            evidenceCertifying: Object.fromEntries([...(evidenceBindingsForArtifacts.bySubject ?? [])].map(([subject, binding]) => [subject, binding?.certifying !== false])),
-            // R3-05 / corrections task 8.4: a receiptDigest is evidence only
-            // when a persisted receipt re-read AT CHECK TIME re-derives it and
-            // is bound to the same SHA. A hand-written digest resolves the
-            // condition EVIDENCE_RECEIPT_ABSENT, never MET.
-            verifyEvidenceReceipt: (/** @type {string} */ subject, /** @type {string} */ digest, /** @type {string} */ evidenceSha) => verifyPersistedReceipt(root, subject, digest, evidenceSha).verified,
+            resolveEvidenceArtifactAtSha: evidenceInputs.resolveEvidenceArtifactAtSha,
+            evidenceArtifactPaths: evidenceInputs.evidenceArtifactPaths,
+            evidenceReceiptDigests: evidenceInputs.evidenceReceiptDigests,
+            evidenceCertifying: evidenceInputs.evidenceCertifying,
+            verifyEvidenceReceipt: evidenceInputs.verifyEvidenceReceipt,
             resolveEvidenceRelation: (resolvedEvidenceSha, checkpoint) => {
               const headAfter = gitReadOnly(root, ['rev-parse', 'HEAD'])?.trim() ?? null;
               if (headBefore !== null && headAfter !== null && headBefore !== headAfter) {

@@ -91,6 +91,32 @@ test.describe('R5-05 mutation harness', () => {
     }
   });
 
+  test('the mutation is COMMITTED in the scratch repository, so a test that reads the committed HEAD sees it', async () => {
+    const fixture = synthetic({
+      behaviouralMutantRequirements: ['R5-05/N1'],
+      behaviouralMutants: [mutant('BM-001', 'R5-05/N1', "'ENFORCED';", "'WEAKENED';")],
+    });
+    try {
+      // This "focused test" reads the guard from the committed HEAD (like a collector
+      // test that clones the repository), never from the working tree.
+      fs.writeFileSync(path.join(fixture.root, FOCUSED), "import { spawnSync } from 'node:child_process';\nconst shown = spawnSync('git', ['show', 'HEAD:guard.mjs'], { encoding: 'utf8' });\nprocess.exit((shown.stdout ?? '').includes(\"'ENFORCED';\") ? 0 : 1);\n");
+      const lines: string[] = [];
+      const result = await runMutationHarness({
+        root: fixture.root,
+        registryPath: REGISTRY,
+        trackedFiles: fixture.files,
+        environment: { PATH: process.env.PATH ?? '' },
+        testInvocation: () => ({ command: process.execPath, args: [FOCUSED] }),
+        hardeningInvocation: () => ({ command: process.execPath, args: ['hardening.check.mjs'] }),
+        log: (line) => lines.push(line),
+      });
+      expect(result.ok, lines.join('\n')).toBe(true);
+      expect(lines).toContain('[mutants] R5-05/N1 DETECTED_BY_TESTS BM-001 (guard BM-001)');
+    } finally {
+      fs.rmSync(fixture.root, { recursive: true, force: true });
+    }
+  });
+
   test('a failing baseline invalidates the run instead of "detecting" every mutant', async () => {
     const fixture = synthetic({
       behaviouralMutantRequirements: ['R5-05/N1'],

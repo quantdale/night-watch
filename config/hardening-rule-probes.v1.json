@@ -24,72 +24,92 @@
         ]
       },
       {
-        "id": "HC-210",
+        "id": "HC-273",
         "ops": [
           {
-            "file": "bin/lib/hardening/rules/process-and-network.mjs",
-            "search": "  'unlink', 'unlinkSync', 'symlink', 'symlinkSync', 'rmdir', 'rmdirSync', 'truncate', 'truncateSync',",
-            "replace": "  'rmdir', 'rmdirSync', 'truncate', 'truncateSync',"
+            "file": "bin/lib/dev-launcher-effects.mjs",
+            "search": "'unlink', 'unlinkSync', 'symlink', 'symlinkSync', 'rmdir', 'rmdirSync', 'truncate', 'truncateSync',",
+            "replace": "'rmdir', 'rmdirSync', 'truncate', 'truncateSync',"
           }
         ]
       },
       {
-        "id": "HC-211",
+        "id": "HC-274",
         "ops": [
           {
-            "file": "bin/lib/hardening/rules/process-and-network.mjs",
-            "search": "    typescript.forEachChild(node, walk);",
-            "replace": "    void 0;"
+            "file": "bin/lib/dev-launcher-effects.mjs",
+            "search": "  typescript.forEachChild(node, (child) => walk(child, region));",
+            "replace": "  void 0;"
           }
         ]
       },
       {
-        "id": "HC-212",
+        "id": "HC-275",
         "ops": [
           {
-            "file": "bin/lib/hardening/rules/process-and-network.mjs",
-            "search": "    const inRegion = start >= from && start < to;",
-            "replace": "    const inRegion = true;"
+            "file": "bin/lib/dev-launcher-effects.mjs",
+            "search": "if (typescript.isPropertyAccessExpression(callee) && (callee.name.text === 'call' || callee.name.text === 'apply' || callee.name.text === 'bind')) {",
+            "replace": "if (false) {"
           }
         ]
       },
       {
-        "id": "HC-213",
+        "id": "HC-276",
         "ops": [
           {
-            "file": "bin/lib/hardening/rules/process-and-network.mjs",
-            "search": "          if (DEV_EFFECT_PROCESS_CALLS.has(callee.text) || localNames.has(callee.text)) effects.push(text);",
-            "replace": "          if (DEV_EFFECT_PROCESS_CALLS.has(callee.text)) effects.push(text);"
+            "file": "bin/lib/dev-launcher-effects.mjs",
+            "search": "    if (target.kind === 'global-call' || target.kind === 'local') return true;",
+            "replace": "    if (target.kind === 'global-call') return true;"
           }
         ]
       },
       {
-        "id": "HC-214",
+        "id": "HC-277",
         "ops": [
           {
-            "file": "bin/lib/hardening/rules/process-and-network.mjs",
-            "search": "      typescript.isArrowFunction(node) || typescript.isFunctionExpression(node) || typescript.isFunctionDeclaration(node)",
-            "replace": "      typescript.isFunctionExpression(node) || typescript.isFunctionDeclaration(node)"
+            "file": "bin/lib/dev-launcher-effects.mjs",
+            "search": "        walk(callee.body, region);",
+            "replace": "        void callee;"
           }
         ]
       },
       {
-        "id": "HC-215",
+        "id": "HC-278",
         "ops": [
           {
-            "file": "bin/lib/hardening/rules/process-and-network.mjs",
-            "search": "export function collectTopLevelEffects(code, from, to, localNames) {",
-            "replace": "export function collectTopLevelEffects(code, from, to, localNames) {\n  if (true) return [];"
+            "file": "bin/lib/dev-launcher-effects.mjs",
+            "search": "      walk(statement, 'BEFORE_GUARD');",
+            "replace": "      void statement;"
           }
         ]
       },
       {
-        "id": "HC-216",
+        "id": "HC-279",
         "ops": [
           {
-            "file": "bin/lib/hardening/rules/process-and-network.mjs",
-            "search": "  const found = collectTopLevelEffects(code, from, to, localNames);",
-            "replace": "  const found = [];"
+            "file": "bin/lib/dev-launcher-effects.mjs",
+            "search": "      if (symbol.kind === 'alias') return resolve(symbol.target, depth + 1);",
+            "replace": "      if (symbol.kind === 'alias') return null;"
+          }
+        ]
+      },
+      {
+        "id": "HC-280",
+        "ops": [
+          {
+            "file": "bin/lib/dev-launcher-effects.mjs",
+            "search": "      if (bindings !== undefined && typescript.isNamespaceImport(bindings)) symbols.set(bindings.name.text, { kind: 'module', category });",
+            "replace": "      void bindings;"
+          }
+        ]
+      },
+      {
+        "id": "HC-281",
+        "ops": [
+          {
+            "file": "bin/lib/dev-launcher-effects.mjs",
+            "search": "typescript.isIdentifier(base) && GLOBAL_OBJECTS.has(base.text) && symbols.get(base.text) === undefined",
+            "replace": "false"
           }
         ]
       }
@@ -2097,7 +2117,7 @@
         "id": "HC-191",
         "ops": [
           {
-            "file": "bin/project-state-check.mjs",
+            "file": "bin/lib/release-receipt-probes.mjs",
             "search": "return receiptNotAtCheckpoint('the newest qualifying yield-campaign receipt', boundToOther, certifiedCheckpointSha);",
             "replace": "return { state: 'MET', detail: 'a receipt bound elsewhere' };"
           }
@@ -2127,7 +2147,7 @@
         "id": "HC-203",
         "ops": [
           {
-            "file": "bin/project-state-check.mjs",
+            "file": "bin/lib/release-receipt-probes.mjs",
             "search": "    if (evaluated.relation === 'BOUND') {",
             "replace": "    if (evaluated.relation !== 'BOUND') {"
           }
@@ -2137,7 +2157,7 @@
         "id": "HC-204",
         "ops": [
           {
-            "file": "bin/project-state-check.mjs",
+            "file": "bin/lib/release-receipt-probes.mjs",
             "search": "  if (receiptBindingRelation(certifiedCheckpointSha, parsed.summary.sha) !== 'BOUND') {",
             "replace": "  if (false) {"
           }
@@ -2147,7 +2167,7 @@
         "id": "HC-205",
         "ops": [
           {
-            "file": "bin/project-state-check.mjs",
+            "file": "bin/lib/release-receipt-probes.mjs",
             "search": "  if (evaluated.relation !== 'BOUND') {",
             "replace": "  if (false) {"
           }
@@ -2717,9 +2737,9 @@
         "id": "HC-221",
         "ops": [
           {
-            "file": "bin/project-state-check.mjs",
-            "search": "            evidenceCertifying: Object.fromEntries(",
-            "replace": "            evidenceCertifying: {},"
+            "file": "bin/lib/evidence-evaluation-inputs.mjs",
+            "search": "    evidenceCertifying[subject] = binding?.certifying !== false;",
+            "replace": "    evidenceCertifying[subject] = true;"
           }
         ]
       },
@@ -2727,9 +2747,9 @@
         "id": "HC-222",
         "ops": [
           {
-            "file": "bin/project-state-check.mjs",
-            "search": "=> verifyPersistedReceipt(root, subject, digest, evidenceSha).verified,",
-            "replace": "=> true,"
+            "file": "bin/lib/evidence-evaluation-inputs.mjs",
+            "search": "    verifyEvidenceReceipt: (subject, digest, evidenceSha) => verifyPersistedReceipt(root, subject, digest, evidenceSha).verified === true,",
+            "replace": "    verifyEvidenceReceipt: () => true,"
           }
         ]
       },
@@ -2737,7 +2757,7 @@
         "id": "HC-223",
         "ops": [
           {
-            "file": "bin/project-state-check.mjs",
+            "file": "bin/lib/release-receipt-probes.mjs",
             "search": "    harnessSourceAtS = typeof harnessAtCheckpoint === 'string' ? harnessAtCheckpoint : null;",
             "replace": "    harnessSourceAtS = null;"
           }
@@ -2980,19 +3000,47 @@
     ]
   },
   "behaviouralMutantRequirements": [
-    "R5-01/move-bytes-equal",
     "R5-01/range-per-commit",
-    "R5-01/unlistable-range-open",
     "R5-01/shape-loosened",
     "R5-02/gate-no-renames",
     "R5-03/dirty-receipt-verifies",
     "R5-04/foreign-subject-verifies",
-    "R5-04/unexecuted-subject-verifies"
+    "R5-04/unexecuted-subject-verifies",
+    "R5-05/R1",
+    "R5-05/R3",
+    "R5-05/N1",
+    "R5-05/N2",
+    "R5-05/N3",
+    "R5-05/N4",
+    "R5-05/N5",
+    "R5-05/N6",
+    "R5-05/N7",
+    "R5-05/N8",
+    "R5-05/N9",
+    "R5-05/N10",
+    "R5-05/V1",
+    "R5-05/R2",
+    "R5-05/R4",
+    "R5-05/R5",
+    "R5-05/R4-08a",
+    "R5-05/R4-08b",
+    "R5-06/M01",
+    "R5-06/M02",
+    "R5-06/M03",
+    "R5-06/M04",
+    "R5-06/M05",
+    "R5-06/M06",
+    "R5-06/M07",
+    "R5-06/M08",
+    "R5-06/M09",
+    "R5-06/M10",
+    "R5-06/M11",
+    "R5-06/M12"
   ],
   "behaviouralMutants": [
     {
       "id": "BM-001",
-      "finding": "R5-01/move-bytes-equal",
+      "finding": "R5-05/R1",
       "guard": "archiveMoveHolds byte-identity",
       "ops": [
         {
@@ -3022,7 +3070,7 @@
     },
     {
       "id": "BM-003",
-      "finding": "R5-01/unlistable-range-open",
+      "finding": "R5-05/R3",
       "guard": "unlistable range fails closed",
       "ops": [
         {
@@ -3119,6 +3167,495 @@
         {
           "file": "tests/unit/projectState.test.ts",
           "grep": "persisted receipt verifies only when"
+        }
+      ]
+    },
+    {
+      "id": "BM-009",
+      "finding": "R5-05/N1",
+      "guard": "collector HEAD resolution",
+      "ops": [
+        {
+          "file": "bin/lib/checkpoint-binding.mjs",
+          "search": "  const headSha = headOutput === null ? null : headOutput.trim();",
+          "replace": "  const headSha = substantiveSha;"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/checkpointBindingFacts.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-010",
+      "finding": "R5-05/N2",
+      "guard": "collector clean-tree measurement",
+      "ops": [
+        {
+          "file": "bin/lib/checkpoint-binding.mjs",
+          "search": "  const porcelainOutput = git(['status', '--porcelain']);",
+          "replace": "  const porcelainOutput = '';"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/checkpointBindingFacts.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-011",
+      "finding": "R5-05/N3",
+      "guard": "collector range classification",
+      "ops": [
+        {
+          "file": "bin/lib/checkpoint-binding.mjs",
+          "search": "  const rangeClass = classifyCheckpointRange({",
+          "replace": "  const rangeClass = 'DOCUMENTARY_DESCENDANT';\n  const rangeClassIgnored = classifyCheckpointRange({"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/checkpointBindingFacts.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-012",
+      "finding": "R5-05/N4",
+      "guard": "collector changed-file filter",
+      "ops": [
+        {
+          "file": "bin/lib/checkpoint-binding.mjs",
+          "search": ".filter((line) => line !== '');",
+          "replace": ".filter((line) => line !== '' && false);"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/checkpointBindingFacts.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-013",
+      "finding": "R5-05/N5",
+      "guard": "collector range violation callback",
+      "ops": [
+        {
+          "file": "bin/lib/checkpoint-binding.mjs",
+          "search": "    checkpointRoleViolations: (files) => {\n      try {",
+          "replace": "    checkpointRoleViolations: (files) => {\n      if (files) return [];\n      try {"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/checkpointBindingFacts.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-014",
+      "finding": "R5-05/N10",
+      "guard": "shared binding receipt verifier",
+      "ops": [
+        {
+          "file": "bin/lib/checkpoint-binding.mjs",
+          "search": "  return productionBindingReceiptVerifier(root);",
+          "replace": "  return () => true;"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/checkpointBindingFacts.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-015",
+      "finding": "R5-05/N6",
+      "guard": "certifying flag derivation",
+      "ops": [
+        {
+          "file": "bin/lib/evidence-evaluation-inputs.mjs",
+          "search": "    evidenceCertifying[subject] = binding?.certifying !== false;",
+          "replace": "    evidenceCertifying[subject] = binding?.certifying !== 0;"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/evidenceEvaluationInputs.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-016",
+      "finding": "R5-05/N7",
+      "guard": "G18 receipt binds to the certified checkpoint",
+      "ops": [
+        {
+          "file": "bin/lib/release-receipt-probes.mjs",
+          "search": "evaluateUiHarnessReceipt(raw, { certifiedCheckpointSha, expectedKinds, harnessSourceAtS })",
+          "replace": "evaluateUiHarnessReceipt(raw, { certifiedCheckpointSha: raw?.nightwatchSha ?? certifiedCheckpointSha, expectedKinds, harnessSourceAtS })"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/releaseReceiptProbes.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-017",
+      "finding": "R5-05/N8",
+      "guard": "G12 relation is the evaluator's",
+      "ops": [
+        {
+          "file": "bin/lib/release-receipt-probes.mjs",
+          "search": "    if (!evaluated.ok || evaluated.summary === null) {\n      if (firstRejection === null)",
+          "replace": "    Object.assign(evaluated, { relation: 'BOUND' });\n    if (!evaluated.ok || evaluated.summary === null) {\n      if (firstRejection === null)"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/releaseReceiptProbes.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-018",
+      "finding": "R5-05/N9",
+      "guard": "G20 record binds to the certified checkpoint",
+      "ops": [
+        {
+          "file": "bin/lib/release-receipt-probes.mjs",
+          "search": "  if (receiptBindingRelation(certifiedCheckpointSha, parsed.summary.sha) !== 'BOUND') {",
+          "replace": "  parsed.summary.sha = String(certifiedCheckpointSha);\n  if (receiptBindingRelation(certifiedCheckpointSha, parsed.summary.sha) !== 'BOUND') {"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/releaseReceiptProbes.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-019",
+      "finding": "R5-05/V1",
+      "guard": "receipt digest verified for PASS bodies",
+      "ops": [
+        {
+          "file": "bin/lib/release-evidence.mjs",
+          "search": "    if (candidate !== digest) {",
+          "replace": "    if (candidate !== digest && body.finalResult !== 'PASS') {"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/projectState.test.ts",
+          "grep": "persisted receipt verifies only when"
+        }
+      ]
+    },
+    {
+      "id": "BM-020",
+      "finding": "R5-05/R2",
+      "guard": "unreadable commit listing fails closed",
+      "ops": [
+        {
+          "file": "bin/lib/checkpoint-role.mjs",
+          "search": "  const output = gitText(root, ['diff-tree', '--root', '--no-commit-id', '--name-only', '--no-renames', '-m', '-r', '-z', commit]);\n  if (output === null) return null;",
+          "replace": "  const output = gitText(root, ['diff-tree', '--root', '--no-commit-id', '--name-only', '--no-renames', '-m', '-r', '-z', commit]);\n  if (output === null) return [];"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/archiveMoveIntegrity.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-021",
+      "finding": "R5-05/R4",
+      "guard": "classifier consumes the supplied receipt verifier",
+      "ops": [
+        {
+          "file": "bin/lib/checkpoint-role.mjs",
+          "search": "          ? { verifyReceipt: context.verifyBindingReceipt }",
+          "replace": "          ? { verifyReceipt: () => true }"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/productionCompletionLaneState.test.ts",
+          "grep": "R4-01"
+        }
+      ]
+    },
+    {
+      "id": "BM-022",
+      "finding": "R5-05/R5",
+      "guard": "unreadable commit skips no listed path",
+      "ops": [
+        {
+          "file": "bin/lib/checkpoint-role.mjs",
+          "search": "      violations.push(UNLISTABLE_RANGE_VIOLATION, ...files);\n      continue;\n    }\n    const touchedSet",
+          "replace": "      continue;\n    }\n    const touchedSet"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/archiveMoveIntegrity.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-023",
+      "finding": "R5-05/R4-08a",
+      "guard": "evidenceArtifactAtSha consults Git",
+      "ops": [
+        {
+          "file": "bin/lib/evidence-evaluation-inputs.mjs",
+          "search": "    resolveEvidenceArtifactAtSha: (sha, artifactPath) => evidenceArtifactExistsAtSha(root, sha, artifactPath),",
+          "replace": "    resolveEvidenceArtifactAtSha: (sha, artifactPath) => true,"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/evidenceEvaluationInputs.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-024",
+      "finding": "R5-05/R4-08b",
+      "guard": "artifactDemoted is the real demotion set",
+      "ops": [
+        {
+          "file": "bin/project-state-check.mjs",
+          "search": "  const laneArtifactEvaluation = laneArtifactDemotions(reported, laneBindings.bySubject ?? new Map(), (sha, artifactPath) => evidenceArtifactExistsAtSha(root, sha, artifactPath));",
+          "replace": "  const laneArtifactEvaluation = { demoted: new Set(), findings: [] };"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/projectState.test.ts",
+          "grep": "lane artifact"
+        }
+      ]
+    },
+    {
+      "id": "BM-025",
+      "finding": "R5-06/M01",
+      "guard": "DEV-launcher effect analysis: arrow IIFE",
+      "ops": [
+        {
+          "file": "bin/observe-gate.mjs",
+          "search": "guardDevLane({ root, launcher: 'observe-gate.mjs', args: process.argv.slice(2) });",
+          "replace": "guardDevLane({ root, launcher: 'observe-gate.mjs', args: process.argv.slice(2) });\n(() => { fs.rmSync(path.join(root, 'x')); })();"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/devLauncherEffects.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-026",
+      "finding": "R5-06/M02",
+      "guard": "DEV-launcher effect analysis: destructured fs binding",
+      "ops": [
+        {
+          "file": "bin/observe-gate.mjs",
+          "search": "guardDevLane({ root, launcher: 'observe-gate.mjs', args: process.argv.slice(2) });",
+          "replace": "guardDevLane({ root, launcher: 'observe-gate.mjs', args: process.argv.slice(2) });\nconst { rmSync } = fs; rmSync(path.join(root, 'x'));"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/devLauncherEffects.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-027",
+      "finding": "R5-06/M03",
+      "guard": "DEV-launcher effect analysis: Reflect.apply",
+      "ops": [
+        {
+          "file": "bin/observe-gate.mjs",
+          "search": "guardDevLane({ root, launcher: 'observe-gate.mjs', args: process.argv.slice(2) });",
+          "replace": "guardDevLane({ root, launcher: 'observe-gate.mjs', args: process.argv.slice(2) });\nReflect.apply(spawnSync, null, ['/bin/true']);"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/devLauncherEffects.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-028",
+      "finding": "R5-06/M04",
+      "guard": "DEV-launcher effect analysis: .call on an effect",
+      "ops": [
+        {
+          "file": "bin/observe-gate.mjs",
+          "search": "guardDevLane({ root, launcher: 'observe-gate.mjs', args: process.argv.slice(2) });",
+          "replace": "guardDevLane({ root, launcher: 'observe-gate.mjs', args: process.argv.slice(2) });\nspawnSync.call(null, '/bin/true');"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/devLauncherEffects.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-029",
+      "finding": "R5-06/M05",
+      "guard": "DEV-launcher effect analysis: aliased process binding",
+      "ops": [
+        {
+          "file": "bin/observe-gate.mjs",
+          "search": "guardDevLane({ root, launcher: 'observe-gate.mjs', args: process.argv.slice(2) });",
+          "replace": "guardDevLane({ root, launcher: 'observe-gate.mjs', args: process.argv.slice(2) });\nconst run = spawnSync; run('/bin/true');"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/devLauncherEffects.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-030",
+      "finding": "R5-06/M06",
+      "guard": "DEV-launcher effect analysis: function expression then call",
+      "ops": [
+        {
+          "file": "bin/observe-gate.mjs",
+          "search": "guardDevLane({ root, launcher: 'observe-gate.mjs', args: process.argv.slice(2) });",
+          "replace": "guardDevLane({ root, launcher: 'observe-gate.mjs', args: process.argv.slice(2) });\nconst helper = function () { fs.rmSync(path.join(root, 'x')); }; helper();"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/devLauncherEffects.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-031",
+      "finding": "R5-06/M07",
+      "guard": "DEV-launcher effect analysis: namespace child_process import",
+      "ops": [
+        {
+          "file": "bin/observe-gate.mjs",
+          "search": "import { guardDevLane } from './lib/dev-lane-precondition.mjs';",
+          "replace": "import { guardDevLane } from './lib/dev-lane-precondition.mjs';\nimport * as childProcess from 'node:child_process';"
+        },
+        {
+          "file": "bin/observe-gate.mjs",
+          "search": "guardDevLane({ root, launcher: 'observe-gate.mjs', args: process.argv.slice(2) });",
+          "replace": "guardDevLane({ root, launcher: 'observe-gate.mjs', args: process.argv.slice(2) });\nchildProcess.execFileSync('/bin/true');"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/devLauncherEffects.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-032",
+      "finding": "R5-06/M08",
+      "guard": "DEV-launcher effect analysis: bare named fs import",
+      "ops": [
+        {
+          "file": "bin/observe-gate.mjs",
+          "search": "import { guardDevLane } from './lib/dev-lane-precondition.mjs';",
+          "replace": "import { guardDevLane } from './lib/dev-lane-precondition.mjs';\nimport { writeFileSync } from 'node:fs';"
+        },
+        {
+          "file": "bin/observe-gate.mjs",
+          "search": "guardDevLane({ root, launcher: 'observe-gate.mjs', args: process.argv.slice(2) });",
+          "replace": "guardDevLane({ root, launcher: 'observe-gate.mjs', args: process.argv.slice(2) });\nwriteFileSync(path.join(root, 'x'), 'x');"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/devLauncherEffects.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-033",
+      "finding": "R5-06/M09",
+      "guard": "DEV-launcher effect analysis: globalThis.fetch",
+      "ops": [
+        {
+          "file": "bin/observe-gate.mjs",
+          "search": "guardDevLane({ root, launcher: 'observe-gate.mjs', args: process.argv.slice(2) });",
+          "replace": "guardDevLane({ root, launcher: 'observe-gate.mjs', args: process.argv.slice(2) });\nglobalThis.fetch('http://127.0.0.1:1');"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/devLauncherEffects.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-034",
+      "finding": "R5-06/M10",
+      "guard": "DEV-launcher effect analysis: let arrow then call",
+      "ops": [
+        {
+          "file": "bin/observe-gate.mjs",
+          "search": "guardDevLane({ root, launcher: 'observe-gate.mjs', args: process.argv.slice(2) });",
+          "replace": "guardDevLane({ root, launcher: 'observe-gate.mjs', args: process.argv.slice(2) });\nlet go = () => fs.rmSync(path.join(root, 'x')); go();"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/devLauncherEffects.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-035",
+      "finding": "R5-06/M11",
+      "guard": "DEV-launcher effect analysis: .call on a local function",
+      "ops": [
+        {
+          "file": "bin/observe-gate.mjs",
+          "search": "guardDevLane({ root, launcher: 'observe-gate.mjs', args: process.argv.slice(2) });",
+          "replace": "guardDevLane({ root, launcher: 'observe-gate.mjs', args: process.argv.slice(2) });\nfunction localFn() { fs.rmSync(path.join(root, 'x')); }\nlocalFn.call(null);"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/devLauncherEffects.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-036",
+      "finding": "R5-06/M12",
+      "guard": "DEV-launcher effect analysis: effect before the guard",
+      "ops": [
+        {
+          "file": "bin/observe-gate.mjs",
+          "search": "// M8 (9.1): refuse a DEV-lane launch while a DEV-lane precondition is OPEN,",
+          "replace": "fs.rmSync(path.join(root, 'x'));\n// M8 (9.1): refuse a DEV-lane launch while a DEV-lane precondition is OPEN,"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/devLauncherEffects.test.ts"
         }
       ]
     }

@@ -166,6 +166,26 @@ test.describe('R5-01 archive-move integrity', () => {
     }
   });
 
+  // R5-05 R2/R5 — an UNREADABLE diff is a violation, never a silent pass: a
+  // guarded binding file and an archived path whose commit cannot be listed stay
+  // non-documentary.
+  test('an unreadable commit fails closed for a guarded file and for an archived path', () => {
+    const fx = fixture();
+    try {
+      fx.write('docs/seed.md', 'seed\n');
+      fx.commit('base');
+      const missing = '0'.repeat(40);
+      const guarded = 'config/release-evidence.v1.json';
+      expect(checkpointRoleViolations(fx.root, [guarded], { kind: 'commit', commit: missing })).toContain(guarded);
+      const archived = `${ARCHIVE_DIR}/tasks.md`;
+      expect(checkpointRoleViolations(fx.root, [archived], { kind: 'commit', commit: missing })).toContain(archived);
+      const both = checkpointRoleViolations(fx.root, [guarded, archived], { kind: 'commit', commit: missing });
+      expect(both).toEqual(expect.arrayContaining([guarded, archived, UNLISTABLE_RANGE_VIOLATION]));
+    } finally {
+      fx.cleanup();
+    }
+  });
+
   test('the archive destination pattern admits exactly the approved planning shapes', () => {
     const shapes = ['proposal.md', 'design.md', 'audit.md', 'tasks.md', '.openspec.yaml', 'specs/some-capability/spec.md'];
     for (const shape of shapes) {

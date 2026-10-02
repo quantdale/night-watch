@@ -31,6 +31,7 @@ import { validateCampaignCertification } from '../../campaign-certification.mjs'
 import { evidenceArtifactExistsAtSha, laneArtifactDemotions } from '../../evidence-artifact.mjs';
 import { UNLISTABLE_RANGE_VIOLATION, checkpointRoleViolations, unpairedCorrectionsInRange } from '../../checkpoint-role.mjs';
 import { bindingReceiptVerifier, collectCheckpointBindingFacts } from '../../checkpoint-binding.mjs';
+import { buildEvidenceEvaluationInputs } from '../../evidence-evaluation-inputs.mjs';
 import { findBinsWithoutExecutingTest, verifyCliImplementationContract } from '../../cli-implementation-contract.mjs';
 import { classifyValidationTruth, extractTestMatchGlobs } from '../../validation-classification.mjs';
 import {
@@ -64,7 +65,9 @@ import { parseAccessibilityCertificationRecord } from '../../accessibility-recor
  * its certifying flags and its receipt verifier EXACTLY as reviewed.
  */
 export function checkReview4CollectorTotality() {
-  const collector = read('bin/project-state-check.mjs');
+  // R5-05 A4.1: the receipt-consuming probes moved to bin/lib/release-receipt-probes.mjs
+  // (importable and behaviourally tested); their exact expressions stay anchored here.
+  const collector = `${read('bin/project-state-check.mjs')}\n${read('bin/lib/release-receipt-probes.mjs')}`;
   const S = 'a'.repeat(40);
   const OTHER = 'b'.repeat(40);
 
@@ -227,9 +230,6 @@ export function checkReview4CollectorTotality() {
   const required = [
     ["harnessSourceAtS = typeof harnessAtCheckpoint === 'string' ? harnessAtCheckpoint : null;", 'the harness source committed AT S'],
     ["if (evaluated.relation !== 'BOUND') {", 'the receipt binding relation check'],
-    ['evidenceCertifying: Object.fromEntries(', 'the certifying flags map (a cleared map must be visible)'],
-    ['verifyEvidenceReceipt: (', 'the subject-carrying receipt verifier call form'],
-    ['=> verifyPersistedReceipt(root, subject, digest, evidenceSha).verified,', 'the subject-carrying receipt verifier body'],
     ["if (evaluated.relation === 'BOUND') {", 'the yield/UI BOUND branch'],
   ];
   for (const [needle, what] of required) {
@@ -239,6 +239,9 @@ export function checkReview4CollectorTotality() {
   // R5-05 / review-5 A4.1: the HEAD / clean-tree / range / binding facts are
   // collected by ONE module that is exercised against real Git repositories
   // here (and in tests/unit/checkpointBindingFacts.test.ts), not by anchors.
+  if (!collector.includes('buildEvidenceEvaluationInputs({ root, bySubject:') || !collector.includes('verifyEvidenceReceipt: evidenceInputs.verifyEvidenceReceipt')) {
+    fail('REVIEW5_COLLECTOR_NOT_DELEGATED bin/project-state-check.mjs no longer derives the evidence evaluation inputs through buildEvidenceEvaluationInputs');
+  }
   if (!collector.includes('collectCheckpointBindingFacts({ root, substantiveSha, git:')) {
     fail('REVIEW5_COLLECTOR_NOT_DELEGATED bin/project-state-check.mjs no longer derives its binding facts through collectCheckpointBindingFacts');
   }
@@ -309,6 +312,28 @@ function verifyCheckpointBindingFacts() {
     }
     if (facts(null).binding.atCheckpoint !== false) {
       fail('REVIEW5_BINDING_FACTS_STUBBED a missing certified checkpoint read as bound');
+    }
+    // R5-05 A4.1: the evidence inputs the evaluator is handed (certifying flags, receipt
+    // digests, artifact paths, the receipt and artifact verifiers) are behaviourally exercised.
+    const inputs = buildEvidenceEvaluationInputs({
+      root: directory,
+      bySubject: new Map([
+        ['certifies', { artifactPaths: ['docs/DECISIONS.md'], receiptDigest: `receipt:sha256:${'1'.repeat(24)}`, certifying: true }],
+        ['refuses', { artifactPaths: [], receiptDigest: null, certifying: false }],
+        ['absent', null],
+      ]),
+    });
+    if (inputs.evidenceCertifying.certifies !== true || inputs.evidenceCertifying.refuses !== false || inputs.evidenceCertifying.absent !== true) {
+      fail('REVIEW5_EVIDENCE_INPUTS_STUBBED the certifying flags no longer follow the recorded bindings (only an explicit false is non-certifying)');
+    }
+    if (inputs.evidenceReceiptDigests.refuses !== null || inputs.evidenceReceiptDigests.certifies !== `receipt:sha256:${'1'.repeat(24)}` || JSON.stringify(inputs.evidenceArtifactPaths.certifies) !== '["docs/DECISIONS.md"]') {
+      fail('REVIEW5_EVIDENCE_INPUTS_STUBBED the receipt digests or artifact paths no longer follow the recorded bindings');
+    }
+    if (inputs.resolveEvidenceArtifactAtSha(S, 'docs/DECISIONS.md') !== true || inputs.resolveEvidenceArtifactAtSha(S, 'docs/NO_SUCH_FILE.md') !== false) {
+      fail('REVIEW5_EVIDENCE_INPUTS_STUBBED the artifact-at-SHA resolver no longer consults Git (present must be true, absent false)');
+    }
+    if (inputs.verifyEvidenceReceipt('authoritative-gate', `receipt:sha256:${'1'.repeat(24)}`, S) !== false) {
+      fail('REVIEW5_EVIDENCE_INPUTS_STUBBED the receipt verifier accepts a digest no persisted receipt carries');
     }
     // The shared verifier is the PRODUCTION verifier: an unpersisted digest never verifies.
     if (bindingReceiptVerifier(directory)('authoritative-gate', `receipt:sha256:${'0'.repeat(24)}`, S) !== false) {
@@ -1061,7 +1086,8 @@ export function checkReleaseImplementedHonesty() {
       fail(`RELEASE_COLLECTOR_ORPHAN: the collector carries an output for undeclared check ${id}`);
     }
   }
-  verifyD3ProbeBinding(collector, collector.slice(collectStart, collectEnd));
+  // The three receipt-consuming probes live in bin/lib/release-receipt-probes.mjs.
+  verifyD3ProbeBinding(`${collector}\n${read('bin/lib/release-receipt-probes.mjs')}`, collector.slice(collectStart, collectEnd));
   verifyLaneArtifactWiring(collector);
 }
 
@@ -1476,13 +1502,22 @@ function verifyCheckpointRoleClassifierFixture() {
     if (!checkpointRoleViolations(directory, [], { kind: 'range', from: '0'.repeat(40), to: legitHead }).includes(UNLISTABLE_RANGE_VIOLATION)) {
       fail('CHECKPOINT_ROLE_GUARD_STUBBED a range that cannot be listed did not fail closed');
     }
+    // R5-05 R2/R5: a commit that cannot be read is a violation for a guarded file
+    // AND for an archived path (the unreadable-diff branch once skipped the archive loop).
+    const unreadable = { kind: /** @type {'commit'} */ ('commit'), commit: '0'.repeat(40) };
+    if (!checkpointRoleViolations(directory, ['config/release-evidence.v1.json'], unreadable).includes('config/release-evidence.v1.json')) {
+      fail('CHECKPOINT_ROLE_GUARD_STUBBED an unreadable commit passed for a guarded binding file');
+    }
+    if (!checkpointRoleViolations(directory, ['openspec/changes/archive/2026-10-01-fixture-change/tasks.md'], unreadable).includes('openspec/changes/archive/2026-10-01-fixture-change/tasks.md')) {
+      fail('CHECKPOINT_ROLE_GUARD_STUBBED an unreadable commit passed for an archived path');
+    }
     // The merge hook and the fail-closed touched-null branch stay present: a
     // merge must be judged against EVERY parent, and an unreadable diff must
     // fail closed rather than skip the guarded file.
     const checkpointSource = read('bin/lib/checkpoint-role.mjs');
     for (const [needle, what] of [
-      ["['diff-tree', '--root', '--no-commit-id', '--name-only', '--no-renames', '-m', '-r', commit]", 'the merge-aware guarded-file listing (-m per parent)'],
-      ['if (touched === null) {\n      violations.push(...guarded);\n      continue;\n    }', 'the fail-closed unreadable-diff branch (an unreadable diff must still violate)'],
+      ["['diff-tree', '--root', '--no-commit-id', '--name-only', '--no-renames', '-m', '-r', '-z', commit]", 'the merge-aware touched-path listing (-m per parent)'],
+      ['violations.push(UNLISTABLE_RANGE_VIOLATION, ...files);', 'the fail-closed unreadable-commit branch (an unreadable commit must still violate every listed path)'],
       ['for (const parent of parentRefs) {', 'the per-parent guard evaluation'],
     ]) {
       if (typeof needle === 'string' && checkpointSource.includes(needle)) continue;
