@@ -197,7 +197,16 @@ export function inspectClaimJournal(input) {
   const info = [];
   const text = input.readText(CLAIM_JOURNAL_PATH);
   if (text === null) {
-    errors.push(`CLAIM_JOURNAL_MISSING: ${CLAIM_JOURNAL_PATH} is absent; the canonical claim journal is required from the claim era onward`);
+    // The claim era begins with the commit that adds the journal. A journal that is
+    // absent although HEAD's history ever touched it was deleted: fail closed. A
+    // history that never carried one (a synthetic fixture, a fresh repository) is
+    // not in the era yet and is reported, never silently passed.
+    const touched = input.git(['log', '--format=%H', '-n', '1', 'HEAD', '--', CLAIM_JOURNAL_PATH]);
+    if (touched.status !== 0 || touched.stdout.trim() !== '') {
+      errors.push(`CLAIM_JOURNAL_MISSING: ${CLAIM_JOURNAL_PATH} is absent although it is part of this history (or the history is unreadable); the canonical claim journal is required from the claim era onward`);
+    } else {
+      info.push(`CLAIM_JOURNAL_NOT_STARTED: ${CLAIM_JOURNAL_PATH} has never existed in this history; the claim era has not begun`);
+    }
     return { errors, warnings, info };
   }
   const parsed = parseClaimJournal(text);

@@ -7,9 +7,9 @@ Phase: COMPLETION_REVIEW5_V1
 CHILD OF: nightwatch-final-product-completion-v1
 Status: IN_PROGRESS
 TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1
-TASK_GROUPS_COMPLETE: A1,A2,A3
-TASK_GROUP_NEXT: A4
-TASK_NEXT_ID: A4.1
+TASK_GROUPS_COMPLETE: A1,A2,A3,A4,A5,A6,A7,A8,A9
+TASK_GROUP_NEXT: B1
+TASK_NEXT_ID: B1.1
 Starting SHA: d68bb1a7c7cf244da654815a1e7f266e1985f30c
 Last validated implementation SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
 Last substantive checkpoint SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
@@ -43,14 +43,14 @@ ACTIVE_TASK routed back to the parent at "M9 task 10.4".
 
 ## Current Milestone
 
-group A4 — Behavioural guard coverage (tasks A4.1-A4.3, R5-05): replace the
-text-anchor guards with behavioural fixtures for the checkpoint-binding facts,
-range callback, `certifying`, G12/G18/G20 relations, `bindingReceiptVerifier`,
-`evidenceArtifactAtSha`, `artifactDemoted`, `evidenceCertifying`,
-`verifyPersistedReceipt` digest path, `archiveMoveHolds` and unreadable/unlistable
-diff handling; register every R5-05 mutant as a probe DETECTED by behaviour; commit
-the mutation harness and run it in `gate:milestone`. Groups A1 and A2 are CI-observed
-green (run 37009611291 at `67d8757e`); group A3 is implemented (CI pending).
+group B1 — the Certification Producer Matrix (task B1.1, R5-12/R5-13): fill the
+matrix in `design.md` for all 16 conditions and 11 lanes (producer, gate group,
+receipt kind/schema/subjects, verdict fields, persistence, clean-clone
+verifiability, binding route), record the persistence mechanism in D-152 and
+strict-validate it before any Track B code. Track A (groups A1-A9) is
+implemented; A1-A3 are CI-observed green (A3: run 37011881613 at `a2e04648`);
+A4-A9 are implemented (CI pending) until the exact-head run at the integrated
+tip is observed.
 
 ## Completed Milestones
 
@@ -60,25 +60,17 @@ green (run 37009611291 at `67d8757e`); group A3 is implemented (CI pending).
 
 ## Work In Progress
 
-Nothing in progress yet; group A1 is the next unit of work.
+NONE — Track A is committed locally; the next unit is the Producer Matrix (B1.1)
+after the Track A integration and its exact-head CI observation.
 
 ## Exact Next Action
 
-Implement task A4.1 (R5-05): build behavioural fixtures (real synthetic Git
-repositories and real producer output, never text anchors) for each collector and
-classifier guard named in `audit.md` R5-05 — N1 `headSha`, N2 porcelain, N3 range
-class, N4 changedFiles filter, N5 range callback, N6 `certifying`, N7-N9 the
-G18/G12/G20 relations, N10 `bindingReceiptVerifier`, V1 the digest path, R1-R5
-(`archiveMoveHolds`, `touchedGuardedFiles`, unlistable range, classifier
-`verifyReceipt`, unreadable archive diff) and the two R4-08 literals
-(`evidenceArtifactAtSha`, `artifactDemoted`). Then A4.2 (register every mutant as a
-probe, all DETECTED by behaviour) and A4.3 (commit the mutation harness: one entry
-point that applies each registered mutant to a scratch copy, runs `hardening:check`
-plus the guard's focused tests, and fails on any survivor; run it in
-`gate:milestone`). Producer-literal mutants deferred from A3 (the
-`sourceRootCleanAtEmit` call sites in `bin/quality-gate.mjs`) register with their
-focused test under the harness. Then A5.1 onward in order. A3's `(implemented; CI
-pending)` markers drop once CI is observed green at a tip containing them.
+Integrate Track A (`npm run prepush`, then `nightwatch-session.mjs integrate`),
+observe exact-head CI, record the run in the CI block record and drop the
+`(implemented; CI pending)` annotations of A4-A9 by annotation. Then B1.1: fill
+the Certification Producer Matrix in `design.md` for all 16 conditions and 11
+lanes and strict-validate it before any Track B code; a row that cannot be
+completed honestly is a STOP.
 
 ## Files Changed
 
@@ -91,6 +83,7 @@ pending)` markers drop once CI is observed green at a tip containing them.
 
 ## Validation Ledger
 
+- 2026-10-02 — Track A close (local): `typecheck`, `typecheck:bin` (1402), `hardening:check`, `agent:check`, `project:check` pass; focused suites agent-state/claimJournal/validationLane pass (147 + 8); mutation harness BM-057..070 each DETECTED_BY_TESTS (BM-063/064 first SURVIVED, the lane validator was never run on a mutated lane; a refusal test now kills both). A3 exact-head CI run 37011881613 at `a2e04648` completed `success`.
 - 2026-10-02 — exact-head CI run 37009611291 at `67d8757e` (A1+A2 integration tip) completed `success`.
 - 2026-10-02 — A3.1 + A3.2 (local): `typecheck`, `typecheck:bin` (1412, 14/76), `hardening:check`, `agent:check` pass; focused suites (projectState, productionCompletionLaneState, gateReceiptPersistence incl. the real-gate clean/dirty producer tests, plannerHandoff, phase23QualityGate) 243/243; probes HC-266..HC-272 registered (campaign result recorded at the next entry).
 - 2026-10-02 — A1.1 + A2.1 (local). `hardening:rules` 95 rules / 263 probes /

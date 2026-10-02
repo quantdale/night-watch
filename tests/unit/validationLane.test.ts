@@ -88,3 +88,25 @@ test('npm run prepush runs the prepush lane, and the session integrate step name
   expect(session).toContain("emit('SESSION_PREPUSH_REQUIRED'");
   expect(fs.readFileSync(path.join(__dirname, '..', '..', 'AGENTS.md'), 'utf8')).toContain('npm run prepush');
 });
+
+// R5-11 — a validator that is only ever run on the intact definition proves nothing: the guards
+// must REFUSE a prepush lane that lost a required component or gained a milestone-scoped one.
+test('the lane validator refuses a prepush lane that lost a required step or gained a certification step', () => {
+  const steps = VALIDATION_LANE_DEFINITIONS.prepush.steps as unknown as Array<{ id: string; command?: readonly string[] }>;
+  const index = steps.findIndex((step) => step.id === 'project-check');
+  expect(index).toBeGreaterThanOrEqual(0);
+  const removed = steps.splice(index, 1);
+  try {
+    expect(validateLaneDefinitions().violations).toContainEqual({ code: 'LANE_PREPUSH_STEP_MISSING', detail: 'project-check' });
+  } finally {
+    steps.splice(index, 0, ...removed);
+  }
+  expect(validateLaneDefinitions().violations).toEqual([]);
+  steps.push({ id: 'synthetic-certification', command: ['npm', 'run', 'gate:local'] });
+  try {
+    expect(validateLaneDefinitions().violations.map((violation) => violation.code)).toContain('LANE_PREPUSH_FORBIDDEN_STEP');
+  } finally {
+    steps.pop();
+  }
+  expect(validateLaneDefinitions().violations).toEqual([]);
+});

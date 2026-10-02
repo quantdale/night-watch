@@ -145,11 +145,14 @@ export function inspectActiveTaskRouting(activeText, taskId, stateBranch, liveWo
     // "no live session (create one ...)", "has no live session"); a parenthetical
     // that describes an EARLIER checkpoint's state ("... GREEN, no live
     // session): the change ...") is history, not this document's claim.
-    const text = String(activeText ?? '');
-    const staleLiveSessionClaim = /\bNO\s+live\s+session\b/.test(text)
-      || /\bno\s+live\s+session\s*\(create one/i.test(text)
-      || /\bhas\s+no\s+live\s+session\b/i.test(text)
-      || /\bno\s+live\s+session\s+is\s+declared\b/i.test(text);
+    // R5-17 / review-5 task A9.4: the claim class is every form of "no live
+    // session" in any letter case, in every paragraph that is not itself a
+    // history paragraph ("Previous ..."). The earlier phrase list missed
+    // lowercase and parenthetical statements of the current state.
+    const staleLiveSessionClaim = String(activeText ?? '')
+      .split(/\n[ \t]*\n/)
+      .filter((paragraph) => !/^\s*Previous\b/i.test(paragraph))
+      .some((paragraph) => /\bno\s+live\s+session\b/i.test(paragraph));
     if (staleLiveSessionClaim) {
       errors.push(
         `ACTIVE_TASK_ROUTING_LIVE_SESSION_PROSE_DRIFT: routing block declares the live session worktree ${declaredWorktree} but the document states there is no live session`
@@ -761,6 +764,21 @@ export function checkTaskGroupLedger(root, taskId, stateText, errors, warnings, 
   for (const [key, value] of [['TASK_GROUPS_COMPLETE', completeField], ['TASK_GROUP_NEXT', nextGroupField], ['TASK_NEXT_ID', nextIdField]]) {
     if (value === undefined) errors.push(`TASK_GROUP_LEDGER_FIELD_MISSING: STATE ${key} is required together with the other ledger fields`);
   }
+  // R5-17 / review-5 task A9.4: ACTIVE_TASK and STATE carry the same three
+  // ledger fields; a value that differs between them is drift (ACTIVE_TASK
+  // once said TASK_NEXT_ID 10.2, already ticked, while STATE said 10.4).
+  if (activeTextForLedger !== null && activeTextForLedger !== undefined) {
+    const activeFields = parseKeyValueFile(String(activeTextForLedger));
+    for (const key of ['TASK_GROUPS_COMPLETE', 'TASK_GROUP_NEXT', 'TASK_NEXT_ID']) {
+      const activeValue = activeFields.get(key);
+      const stateValue = fields.get(key);
+      if (activeValue === undefined) {
+        errors.push(`TASK_GROUP_LEDGER_ACTIVE_FIELD_MISSING: ACTIVE_TASK does not declare ${key} although STATE does`);
+      } else if (stateValue !== undefined && String(activeValue).trim() !== String(stateValue).trim()) {
+        errors.push(`TASK_GROUP_LEDGER_ACTIVE_DRIFT: ACTIVE_TASK ${key}=${String(activeValue).trim()} but STATE ${key}=${String(stateValue).trim()}`);
+      }
+    }
+  }
   const declaredComplete = parseGroupList(completeField);
   if (declaredComplete.length !== complete.length || declaredComplete.some((group, index) => group !== complete[index])) {
     errors.push(
@@ -819,14 +837,23 @@ export function checkTaskGroupLedger(root, taskId, stateText, errors, warnings, 
   // ACTIVE_TASK prose said 59/76 declared while STATE said 60/76). The scan is
   // occurrence-complete and compares the LAST figure each document states, so a
   // historical figure earlier in a narrative is not read as the current claim.
-  const progressIn = (text) => [...String(text ?? '').matchAll(/(\d{1,3})\/(\d{1,3})\s+declared/g)].map((match) => `${match[1]}/${match[2]}`);
+  // R5-17 / review-5 task A9.4: every statement form counts ("N/M declared",
+  // "N of M conforming", "conformance is now N/M"), in any letter case and
+  // inside parentheticals, and the PLAN is compared as well as ACTIVE_TASK.
+  const progressIn = (text) => [...String(text ?? '').matchAll(/(\d{1,3})\s*(?:\/|\s+of\s+)\s*(\d{1,3})\s+(?:declared|conforming|conformance)\b|\bconformance\s+(?:is\s+)?(?:now\s+)?(?:at\s+)?(\d{1,3})\/(\d{1,3})/gi)]
+    .map((match) => `${match[1] ?? match[3]}/${match[2] ?? match[4]}`);
+  const planPath = path.join(root, '.agent', 'tasks', taskId, 'PLAN.md');
+  const documents = [
+    ['ACTIVE_TASK', progressIn(activeTextForLedger)],
+    ['PLAN', progressIn(fs.existsSync(planPath) ? fs.readFileSync(planPath, 'utf8') : '')],
+  ];
   const stateProgress = progressIn(stateText);
-  const activeProgress = progressIn(activeTextForLedger);
-  if (stateProgress.length > 0 && activeProgress.length > 0) {
+  if (stateProgress.length > 0) {
     const stateLast = stateProgress[stateProgress.length - 1];
-    const activeLast = activeProgress[activeProgress.length - 1];
-    if (stateLast !== activeLast) {
-      errors.push(`TASK_GROUP_LEDGER_PROGRESS_PROSE_DRIFT: ACTIVE_TASK states ${activeLast} declared but STATE states ${stateLast}`);
+    for (const [name, figures] of documents) {
+      if (figures.length > 0 && figures[figures.length - 1] !== stateLast) {
+        errors.push(`TASK_GROUP_LEDGER_PROGRESS_PROSE_DRIFT: ${name} states ${figures[figures.length - 1]} declared but STATE states ${stateLast}`);
+      }
     }
   }
 }

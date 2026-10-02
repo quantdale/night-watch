@@ -8,39 +8,39 @@
 
 ## A3. Receipt verification completeness
 
-- [x] A3.1 Gate receipts record tree cleanliness at emit; `requireCleanEmit` true for every certifying kind; gate:local receipts from a dirty tree are non-certifying (R5-03). — DONE (implemented; CI pending): the gate receipt records `sourceRootCleanAtEmit` (measured at emit, inside the digested body, in both receipt literals); `RECEIPT_KINDS.gate.requireCleanEmit` is true and the per-schema clean field is enforced (`bin/lib/receipt-schemas.mjs`), so a `gate:local` receipt from a dirty or unmeasured tree verifies for nothing; producer tests run the real gate in a git fixture (clean → true, dirty → false); probes HC-266, HC-272.
-- [x] A3.2 Every receipt kind declares a closed subject set derived from what its producer executed (no `subjects:null`); a receipt naming a subject its producer did not execute never verifies (R5-04). — DONE (implemented; CI pending): `bin/lib/receipt-schemas.mjs` is the single closed schema table (closed subject set, clean-emit field, and an `executed(body)` derivation per schema); the gate kind's `subjects` is the closed union (never `null`); a receipt naming a subject outside its schema's set, or one whose body records no executed groups/tests for the subject, never verifies; probes HC-267..HC-271.
+- [x] A3.1 Gate receipts record tree cleanliness at emit; `requireCleanEmit` true for every certifying kind; gate:local receipts from a dirty tree are non-certifying (R5-03). — DONE (implemented; CI pending): the gate receipt records `sourceRootCleanAtEmit` (measured at emit, inside the digested body, in both receipt literals); `RECEIPT_KINDS.gate.requireCleanEmit` is true and the per-schema clean field is enforced (`bin/lib/receipt-schemas.mjs`), so a `gate:local` receipt from a dirty or unmeasured tree verifies for nothing; producer tests run the real gate in a git fixture (clean → true, dirty → false); probes HC-266, HC-272. — CI GREEN: exact-head run 37011881613 at `a2e04648`.
+- [x] A3.2 Every receipt kind declares a closed subject set derived from what its producer executed (no `subjects:null`); a receipt naming a subject its producer did not execute never verifies (R5-04). — DONE (implemented; CI pending): `bin/lib/receipt-schemas.mjs` is the single closed schema table (closed subject set, clean-emit field, and an `executed(body)` derivation per schema); the gate kind's `subjects` is the closed union (never `null`); a receipt naming a subject outside its schema's set, or one whose body records no executed groups/tests for the subject, never verifies; probes HC-267..HC-271. — CI GREEN: exact-head run 37011881613 at `a2e04648`.
 
 ## A4. Behavioural guard coverage (collector/classifier)
 
-- [ ] A4.1 Replace text-anchor guards with behavioural fixtures for: checkpoint binding facts (headSha, porcelain, range class, changedFiles), range violation callback, `certifying`, G12/G18/G20 relations, `bindingReceiptVerifier`, `evidenceArtifactAtSha`, `artifactDemoted`, `evidenceCertifying`, `verifyPersistedReceipt` digest path, `archiveMoveHolds`, unreadable/unlistable diff handling (fail closed) (R5-05).
-- [ ] A4.2 Register every R5-05 mutant (N1–N10, V1, R1–R5, the two R4-08 literals) as probes; all DETECTED by behaviour, not anchors (R5-05).
-- [ ] A4.3 Commit the mutation harness (§1.3) and run it in gate:milestone (R5-05).
+- [x] A4.1 Replace text-anchor guards with behavioural fixtures for: checkpoint binding facts (headSha, porcelain, range class, changedFiles), range violation callback, `certifying`, G12/G18/G20 relations, `bindingReceiptVerifier`, `evidenceArtifactAtSha`, `artifactDemoted`, `evidenceCertifying`, `verifyPersistedReceipt` digest path, `archiveMoveHolds`, unreadable/unlistable diff handling (fail closed) (R5-05). — DONE (implemented; CI pending).
+- [x] A4.2 Register every R5-05 mutant (N1–N10, V1, R1–R5, the two R4-08 literals) as probes; all DETECTED by behaviour, not anchors (R5-05). — DONE (implemented; CI pending).
+- [x] A4.3 Commit the mutation harness (§1.3) and run it in gate:milestone (R5-05). — DONE (implemented; CI pending).
 
 ## A5. DEV-launcher effect analysis
 
-- [ ] A5.1 Replace the line-regex effect scan with an AST scan of the launcher's top level up to the guard and up to the short-circuit: aliases/destructuring, function expressions, IIFEs, `.call/.apply/Reflect.apply`, any `child_process` or `fs` binding (namespace, named, default), `globalThis.fetch`/network, dynamic import, and the region before `guardDevLane`; register all 12 R5-06 mutants and detect them (R5-06).
+- [x] A5.1 Replace the line-regex effect scan with an AST scan of the launcher's top level up to the guard and up to the short-circuit: aliases/destructuring, function expressions, IIFEs, `.call/.apply/Reflect.apply`, any `child_process` or `fs` binding (namespace, named, default), `globalThis.fetch`/network, dynamic import, and the region before `guardDevLane`; register all 12 R5-06 mutants and detect them (R5-06). — DONE (implemented; CI pending).
 
 ## A6. CLI correctness
 
-- [ ] A6.1 `nightwatch-agent` unknown commands exit 2; `phase22-dev explain <id>` works (declared positional) with a regression; remove/correct phantom or misleading flags; phase23-dev authorization class reflects DEV execution (R5-07).
-- [ ] A6.2 Shared-parser rule becomes behavioural (per-bin effect sweep under `--help`/`--print-metadata`/unknown flag in a sandbox, or AST gating of the dispatcher); bins enumerated from `git ls-files`; probes across ≥3 bins; restore launcher-side probes for migrated DEV launchers; `nightwatch.mjs --help` distinguishes LIBRARY_RETAINED from undeclared (R5-08).
+- [x] A6.1 `nightwatch-agent` unknown commands exit 2; `phase22-dev explain <id>` works (declared positional) with a regression; remove/correct phantom or misleading flags; phase23-dev authorization class reflects DEV execution (R5-07). — DONE (implemented; CI pending).
+- [x] A6.2 Shared-parser rule becomes behavioural (per-bin effect sweep under `--help`/`--print-metadata`/unknown flag in a sandbox, or AST gating of the dispatcher); bins enumerated from `git ls-files`; probes across ≥3 bins; restore launcher-side probes for migrated DEV launchers; `nightwatch.mjs --help` distinguishes LIBRARY_RETAINED from undeclared (R5-08). — DONE (implemented; CI pending).
 
 ## A7. CI record truth
 
-- [ ] A7.1 Fix the 36797226757→027367d9 entry (027367d9's run is 36790169165, with its jobId); record every red and repair run listed in R5-09 in run order; refresh the top level to the newest observed run on every push; staleness compares run order/creation time; `deriveCiObservationStatus` uses the newest observation per SHA; fix the typo (R5-09).
+- [x] A7.1 Fix the 36797226757→027367d9 entry (027367d9's run is 36790169165, with its jobId); record every red and repair run listed in R5-09 in run order; refresh the top level to the newest observed run on every push; staleness compares run order/creation time; `deriveCiObservationStatus` uses the newest observation per SHA; fix the typo (R5-09). — DONE (implemented; CI pending).
 
 ## A8. Small truths
 
-- [ ] A8.1 `captureFailureCounts` end-to-end test asserts a non-zero `BODY_READ_ACQUISITION_BOUND` in the recorded summary; fix the stale CURRENT_STATE live-CI prose; remove the archived review4 entry from the task-ID ledger (and auto-detect archived entries); the formatter-policy absent-Prettier branch emits a declared skip identity (R5-10).
-- [ ] A8.2 Redact the remaining session UUIDs by appended correction (archived tasks.md:96 prefix, phase-16a REPORT:13) and record in DECISIONS that full UUIDs remain in public git history (R5-18).
+- [x] A8.1 `captureFailureCounts` end-to-end test asserts a non-zero `BODY_READ_ACQUISITION_BOUND` in the recorded summary; fix the stale CURRENT_STATE live-CI prose; remove the archived review4 entry from the task-ID ledger (and auto-detect archived entries); the formatter-policy absent-Prettier branch emits a declared skip identity (R5-10). — DONE (implemented; CI pending).
+- [x] A8.2 Redact the remaining session UUIDs by appended correction (archived tasks.md:96 prefix, phase-16a REPORT:13) and record in DECISIONS that full UUIDs remain in public git history (R5-18). — DONE (implemented; CI pending).
 
 ## A9. Process and continuity
 
-- [ ] A9.1 Add an append-only canonical claim journal (claim id, task, created, released, commits made under it); agent:check fails a canonical commit not covered by a journal entry from the claim era onward; record the 67eb3098/e5ec64ca/46c8b674 gaps (R5-11).
-- [ ] A9.2 Pre-push checklist enforced by a script (`npm run prepush` = hardening:check, agent:check, project:check, typecheck, typecheck:bin, affected focused suites) and referenced by every integrate step; record the four red runs it would have prevented (R5-11).
-- [ ] A9.3 Append corrections to the review-4 REPORT (declaredSessionWorktree, archive move not byte-identical, close-out commit substantive) and to parent 10.2/10.3 and review4 7.1/7.2 ticks ("ticked before CI; 10.3 first push red"); drop stale "CI pending" markers by annotation; record the split bootstrap and the post-deletion SHA record (R5-11).
-- [ ] A9.4 Sync parent ACTIVE_TASK/STATE/PLAN prose; ACTIVE_TASK `TASK_NEXT_ID` validated against the open set and STATE; extend the prose checker to all forms/counts; refresh the bin-typecheck note (R5-17).
+- [x] A9.1 Add an append-only canonical claim journal (claim id, task, created, released, commits made under it); agent:check fails a canonical commit not covered by a journal entry from the claim era onward; record the 67eb3098/e5ec64ca/46c8b674 gaps (R5-11). — DONE (implemented; CI pending).
+- [x] A9.2 Pre-push checklist enforced by a script (`npm run prepush` = hardening:check, agent:check, project:check, typecheck, typecheck:bin, affected focused suites) and referenced by every integrate step; record the four red runs it would have prevented (R5-11). — DONE (implemented; CI pending).
+- [x] A9.3 Append corrections to the review-4 REPORT (declaredSessionWorktree, archive move not byte-identical, close-out commit substantive) and to parent 10.2/10.3 and review4 7.1/7.2 ticks ("ticked before CI; 10.3 first push red"); drop stale "CI pending" markers by annotation; record the split bootstrap and the post-deletion SHA record (R5-11). — DONE (implemented; CI pending).
+- [x] A9.4 Sync parent ACTIVE_TASK/STATE/PLAN prose; ACTIVE_TASK `TASK_NEXT_ID` validated against the open set and STATE; extend the prose checker to all forms/counts; refresh the bin-typecheck note (R5-17). — DONE (implemented; CI pending).
 
 ## B1. Certification Producer Matrix (design before code)
 

@@ -205,13 +205,14 @@ export function checkAgentContinuityIntegrity() {
   // predicate, the occurrence-complete scan or either refusal code fails here.
   for (const [needle, what] of [
     ['const staleLiveSessionClaim =', 'the live-session prose claim scan'],
-    ['(create one', 'the imperative no-live-session phrasing'],
-    ['no\\s+live\\s+session\\s+is\\s+declared', 'the declared-absence phrasing'],
+    ['/\\bno\\s+live\\s+session\\b/i.test(paragraph)', 'the case-insensitive no-live-session phrasing'],
+    ['!/^\\s*Previous\\b/i.test(paragraph)', 'the history-paragraph exemption'],
+    ['TASK_GROUP_LEDGER_ACTIVE_DRIFT', 'the ACTIVE_TASK/STATE ledger drift code'],
     ['if (staleLiveSessionClaim) {', 'the live-session prose refusal branch'],
     ['ACTIVE_TASK_ROUTING_LIVE_SESSION_PROSE_DRIFT', 'the live-session prose drift code'],
     ['TASK_GROUP_LEDGER_PROGRESS_PROSE_DRIFT', 'the progress prose drift code'],
     ['const stateProgress = progressIn(stateText);', 'the STATE progress scan'],
-    ['(\\d{1,3})\\/(\\d{1,3})\\s+declared', 'the progress figure pattern'],
+    ['(?:\\/|\\s+of\\s+)', 'the progress figure pattern (every statement form)'],
   ]) {
     if (typeof needle === 'string' && agentStateCode.includes(needle)) continue;
     fail(`bin/agent-state.mjs no longer carries ${what} (${String(needle)})`);

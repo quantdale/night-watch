@@ -102,3 +102,36 @@ assessed in `docs/HOST-CAPABILITY-MATRIX.md` and neutralised by
   (60/76 declared; next bin `auth-configure`) with `9.5b` deferred to 14.1/14.2.
 - Scope discipline: no finding outside review-4 was added to this campaign; the
   review-4 scope is closed and there is no review-5.
+
+## Corrections appended by review-5 (R5-11, task A9.3, 2026-10-02)
+
+This block is appended; no earlier line was altered. Where it disagrees with
+the close-out record above, this block is authoritative.
+
+- **`declaredSessionWorktree = NONE` was not true.** The close-out record above
+  says the `gate:clean` receipt recorded `declaredSessionWorktree = NONE`.
+  That field is read from the `SESSION WORKTREE:` line of
+  `.agent/ACTIVE_TASK.md` (`bin/quality-gate-clean.mjs`), and at the integrated
+  tip `17391ae6` that line still named the retired review-4 session worktree,
+  so the field could only read `NONE` if the routing block had no such line.
+  The reliable facts are `sourceWorktreePathClass = CANONICAL_CHECKOUT` and
+  `liveSessionCount = 0`; the declared-worktree value was a stale routing
+  reference, not `NONE`.
+- **The archive move was not byte-identical.** The record says the change
+  "moved byte-identically". The move was a git rename at roughly 90%
+  similarity because the task ticks were edited in the same commit. The
+  tightened archive-move rule (review-5 A1) now admits only the planning-shape
+  paths.
+- **The close-out commit was SUBSTANTIVE, not documentary.** Under R4-13 the
+  close-out commit `e5ec64ca` touched guarded paths and therefore classifies
+  SUBSTANTIVE; it is not a documentary descendant of the implementation
+  anchor.
+- **Review-4 ticks 7.1/7.2 were ticked before exact-head CI** and without the
+  "(implemented; CI pending)" annotation. The 7.3 exact-head run
+  (36855178941, GREEN, 15/15) was observed afterwards.
+- **Canonical commits `67eb3098`, `e5ec64ca` and `46c8b674` have no recorded
+  MAINTENANCE claim.** They are recorded as GAP lines in
+  `.agent/CLAIM_JOURNAL.md` (review-5 A9.1) rather than back-filled.
+- **`b4d0c611` was recorded after the corrections branch was deleted.** The
+  R4-22 row says the ancestry was proven before deletion; the SHA was written
+  into the record after the deletion, not before.

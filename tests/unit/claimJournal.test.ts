@@ -139,10 +139,29 @@ test.describe('R5-11 claim journal coverage', () => {
     try {
       r.write('a.txt', 'era\n');
       r.commit('era start');
-      expect(r.inspect().errors.join(' ')).toContain('CLAIM_JOURNAL_MISSING');
+      // Never existed: the era has not begun (reported, not an error).
+      const early = r.inspect();
+      expect(early.errors).toEqual([]);
+      expect(early.info.join(' ')).toContain('CLAIM_JOURNAL_NOT_STARTED');
       r.write(CLAIM_JOURNAL_PATH, journal('8'.repeat(40), []));
       r.commit('journal with an era that is not an ancestor');
       expect(r.inspect().errors.join(' ')).toContain('CLAIM_JOURNAL_ERA_START_UNRESOLVED');
+    } finally {
+      r.cleanup();
+    }
+  });
+
+  test('a journal deleted after it existed fails closed instead of reading as not started', () => {
+    const r = repo();
+    try {
+      r.write('a.txt', 'era\n');
+      const era = r.commit('era start');
+      r.write(CLAIM_JOURNAL_PATH, journal(era, []));
+      r.commit('start the journal');
+      expect(r.inspect().errors).toEqual([]);
+      fs.rmSync(path.join(r.root, CLAIM_JOURNAL_PATH));
+      r.commit('delete the journal');
+      expect(r.inspect().errors.join(' ')).toContain('CLAIM_JOURNAL_MISSING');
     } finally {
       r.cleanup();
     }

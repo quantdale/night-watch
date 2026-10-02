@@ -47,3 +47,15 @@
 - [x] 7.4 REPORT with a per-ID disposition table for R4-01..R4-24; archive with spec sync; route ACTIVE_TASK back to the parent ("M9 10.2 remainder"). — DONE: this task file is archived with spec sync to `openspec/changes/archive/2026-10-01-nightwatch-final-completion-review4-v1/` (a byte-identical move in one commit), the REPORT carries the per-ID disposition table for R4-01..R4-24 and the close-out record, and ACTIVE_TASK routes back to the parent at "M9 task 10.2 remainder".
 - [x] 7.5 Replace the Claude session UUID/transcript path in DECISIONS with a non-identifying provenance reference (date, question text, answer text) via an appended correction, and record that CI artifacts are public while the repository is (R4-24). — DONE: the agent-session UUID is replaced in `docs/DECISIONS.md` by a non-identifying provenance reference (registered as CORR-R4-24-001..003 in `config/document-role-corrections.v1.json`) and the public-CI-artifact exposure is recorded in the same document.
 - [x] 7.6 Add an active parent task line under group 15: "Owner reverts the GitHub repository to private and confirms GitHub Actions still executes; record the run" (R4-21). — DONE: the parent change carries group-15 task `15.8 OWNER STEP` (revert the repository to private, confirm GitHub Actions still executes, record the run).
+
+## Corrections appended by review-5 (R5-11, task A9.3, 2026-10-02)
+
+Appended; no earlier line was altered.
+
+- Every `(implemented; CI pending)` marker above is resolved: exact-head CI run
+  **36855178941** at `17391ae6` is GREEN (15/15 groups), observed after the
+  ticks were written.
+- Ticks 7.1 and 7.2 were written before that exact-head observation and
+  without the pending annotation; they were ticked before CI.
+- This file moved to the archive as a git rename at roughly 90% similarity (the
+  ticks were edited in the same commit); it was not a byte-identical move.

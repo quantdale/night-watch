@@ -157,3 +157,19 @@
 - [ ] 15.6 Final topology proof: `git status --short --branch`, `git worktree list --porcelain`, `git branch`, `git branch -r`, `git rev-parse HEAD origin/main`, `git log --oneline --decorate -10`. Only `main`, one worktree, clean.
 - [ ] 15.7 Deliver the final completion report in the prompt's 13-section form: verdict per the terminal vocabulary; safety counters (DEV/NEXT/production contacts 0, production DB 0, sibling writes 0, credentials persisted 0, external publications 0, force pushes 0); external prerequisites; final operator commands.
 - [ ] 15.8 OWNER STEP (added by review-4 task 7.6 / R4-21): revert the GitHub repository to private and confirm GitHub Actions still executes; record the run. The repository was made TEMPORARILY PUBLIC during the close-out so GitHub Actions could run, and the owner confirmed at the time that it returns to private at the final close-out; this is the active task that tracks it, so it can no longer live only in an archived file. Evidence to record: `gh repo view` showing PRIVATE, the observed workflow run at the same head, and the run id in this ledger.
+
+## Corrections appended by review-5 (R5-11, task A9.3, 2026-10-02)
+
+Appended; no earlier line was altered.
+
+- Ticks 10.2 and 10.3 were written before exact-head CI and without the
+  "(implemented; CI pending)" annotation. 10.3's first push (`6e4c6ee1`,
+  run 36912796291) was RED on `BIN_TYPECHECK_CEILING`; the repair `2894f334`
+  (run 36913655505) is GREEN, and the 10.2/10.3 completion record at
+  `2e0cfda0` (run 36916725274) is GREEN 15/15.
+- The four red runs the `npm run prepush` lane (review-5 A9.2) would have
+  prevented, all recorded in `config/ci-block-record.v1.json`: 36867934911
+  (`ae1ff3a6`), 36869760469 (`011c408b`), 36889920975 (`f8710899`) and
+  36912796291 (`6e4c6ee1`).
+- The review-5 child bootstrap was split over three commits rather than one;
+  that is recorded here rather than rewritten.

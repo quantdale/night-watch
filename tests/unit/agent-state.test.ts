@@ -1609,6 +1609,57 @@ test('a progress figure that disagrees between ACTIVE_TASK and STATE fails agent
   expect(result.stderr).toContain('TASK_GROUP_LEDGER_PROGRESS_PROSE_DRIFT');
 });
 
+// R5-17 / review-5 task A9.4 — ACTIVE_TASK mirrors the ledger; a stale
+// TASK_NEXT_ID there (already ticked, or simply different) is drift.
+test('an ACTIVE_TASK TASK_NEXT_ID that differs from STATE fails agent:check', () => {
+  const { root, sha } = fixture();
+  writeProtocol(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha });
+  writeGroupLedger(root);
+  setField(root, '.agent/ACTIVE_TASK.md', 'TASK_NEXT_ID', '1.1');
+  const result = run(root);
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain('TASK_GROUP_LEDGER_ACTIVE_DRIFT');
+  expect(result.stderr).toContain('TASK_NEXT_ID=1.1');
+});
+
+test('an ACTIVE_TASK without the ledger fields fails agent:check', () => {
+  const { root, sha } = fixture();
+  writeProtocol(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha });
+  writeGroupLedger(root);
+  const file = path.join(root, '.agent/ACTIVE_TASK.md');
+  fs.writeFileSync(file, fs.readFileSync(file, 'utf8').replace(/^TASK_NEXT_ID:.*\n/m, ''));
+  const result = run(root);
+  expect(result.stderr).toContain('TASK_GROUP_LEDGER_ACTIVE_FIELD_MISSING');
+});
+
+// R5-17 — the live-session prose claim is every letter case and form, outside
+// history ("Previous ...") paragraphs only.
+test('a lowercase no-live-session claim in a current paragraph fails, a Previous paragraph does not', () => {
+  const routing = '## Routing and safety\n\n```\nCAMPAIGN: phase-test\nSESSION WORKTREE: session/phase-test-0000\n```\n';
+  const current = fixture();
+  writeProtocol(current.root, { baselineSha: current.sha, substantiveSha: current.sha, startingSha: current.sha, activeExtra: '\nStatus note: there is currently no live session.\n', activeRouting: routing });
+  setField(current.root, '.agent/tasks/phase-test/STATE.md', 'Branch', 'session/phase-test-0000');
+  expect(run(current.root).stderr).toContain('ACTIVE_TASK_ROUTING_LIVE_SESSION_PROSE_DRIFT');
+  const history = fixture();
+  writeProtocol(history.root, { baselineSha: history.sha, substantiveSha: history.sha, startingSha: history.sha, activeExtra: '\nPrevious checkpoint: (earlier state, no live session) the change closed.\n', activeRouting: routing });
+  setField(history.root, '.agent/tasks/phase-test/STATE.md', 'Branch', 'session/phase-test-0000');
+  expect(run(history.root).stderr).not.toContain('ACTIVE_TASK_ROUTING_LIVE_SESSION_PROSE_DRIFT');
+});
+
+test('a progress figure in the "N of M conforming" form is compared, including against the PLAN', () => {
+  const { root, sha } = fixture();
+  writeProtocol(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha, activeExtra: '\nConformance: 60 of 76 conforming.\n' });
+  writeGroupLedger(root, {});
+  setSectionBody(path.join(root, '.agent/tasks/phase-test/STATE.md'), '## Work In Progress', 'The surface is 61/76 declared.');
+  expect(run(root).stderr).toContain('TASK_GROUP_LEDGER_PROGRESS_PROSE_DRIFT: ACTIVE_TASK states 60/76');
+  const plan = fixture();
+  writeProtocol(plan.root, { baselineSha: plan.sha, substantiveSha: plan.sha, startingSha: plan.sha });
+  writeGroupLedger(plan.root, {});
+  setSectionBody(path.join(plan.root, '.agent/tasks/phase-test/STATE.md'), '## Work In Progress', 'The surface is 76/76 declared.');
+  fs.appendFileSync(path.join(plan.root, '.agent/tasks/phase-test/PLAN.md'), '\nStatus: 60/76 declared, paused.\n');
+  expect(run(plan.root).stderr).toContain('PLAN states 60/76');
+});
+
 test('routing block naming a foreign session worktree fails agent:check', () => {
   const { root, sha } = fixture();
   writeProtocol(root, {
@@ -1704,6 +1755,11 @@ function writeGroupLedger(root: string, options: { readonly tasks?: string; read
   setSectionBody(stateFile, '## Exact Next Action', options.exactNext ?? 'Do 3.1 next, then 2.2 after.');
   setSectionBody(stateFile, '## Current Milestone', options.milestone ?? 'Milestone ID: M3 — third group execution (group 3 run)');
   setField(root, '.agent/ACTIVE_TASK.md', 'Current milestone', options.activeMilestone ?? 'M3 — third group execution');
+  // R5-17: ACTIVE_TASK mirrors the three ledger fields STATE declares.
+  for (const key of ['TASK_GROUPS_COMPLETE', 'TASK_GROUP_NEXT', 'TASK_NEXT_ID']) {
+    const value = new RegExp(`^${key}:[ \\t]*(.*)$`, 'm').exec(fs.readFileSync(stateFile, 'utf8'))?.[1]?.trim();
+    if (value !== undefined) setField(root, '.agent/ACTIVE_TASK.md', key, value);
+  }
 }
 
 test('a matching task-group ledger passes agent:check', () => {

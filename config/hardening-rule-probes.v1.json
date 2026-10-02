@@ -679,8 +679,8 @@
         "ops": [
           {
             "file": "bin/agent-state.mjs",
-            "search": "    const staleLiveSessionClaim = /\\bNO\\s+live\\s+session\\b/.test(text)\n      || /\\bno\\s+live\\s+session\\s*\\(create one/i.test(text)\n      || /\\bhas\\s+no\\s+live\\s+session\\b/i.test(text)\n      || /\\bno\\s+live\\s+session\\s+is\\s+declared\\b/i.test(text);",
-            "replace": "    const staleLiveSessionClaim = false;"
+            "search": "      .some((paragraph) => /\\bno\\s+live\\s+session\\b/i.test(paragraph));",
+            "replace": "      .some(() => false);"
           }
         ]
       },
@@ -699,8 +699,8 @@
         "ops": [
           {
             "file": "bin/agent-state.mjs",
-            "search": "    if (stateLast !== activeLast) {\n      errors.push(`TASK_GROUP_LEDGER_PROGRESS_PROSE_DRIFT: ACTIVE_TASK states ${activeLast} declared but STATE states ${stateLast}`);\n    }",
-            "replace": "    void stateLast;\n    void activeLast;"
+            "search": "      if (figures.length > 0 && figures[figures.length - 1] !== stateLast) {",
+            "replace": "      if (false) {"
           }
         ]
       },
@@ -719,7 +719,7 @@
         "ops": [
           {
             "file": "bin/agent-state.mjs",
-            "search": "  const progressIn = (text) => [...String(text ?? '').matchAll(/(\\d{1,3})\\/(\\d{1,3})\\s+declared/g)].map((match) => `${match[1]}/${match[2]}`);",
+            "search": "  const progressIn = (text) => [...String(text ?? '').matchAll(/(\\d{1,3})\\s*(?:\\/|\\s+of\\s+)\\s*(\\d{1,3})\\s+(?:declared|conforming|conformance)\\b|\\bconformance\\s+(?:is\\s+)?(?:now\\s+)?(?:at\\s+)?(\\d{1,3})\\/(\\d{1,3})/gi)]\n    .map((match) => `${match[1] ?? match[3]}/${match[2] ?? match[4]}`);",
             "replace": "  const progressIn = () => [];"
           }
         ]
@@ -3055,7 +3055,21 @@
     "R5-09/last-in-list-wins",
     "R5-09/history-order",
     "R5-09/top-level-run-order",
-    "R5-09/job-duplicate"
+    "R5-09/job-duplicate",
+    "R5-10/archived-entry-detected",
+    "R5-10/failure-counts-main-path",
+    "R5-11/claim-coverage-skipped",
+    "R5-11/claim-window-inverted",
+    "R5-11/journal-deleted",
+    "R5-11/claim-edited",
+    "R5-11/prepush-step-missing",
+    "R5-11/prepush-forbidden-step",
+    "R5-17/active-ledger-drift",
+    "R5-17/active-ledger-missing",
+    "R5-17/no-live-session-case",
+    "R5-17/previous-paragraph-exempt",
+    "R5-17/progress-form",
+    "R5-17/plan-progress"
   ],
   "behaviouralMutants": [
     {
@@ -4028,6 +4042,244 @@
       "focusedTests": [
         {
           "file": "tests/unit/ciBlockRecord.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-057",
+      "finding": "R5-10/archived-entry-detected",
+      "guard": "an archived change keeps no task-ID ledger entry",
+      "ops": [
+        {
+          "file": "bin/lib/openspec-ledger.mjs",
+          "search": "      if (isArchivedChange(root, changeId)) {",
+          "replace": "      if (false) {"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/productionCompletionOpenWork.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-058",
+      "finding": "R5-10/failure-counts-main-path",
+      "guard": "the main-path run summary carries the real capture failure counts",
+      "ops": [
+        {
+          "file": "src/core/journeys/engine.ts",
+          "search": "    // run summary on the main path, not only the auth-invalid early return.\n    captureFailureCounts: ctx.network.captureFailureCounts?.() ?? {},",
+          "replace": "    // run summary on the main path, not only the auth-invalid early return.\n    captureFailureCounts: {},"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/journeyEngine.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-059",
+      "finding": "R5-11/claim-coverage-skipped",
+      "guard": "every canonical commit lies in a recorded claim window",
+      "ops": [
+        {
+          "file": "bin/lib/claim-journal.mjs",
+          "search": "    if (windows.some((window) => position >= window.from && position <= window.to)) continue;",
+          "replace": "    continue;"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/claimJournal.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-060",
+      "finding": "R5-11/claim-window-inverted",
+      "guard": "a claim window whose tip precedes its base is rejected",
+      "ops": [
+        {
+          "file": "bin/lib/claim-journal.mjs",
+          "search": "    if (to < from) {",
+          "replace": "    if (false) {"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/claimJournal.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-061",
+      "finding": "R5-11/journal-deleted",
+      "guard": "a deleted journal fails closed instead of reading as not started",
+      "ops": [
+        {
+          "file": "bin/lib/claim-journal.mjs",
+          "search": "    if (touched.status !== 0 || touched.stdout.trim() !== '') {",
+          "replace": "    if (false) {"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/claimJournal.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-062",
+      "finding": "R5-11/claim-edited",
+      "guard": "a closed claim cannot be edited or removed",
+      "ops": [
+        {
+          "file": "bin/lib/claim-journal.mjs",
+          "search": "    if (!identical && !closing) errors.push(",
+          "replace": "    if (false) errors.push("
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/claimJournal.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-063",
+      "finding": "R5-11/prepush-step-missing",
+      "guard": "the prepush lane carries every required component",
+      "ops": [
+        {
+          "file": "src/core/validation/validationLane.ts",
+          "search": "    if (!prepush.steps.some((step) => step.id === required)) violations.push(",
+          "replace": "    if (false) violations.push("
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/validationLane.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-064",
+      "finding": "R5-11/prepush-forbidden-step",
+      "guard": "the prepush lane carries no milestone-scoped step",
+      "ops": [
+        {
+          "file": "src/core/validation/validationLane.ts",
+          "search": "    if (FORBIDDEN_IN_DEV.some((forbidden) => rendered.includes(forbidden))) violations.push({ code: 'LANE_PREPUSH_FORBIDDEN_STEP'",
+          "replace": "    if (false) violations.push({ code: 'LANE_PREPUSH_FORBIDDEN_STEP'"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/validationLane.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-065",
+      "finding": "R5-17/active-ledger-drift",
+      "guard": "ACTIVE_TASK ledger fields equal STATE",
+      "ops": [
+        {
+          "file": "bin/agent-state.mjs",
+          "search": "      } else if (stateValue !== undefined && String(activeValue).trim() !== String(stateValue).trim()) {",
+          "replace": "      } else if (false) {"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/agent-state.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-066",
+      "finding": "R5-17/active-ledger-missing",
+      "guard": "ACTIVE_TASK declares the ledger fields",
+      "ops": [
+        {
+          "file": "bin/agent-state.mjs",
+          "search": "      if (activeValue === undefined) {\n        errors.push(`TASK_GROUP_LEDGER_ACTIVE_FIELD_MISSING",
+          "replace": "      if (false) {\n        errors.push(`TASK_GROUP_LEDGER_ACTIVE_FIELD_MISSING"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/agent-state.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-067",
+      "finding": "R5-17/no-live-session-case",
+      "guard": "a no-live-session claim is caught in every letter case",
+      "ops": [
+        {
+          "file": "bin/agent-state.mjs",
+          "search": "      .some((paragraph) => /\\bno\\s+live\\s+session\\b/i.test(paragraph));",
+          "replace": "      .some((paragraph) => /\\bNO\\s+live\\s+session\\b/.test(paragraph));"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/agent-state.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-068",
+      "finding": "R5-17/previous-paragraph-exempt",
+      "guard": "only history paragraphs are exempt from the no-live-session scan",
+      "ops": [
+        {
+          "file": "bin/agent-state.mjs",
+          "search": "      .filter((paragraph) => !/^\\s*Previous\\b/i.test(paragraph))",
+          "replace": "      .filter((paragraph) => true)"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/agent-state.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-069",
+      "finding": "R5-17/progress-form",
+      "guard": "the \"N of M conforming\" progress form is compared",
+      "ops": [
+        {
+          "file": "bin/agent-state.mjs",
+          "search": "(?:\\/|\\s+of\\s+)",
+          "replace": "(?:\\/)"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/agent-state.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-070",
+      "finding": "R5-17/plan-progress",
+      "guard": "the PLAN progress figure is compared with STATE",
+      "ops": [
+        {
+          "file": "bin/agent-state.mjs",
+          "search": "progressIn(fs.existsSync(planPath) ? fs.readFileSync(planPath, 'utf8') : '')",
+          "replace": "progressIn('')"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/agent-state.test.ts"
         }
       ]
     }
