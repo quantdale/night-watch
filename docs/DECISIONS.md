@@ -5655,3 +5655,24 @@ the registered excerpts). The redaction is a working-tree redaction only: **the 
 identifier remains in earlier public git history** (the repository is temporarily
 public and history is never rewritten here), so it must be treated as already
 published; the repository returns to private at the owner's close-out step.
+
+**Record (2026-10-03, review-5 task B1.1 — appended): the evidence persistence
+mechanism.** The Certification Producer Matrix in
+`openspec/changes/nightwatch-final-completion-review5-v1/design.md` is complete for
+all 16 conditions and 11 lanes (27 rows, none `EMPTY`, no row needed an owner
+decision). The recommended mechanism of this decision is adopted: certification
+receipts are **committed, tracked files** under
+`evidence/certification/<S>/<subject>.json`, one receipt per subject, produced by
+`npm run certify:evidence` at HEAD == S on a clean tree and landed in a
+**documentary descendant** of S through a new approved exact-pattern path with a
+content guard (schema, closed subject set, `sourceHead` an ancestor, digest
+re-derivation, allowlisted tokens only — no path, host, cookie, header or customer
+value, because the repository is temporarily public). `artifacts/` stays
+git-ignored. The verifier reads the tracked directory, so CI and `gate:clean`
+verify what the host produced. The receipts are **tamper-evident, not
+tamper-proof** (OD-5): no signature, key or MAC. Four dependencies belong to the
+parent and are named in the matrix rather than faked: the paid yield run (12.3),
+the npm registry query (15.4), the bin burn-down to BLOCKING (M9 10.4-10.6) and the
+GitHub Actions run at the final S; `owner-manual` is certified only as a recorded,
+current, unexpired unavailable lane. The matrix does not weaken any guard and does
+not claim any condition MET.
