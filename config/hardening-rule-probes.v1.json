@@ -2134,16 +2134,6 @@
         ]
       },
       {
-        "id": "HC-202",
-        "ops": [
-          {
-            "file": "bin/lib/checkpoint-binding.mjs",
-            "search": "    headSha,\n    treeClean,\n    documentaryDescendant:",
-            "replace": "    headSha: substantiveSha,\n    treeClean: true,\n    documentaryDescendant:"
-          }
-        ]
-      },
-      {
         "id": "HC-203",
         "ops": [
           {
@@ -2556,8 +2546,8 @@
         "ops": [
           {
             "file": "bin/lib/checkpoint-role.mjs",
-            "search": "  const output = gitText(root, ['diff-tree', '--root', '--no-commit-id', '--name-only', '--no-renames', '-m', '-r', commit]);",
-            "replace": "  const output = gitText(root, ['diff-tree', '--root', '--no-commit-id', '--name-only', '--no-renames', '-r', commit]);"
+            "search": "['diff-tree', '--root', '--no-commit-id', '--name-only', '--no-renames', '-m', '-r', '-z', commit]",
+            "replace": "['diff-tree', '--root', '--no-commit-id', '--name-only', '--no-renames', '-r', '-z', commit]"
           }
         ]
       },
@@ -2566,8 +2556,8 @@
         "ops": [
           {
             "file": "bin/lib/checkpoint-role.mjs",
-            "search": "      violations.push(...guarded);\n      continue;",
-            "replace": "      continue;"
+            "search": "      violations.push(UNLISTABLE_RANGE_VIOLATION, ...files);\n      continue;\n    }\n    const touchedSet",
+            "replace": "      continue;\n    }\n    const touchedSet"
           }
         ]
       },
@@ -2840,6 +2830,16 @@
             "file": "bin/lib/release-evidence.mjs",
             "search": "    if (kind.requireCleanEmit && body[schema.cleanEmitField] !== true) return",
             "replace": "    if (false) return"
+          }
+        ]
+      },
+      {
+        "id": "HC-202",
+        "ops": [
+          {
+            "file": "bin/lib/checkpoint-binding.mjs",
+            "search": "    headSha,\n    treeClean,\n    documentaryDescendant:",
+            "replace": "    headSha: substantiveSha,\n    treeClean: true,\n    documentaryDescendant:"
           }
         ]
       }
