@@ -3070,7 +3070,24 @@
     "R5-17/previous-paragraph-exempt",
     "R5-17/progress-form",
     "R5-17/plan-progress",
-    "R5-10/refused-read-unhandled"
+    "R5-10/refused-read-unhandled",
+    "R5-12/executed-needs-met",
+    "R5-12/builder-pass-rule",
+    "R5-12/validator-pass-invariant",
+    "R5-12/token-allowlist",
+    "R5-12/validator-digest",
+    "R5-12/closed-subject",
+    "R5-12/command-at-checkpoint",
+    "R5-12/clean-tree-required",
+    "R5-12/command-exit-status",
+    "R5-12/ci-success-only",
+    "R5-12/ci-exact-sha",
+    "R5-12/ci-completed-only",
+    "R5-12/publish-pass-only",
+    "R5-13/publish-immutable",
+    "R5-13/verify-binding",
+    "R5-12/schema-subject-union",
+    "R5-12/matrix-totality"
   ],
   "behaviouralMutants": [
     {
@@ -4298,6 +4315,346 @@
       "focusedTests": [
         {
           "file": "tests/unit/bodyReadAcquisition.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-072",
+      "finding": "R5-12/executed-needs-met",
+      "guard": "a certification receipt executes its subject only for a MET PASS",
+      "ops": [
+        {
+          "file": "bin/lib/receipt-schemas.mjs",
+          "search": "  return body.checkState === 'MET' && body.result === 'PASS' ? [body.subject] : [];",
+          "replace": "  return [body.subject];"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/certificationEvidence.test.ts"
+        },
+        {
+          "file": "tests/unit/certifyEvidence.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-073",
+      "finding": "R5-12/builder-pass-rule",
+      "guard": "the builder writes PASS only for a MET check on a clean emit",
+      "ops": [
+        {
+          "file": "bin/lib/certification-evidence.mjs",
+          "search": "    result: input.checkState === 'MET' && input.sourceRootCleanAtEmit === true ? 'PASS' : 'NOT_MET',",
+          "replace": "    result: 'PASS',"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/certificationEvidence.test.ts"
+        },
+        {
+          "file": "tests/unit/certifyEvidence.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-074",
+      "finding": "R5-12/validator-pass-invariant",
+      "guard": "a PASS receipt must record a MET check and a clean emit",
+      "ops": [
+        {
+          "file": "bin/lib/certification-evidence.mjs",
+          "search": "  if (body.result === 'PASS' && (body.checkState !== 'MET' || body.sourceRootCleanAtEmit !== true))",
+          "replace": "  if (false)"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/certificationEvidence.test.ts"
+        },
+        {
+          "file": "tests/unit/certifyEvidence.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-075",
+      "finding": "R5-12/token-allowlist",
+      "guard": "a receipt carries only bounded tokens (no path, host or whitespace)",
+      "ops": [
+        {
+          "file": "bin/lib/certification-evidence.mjs",
+          "search": "const TOKEN_RE = /^[A-Za-z0-9._:+-]{1,80}$/;",
+          "replace": "const TOKEN_RE = /^.{1,80}$/;"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/certificationEvidence.test.ts"
+        },
+        {
+          "file": "tests/unit/certifyEvidence.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-076",
+      "finding": "R5-12/validator-digest",
+      "guard": "the validator re-derives the receipt digest",
+      "ops": [
+        {
+          "file": "bin/lib/certification-evidence.mjs",
+          "search": "body.receiptDigest !== certificationReceiptDigest(body)",
+          "replace": "false"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/certificationEvidence.test.ts"
+        },
+        {
+          "file": "tests/unit/certifyEvidence.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-077",
+      "finding": "R5-12/closed-subject",
+      "guard": "the certification schema certifies a closed subject set",
+      "ops": [
+        {
+          "file": "bin/lib/certification-evidence.mjs",
+          "search": "!CERTIFICATION_SCHEMA_SUBJECTS.includes(subject)",
+          "replace": "false"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/certificationEvidence.test.ts"
+        },
+        {
+          "file": "tests/unit/certifyEvidence.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-078",
+      "finding": "R5-12/command-at-checkpoint",
+      "guard": "a command producer measures only at HEAD == S",
+      "ops": [
+        {
+          "file": "bin/lib/certify-producers.mjs",
+          "search": "    if (head !== checkpoint) return refuse('CERTIFY_HEAD_NOT_CHECKPOINT');\n",
+          "replace": "\n"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/certificationEvidence.test.ts"
+        },
+        {
+          "file": "tests/unit/certifyEvidence.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-079",
+      "finding": "R5-12/clean-tree-required",
+      "guard": "a producer refuses a dirty tree",
+      "ops": [
+        {
+          "file": "bin/lib/certify-producers.mjs",
+          "search": "  if (porcelain.trim() !== '') return refuse('CERTIFY_TREE_DIRTY');\n",
+          "replace": "\n"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/certificationEvidence.test.ts"
+        },
+        {
+          "file": "tests/unit/certifyEvidence.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-080",
+      "finding": "R5-12/command-exit-status",
+      "guard": "a command subject is MET only on exit 0",
+      "ops": [
+        {
+          "file": "bin/lib/certify-producers.mjs",
+          "search": "outcome.status === 0 ? 'MET' : 'NOT_MET'",
+          "replace": "'MET'"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/certificationEvidence.test.ts"
+        },
+        {
+          "file": "tests/unit/certifyEvidence.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-081",
+      "finding": "R5-12/ci-success-only",
+      "guard": "a CI observation is MET only for a success conclusion",
+      "ops": [
+        {
+          "file": "bin/lib/certify-producers.mjs",
+          "search": "observation.conclusion === 'success' ? 'MET' : 'NOT_MET'",
+          "replace": "'MET'"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/certificationEvidence.test.ts"
+        },
+        {
+          "file": "tests/unit/certifyEvidence.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-082",
+      "finding": "R5-12/ci-exact-sha",
+      "guard": "a CI observation is for exactly the requested SHA",
+      "ops": [
+        {
+          "file": "bin/lib/certify-producers.mjs",
+          "search": "    if (typeof record['headSha'] !== 'string' || record['headSha'].toLowerCase() !== sha.toLowerCase()) continue;",
+          "replace": "    if (typeof record['headSha'] !== 'string') continue;"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/certificationEvidence.test.ts"
+        },
+        {
+          "file": "tests/unit/certifyEvidence.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-083",
+      "finding": "R5-12/ci-completed-only",
+      "guard": "only a completed run is an observation",
+      "ops": [
+        {
+          "file": "bin/lib/certify-producers.mjs",
+          "search": "    if (record['status'] !== 'completed' || typeof record['conclusion'] !== 'string') continue;",
+          "replace": "    if (typeof record['conclusion'] !== 'string') continue;"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/certificationEvidence.test.ts"
+        },
+        {
+          "file": "tests/unit/certifyEvidence.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-084",
+      "finding": "R5-12/publish-pass-only",
+      "guard": "publish copies PASS receipts only",
+      "ops": [
+        {
+          "file": "bin/certify-evidence.mjs",
+          "search": "errors.length > 0 || record['result'] !== 'PASS' || record['sourceHead'] !== sha",
+          "replace": "errors.length > 0 || record['sourceHead'] !== sha"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/certificationEvidence.test.ts"
+        },
+        {
+          "file": "tests/unit/certifyEvidence.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-085",
+      "finding": "R5-13/publish-immutable",
+      "guard": "publish never overwrites a different tracked receipt",
+      "ops": [
+        {
+          "file": "bin/certify-evidence.mjs",
+          "search": "fs.existsSync(target) && fs.readFileSync(target, 'utf8') !== text",
+          "replace": "false"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/certificationEvidence.test.ts"
+        },
+        {
+          "file": "tests/unit/certifyEvidence.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-086",
+      "finding": "R5-13/verify-binding",
+      "guard": "verify binds each tracked receipt to its subject file and S",
+      "ops": [
+        {
+          "file": "bin/certify-evidence.mjs",
+          "search": "if (validateCertificationReceipt(body).length === 0 && record['subject'] === subject && record['sourceHead'] === sha) valid.push(subject);",
+          "replace": "if (validateCertificationReceipt(body).length === 0) valid.push(subject);"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/certificationEvidence.test.ts"
+        },
+        {
+          "file": "tests/unit/certifyEvidence.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-087",
+      "finding": "R5-12/schema-subject-union",
+      "guard": "the certification schema subject set is the closed table, nothing more",
+      "ops": [
+        {
+          "file": "bin/lib/receipt-schemas.mjs",
+          "search": "    subjects: CERTIFICATION_SCHEMA_SUBJECTS,",
+          "replace": "    subjects: [...CERTIFICATION_SCHEMA_SUBJECTS, 'authoritative-gate'],"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/certificationEvidence.test.ts"
+        },
+        {
+          "file": "tests/unit/certifyEvidence.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-088",
+      "finding": "R5-12/matrix-totality",
+      "guard": "every Producer Matrix row is a declared subject",
+      "ops": [
+        {
+          "file": "bin/lib/certification-subjects.mjs",
+          "search": "  subject('owner-manual', 'LANE', 'NONE', 'UNAVAILABLE'),\n",
+          "replace": ""
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/certificationEvidence.test.ts"
+        },
+        {
+          "file": "tests/unit/certifyEvidence.test.ts"
         }
       ]
     }

@@ -13,34 +13,34 @@
 
 ## A4. Behavioural guard coverage (collector/classifier)
 
-- [x] A4.1 Replace text-anchor guards with behavioural fixtures for: checkpoint binding facts (headSha, porcelain, range class, changedFiles), range violation callback, `certifying`, G12/G18/G20 relations, `bindingReceiptVerifier`, `evidenceArtifactAtSha`, `artifactDemoted`, `evidenceCertifying`, `verifyPersistedReceipt` digest path, `archiveMoveHolds`, unreadable/unlistable diff handling (fail closed) (R5-05). — DONE (implemented; CI pending).
-- [x] A4.2 Register every R5-05 mutant (N1–N10, V1, R1–R5, the two R4-08 literals) as probes; all DETECTED by behaviour, not anchors (R5-05). — DONE (implemented; CI pending).
-- [x] A4.3 Commit the mutation harness (§1.3) and run it in gate:milestone (R5-05). — DONE (implemented; CI pending).
+- [x] A4.1 Replace text-anchor guards with behavioural fixtures for: checkpoint binding facts (headSha, porcelain, range class, changedFiles), range violation callback, `certifying`, G12/G18/G20 relations, `bindingReceiptVerifier`, `evidenceArtifactAtSha`, `artifactDemoted`, `evidenceCertifying`, `verifyPersistedReceipt` digest path, `archiveMoveHolds`, unreadable/unlistable diff handling (fail closed) (R5-05). — DONE (CI GREEN: exact-head run 37044532848 at `4f4d7bfd`).
+- [x] A4.2 Register every R5-05 mutant (N1–N10, V1, R1–R5, the two R4-08 literals) as probes; all DETECTED by behaviour, not anchors (R5-05). — DONE (CI GREEN: exact-head run 37044532848 at `4f4d7bfd`).
+- [x] A4.3 Commit the mutation harness (§1.3) and run it in gate:milestone (R5-05). — DONE (CI GREEN: exact-head run 37044532848 at `4f4d7bfd`).
 
 ## A5. DEV-launcher effect analysis
 
-- [x] A5.1 Replace the line-regex effect scan with an AST scan of the launcher's top level up to the guard and up to the short-circuit: aliases/destructuring, function expressions, IIFEs, `.call/.apply/Reflect.apply`, any `child_process` or `fs` binding (namespace, named, default), `globalThis.fetch`/network, dynamic import, and the region before `guardDevLane`; register all 12 R5-06 mutants and detect them (R5-06). — DONE (implemented; CI pending).
+- [x] A5.1 Replace the line-regex effect scan with an AST scan of the launcher's top level up to the guard and up to the short-circuit: aliases/destructuring, function expressions, IIFEs, `.call/.apply/Reflect.apply`, any `child_process` or `fs` binding (namespace, named, default), `globalThis.fetch`/network, dynamic import, and the region before `guardDevLane`; register all 12 R5-06 mutants and detect them (R5-06). — DONE (CI GREEN: exact-head run 37044532848 at `4f4d7bfd`).
 
 ## A6. CLI correctness
 
-- [x] A6.1 `nightwatch-agent` unknown commands exit 2; `phase22-dev explain <id>` works (declared positional) with a regression; remove/correct phantom or misleading flags; phase23-dev authorization class reflects DEV execution (R5-07). — DONE (implemented; CI pending).
-- [x] A6.2 Shared-parser rule becomes behavioural (per-bin effect sweep under `--help`/`--print-metadata`/unknown flag in a sandbox, or AST gating of the dispatcher); bins enumerated from `git ls-files`; probes across ≥3 bins; restore launcher-side probes for migrated DEV launchers; `nightwatch.mjs --help` distinguishes LIBRARY_RETAINED from undeclared (R5-08). — DONE (implemented; CI pending).
+- [x] A6.1 `nightwatch-agent` unknown commands exit 2; `phase22-dev explain <id>` works (declared positional) with a regression; remove/correct phantom or misleading flags; phase23-dev authorization class reflects DEV execution (R5-07). — DONE (CI GREEN: exact-head run 37044532848 at `4f4d7bfd`).
+- [x] A6.2 Shared-parser rule becomes behavioural (per-bin effect sweep under `--help`/`--print-metadata`/unknown flag in a sandbox, or AST gating of the dispatcher); bins enumerated from `git ls-files`; probes across ≥3 bins; restore launcher-side probes for migrated DEV launchers; `nightwatch.mjs --help` distinguishes LIBRARY_RETAINED from undeclared (R5-08). — DONE (CI GREEN: exact-head run 37044532848 at `4f4d7bfd`).
 
 ## A7. CI record truth
 
-- [x] A7.1 Fix the 36797226757→027367d9 entry (027367d9's run is 36790169165, with its jobId); record every red and repair run listed in R5-09 in run order; refresh the top level to the newest observed run on every push; staleness compares run order/creation time; `deriveCiObservationStatus` uses the newest observation per SHA; fix the typo (R5-09). — DONE (implemented; CI pending).
+- [x] A7.1 Fix the 36797226757→027367d9 entry (027367d9's run is 36790169165, with its jobId); record every red and repair run listed in R5-09 in run order; refresh the top level to the newest observed run on every push; staleness compares run order/creation time; `deriveCiObservationStatus` uses the newest observation per SHA; fix the typo (R5-09). — DONE (CI GREEN: exact-head run 37044532848 at `4f4d7bfd`).
 
 ## A8. Small truths
 
-- [x] A8.1 `captureFailureCounts` end-to-end test asserts a non-zero `BODY_READ_ACQUISITION_BOUND` in the recorded summary; fix the stale CURRENT_STATE live-CI prose; remove the archived review4 entry from the task-ID ledger (and auto-detect archived entries); the formatter-policy absent-Prettier branch emits a declared skip identity (R5-10). — DONE (implemented; CI pending).
-- [x] A8.2 Redact the remaining session UUIDs by appended correction (archived tasks.md:96 prefix, phase-16a REPORT:13) and record in DECISIONS that full UUIDs remain in public git history (R5-18). — DONE (implemented; CI pending).
+- [x] A8.1 `captureFailureCounts` end-to-end test asserts a non-zero `BODY_READ_ACQUISITION_BOUND` in the recorded summary; fix the stale CURRENT_STATE live-CI prose; remove the archived review4 entry from the task-ID ledger (and auto-detect archived entries); the formatter-policy absent-Prettier branch emits a declared skip identity (R5-10). — DONE (CI GREEN: exact-head run 37044532848 at `4f4d7bfd`).
+- [x] A8.2 Redact the remaining session UUIDs by appended correction (archived tasks.md:96 prefix, phase-16a REPORT:13) and record in DECISIONS that full UUIDs remain in public git history (R5-18). — DONE (CI GREEN: exact-head run 37044532848 at `4f4d7bfd`).
 
 ## A9. Process and continuity
 
-- [x] A9.1 Add an append-only canonical claim journal (claim id, task, created, released, commits made under it); agent:check fails a canonical commit not covered by a journal entry from the claim era onward; record the 67eb3098/e5ec64ca/46c8b674 gaps (R5-11). — DONE (implemented; CI pending).
-- [x] A9.2 Pre-push checklist enforced by a script (`npm run prepush` = hardening:check, agent:check, project:check, typecheck, typecheck:bin, affected focused suites) and referenced by every integrate step; record the four red runs it would have prevented (R5-11). — DONE (implemented; CI pending).
-- [x] A9.3 Append corrections to the review-4 REPORT (declaredSessionWorktree, archive move not byte-identical, close-out commit substantive) and to parent 10.2/10.3 and review4 7.1/7.2 ticks ("ticked before CI; 10.3 first push red"); drop stale "CI pending" markers by annotation; record the split bootstrap and the post-deletion SHA record (R5-11). — DONE (implemented; CI pending).
-- [x] A9.4 Sync parent ACTIVE_TASK/STATE/PLAN prose; ACTIVE_TASK `TASK_NEXT_ID` validated against the open set and STATE; extend the prose checker to all forms/counts; refresh the bin-typecheck note (R5-17). — DONE (implemented; CI pending).
+- [x] A9.1 Add an append-only canonical claim journal (claim id, task, created, released, commits made under it); agent:check fails a canonical commit not covered by a journal entry from the claim era onward; record the 67eb3098/e5ec64ca/46c8b674 gaps (R5-11). — DONE (CI GREEN: exact-head run 37044532848 at `4f4d7bfd`).
+- [x] A9.2 Pre-push checklist enforced by a script (`npm run prepush` = hardening:check, agent:check, project:check, typecheck, typecheck:bin, affected focused suites) and referenced by every integrate step; record the four red runs it would have prevented (R5-11). — DONE (CI GREEN: exact-head run 37044532848 at `4f4d7bfd`).
+- [x] A9.3 Append corrections to the review-4 REPORT (declaredSessionWorktree, archive move not byte-identical, close-out commit substantive) and to parent 10.2/10.3 and review4 7.1/7.2 ticks ("ticked before CI; 10.3 first push red"); drop stale "CI pending" markers by annotation; record the split bootstrap and the post-deletion SHA record (R5-11). — DONE (CI GREEN: exact-head run 37044532848 at `4f4d7bfd`).
+- [x] A9.4 Sync parent ACTIVE_TASK/STATE/PLAN prose; ACTIVE_TASK `TASK_NEXT_ID` validated against the open set and STATE; extend the prose checker to all forms/counts; refresh the bin-typecheck note (R5-17). — DONE (CI GREEN: exact-head run 37044532848 at `4f4d7bfd`).
 
 ## B1. Certification Producer Matrix (design before code)
 

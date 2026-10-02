@@ -9,3 +9,4 @@ export function subjectsOfSchemas(schemas: readonly string[]): readonly string[]
 export function qualityGateExecutedSubjects(body: Record<string, unknown>): string[];
 export function cleanCheckoutExecutedSubjects(body: Record<string, unknown>): string[];
 export function uiHarnessExecutedSubjects(body: Record<string, unknown>): string[];
+export function certificationExecutedSubjects(body: Record<string, unknown>): string[];

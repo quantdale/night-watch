@@ -115,14 +115,14 @@ export const RECEIPT_KINDS = Object.freeze({
   gate: Object.freeze({
     digestPrefix: 'receipt:',
     directory: 'artifacts/receipts',
-    schemas: Object.freeze(['nightwatch.quality-gate-receipt.v1', 'nightwatch.ui-harness-receipt.v1']),
+    schemas: Object.freeze(['nightwatch.quality-gate-receipt.v1', 'nightwatch.ui-harness-receipt.v1', 'nightwatch.certification-evidence-receipt.v1']),
     verdictFields: Object.freeze(['finalResult', 'gateResult', 'result']),
     // R5-03: every certifying kind requires a CLEAN emit; a gate receipt from a
     // dirty tree (the `gate:local` pre-commit run) verifies for nothing.
     requireCleanEmit: true,
     // R5-04: the closed union of the subjects its declared schemas may certify
     // (`bin/lib/receipt-schemas.mjs`) — never `null`/open.
-    subjects: subjectsOfSchemas(['nightwatch.quality-gate-receipt.v1', 'nightwatch.ui-harness-receipt.v1']),
+    subjects: subjectsOfSchemas(['nightwatch.quality-gate-receipt.v1', 'nightwatch.ui-harness-receipt.v1', 'nightwatch.certification-evidence-receipt.v1']),
   }),
 });
 

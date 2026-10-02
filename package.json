@@ -20,6 +20,7 @@
     "hardening:mutants": "node bin/hardening-check.mjs --mutation-harness",
     "handoff:check": "node bin/planner-handoff-check.mjs",
     "quality-gate:spec": "node bin/quality-gate-spec.mjs",
+    "certify:evidence": "node bin/certify-evidence.mjs",
     "gate:local": "node bin/quality-gate.mjs local",
     "gate:ci": "node bin/quality-gate.mjs ci",
     "gate:clean": "node bin/quality-gate-clean.mjs",

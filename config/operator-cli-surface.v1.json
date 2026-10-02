@@ -47,6 +47,10 @@
       "disposition": "OPERATOR_CLI"
     },
     {
+      "file": "bin/certify-evidence.mjs",
+      "disposition": "OPERATOR_CLI"
+    },
+    {
       "file": "bin/change-intelligence.mjs",
       "disposition": "OPERATOR_CLI"
     },
@@ -312,8 +316,8 @@
     }
   ],
   "counts": {
-    "total": 76,
-    "operatorCli": 72,
+    "total": 77,
+    "operatorCli": 73,
     "libraryRetained": 4,
     "pending": 0
   }

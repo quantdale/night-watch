@@ -15,6 +15,8 @@
 // added where its executing producer is declared, and a producer cannot emit a
 // subject the verifier does not know.
 
+import { CERTIFICATION_SCHEMA_SUBJECTS } from './certification-subjects.mjs';
+
 /** @typedef {{ subjects: readonly string[], cleanEmitField: string, executed: (body: Record<string, unknown>) => string[] }} ReceiptSchema */
 
 /** @param {unknown} value */
@@ -65,6 +67,17 @@ export function uiHarnessExecutedSubjects(body) {
   return ['ui-error-taxonomy-rendering'];
 }
 
+/**
+ * A certification receipt executed its subject only when its producer recorded the
+ * check as MET and the verdict PASS for exactly the subject it names.
+ * @param {Record<string, unknown>} body
+ * @returns {string[]}
+ */
+export function certificationExecutedSubjects(body) {
+  if (typeof body.subject !== 'string' || body.subject === '') return [];
+  return body.checkState === 'MET' && body.result === 'PASS' ? [body.subject] : [];
+}
+
 /** @type {Readonly<Record<string, ReceiptSchema>>} */
 export const RECEIPT_SCHEMAS = Object.freeze({
   'nightwatch.quality-gate-receipt.v1': Object.freeze({
@@ -76,6 +89,11 @@ export const RECEIPT_SCHEMAS = Object.freeze({
     subjects: Object.freeze(['ui-error-taxonomy-rendering']),
     cleanEmitField: 'treeClean',
     executed: uiHarnessExecutedSubjects,
+  }),
+  'nightwatch.certification-evidence-receipt.v1': Object.freeze({
+    subjects: CERTIFICATION_SCHEMA_SUBJECTS,
+    cleanEmitField: 'sourceRootCleanAtEmit',
+    executed: certificationExecutedSubjects,
   }),
   'nightwatch.clean-checkout-receipt.v1': Object.freeze({
     subjects: Object.freeze(['clean-checkout']),

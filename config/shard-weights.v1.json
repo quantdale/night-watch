@@ -70,6 +70,8 @@
     "tests/unit/campaignEndurance.test.ts": 1882,
     "tests/unit/campaignStrategyMemory.test.ts": 1820,
     "tests/unit/candidateLifecycle.test.ts": 307,
+    "tests/unit/certificationEvidence.test.ts": 1800,
+    "tests/unit/certifyEvidence.test.ts": 13000,
     "tests/unit/changeIntelligence.test.ts": 316,
     "tests/unit/changeIntelligenceBacktest.test.ts": 524,
     "tests/unit/checkpointBindingFacts.test.ts": 4,
