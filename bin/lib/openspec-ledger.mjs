@@ -389,7 +389,12 @@ export function inspectLedgerAgreement(root, readBlobAtCommit = null) {
 
 export const TASK_ID_LEDGER_PATH = 'config/task-id-ledger.v1.json';
 export const TASK_ID_LEDGER_SCHEMA = 'nightwatch.task-id-ledger.v1';
-const TASK_LINE_ID_RE = /^\s*-\s*\[[ xX]\]\s*(?:~~)?(\d+\.\d+[a-z]?)\s/;
+// R5-17 / review-5 D-1: the ID may carry a letter-prefixed group (`A1.1`, `B1.1`,
+// `C.1`). The letter class is DELIBERATELY bounded to A-C, the groups a campaign
+// declares: the legacy `M<n>.<m>` milestone IDs of an earlier change were
+// rewritten before the stable-ID rule existed, and reading them now would turn
+// that history into fresh violations. Widening the class is an owner decision.
+const TASK_LINE_ID_RE = /^\s*-\s*\[[ xX]\]\s*(?:~~)?((?:[A-C]\d*|\d+)\.\d+[a-z]?)\s/;
 
 /** The ordered, de-duplicated stable IDs that open a task line in `tasksText`. */
 /**
@@ -436,7 +441,7 @@ export const LEGACY_STRIKE_EXEMPTIONS = Object.freeze([
 ]);
 
 /** The struck-ID form: a checkbox whose ID is crossed out. */
-const STRUCK_TASK_ID_RE = /^\s*-\s*\[[ xX]\]\s*~~\s*(\d+\.\d+[a-z]?)/;
+const STRUCK_TASK_ID_RE = /^\s*-\s*\[[ xX]\]\s*~~\s*((?:[A-C]\d*|\d+)\.\d+[a-z]?)/;
 
 /**
  * The task text per ID, with the checkbox/ID prefix removed.

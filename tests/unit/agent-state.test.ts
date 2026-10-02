@@ -1751,6 +1751,55 @@ test('an open suffixed task keeps its group out of TASK_GROUPS_COMPLETE', () => 
   expect(accepted.status, accepted.stderr).toBe(0);
 });
 
+// R5-17 / review-5 discovery D-1 — a campaign that letter-prefixes its groups
+// (`A1.1`, `B1.1`, `C.1`) must be as visible to the group ledger as an `N.M`
+// one. Before the fix every such line was invisible, so the ledger degraded to
+// a warning and no tick/next-ID disagreement could ever fail.
+test('letter-prefixed task groups are seen, ordered and enforced by the group ledger', () => {
+  const tasks = [
+    '- [x] A1.1 closed work',
+    '- [ ] A2.1 open work',
+    '- [ ] B1.1 later work',
+    '- [ ] C.1 final work',
+    '',
+  ].join('\n');
+  // Declaring A2 complete while A2.1 is open is refused: the letter group is real.
+  const refused = fixture();
+  writeProtocol(refused.root, { baselineSha: refused.sha, substantiveSha: refused.sha, startingSha: refused.sha });
+  writeGroupLedger(refused.root, {
+    tasks,
+    fields: 'TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1\nTASK_GROUPS_COMPLETE: A1,A2\nTASK_GROUP_NEXT: B1\nTASK_NEXT_ID: B1.1',
+    exactNext: 'Do B1.1 next.',
+    milestone: 'Milestone ID: group B1 run',
+    activeMilestone: 'group B1 run',
+  });
+  expect(run(refused.root).stderr).toContain('TASK_GROUP_LEDGER_COMPLETE_MISMATCH');
+  // The truthful declaration passes; A < B < C ordering makes A2.1 an earlier open task that must be deferred.
+  const accepted = fixture();
+  writeProtocol(accepted.root, { baselineSha: accepted.sha, substantiveSha: accepted.sha, startingSha: accepted.sha });
+  writeGroupLedger(accepted.root, {
+    tasks,
+    fields: 'TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1\nTASK_GROUPS_COMPLETE: A1\nTASK_GROUP_NEXT: B1\nTASK_NEXT_ID: B1.1\nTASK_GROUP_DEFERRED: A2.1',
+    exactNext: 'Do B1.1 next, then A2.1 after.',
+    milestone: 'Milestone ID: group B1 run',
+    activeMilestone: 'group B1 run',
+  });
+  const ok = run(accepted.root);
+  expect(ok.stderr).not.toContain('TASK_GROUP_LEDGER');
+  expect(ok.status, ok.stderr).toBe(0);
+  // Without the deferral the earlier-open lettered task is unaccounted for.
+  const unaccounted = fixture();
+  writeProtocol(unaccounted.root, { baselineSha: unaccounted.sha, substantiveSha: unaccounted.sha, startingSha: unaccounted.sha });
+  writeGroupLedger(unaccounted.root, {
+    tasks,
+    fields: 'TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1\nTASK_GROUPS_COMPLETE: A1\nTASK_GROUP_NEXT: B1\nTASK_NEXT_ID: B1.1',
+    exactNext: 'Do B1.1 next.',
+    milestone: 'Milestone ID: group B1 run',
+    activeMilestone: 'group B1 run',
+  });
+  expect(run(unaccounted.root).stderr).toContain('TASK_GROUP_LEDGER_OPEN_TASK_UNACCOUNTED');
+});
+
 test('a ticked group missing from TASK_GROUPS_COMPLETE fails', () => {
   const { root, sha } = fixture();
   writeProtocol(root, { baselineSha: sha, substantiveSha: sha, startingSha: sha });

@@ -305,6 +305,13 @@ test.describe('stable task-ID ledger (VA-01 / task 5.2)', () => {
   };
   const sha = 'a'.repeat(40);
 
+  test('R5-17: the stable-ID ledger reads letter-prefixed IDs (A1.1, B1.1, C.1) and still detects a vanished one', () => {
+    const bootstrap = '- [ ] A1.1 first\n- [ ] B1.1 second\n- [ ] C.1 third';
+    expect(collectTaskIds(bootstrap)).toEqual(['A1.1', 'B1.1', 'C.1']);
+    expect(taskIdLedgerViolations(bootstrap, '- [x] A1.1 first\n- [x] C.1 third')).toEqual(['B1.1']);
+    expect(taskIdLedgerViolations(bootstrap, '- [x] A1.1 first\n- [x] B1.1 second\n- [x] C.1 third')).toEqual([]);
+  });
+
   test('collectTaskIds reads only leading IDs and de-duplicates', () => {
     expect(collectTaskIds('- [x] 1.1 a\n- [ ] ~~1.2 b~~\n- [x] — DONE without id\n- [ ] 9.5b tagged\n- [x] 1.1 again')).toEqual(['1.1', '1.2', '9.5b']);
   });

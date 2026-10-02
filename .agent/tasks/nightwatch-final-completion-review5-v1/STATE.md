@@ -107,7 +107,12 @@ A9.4, with its tests. Then A1.1 → A2.1 → … in order.
   / `STRUCK_TASK_ID_RE` (openspec-ledger) accept only `N.M[a-z]` IDs, so the
   `A1.1`/`B1.1`/`C.1` IDs of this change are invisible to the task-group
   ledger (`TASK_GROUP_LEDGER_UNAVAILABLE` warning) and to the stable-ID ledger.
-  Fix lands first, under A9.4.
+  Fix lands first, under A9.4 — RESOLVED (implemented; CI pending): both patterns now
+  accept `[A-C]`-prefixed IDs (bounded: the legacy `M<n>.<m>` IDs of an older
+  change were rewritten before the stable-ID rule and would become fresh
+  violations), group keys are strings with a natural order, and
+  `TASK_GROUPS_COMPLETE: NONE` is parsed as the empty set. Tests:
+  `agent-state.test.ts` letter-group test and `productionCompletionOpenWork`.
 
 ## Blockers
 

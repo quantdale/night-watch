@@ -667,21 +667,46 @@ function checkContinuity(stateFields, root, head, errors, warnings) {
 // the task-ID ledger's own pattern accepts. Without the suffix the group
 // derivation could not see a reopened sub-task, so `TASK_GROUPS_COMPLETE: …,9`
 // passed while `9.5b` was still open.
-const TASK_GROUP_TASK_RE = /^- \[( |x|X)\]\s+(\d+)\.(\d+[a-z]?)\s/;
+// R5-17 / review-5 discovery D-1: a campaign may letter-prefix its groups (the
+// letter class is bounded to A-C, matching the stable-ID ledger's pattern)
+// (`A1.1`, `B1.1`, `C.1`); the group key is the text before the dot, a plain
+// number (`10`) or a letter with an optional number (`A1`, `C`). A pattern that
+// only knew `N.M` made such a change invisible to this ledger.
+const TASK_GROUP_TASK_RE = /^- \[( |x|X)\]\s+([A-C]\d*|\d+)\.(\d+[a-z]?)\s/;
+
+/**
+ * Natural order of group keys: plain numbers first (numerically), then lettered
+ * keys by letters and then number (`A1` < `A2` < `B1` < `C`).
+ * @param {string} left
+ * @param {string} right
+ * @returns {number}
+ */
+export function compareTaskGroupKeys(left, right) {
+  const parse = (key) => {
+    const match = /^([A-Z]*)(\d*)$/.exec(key);
+    return { letters: match?.[1] ?? key, digits: match?.[2] === '' || match === null ? -1 : Number(match[2]) };
+  };
+  const a = parse(String(left));
+  const b = parse(String(right));
+  if (a.letters === '' && b.letters !== '') return -1;
+  if (a.letters !== '' && b.letters === '') return 1;
+  if (a.letters !== b.letters) return a.letters < b.letters ? -1 : 1;
+  return a.digits - b.digits;
+}
 
 /**
  * Derive the group/tick truth from one change's tasks.md. Group headers are
  * not required for a task line to count: the `N.M` prefix is the identity.
  * @param {string} tasksText
- * @returns {Map<number, { total: number, ticked: number, open: number, openIds: string[] }>}
+ * @returns {Map<string, { total: number, ticked: number, open: number, openIds: string[] }>}
  */
 export function deriveTaskGroups(tasksText) {
-  /** @type {Map<number, { total: number, ticked: number, open: number, openIds: string[] }>} */
+  /** @type {Map<string, { total: number, ticked: number, open: number, openIds: string[] }>} */
   const groups = new Map();
   for (const line of String(tasksText ?? '').split(/\r?\n/)) {
     const task = TASK_GROUP_TASK_RE.exec(line);
     if (task === null) continue;
-    const group = Number(task[2]);
+    const group = task[2];
     if (!groups.has(group)) groups.set(group, { total: 0, ticked: 0, open: 0, openIds: [] });
     const record = groups.get(group);
     record.total += 1;
@@ -696,10 +721,11 @@ export function deriveTaskGroups(tasksText) {
 
 /**
  * @param {string} value
- * @returns {number[]}
+ * @returns {string[]}
  */
 function parseGroupList(value) {
-  return String(value ?? '').split(',').map((entry) => entry.trim()).filter((entry) => entry !== '').map(Number);
+  const entries = String(value ?? '').split(',').map((entry) => entry.trim()).filter((entry) => entry !== '');
+  return entries.length === 1 && entries[0] === 'NONE' ? [] : entries;
 }
 
 /**
@@ -729,7 +755,7 @@ export function checkTaskGroupLedger(root, taskId, stateText, errors, warnings, 
     warnings.push(`TASK_GROUP_LEDGER_UNAVAILABLE: ${taskId}/tasks.md carries no numbered task groups`);
     return;
   }
-  const sorted = [...groups.keys()].sort((a, b) => a - b);
+  const sorted = [...groups.keys()].sort(compareTaskGroupKeys);
   const complete = sorted.filter((group) => (groups.get(group)?.open ?? 0) === 0);
   const open = sorted.filter((group) => (groups.get(group)?.open ?? 0) > 0);
   const fields = parseKeyValueFile(stateText);
@@ -758,8 +784,8 @@ export function checkTaskGroupLedger(root, taskId, stateText, errors, warnings, 
     if (deferred.length > 0) errors.push(`TASK_GROUP_LEDGER_DEFERRED_WITHOUT_OPEN: STATE defers [${deferred.join(',')}] while no task is open`);
     return;
   }
-  const nextGroup = Number(String(nextGroupField ?? '').trim());
-  if (!Number.isInteger(nextGroup) || !open.includes(nextGroup)) {
+  const nextGroup = String(nextGroupField ?? '').trim();
+  if (!open.includes(nextGroup)) {
     errors.push(`TASK_GROUP_LEDGER_NEXT_GROUP_INVALID: STATE TASK_GROUP_NEXT=${String(nextGroupField)} is not an open group (open [${open.join(',')}])`);
     return;
   }
@@ -772,7 +798,7 @@ export function checkTaskGroupLedger(root, taskId, stateText, errors, warnings, 
   }
   // Every open task in an EARLIER group must be explicitly deferred behind the
   // declared next group, and every deferred ID must be exactly such a task.
-  const earlierOpen = open.filter((group) => group < nextGroup).flatMap((group) => groups.get(group)?.openIds ?? []);
+  const earlierOpen = open.filter((group) => compareTaskGroupKeys(group, nextGroup) < 0).flatMap((group) => groups.get(group)?.openIds ?? []);
   const earlierOpenSet = new Set(earlierOpen);
   for (const id of earlierOpen) {
     if (!deferred.includes(id)) {
