@@ -210,6 +210,13 @@
       "oldLineSha256": "sha256:fb86ca708388f036114093c4",
       "oldLineExcerpt": "answer is recorded in that session's transcript). The refusal and the global cap",
       "reason": "R4-24 / review-4 task 7.5: the trailing clause referring to a session transcript is replaced by the non-identifying statement that the quoted question and answer ARE the provenance."
+    },
+    {
+      "id": "CORR-R5-001",
+      "path": "docs/CURRENT_STATE.md",
+      "oldLineSha256": "sha256:fc7b05c2951fbc1892b8499c",
+      "oldLineExcerpt": "> Durable memory for the next agent/session. Last updated: **2026-10-01**",
+      "reason": "The review-5 child bootstrap (2026-10-02) advanced the governed LIVE_TASK_ID/LIVE_PHASE machine fields; the header date must cover the document's own last change, while the statement itself is unchanged (same pattern as CORR-CORR-001)."
     }
   ]
 }

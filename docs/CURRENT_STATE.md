@@ -1,6 +1,6 @@
 # Nightwatch — CURRENT STATE
 
-> Durable memory for the next agent/session. Last updated: **2026-10-01**
+> Durable memory for the next agent/session. Last updated: **2026-10-02**
 > during the autonomous bug-hunting programme (Wave 0 protocol freeze and
 > Wave 1 lanes A–E integrated). RS-1 close-out remains
 > COMPLETE: DEF-FC-04 continuity repair, the Control Center reviewer
@@ -947,8 +947,8 @@ informational and are not interpreted as current authority.
 
 ```
 LIVE_STATE_PROTOCOL_VERSION: nightwatch.live-state.v1
-LIVE_TASK_ID: nightwatch-final-product-completion-v1
-LIVE_PHASE: FINAL_PRODUCT_COMPLETION_V1
+LIVE_TASK_ID: nightwatch-final-completion-review5-v1
+LIVE_PHASE: COMPLETION_REVIEW5_V1
 LIVE_TASK_STATUS: IN_PROGRESS
 LIVE_PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 LIVE_PROJECT_VERDICT_EFFECT: PRESERVE
