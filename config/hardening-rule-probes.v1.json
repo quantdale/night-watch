@@ -2506,7 +2506,7 @@
         "ops": [
           {
             "file": "bin/lib/checkpoint-role.mjs",
-            "search": "if (guarded.size === 0 && archived.size === 0) return [...new Set(violations)];",
+            "search": "if (!perCommitJudgement && aggregateGuarded.size === 0 && aggregateArchived.size === 0) return [...new Set(violations)];",
             "replace": "if (true) return [...new Set(violations)];"
           }
         ]
