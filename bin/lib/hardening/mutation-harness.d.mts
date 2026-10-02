@@ -23,3 +23,4 @@ export function runMutationHarness(options?: {
   environment?: NodeJS.ProcessEnv;
   log?: (line: string) => void;
 }): Promise<{ ok: boolean; mutants: number; detected: number; survived: string[]; errors: string[] }>;
+export function createScratch(root: string, files: string[]): string;

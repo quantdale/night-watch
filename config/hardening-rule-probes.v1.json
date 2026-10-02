@@ -3035,7 +3035,22 @@
     "R5-06/M09",
     "R5-06/M10",
     "R5-06/M11",
-    "R5-06/M12"
+    "R5-06/M12",
+    "R5-07/agent-unknown-command",
+    "R5-07/agent-stray-positional",
+    "R5-07/explain-positional",
+    "R5-07/phase23-authorization",
+    "R5-07/phase22-all-flag",
+    "R5-08/portfolio-stop-gate",
+    "R5-08/phase22-dev-stop-gate",
+    "R5-08/phase23-ci-stop-gate",
+    "R5-08/hardening-check-stop-gate",
+    "R5-08/launcher-effect-phase23-dev",
+    "R5-08/launcher-effect-phase22-real",
+    "R5-08/help-effect-agent",
+    "R5-08/help-effect-phase22-dev",
+    "R5-08/help-effect-portfolio",
+    "R5-08/library-listed-as-undeclared"
   ],
   "behaviouralMutants": [
     {
@@ -3656,6 +3671,273 @@
       "focusedTests": [
         {
           "file": "tests/unit/devLauncherEffects.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-037",
+      "finding": "R5-07/agent-unknown-command",
+      "guard": "nightwatch-agent unknown command exits 2",
+      "ops": [
+        {
+          "file": "bin/nightwatch-agent.mjs",
+          "search": "choices: ['run', 'pause', 'status', 'findings', 'resume', 'help'], ",
+          "replace": ""
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/cliRegressionsR5.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-038",
+      "finding": "R5-07/agent-stray-positional",
+      "guard": "nightwatch-agent stray positional refused",
+      "ops": [
+        {
+          "file": "bin/nightwatch-agent.mjs",
+          "search": "const strayPositional = !cliStopped && command !== 'campaign' && cli.positionals.length > 0;",
+          "replace": "const strayPositional = false;"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/cliRegressionsR5.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-039",
+      "finding": "R5-07/explain-positional",
+      "guard": "phase22-dev explain reads its declared positional",
+      "ops": [
+        {
+          "file": "bin/phase22-dev.mjs",
+          "search": "  const safeId = args._[0];",
+          "replace": "  const safeId = args._[1];"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/cliRegressionsR5.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-040",
+      "finding": "R5-07/phase23-authorization",
+      "guard": "phase23-dev authorization class",
+      "ops": [
+        {
+          "file": "bin/phase23-dev.mjs",
+          "search": "  authorization: 'OWNER_GATED',\n  artifacts: [],\n};\nconst cli = defineOperatorCli",
+          "replace": "  authorization: 'LOCAL_ONLY',\n  artifacts: [],\n};\nconst cli = defineOperatorCli"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/cliRegressionsR5.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-041",
+      "finding": "R5-07/phase22-all-flag",
+      "guard": "phase22-dev declares no --all flag",
+      "ops": [
+        {
+          "file": "bin/phase22-dev.mjs",
+          "search": "    { name: '--dry-run', shape: 'boolean', summary: 'evaluate acceptance without any effect (the default)' },\n",
+          "replace": "    { name: '--dry-run', shape: 'boolean', summary: 'evaluate acceptance without any effect (the default)' },\n    { name: '--all', shape: 'boolean', summary: 'include every frozen target' },\n"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/cliRegressionsR5.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-042",
+      "finding": "R5-08/portfolio-stop-gate",
+      "guard": "portfolio dispatcher gated on the parser result",
+      "ops": [
+        {
+          "file": "bin/portfolio.mjs",
+          "search": "  if (cli.ok !== true || cli.stop === true) return;",
+          "replace": "  if (cli.ok !== true) return;"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/operatorCliStructure.test.ts"
+        },
+        {
+          "file": "tests/unit/operatorCliHelpSweep.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-043",
+      "finding": "R5-08/phase22-dev-stop-gate",
+      "guard": "phase22-dev dispatcher gated on the parser result",
+      "ops": [
+        {
+          "file": "bin/phase22-dev.mjs",
+          "search": "  if (cli.ok !== true || cli.stop === true) return;",
+          "replace": "  if (cli.ok !== true) return;"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/operatorCliStructure.test.ts"
+        },
+        {
+          "file": "tests/unit/operatorCliHelpSweep.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-044",
+      "finding": "R5-08/phase23-ci-stop-gate",
+      "guard": "phase23-ci dispatcher gated on the parser result",
+      "ops": [
+        {
+          "file": "bin/phase23-ci.mjs",
+          "search": "  if (cli.ok !== true || cli.stop === true) {",
+          "replace": "  if (cli.ok !== true) {"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/operatorCliStructure.test.ts"
+        },
+        {
+          "file": "tests/unit/operatorCliHelpSweep.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-045",
+      "finding": "R5-08/hardening-check-stop-gate",
+      "guard": "hardening-check dispatcher gated on the parser result",
+      "ops": [
+        {
+          "file": "bin/hardening-check.mjs",
+          "search": "if (cli.ok !== true || cli.stop === true) {",
+          "replace": "if (cli.ok !== true) {"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/operatorCliStructure.test.ts"
+        },
+        {
+          "file": "tests/unit/operatorCliHelpSweep.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-046",
+      "finding": "R5-08/launcher-effect-phase23-dev",
+      "guard": "migrated DEV launcher phase23-dev runs nothing before its short-circuit",
+      "ops": [
+        {
+          "file": "bin/phase23-dev.mjs",
+          "search": "guardDevLane({ root: ROOT, launcher: 'phase23-dev.mjs', args: process.argv.slice(2), devOnly: true });",
+          "replace": "guardDevLane({ root: ROOT, launcher: 'phase23-dev.mjs', args: process.argv.slice(2), devOnly: true });\nspawnSync('/bin/true', []);"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/devLauncherEffects.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-047",
+      "finding": "R5-08/launcher-effect-phase22-real",
+      "guard": "migrated DEV launcher phase22-real runs nothing before its short-circuit",
+      "ops": [
+        {
+          "file": "bin/phase22-real.mjs",
+          "search": "guardDevLane({ root: ROOT, launcher: 'phase22-real.mjs', args: process.argv.slice(2) });",
+          "replace": "guardDevLane({ root: ROOT, launcher: 'phase22-real.mjs', args: process.argv.slice(2) });\n(() => { throw new Error('effect'); })();"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/devLauncherEffects.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-048",
+      "finding": "R5-08/help-effect-agent",
+      "guard": "nightwatch-agent --help runs no module work",
+      "ops": [
+        {
+          "file": "bin/nightwatch-agent.mjs",
+          "search": "const cli = defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url });",
+          "replace": "(await import('node:fs')).writeFileSync('sweep-effect.txt', 'x');\nconst cli = defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url });"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/operatorCliHelpSweep.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-049",
+      "finding": "R5-08/help-effect-phase22-dev",
+      "guard": "phase22-dev --help runs no module work",
+      "ops": [
+        {
+          "file": "bin/phase22-dev.mjs",
+          "search": "  const cli = defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url });\n  // The shared parser owns",
+          "replace": "  fs.writeFileSync(path.join(ROOT, 'sweep-effect.txt'), 'x');\n  const cli = defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url });\n  // The shared parser owns"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/operatorCliHelpSweep.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-050",
+      "finding": "R5-08/help-effect-portfolio",
+      "guard": "portfolio --help runs no module work",
+      "ops": [
+        {
+          "file": "bin/portfolio.mjs",
+          "search": "async function main() {\n  const cli = defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url });",
+          "replace": "async function main() {\n  fs.writeFileSync(path.join(process.cwd(), 'sweep-effect.txt'), 'x');\n  const cli = defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url });"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/operatorCliHelpSweep.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-051",
+      "finding": "R5-08/library-listed-as-undeclared",
+      "guard": "LIBRARY_RETAINED bins are libraries, not undeclared commands",
+      "ops": [
+        {
+          "file": "bin/lib/operator-command-listing.mjs",
+          "search": "entry.disposition === 'LIBRARY_RETAINED' && typeof entry.file === 'string'",
+          "replace": "entry.disposition === 'NEVER_MATCHES' && typeof entry.file === 'string'"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/cliRegressionsR5.test.ts"
         }
       ]
     }

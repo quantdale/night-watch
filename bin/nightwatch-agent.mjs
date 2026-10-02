@@ -40,7 +40,9 @@ const CLI_METADATA = {
     { name: 'help', summary: 'print the usage line' },
   ],
   defaultCommand: 'help',
-  positionals: { min: 0, max: 1, names: ['subcommand'], summary: 'the campaign subcommand (run|help)' },
+  // R5-07: the positional is the CAMPAIGN subcommand only, so an unknown word (`bogus`) is
+  // refused with exit 2 by the parser instead of falling through to the default `help`.
+  positionals: { min: 0, max: 1, names: ['subcommand'], choices: ['run', 'pause', 'status', 'findings', 'resume', 'help'], summary: 'the campaign subcommand (run|pause|status|findings|resume|help)' },
   flags: [
     { name: '--reasoner', shape: 'string', summary: 'campaign run reasoner (must be cli)' },
     { name: '--duration', shape: 'enum', values: ['1h', '4h', '8h', 'overnight'], summary: 'campaign run budget window' },
@@ -48,12 +50,7 @@ const CLI_METADATA = {
     { name: '--max-turns', shape: 'integer', summary: 'campaign run turn bound' },
     { name: '--model', shape: 'string', summary: 'reasoner model label' },
     { name: '--repository', shape: 'string', summary: 'approved org/repo target' },
-    { name: '--env', shape: 'enum', values: ['dev', 'next', 'production'], summary: 'campaign target environment (owner-gated; next/production refused here)' },
     { name: '--id', shape: 'string', summary: 'campaign run id label' },
-    { name: '--porcelain', shape: 'boolean', summary: 'machine-readable summary' },
-    { name: '--project', shape: 'string', summary: 'project label' },
-    { name: '--workers', shape: 'integer', summary: 'worker bound' },
-    { name: '--expose-gc', shape: 'boolean', summary: 'enable NODE_OPTIONS --expose-gc for the child' },
   ],
   json: true,
   authorization: 'OWNER_GATED',
@@ -65,6 +62,8 @@ const args = (cli.ok === true && cli.stop !== true)
   : [cli.command ?? 'help'];
 const command = cli.ok === true && cli.stop !== true ? cli.command ?? 'help' : 'help';
 const cliStopped = cli.ok !== true || cli.stop === true;
+// R5-07: only `campaign` takes a positional; `status extra` / `help run` are usage errors (exit 2).
+const strayPositional = !cliStopped && command !== 'campaign' && cli.positionals.length > 0;
 
 const DURATIONS = new Map([
   ['1h', 'HOUR_1'],
@@ -273,7 +272,9 @@ function resolveReasonerIdentity(reasonerMod, configured, options = {}) {
   };
 }
 
-if (!cliStopped && command === 'status') {
+if (strayPositional) {
+  fail(2, `usage: ${command} takes no argument (a positional follows \`campaign\` only)`);
+} else if (!cliStopped && command === 'status') {
   // M5 (6.14/C-13/B-12): status reports MEASURED state — the durable records
   // the owner-local store actually holds and the campaigns actually stored —
   // not a constant schema list. The static protocol identity stays, because it
@@ -388,8 +389,6 @@ if (!cliStopped && command === 'status') {
       fail(2, 'campaign run requires --duration=1h|4h|8h|overnight');
     } else if (modelLabel === null) {
       // Refused above: --model and NIGHTWATCH_REASONER_MODEL disagree.
-    } else if (flags.env === 'dev' || flags.env === 'next' || flags.env === 'production') {
-      fail(2, `environment ${flags.env} is NOT AUTHORIZED for this programme`);
     } else if (!assertStartupEnvironment().NIGHTWATCH_REASONER_CLI && !assertStartupEnvironment().NIGHTWATCH_PRINT_CLI) {
       fail(2, 'REASONER_CLI_NOT_CONFIGURED — set NIGHTWATCH_REASONER_CLI or NIGHTWATCH_PRINT_CLI; refusing to start');
     } else {

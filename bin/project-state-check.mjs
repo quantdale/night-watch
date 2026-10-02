@@ -388,7 +388,8 @@ function probeOperatorCli(root) {
     return { state: 'UNAVAILABLE_CAPABILITY', detail: 'operator command listing failed' };
   }
   const bins = listing.bins.length;
-  const undeclared = listing.entries.filter((entry) => !entry.declared).length;
+  // R5-08: a LIBRARY_RETAINED module (registered with a reason) is not an undeclared command.
+  const undeclared = listing.entries.filter((entry) => !entry.declared && entry.library !== true).length;
   const declaredBroken = listing.entries.filter((entry) => entry.declared && entry.error !== null).length;
   const conforming = listing.entries.filter((entry) => entry.metadata !== null && entry.error === null).length;
   if (bins > 0 && undeclared === 0 && declaredBroken === 0) {

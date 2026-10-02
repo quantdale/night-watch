@@ -23,7 +23,7 @@ const CLI_METADATA = {
   schemaVersion: OPERATOR_CLI_SCHEMA,
   name: 'phase22-dev',
   entry: 'bin/phase22-dev.mjs',
-  purpose: 'Contained Phase 22 DEV operator surface: manifest, preflight, acceptance, results and explain over frozen external inputs. The default path is local; there is no --all target discovery.',
+  purpose: 'Contained Phase 22 DEV operator surface: manifest, preflight, acceptance, results and explain over frozen external inputs. The default path is local; targets come only from the frozen manifest and are never discovered.',
   group: 'run-scenario',
   commands: [
     { name: 'manifest', summary: 'compile a frozen Phase 22 manifest from an exact source snapshot' },
@@ -33,6 +33,9 @@ const CLI_METADATA = {
     { name: 'explain', summary: 'explain one frozen target id from a manifest' },
   ],
   commandRequired: true,
+  // R5-07: `explain <target-id>` reads ONE positional (the frozen target id); every other
+  // command refuses a stray positional below.
+  positionals: { min: 0, max: 1, names: ['target-id'], summary: 'the frozen target id (explain only)' },
   flags: [
     { name: '--snapshot', shape: 'path', summary: 'exact source snapshot directory for the manifest' },
     { name: '--source-sha', shape: 'string', summary: 'the 40-hex source sha the snapshot corresponds to' },
@@ -43,7 +46,6 @@ const CLI_METADATA = {
     { name: '--out', shape: 'path', summary: 'absolute external output path (mode 0600)' },
     { name: '--execute', shape: 'boolean', summary: 'run the acceptance lane for real instead of dry-run' },
     { name: '--dry-run', shape: 'boolean', summary: 'evaluate acceptance without any effect (the default)' },
-    { name: '--all', shape: 'boolean', summary: 'include every frozen target (never dynamic discovery)' },
   ],
   json: true,
   authorization: 'LOCAL_ONLY',
@@ -97,7 +99,6 @@ function sourceReader(snapshot) {
 }
 
 function buildManifest(args) {
-  if (args.all !== undefined) fail('DYNAMIC_ALL_FORBIDDEN');
   const sourceSha = args['source-sha'];
   if (typeof sourceSha !== 'string' || !/^[0-9a-f]{40}$/.test(sourceSha)) fail('SOURCE_SHA_REQUIRED');
   const reader = sourceReader(args.snapshot);
@@ -244,7 +245,6 @@ function preflight(args) {
 }
 
 function acceptance(args) {
-  if (args.all !== undefined) fail('DYNAMIC_ALL_FORBIDDEN');
   if (args['dry-run'] === true) {
     const phase22 = loadTypeScriptModule('src/core/phase22/index.ts');
     const manifest = safeJson(args.manifest);
@@ -280,7 +280,7 @@ function results(args) {
 }
 
 function explain(args) {
-  const safeId = args._[1];
+  const safeId = args._[0];
   if (typeof safeId !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._:/-]{0,199}$/.test(safeId)) fail('SAFE_ID_REQUIRED');
   const manifest = safeJson(args.manifest);
   const phase22 = loadTypeScriptModule('src/core/phase22/index.ts');
@@ -310,9 +310,9 @@ function main() {
     out: flags['--out'],
     execute: flags['--execute'],
     'dry-run': flags['--dry-run'],
-    all: flags['--all'],
   };
   const command = cli.command;
+  if (command !== 'explain' && args._.length > 0) fail('UNEXPECTED_POSITIONAL');
   if (command === 'manifest') {
     const result = buildManifest(args);
     writeSafeOutput(args.out, result.manifest);

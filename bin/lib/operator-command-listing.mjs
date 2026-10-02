@@ -26,6 +26,30 @@ export function discoverOperatorBins(root) {
 }
 
 /**
+ * R5-08 / review-5 A6.2 — the LIBRARY_RETAINED bins of the operator-CLI surface
+ * registry (file -> stated reason). A retained library module lives under bin/ but is
+ * not an entry point, so it is NOT an "undeclared" command: the listing and the
+ * release probe both read this one registry instead of calling it a gap.
+ * @param {string} root
+ * @returns {Map<string, string>}
+ */
+export function readLibraryRetainedBins(root) {
+  /** @type {Map<string, string>} */
+  const retained = new Map();
+  try {
+    const registry = JSON.parse(fs.readFileSync(path.join(root, 'config', 'operator-cli-surface.v1.json'), 'utf8'));
+    for (const entry of Array.isArray(registry.bins) ? registry.bins : []) {
+      if (entry !== null && typeof entry === 'object' && entry.disposition === 'LIBRARY_RETAINED' && typeof entry.file === 'string') {
+        retained.set(entry.file, typeof entry.reason === 'string' ? entry.reason : '');
+      }
+    }
+  } catch {
+    // An unreadable registry retains nothing: every undeclared bin stays visible as undeclared.
+  }
+  return retained;
+}
+
+/**
  * Static presence of a declaration. This is the structural fact hardening
  * checks can read without executing 62 processes; the behavioural facts (help,
  * refusal, metadata correctness) belong to the sweep.
@@ -216,16 +240,20 @@ export function extractDeclaredOperatorMetadata(source) {
 }
 
 /**
+ * @typedef {object} ListingInput
+ * @property {string} root
+ * @property {readonly string[]} bins
+ * @property {(absolute: string) => { status: number | null, stdout?: string | null, stderr?: string | null, error?: Error }} [run]
+ * @property {ReadonlyMap<string, string>} [libraryRetained] LIBRARY_RETAINED bins (file -> reason): listed as library modules, not as undeclared commands
+ */
+
+/**
  * Collect declared metadata statically. When `run` is supplied each declared
  * bin is also asked for its runtime `--print-metadata` answer, and a mismatch
  * between the static declaration and the runtime answer is a contract failure:
  * the help text, the listing and the parser must describe one contract.
  *
- * @param {{
- *   root: string,
- *   bins: readonly string[],
- *   run?: (absolute: string) => { status: number|null, stdout?: string|null, stderr?: string|null, error?: Error },
- * }} input
+ * @param {ListingInput} input
  */
 export function collectOperatorCommandMetadata(input) {
   const run = input.run;
@@ -233,7 +261,12 @@ export function collectOperatorCommandMetadata(input) {
   for (const bin of input.bins) {
     const source = fs.readFileSync(path.join(input.root, bin), 'utf8');
     if (!sourceDeclaresOperatorMetadata(source)) {
-      entries.push({ bin, declared: false, metadata: null, error: 'OPERATOR_CLI_METADATA_NOT_DECLARED' });
+      const reason = input.libraryRetained?.get(bin);
+      if (reason !== undefined) {
+        entries.push({ bin, declared: false, library: true, metadata: null, error: null, reason });
+      } else {
+        entries.push({ bin, declared: false, metadata: null, error: 'OPERATOR_CLI_METADATA_NOT_DECLARED' });
+      }
       continue;
     }
     const metadata = extractDeclaredOperatorMetadata(source);
@@ -308,7 +341,13 @@ export function renderOperatorCommandListing(entries) {
     }
     lines.push('');
   }
-  const undeclared = entries.filter((entry) => entry.metadata === null);
+  const libraries = entries.filter((entry) => entry.library === true);
+  if (libraries.length > 0) {
+    lines.push(`Library modules, retained under bin/ (not commands) (${libraries.length}):`);
+    for (const member of libraries) lines.push(`  ${member.bin} — ${member.reason}`);
+    lines.push('');
+  }
+  const undeclared = entries.filter((entry) => entry.metadata === null && entry.library !== true);
   if (undeclared.length > 0) {
     lines.push(`Undeclared metadata (${undeclared.length}):`);
     for (const member of undeclared) lines.push(`  ${member.bin} — ${member.error}`);
@@ -324,6 +363,6 @@ export function renderOperatorCommandListing(entries) {
  */
 export function operatorCommandListing(root, options = {}) {
   const bins = options.bins ?? discoverOperatorBins(root);
-  const entries = collectOperatorCommandMetadata({ root, bins, run: options.run });
+  const entries = collectOperatorCommandMetadata({ root, bins, run: options.run, libraryRetained: options.libraryRetained ?? readLibraryRetainedBins(root) });
   return { bins, entries, text: renderOperatorCommandListing(entries) };
 }

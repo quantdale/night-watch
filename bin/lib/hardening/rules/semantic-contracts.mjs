@@ -711,7 +711,11 @@ export function checkPhase22IntegrationSeams() {
   if (/\.\.\.process\.env/.test(launcher) || /stdio:\s*['"]inherit['"]/.test(launcher) || !/NIGHTWATCH_PHASE_22_REAL/.test(launcherCode) || !/args\.env !== 'dev'/.test(launcherCode) || !/EXACT_GREEN_CI_RUN_ID_REQUIRED/.test(launcherCode)) fail('Phase 22 launcher boundary is incomplete');
   if (!/maxBuffer\s*:/.test(launcherCode) || !/timeout\s*:/.test(launcherCode) || !/--config=playwright\.phase22\.config\.ts/.test(launcherCode)) fail('Phase 22 launcher lacks bounded child execution');
   const cli = read('bin/phase22-dev.mjs');
-  if (!/DYNAMIC_ALL_FORBIDDEN/.test(cli) || !/simulatePhase22DevAcceptance/.test(cli) || !/EXPLICIT_EXECUTE_REQUIRED/.test(cli)) fail('Phase 22 local operator surface is missing dry-run/explicit-execute guards');
+  // R5-07: there is no `--all` flag at all — dynamic target discovery is refused by the shared
+  // parser as an unknown option (exit 2), which is stronger than a declared flag that is always
+  // refused; tests/unit/cliRegressionsR5.test.ts proves the refusal behaviourally.
+  if (/name:\s*'--all'/.test(cli) || /flags\['--all'\]/.test(cli)) fail('Phase 22 local operator surface must not declare or read an --all flag (dynamic target discovery is forbidden)');
+  if (!/simulatePhase22DevAcceptance/.test(cli) || !/EXPLICIT_EXECUTE_REQUIRED/.test(cli)) fail('Phase 22 local operator surface is missing dry-run/explicit-execute guards');
   const packageJson = readDataFile('package.json');
   for (const script of ['dev-preflight', 'dev-manifest', 'dev-acceptance', 'dev-results', 'dev-explain']) if (!packageJson.includes(`"${script}"`)) fail(`Phase 22 operator script missing: ${script}`);
 }

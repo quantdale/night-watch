@@ -153,7 +153,7 @@ function run(cwd, invocation, env) {
  * @param {string[]} files
  * @returns {string} the scratch directory
  */
-function createScratch(root, files) {
+export function createScratch(root, files) {
   const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'nw-mutants-'));
   const git = (/** @type {string[]} */ args, /** @type {string} */ cwd = scratch) => spawnSync('git', ['-c', 'user.email=mutants@nightwatch.local', '-c', 'user.name=mutants', ...args], { cwd, encoding: 'utf8', shell: false });
   const isRepository = git(['rev-parse', '--git-dir'], root).status === 0;

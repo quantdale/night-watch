@@ -449,6 +449,12 @@
         "isolated-scratch"
       ]
     },
+    "tests/unit/cliRegressionsR5.test.ts": {
+      "class": "PARALLEL_SAFE",
+      "signals": [
+        "child-process"
+      ]
+    },
     "tests/unit/containedTestReplay.test.ts": {
       "class": "PARALLEL_SAFE",
       "signals": [
@@ -910,6 +916,17 @@
         "artifacts-write",
         "isolated-scratch"
       ]
+    },
+    "tests/unit/operatorCliHelpSweep.test.ts": {
+      "class": "PARALLEL_SAFE",
+      "signals": [
+        "isolated-scratch",
+        "child-process"
+      ]
+    },
+    "tests/unit/operatorCliStructure.test.ts": {
+      "class": "PARALLEL_SAFE",
+      "signals": []
     },
     "tests/unit/operatorCliSurface.test.ts": {
       "class": "PROCESS_ISOLATED_ONLY",

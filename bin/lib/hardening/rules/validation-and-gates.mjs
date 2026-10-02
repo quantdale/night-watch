@@ -33,6 +33,7 @@ import { UNLISTABLE_RANGE_VIOLATION, checkpointRoleViolations, unpairedCorrectio
 import { bindingReceiptVerifier, collectCheckpointBindingFacts } from '../../checkpoint-binding.mjs';
 import { buildEvidenceEvaluationInputs } from '../../evidence-evaluation-inputs.mjs';
 import { findBinsWithoutExecutingTest, verifyCliImplementationContract } from '../../cli-implementation-contract.mjs';
+import { analyzeOperatorCliStructure } from '../../operator-cli-structure.mjs';
 import { classifyValidationTruth, extractTestMatchGlobs } from '../../validation-classification.mjs';
 import {
   DOCUMENT_ROLE_CORRECTIONS_FILE,
@@ -371,7 +372,9 @@ export function checkSharedOperatorParserStructure() {
     fail('SHARED_PARSER_STRUCTURE config/operator-cli-surface.v1.json carries no bins array');
     return;
   }
-  const tracked = fs.readdirSync(path.join(root, 'bin')).filter((name) => name.endsWith('.mjs')).map((name) => `bin/${name}`).sort();
+  // R5-08: the tracked set comes from Git (`git ls-files`), not a directory listing, so an
+  // untracked scratch file can neither hide a missing disposition nor create a false one.
+  const tracked = gitFiles().filter((file) => /^bin\/[^/]+\.mjs$/.test(file)).sort();
   const declared = new Map(bins
     .filter((/** @type {unknown} */ entry) => entry !== null && typeof entry === 'object')
     .map((/** @type {Record<string, unknown>} */ entry) => [String(entry.file), entry]));
@@ -392,22 +395,22 @@ export function checkSharedOperatorParserStructure() {
     const disposition = entry.disposition;
     if (disposition === 'OPERATOR_CLI') {
       operatorCount += 1;
-      if (!code.includes('defineOperatorCli(')) {
+      // R5-08: the structure is read from the PARSED entry, not matched as text over the
+      // whole file (a comment, a string or a dead branch satisfied `/cli\.stop/`).
+      const structure = analyzeOperatorCliStructure(code, file);
+      if (!structure.callsDefine) {
         fail(`SHARED_PARSER_STRUCTURE ${file} declares OPERATOR_CLI but never calls defineOperatorCli(; its help would run module effects`);
         continue;
       }
-      if (!/defineOperatorCli\(CLI_METADATA/.test(code)) {
+      if (!structure.passesOwnMetadata) {
         fail(`SHARED_PARSER_STRUCTURE ${file} declares OPERATOR_CLI but does not pass its own CLI_METADATA to the shared parser`);
       }
-      // The help/metadata short-circuit must be honoured. An entry that does
-      // module WORK gates its dispatcher on `cli.stop`; a DECLARATION-ONLY entry
-      // (its whole body is declarations, so the shared parser is called for
-      // help/metadata and there is nothing else to gate) instead guards the
-      // call behind a direct-invocation check.
-      const dispatchGated = /cli\.stop/.test(code);
-      const declarationOnly = /process\.argv\[1\][^\n]*\n?[^\n]*defineOperatorCli\(CLI_METADATA\)/.test(code);
-      if (!dispatchGated && !declarationOnly) {
-        fail(`SHARED_PARSER_STRUCTURE ${file} declares OPERATOR_CLI but neither gates its dispatcher on cli.stop nor is a declaration-only entry; a help query could execute module work`);
+      // The help/metadata short-circuit must be honoured. An entry that does module WORK gates
+      // its dispatcher on the parser's `.stop` result (a `.stop` read that reaches an if /
+      // conditional / logical condition); a DECLARATION-ONLY entry (its whole body is
+      // declarations) instead guards the parser call behind a `process.argv[1]` check.
+      if (!structure.stopGated && !structure.declarationOnly) {
+        fail(`SHARED_PARSER_STRUCTURE ${file} declares OPERATOR_CLI but neither gates its dispatcher on the parser's .stop result nor is a declaration-only entry; a help query could execute module work`);
       }
     } else if (disposition === 'LIBRARY_RETAINED') {
       libraryCount += 1;

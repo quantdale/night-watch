@@ -2,7 +2,7 @@
   "schemaVersion": "nightwatch.validation-universe.v1",
   "definitionName": "Nightwatch validation universe classification (NW-08)",
   "note": "Every discovered executable test or check belongs to exactly one class. AUTHORITATIVE_GATE is DERIVED from what the required gate lanes actually select and is therefore not declarable here; every other discovered file must appear below exactly once, with the reason it is not in the gate and the evidence lane that does cover it. A newly added test that is in no lane and no class fails the gate rather than joining the repository silently.",
-  "inventoryDigest": "sha256:44509de9cb9178e458b37704",
+  "inventoryDigest": "sha256:950704aedf60902bde079743",
   "classes": {
     "FULL_REGRESSION": {
       "reason": "Offline, deterministic suites that the full canonical regression executes. They are not in a required gate lane because the authoritative gate is bounded for CI runtime; leaving them unclassified is what made the gap invisible.",
@@ -47,6 +47,7 @@
         "tests/unit/childProcessCensus.test.ts",
         "tests/unit/childProcessCensusIndirection.test.ts",
         "tests/unit/cliImplementationContract.test.ts",
+        "tests/unit/cliRegressionsR5.test.ts",
         "tests/unit/containedTestReplay.test.ts",
         "tests/unit/contextGuardTransaction.test.ts",
         "tests/unit/continuityLiveWaypoint.test.ts",
@@ -98,6 +99,8 @@
         "tests/unit/observeAuthenticatedRunner.test.ts",
         "tests/unit/openspecArchiveIndex.test.ts",
         "tests/unit/operatorCliContract.test.ts",
+        "tests/unit/operatorCliHelpSweep.test.ts",
+        "tests/unit/operatorCliStructure.test.ts",
         "tests/unit/operatorCliSurface.test.ts",
         "tests/unit/ownerLocalReproductionAdversarial.test.ts",
         "tests/unit/ownerLocalReproductionContracts.test.ts",
@@ -301,6 +304,7 @@
         "bin/lib/name-listing-scan.mjs",
         "bin/lib/openspec-archive-index.mjs",
         "bin/lib/openspec-ledger.mjs",
+        "bin/lib/operator-cli-structure.mjs",
         "bin/lib/operator-cli.mjs",
         "bin/lib/operator-command-listing.mjs",
         "bin/lib/privateConsumerCensus.mjs",

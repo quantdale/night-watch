@@ -51,7 +51,9 @@ const CLI_METADATA = {
     { name: '--out', shape: 'path', summary: 'absolute external output path (mode 0600)' },
   ],
   json: true,
-  authorization: 'LOCAL_ONLY',
+  // R5-07: `execute` runs the bounded DEV lane against a real target, so this surface is
+  // OWNER_GATED (the DEV-lane guard still runs first); it is not a local-only command.
+  authorization: 'OWNER_GATED',
   artifacts: [],
 };
 const cli = defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url });
