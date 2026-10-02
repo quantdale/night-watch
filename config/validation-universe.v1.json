@@ -2,7 +2,7 @@
   "schemaVersion": "nightwatch.validation-universe.v1",
   "definitionName": "Nightwatch validation universe classification (NW-08)",
   "note": "Every discovered executable test or check belongs to exactly one class. AUTHORITATIVE_GATE is DERIVED from what the required gate lanes actually select and is therefore not declarable here; every other discovered file must appear below exactly once, with the reason it is not in the gate and the evidence lane that does cover it. A newly added test that is in no lane and no class fails the gate rather than joining the repository silently.",
-  "inventoryDigest": "sha256:37a1d2b49530c5aa8a917fd4",
+  "inventoryDigest": "sha256:37f4a020a7f23f1da8dc1bcd",
   "classes": {
     "FULL_REGRESSION": {
       "reason": "Offline, deterministic suites that the full canonical regression executes. They are not in a required gate lane because the authoritative gate is bounded for CI runtime; leaving them unclassified is what made the gap invisible.",
@@ -43,6 +43,7 @@
         "tests/unit/changeIntelligence.test.ts",
         "tests/unit/changeIntelligenceBacktest.test.ts",
         "tests/unit/changeSetGenerationIntegrity.test.ts",
+        "tests/unit/checkpointBindingFacts.test.ts",
         "tests/unit/childProcessCensus.test.ts",
         "tests/unit/childProcessCensusIndirection.test.ts",
         "tests/unit/cliImplementationContract.test.ts",
@@ -266,6 +267,7 @@
         "bin/lib/authenticatedWriterCensus.mjs",
         "bin/lib/campaign-certification.mjs",
         "bin/lib/certification-demotion.mjs",
+        "bin/lib/checkpoint-binding.mjs",
         "bin/lib/checkpoint-range.mjs",
         "bin/lib/checkpoint-role.mjs",
         "bin/lib/childProcessCensus.mjs",

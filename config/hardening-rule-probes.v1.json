@@ -2107,9 +2107,9 @@
         "id": "HC-192",
         "ops": [
           {
-            "file": "bin/project-state-check.mjs",
-            "search": "    certifiedCheckpointSha: substantiveSha,\n    headSha,\n    treeClean:",
-            "replace": "    certifiedCheckpointSha: null,\n    headSha,\n    treeClean:"
+            "file": "bin/lib/checkpoint-binding.mjs",
+            "search": "    certifiedCheckpointSha: substantiveSha,\n    headSha,\n    treeClean,",
+            "replace": "    certifiedCheckpointSha: null,\n    headSha,\n    treeClean,"
           }
         ]
       },
@@ -2117,9 +2117,9 @@
         "id": "HC-202",
         "ops": [
           {
-            "file": "bin/project-state-check.mjs",
-            "search": "    headSha,\n    treeClean: porcelainOutput === null ? null : porcelainOutput.trim() === '',",
-            "replace": "    headSha: substantiveSha,\n    treeClean: true,"
+            "file": "bin/lib/checkpoint-binding.mjs",
+            "search": "    headSha,\n    treeClean,\n    documentaryDescendant:",
+            "replace": "    headSha: substantiveSha,\n    treeClean: true,\n    documentaryDescendant:"
           }
         ]
       },
@@ -2677,7 +2677,7 @@
         "id": "HC-217",
         "ops": [
           {
-            "file": "bin/project-state-check.mjs",
+            "file": "bin/lib/checkpoint-binding.mjs",
             "search": "  const headSha = headOutput === null ? null : headOutput.trim();",
             "replace": "  const headSha = substantiveSha;"
           }
@@ -2687,9 +2687,9 @@
         "id": "HC-218",
         "ops": [
           {
-            "file": "bin/project-state-check.mjs",
-            "search": "    treeClean: porcelainOutput === null ? null : porcelainOutput.trim() === '',",
-            "replace": "    treeClean: true,"
+            "file": "bin/lib/checkpoint-binding.mjs",
+            "search": "    treeClean,\n    documentaryDescendant:",
+            "replace": "    treeClean: true,\n    documentaryDescendant:"
           }
         ]
       },
@@ -2697,8 +2697,8 @@
         "id": "HC-219",
         "ops": [
           {
-            "file": "bin/project-state-check.mjs",
-            "search": "  const porcelainOutput = gitReadOnly(root, ['status', '--porcelain']);",
+            "file": "bin/lib/checkpoint-binding.mjs",
+            "search": "  const porcelainOutput = git(['status', '--porcelain']);",
             "replace": "  const porcelainOutput = '';"
           }
         ]
@@ -2707,7 +2707,7 @@
         "id": "HC-220",
         "ops": [
           {
-            "file": "bin/project-state-check.mjs",
+            "file": "bin/lib/checkpoint-binding.mjs",
             "search": "    documentaryDescendant: rangeClass === 'DOCUMENTARY_DESCENDANT',",
             "replace": "    documentaryDescendant: true,"
           }
@@ -2747,8 +2747,8 @@
         "id": "HC-224",
         "ops": [
           {
-            "file": "bin/project-state-check.mjs",
-            "search": "      const output = gitReadOnly(root, ['diff', '--name-only', '--no-renames', `${from}..${to}`]);",
+            "file": "bin/lib/checkpoint-binding.mjs",
+            "search": "      const output = git(['diff', '--name-only', '--no-renames', `${from}..${to}`]);",
             "replace": "      const output = null;"
           }
         ]

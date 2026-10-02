@@ -30,17 +30,17 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
 import { loadTypeScriptModule as loadRuntimeTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
-import { evidenceLaneDisagreements, loadReleaseEvidenceBindings, productionBindingReceiptVerifier, resolveEvidenceShaForSubject, verifyPersistedReceipt } from './lib/release-evidence.mjs';
+import { evidenceLaneDisagreements, loadReleaseEvidenceBindings, resolveEvidenceShaForSubject, verifyPersistedReceipt } from './lib/release-evidence.mjs';
 import { ACCESSIBILITY_RECORD_PATH, parseAccessibilityCertificationRecord } from './lib/accessibility-record.mjs';
 import { UI_HARNESS_FILE, UI_HARNESS_RECEIPT_PATH, UI_HARNESS_TYPES_PATH, evaluateUiHarnessReceipt, extractApiErrorKinds } from './lib/ui-harness-receipt.mjs';
 import { evidenceArtifactExistsAtSha, laneArtifactDemotions } from './lib/evidence-artifact.mjs';
 import { exerciseConfigurationContract, exercisePreflightRefusal } from './lib/release-probe-exercises.mjs';
-import { bindTreeProbe, receiptBindingRelation, receiptNotAtCheckpoint, resolveProbeBinding } from './lib/probe-binding.mjs';
-import { classifyCheckpointRange } from './lib/checkpoint-range.mjs';
+import { bindTreeProbe, receiptBindingRelation, receiptNotAtCheckpoint } from './lib/probe-binding.mjs';
 import { classifyCertificationDemotion } from './lib/certification-demotion.mjs';
 import { collectCiBlockStale, validateCiBlockRecord } from './lib/ci-block-record.mjs';
 import { topologyCertificationForCheckpoint, topologyCertificationVerdict } from './lib/topology-receipts.mjs';
 import { checkpointRoleViolations } from './lib/checkpoint-role.mjs';
+import { bindingReceiptVerifier, collectCheckpointBindingFacts } from './lib/checkpoint-binding.mjs';
 import {
   findDuplicateFields,
   fieldValue,
@@ -280,19 +280,6 @@ const RELEASE_DEFINITION_PATH = 'config/release-certification.v1.json';
 const RULE_QUANTIFIERS = new Set(['TOTALITY', 'EXISTENCE']);
 const ZERO_LANE_COUNTS = Object.freeze({ proven: 0, externallyBlocked: 0, neverAttempted: 0, staleEvidence: 0 });
 const HEX40 = /^[0-9a-f]{40}$/i;
-
-/**
- * R4-01 / review-4 task 1.1 — the production binding-receipt verifier this
- * checker hands to `checkpointRoleViolations`. Without it, ANY commit that
- * records or refreshes a `receiptDigest` is classified substantive
- * (`BINDING_RECEIPT_UNVERIFIED`), so every descendant of the certified
- * checkpoint that binds evidence made all tree-bound probes
- * NOT_AT_CHECKPOINT and certification was unreachable.
- * @param {string} root
- */
-function bindingReceiptVerifier(root) {
-  return productionBindingReceiptVerifier(root);
-}
 
 function readJsonAt(root, relative) {
   try {
@@ -1044,40 +1031,12 @@ function resolveEvidenceLineage(root, evidenceSha, checkpointSha) {
 }
 
 function collectReleaseCheckOutputs(root, blockFields, agentText, substantiveSha, today) {
-  const isAncestor = (ancestor, descendant) => gitReadOnly(root, ['merge-base', '--is-ancestor', ancestor, descendant]) !== null;
+  // R5-05 / review-5 task A4.1: the HEAD / clean-tree / range-class / binding
+  // facts are collected by ONE importable module (tested against real Git
+  // repositories), not derived inline.
+  const { binding, isAncestor } = collectCheckpointBindingFacts({ root, substantiveSha, git: (args) => gitReadOnly(root, args) });
   const lane = probeLaneState(root, substantiveSha, isAncestor, today);
   const rules = probeRuleRegistry(root);
-  // VD-01 / design D3 + R3-03 / corrections task 8.3: the facts that decide
-  // whether a working-tree measurement is bound to the certified checkpoint.
-  // HEAD == S with a clean tree is the primary case; HEAD != S is admissible
-  // ONLY as a DOCUMENTARY descendant, proven by the whole-range classifier
-  // below (S an ancestor of HEAD and S..HEAD documentation-only). Read once
-  // per evaluation; every unknown or unprovable range fails closed.
-  const headOutput = gitReadOnly(root, ['rev-parse', 'HEAD']);
-  const porcelainOutput = gitReadOnly(root, ['status', '--porcelain']);
-  const headSha = headOutput === null ? null : headOutput.trim();
-  const rangeClass = classifyCheckpointRange({
-    certifiedCheckpointSha: substantiveSha,
-    headSha,
-    isAncestor,
-    changedFiles: (from, to) => {
-      const output = gitReadOnly(root, ['diff', '--name-only', '--no-renames', `${from}..${to}`]);
-      return output === null ? null : output.split('\n').map((line) => line.trim()).filter((line) => line !== '');
-    },
-    checkpointRoleViolations: (files) => {
-      try {
-        return checkpointRoleViolations(root, files, { kind: 'range', from: substantiveSha, to: headSha ?? substantiveSha, verifyBindingReceipt: bindingReceiptVerifier(root) });
-      } catch {
-        return null;
-      }
-    },
-  });
-  const binding = resolveProbeBinding({
-    certifiedCheckpointSha: substantiveSha,
-    headSha,
-    treeClean: porcelainOutput === null ? null : porcelainOutput.trim() === '',
-    documentaryDescendant: rangeClass === 'DOCUMENTARY_DESCENDANT',
-  });
   return {
     laneCounts: lane.counts,
     outputs: {

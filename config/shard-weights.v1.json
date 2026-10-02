@@ -72,6 +72,7 @@
     "tests/unit/candidateLifecycle.test.ts": 307,
     "tests/unit/changeIntelligence.test.ts": 316,
     "tests/unit/changeIntelligenceBacktest.test.ts": 524,
+    "tests/unit/checkpointBindingFacts.test.ts": 4,
     "tests/unit/childEnvironment.test.ts": 270,
     "tests/unit/ciBlockRecord.test.ts": 47,
     "tests/unit/cliImplementationContract.test.ts": 25625,

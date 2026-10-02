@@ -30,6 +30,7 @@ import {
 import { validateCampaignCertification } from '../../campaign-certification.mjs';
 import { evidenceArtifactExistsAtSha, laneArtifactDemotions } from '../../evidence-artifact.mjs';
 import { UNLISTABLE_RANGE_VIOLATION, checkpointRoleViolations, unpairedCorrectionsInRange } from '../../checkpoint-role.mjs';
+import { bindingReceiptVerifier, collectCheckpointBindingFacts } from '../../checkpoint-binding.mjs';
 import { findBinsWithoutExecutingTest, verifyCliImplementationContract } from '../../cli-implementation-contract.mjs';
 import { classifyValidationTruth, extractTestMatchGlobs } from '../../validation-classification.mjs';
 import {
@@ -224,12 +225,6 @@ export function checkReview4CollectorTotality() {
 
   // --- anchored: the collector must derive its facts EXACTLY as reviewed ---
   const required = [
-    ['const headSha = headOutput === null ? null : headOutput.trim();', 'the HEAD resolution (a `const headSha = substantiveSha` rewrite must be visible)'],
-    ["const porcelainOutput = gitReadOnly(root, ['status', '--porcelain']);", 'the clean-tree measurement (an empty-string stub must be visible)'],
-    ["treeClean: porcelainOutput === null ? null : porcelainOutput.trim() === '',", 'the clean-tree fact fed to the probe binding'],
-    ["documentaryDescendant: rangeClass === 'DOCUMENTARY_DESCENDANT',", 'the documentary-descendant fact (an unconditional `true` must be visible)'],
-    ["const output = gitReadOnly(root, ['diff', '--name-only', '--no-renames', `${from}..${to}`]);", 'the changed-file range callback'],
-    ['return output === null ? null : output.split', 'the changed-file fail-closed return (a `return []` rewrite must be visible)'],
     ["harnessSourceAtS = typeof harnessAtCheckpoint === 'string' ? harnessAtCheckpoint : null;", 'the harness source committed AT S'],
     ["if (evaluated.relation !== 'BOUND') {", 'the receipt binding relation check'],
     ['evidenceCertifying: Object.fromEntries(', 'the certifying flags map (a cleared map must be visible)'],
@@ -240,6 +235,87 @@ export function checkReview4CollectorTotality() {
   for (const [needle, what] of required) {
     if (typeof needle === 'string' && collector.includes(needle)) continue;
     fail(`REVIEW4_COLLECTOR_FACT_WEAKENED bin/project-state-check.mjs no longer carries ${what} (${String(needle).slice(0, 90)})`);
+  }
+  // R5-05 / review-5 A4.1: the HEAD / clean-tree / range / binding facts are
+  // collected by ONE module that is exercised against real Git repositories
+  // here (and in tests/unit/checkpointBindingFacts.test.ts), not by anchors.
+  if (!collector.includes('collectCheckpointBindingFacts({ root, substantiveSha, git:')) {
+    fail('REVIEW5_COLLECTOR_NOT_DELEGATED bin/project-state-check.mjs no longer derives its binding facts through collectCheckpointBindingFacts');
+  }
+  verifyCheckpointBindingFacts();
+}
+
+/**
+ * R5-05 / review-5 task A4.1 — the behavioural half of the binding-facts guard.
+ * A real synthetic repository drives `collectCheckpointBindingFacts` through
+ * every relation that decides whether a probe describes S, so `headSha = S`,
+ * `porcelain = ''`, a constant range class, a range callback returning `[]`,
+ * or a verifier stubbed to `true` each fail HERE.
+ */
+function verifyCheckpointBindingFacts() {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'nw-binding-facts-'));
+  const environment = { PATH: '/usr/bin:/bin', HOME: directory, GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_NOSYSTEM: '1', GIT_AUTHOR_NAME: 'nw', GIT_AUTHOR_EMAIL: 'nw@example.invalid', GIT_COMMITTER_NAME: 'nw', GIT_COMMITTER_EMAIL: 'nw@example.invalid', LANG: 'C' };
+  /** @param {string[]} args */
+  const run = (args) => spawnSync('git', args, { cwd: directory, env: environment, shell: false, encoding: 'utf8', timeout: 15_000 });
+  /** @param {string[]} args @returns {string | null} */
+  const git = (args) => {
+    const result = run(args);
+    return result.status === 0 ? (result.stdout ?? '') : null;
+  };
+  try {
+    if (run(['init', '--quiet']).status !== 0) {
+      fail('REVIEW5_BINDING_FACTS_STUBBED the binding-facts fixture repository could not be created');
+      return;
+    }
+    fs.mkdirSync(path.join(directory, 'docs'), { recursive: true });
+    fs.mkdirSync(path.join(directory, 'lib'), { recursive: true });
+    fs.writeFileSync(path.join(directory, 'docs/DECISIONS.md'), 'seed\n');
+    run(['add', '--all']);
+    run(['commit', '--quiet', '--no-gpg-sign', '-m', 'S']);
+    const S = (run(['rev-parse', 'HEAD']).stdout ?? '').trim();
+    /** @param {string | null} sha @param {(args: string[]) => string | null} [reader] */
+    const facts = (sha, reader = git) => collectCheckpointBindingFacts({ root: directory, substantiveSha: sha, git: reader });
+    const atS = facts(S);
+    if (atS.headSha !== S || atS.treeClean !== true || atS.rangeClass !== 'SAME' || atS.binding.atCheckpoint !== true) {
+      fail(`REVIEW5_BINDING_FACTS_STUBBED HEAD == S on a clean tree must read headSha=S, treeClean=true, SAME, atCheckpoint (got ${JSON.stringify({ head: atS.headSha === S, clean: atS.treeClean, range: atS.rangeClass, at: atS.binding.atCheckpoint })})`);
+    }
+    fs.writeFileSync(path.join(directory, 'stray.txt'), 'untracked\n');
+    const dirty = facts(S);
+    if (dirty.treeClean !== false || dirty.binding.atCheckpoint !== false) {
+      fail('REVIEW5_BINDING_FACTS_STUBBED a dirty tree at S read as clean or at the checkpoint');
+    }
+    fs.rmSync(path.join(directory, 'stray.txt'));
+    fs.appendFileSync(path.join(directory, 'docs/DECISIONS.md'), 'more\n');
+    run(['add', '--all']);
+    run(['commit', '--quiet', '--no-gpg-sign', '-m', 'documentary descendant']);
+    const documentary = facts(S);
+    if (documentary.headSha === S || documentary.rangeClass !== 'DOCUMENTARY_DESCENDANT' || documentary.binding.atCheckpoint !== true) {
+      fail('REVIEW5_BINDING_FACTS_STUBBED a clean documentary descendant of S must read its own HEAD, DOCUMENTARY_DESCENDANT and atCheckpoint');
+    }
+    fs.writeFileSync(path.join(directory, 'lib/code.ts'), 'export const x = 1;\n');
+    run(['add', '--all']);
+    run(['commit', '--quiet', '--no-gpg-sign', '-m', 'substantive descendant']);
+    const substantiveDescendant = facts(S);
+    if (substantiveDescendant.rangeClass !== 'SUBSTANTIVE_DESCENDANT' || substantiveDescendant.binding.atCheckpoint !== false) {
+      fail('REVIEW5_BINDING_FACTS_STUBBED a substantive descendant of S was classified documentary or at the checkpoint');
+    }
+    const unreadable = facts(S, () => null);
+    if (unreadable.headSha !== null || unreadable.treeClean !== null || unreadable.binding.atCheckpoint !== false) {
+      fail('REVIEW5_BINDING_FACTS_STUBBED unreadable Git facts did not fail closed');
+    }
+    const unrelated = facts('0'.repeat(40));
+    if (unrelated.binding.atCheckpoint !== false || unrelated.rangeClass === 'DOCUMENTARY_DESCENDANT' || unrelated.rangeClass === 'SAME') {
+      fail('REVIEW5_BINDING_FACTS_STUBBED an unresolvable certified checkpoint read as bound');
+    }
+    if (facts(null).binding.atCheckpoint !== false) {
+      fail('REVIEW5_BINDING_FACTS_STUBBED a missing certified checkpoint read as bound');
+    }
+    // The shared verifier is the PRODUCTION verifier: an unpersisted digest never verifies.
+    if (bindingReceiptVerifier(directory)('authoritative-gate', `receipt:sha256:${'0'.repeat(24)}`, S) !== false) {
+      fail('REVIEW5_BINDING_FACTS_STUBBED bindingReceiptVerifier accepts a digest no persisted receipt carries');
+    }
+  } finally {
+    fs.rmSync(directory, { recursive: true, force: true });
   }
 }
 
@@ -1090,7 +1166,7 @@ function verifyD3ProbeBinding(collectorSource, collectorBody) {
   // flipped comparison or a hard-coded fact cannot survive them.
   /** @type {Array<[string, string]>} */
   const relationAnchors = [
-    ["headSha,\n    treeClean: porcelainOutput === null ? null : porcelainOutput.trim() === '',", 'the binding facts read from Git, not hard-coded'],
+    ['collectCheckpointBindingFacts({ root, substantiveSha, git:', 'the binding facts delegated to the tested collector module'],
     ["if (evaluated.relation !== 'BOUND') {", 'the G18 receipt relation comparison'],
     ["if (evaluated.relation === 'BOUND') {", 'the G12 receipt relation comparison'],
     ["if (receiptBindingRelation(certifiedCheckpointSha, parsed.summary.sha) !== 'BOUND') {", 'the G20 record relation comparison'],
@@ -1101,7 +1177,7 @@ function verifyD3ProbeBinding(collectorSource, collectorBody) {
     }
   }
   verifyD3ProbeBehaviour();
-  if (!/resolveProbeBinding\(\{\s*certifiedCheckpointSha:\s*substantiveSha,/.test(collectorBody)) {
+  if (!/resolveProbeBinding\(\{\s*certifiedCheckpointSha:\s*substantiveSha,/.test(read('bin/lib/checkpoint-binding.mjs'))) {
     fail('RELEASE_PROBE_NOT_CHECKPOINT_BOUND: the probe binding must be derived from the certified checkpoint (certifiedCheckpointSha: substantiveSha)');
   }
 }

@@ -24,7 +24,7 @@ import {
 } from './agent-continuity-protocol.mjs';
 import { inspectWorkspace, listWorktreeBranches } from './workspace-integrity.mjs';
 import { checkpointRoleViolations } from './lib/checkpoint-role.mjs';
-import { productionBindingReceiptVerifier } from './lib/release-evidence.mjs';
+import { bindingReceiptVerifier } from './lib/checkpoint-binding.mjs';
 import { validateProgrammeState } from './lib/programme-state.mjs';
 import { collectCiBlockStale, validateCiBlockRecord } from './lib/ci-block-record.mjs';
 import {
@@ -517,16 +517,6 @@ function committedPathsForCommit(root, commit) {
     parents,
     reason: parents.length === 0 ? 'root commit paths inspected' : 'single-parent commit paths inspected',
   };
-}
-
-/**
- * R4-01 / review-4 task 1.1 — the production receipt verifier handed to every
- * checkpoint/range classification in this checker. The `() => true` shortcut
- * survives only inside hardening/test fixtures.
- * @param {string} root
- */
-function bindingReceiptVerifier(root) {
-  return productionBindingReceiptVerifier(root);
 }
 
 function classifyCommitRole(root, commit) {
