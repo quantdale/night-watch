@@ -59,7 +59,7 @@ export const RECEIPT_KINDS: Readonly<Record<'clean' | 'gate', {
   schemas: readonly string[];
   verdictFields: readonly string[];
   requireCleanEmit: boolean;
-  subjects: readonly string[] | null;
+  subjects: readonly string[];
 }>>;
 export function receiptDeclaredSubjects(body: Record<string, unknown>): string[];
 export function verifyPersistedReceipt(root: string, subject: string, digest: string, sha: string | null): { verified: boolean; reason: string };

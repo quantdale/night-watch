@@ -40,6 +40,7 @@ import {
   RELEASE_EVIDENCE_SCHEMA,
   guardHoldsForChange,
   verifyPersistedReceipt,
+  RECEIPT_KINDS,
 } from '../../release-evidence.mjs';
 import { bindTreeProbe, receiptBindingRelation, resolveProbeBinding } from '../../probe-binding.mjs';
 import { classifyCheckpointRange } from '../../checkpoint-range.mjs';
@@ -84,10 +85,19 @@ export function checkReview4CollectorTotality() {
       fs.writeFileSync(path.join(directory, 'artifacts/receipts', `${name}.json`), `${JSON.stringify({ ...body, receiptDigest: digest })}\n`);
       return digest;
     };
-    const passBody = { schemaVersion: 'nightwatch.quality-gate-receipt.v1', subject: 'authoritative-gate', gitHead: S, finalResult: 'PASS' };
+    // R5-03/R5-04: a gate receipt is an EXECUTED, CLEAN-EMIT record — it names the
+    // groups it ran and whether the tree was clean — never a bare subject + PASS.
+    const executedGroups = [{ id: 'STATIC', required: true, status: 'PASS' }];
+    const passBody = { schemaVersion: 'nightwatch.quality-gate-receipt.v1', subject: 'authoritative-gate', gitHead: S, finalResult: 'PASS', sourceRootCleanAtEmit: true, groupIds: ['STATIC'], groups: executedGroups };
     const failBody = { ...passBody, finalResult: 'FAIL' };
     const passDigest = writeGateReceipt('pass', passBody);
     const failDigest = writeGateReceipt('fail', failBody);
+    const dirtyDigest = writeGateReceipt('dirty', { ...passBody, sourceRootCleanAtEmit: false });
+    const unknownCleanDigest = writeGateReceipt('unknown-clean', { ...passBody, sourceRootCleanAtEmit: null });
+    const foreignDigest = writeGateReceipt('foreign', { ...passBody, subjects: ['autonomous-yield-proof'] });
+    const unexecutedDigest = writeGateReceipt('unexecuted', { ...passBody, groups: [], groupIds: [] });
+    const failedGroupDigest = writeGateReceipt('failed-group', { ...passBody, groups: [{ id: 'STATIC', required: true, status: 'TEST_FAILURE' }] });
+    const bareDigest = writeGateReceipt('bare', { schemaVersion: 'nightwatch.quality-gate-receipt.v1', subject: 'authoritative-gate', gitHead: S, finalResult: 'PASS', sourceRootCleanAtEmit: true });
     if (verifyPersistedReceipt(directory, 'authoritative-gate', passDigest, S).verified !== true) {
       fail('REVIEW4_RECEIPT_VERIFIER_STUBBED a persisted PASS receipt with the right subject no longer verifies');
     }
@@ -99,6 +109,43 @@ export function checkReview4CollectorTotality() {
     }
     if (verifyPersistedReceipt(directory, 'authoritative-gate', passDigest, OTHER).verified !== false) {
       fail('REVIEW4_RECEIPT_VERIFIER_STUBBED a receipt bound to another SHA certifies this one');
+    }
+    if (verifyPersistedReceipt(directory, 'authoritative-gate', dirtyDigest, S).verified !== false) {
+      fail('REVIEW5_RECEIPT_VERIFIER_STUBBED a gate receipt emitted from a DIRTY tree verifies (requireCleanEmit is not enforced for the gate kind)');
+    }
+    if (verifyPersistedReceipt(directory, 'authoritative-gate', unknownCleanDigest, S).verified !== false) {
+      fail('REVIEW5_RECEIPT_VERIFIER_STUBBED a gate receipt whose cleanliness was unmeasured (null) verifies');
+    }
+    if (verifyPersistedReceipt(directory, 'authoritative-gate', foreignDigest, S).verified !== false) {
+      fail('REVIEW5_RECEIPT_VERIFIER_STUBBED a gate receipt that also names a subject its producer never certifies verifies for its legitimate subject');
+    }
+    if (verifyPersistedReceipt(directory, 'autonomous-yield-proof', foreignDigest, S).verified !== false) {
+      fail('REVIEW5_RECEIPT_VERIFIER_STUBBED a gate receipt certifies the foreign subject it names (the subject set is open)');
+    }
+    if (verifyPersistedReceipt(directory, 'authoritative-gate', unexecutedDigest, S).verified !== false) {
+      fail('REVIEW5_RECEIPT_VERIFIER_STUBBED a gate receipt that records no executed groups verifies');
+    }
+    if (verifyPersistedReceipt(directory, 'authoritative-gate', failedGroupDigest, S).verified !== false) {
+      fail('REVIEW5_RECEIPT_VERIFIER_STUBBED a gate receipt with a FAILED required group verifies');
+    }
+    if (verifyPersistedReceipt(directory, 'authoritative-gate', bareDigest, S).verified !== false) {
+      fail('REVIEW5_RECEIPT_VERIFIER_STUBBED a hand-shaped subject + PASS gate receipt with no executed groups verifies');
+    }
+    // The kind table itself is closed: every certifying kind requires a clean
+    // emit and declares a non-open subject list (a `null` set let any receipt name
+    // any subject).
+    for (const [kindName, kind] of Object.entries(RECEIPT_KINDS)) {
+      if (kind.requireCleanEmit !== true) fail(`REVIEW5_RECEIPT_KIND_OPEN receipt kind '${kindName}' does not require a clean emit`);
+      if (!Array.isArray(kind.subjects) || kind.subjects.length === 0) fail(`REVIEW5_RECEIPT_KIND_OPEN receipt kind '${kindName}' has no closed subject set`);
+    }
+    // Every quality-gate receipt object literal the producer builds records the
+    // clean-emit fact (the verifier requires it): the count of literals equals the
+    // count of recorded measurements.
+    const gateSource = read('bin/quality-gate.mjs');
+    const literalCount = (gateSource.match(/schemaVersion: 'nightwatch\.quality-gate-receipt\.v1'/g) ?? []).length;
+    const measuredCount = (gateSource.match(/sourceRootCleanAtEmit: sourceRootCleanAtEmit\(\)/g) ?? []).length;
+    if (literalCount < 2 || literalCount !== measuredCount) {
+      fail(`REVIEW5_RECEIPT_PRODUCER_UNMEASURED bin/quality-gate.mjs builds ${literalCount} receipt literal(s) but records the clean-emit measurement in ${measuredCount}`);
     }
   } finally {
     fs.rmSync(directory, { recursive: true, force: true });

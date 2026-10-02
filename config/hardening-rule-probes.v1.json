@@ -2752,6 +2752,76 @@
             "replace": "      const output = null;"
           }
         ]
+      },
+      {
+        "id": "HC-266",
+        "ops": [
+          {
+            "file": "bin/lib/release-evidence.mjs",
+            "search": "    requireCleanEmit: true,\n    // R5-04: the closed union",
+            "replace": "    requireCleanEmit: false,\n    // R5-04: the closed union"
+          }
+        ]
+      },
+      {
+        "id": "HC-267",
+        "ops": [
+          {
+            "file": "bin/lib/release-evidence.mjs",
+            "search": "    if (foreign.length > 0) return { verified: false,",
+            "replace": "    if (false) return { verified: false,"
+          }
+        ]
+      },
+      {
+        "id": "HC-268",
+        "ops": [
+          {
+            "file": "bin/lib/release-evidence.mjs",
+            "search": "    if (!schema.executed(body).includes(wantedSubject)) return {",
+            "replace": "    if (false) return {"
+          }
+        ]
+      },
+      {
+        "id": "HC-269",
+        "ops": [
+          {
+            "file": "bin/lib/receipt-schemas.mjs",
+            "search": "  if (!records.every((group) => group.required !== true || group.status === 'PASS')) return [];\n",
+            "replace": ""
+          }
+        ]
+      },
+      {
+        "id": "HC-270",
+        "ops": [
+          {
+            "file": "bin/lib/receipt-schemas.mjs",
+            "search": "  if (!Array.isArray(groups) || groups.length === 0) return [];\n",
+            "replace": "  if (!Array.isArray(groups)) return [];\n"
+          }
+        ]
+      },
+      {
+        "id": "HC-271",
+        "ops": [
+          {
+            "file": "bin/lib/release-evidence.mjs",
+            "search": "    subjects: subjectsOfSchemas(['nightwatch.quality-gate-receipt.v1', 'nightwatch.ui-harness-receipt.v1']),",
+            "replace": "    subjects: null,"
+          }
+        ]
+      },
+      {
+        "id": "HC-272",
+        "ops": [
+          {
+            "file": "bin/lib/release-evidence.mjs",
+            "search": "    if (kind.requireCleanEmit && body[schema.cleanEmitField] !== true) return",
+            "replace": "    if (false) return"
+          }
+        ]
       }
     ],
     "checkSharedOperatorParserStructure": [

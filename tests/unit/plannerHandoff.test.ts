@@ -277,6 +277,7 @@ function makeFixture(options: FixtureOptions = {}): Fixture {
     'bin/lib/openspec-archive-index.mjs',
     'bin/lib/operator-cli.mjs',
     'bin/lib/release-evidence.mjs',
+    'bin/lib/receipt-schemas.mjs',
     'bin/lib/typescript-runtime-loader.mjs',
     'bin/lib/validation-lane-state.mjs',
   ]) {

@@ -488,6 +488,36 @@ test.describe('R-11 the gate itself persists its receipt', () => {
     expect(fs.existsSync(path.join(ROOT, 'gate-receipt.json'))).toBe(false);
   });
 
+  // R5-03 / review-5 task A3.1 — the receipt RECORDS whether the source tree was
+  // clean when it was emitted (gate:local may run on a dirty tree; the verifier
+  // then refuses that receipt). The producer is exercised for real here.
+  for (const dirty of [false, true]) {
+    test(`R5-03: a ${dirty ? 'dirty' : 'clean'}-tree gate run records sourceRootCleanAtEmit=${dirty ? 'false' : 'true'}`, () => {
+      const directory = scratch('gate-clean-flag');
+      const gateRoot = minimalGateRoot();
+      try {
+        const git = (args: string[]) => spawnSync('git', ['-c', 'user.email=probe@nightwatch.local', '-c', 'user.name=probe', ...args], { cwd: gateRoot, encoding: 'utf8', shell: false });
+        expect(git(['init', '--quiet', '-b', 'main']).status).toBe(0);
+        expect(git(['add', '--all']).status).toBe(0);
+        expect(git(['commit', '--quiet', '--no-gpg-sign', '-m', 'fixture']).status).toBe(0);
+        if (dirty) fs.writeFileSync(path.join(gateRoot, 'untracked-change.txt'), 'dirty\n');
+        const file = path.join(directory, 'gate.json');
+        const result = spawnSync(process.execPath, [path.join(gateRoot, 'bin', 'quality-gate.mjs'), 'local'], {
+          cwd: gateRoot,
+          encoding: 'utf8',
+          env: minimalGateEnvironment(file),
+          timeout: 120_000,
+        });
+        expect(result.status).toBe(1);
+        const receipt = readPersistedGateReceipt(file).receipt as Record<string, unknown>;
+        expect(receipt.sourceRootCleanAtEmit).toBe(!dirty);
+      } finally {
+        fs.rmSync(directory, { recursive: true, force: true });
+        fs.rmSync(gateRoot, { recursive: true, force: true });
+      }
+    });
+  }
+
   test('the persisted receipt is byte-identical to stdout, and stdout scraping can no longer be trusted over it', () => {
     const directory = scratch('gate-run');
     const gateRoot = minimalGateRoot();

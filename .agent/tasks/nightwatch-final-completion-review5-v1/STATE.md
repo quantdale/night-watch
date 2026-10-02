@@ -7,9 +7,9 @@ Phase: COMPLETION_REVIEW5_V1
 CHILD OF: nightwatch-final-product-completion-v1
 Status: IN_PROGRESS
 TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1
-TASK_GROUPS_COMPLETE: A1,A2
-TASK_GROUP_NEXT: A3
-TASK_NEXT_ID: A3.1
+TASK_GROUPS_COMPLETE: A1,A2,A3
+TASK_GROUP_NEXT: A4
+TASK_NEXT_ID: A4.1
 Starting SHA: d68bb1a7c7cf244da654815a1e7f266e1985f30c
 Last validated implementation SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
 Last substantive checkpoint SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
@@ -43,12 +43,14 @@ ACTIVE_TASK routed back to the parent at "M9 task 10.4".
 
 ## Current Milestone
 
-group A3 — Receipt verification completeness (tasks A3.1-A3.2, R5-03/R5-04):
-gate receipts record tree cleanliness at emit and `requireCleanEmit` is true for
-every certifying kind (a `gate:local` receipt from a dirty tree is
-non-certifying); every receipt kind declares a closed subject set derived from
-what its producer executed (no `subjects: null`). Groups A1 and A2 are
-implemented (CI pending at their integration tip).
+group A4 — Behavioural guard coverage (tasks A4.1-A4.3, R5-05): replace the
+text-anchor guards with behavioural fixtures for the checkpoint-binding facts,
+range callback, `certifying`, G12/G18/G20 relations, `bindingReceiptVerifier`,
+`evidenceArtifactAtSha`, `artifactDemoted`, `evidenceCertifying`,
+`verifyPersistedReceipt` digest path, `archiveMoveHolds` and unreadable/unlistable
+diff handling; register every R5-05 mutant as a probe DETECTED by behaviour; commit
+the mutation harness and run it in `gate:milestone`. Groups A1 and A2 are CI-observed
+green (run 37009611291 at `67d8757e`); group A3 is implemented (CI pending).
 
 ## Completed Milestones
 
@@ -62,17 +64,21 @@ Nothing in progress yet; group A1 is the next unit of work.
 
 ## Exact Next Action
 
-Implement task A3.1 (R5-03): in `bin/lib/release-evidence.mjs` and
-`bin/quality-gate.mjs` make the gate receipt record `treeClean` at emit,
-set `requireCleanEmit: true` for every certifying kind, and make a `gate:local`
-receipt from a dirty tree non-certifying (behavioural test: a dirty-tree gate
-receipt must NOT verify); then A3.2 (R5-04): a closed subject set per receipt
-kind derived from what its producer executed (no `subjects: null`; a receipt
-naming a subject its producer did not execute never verifies). Register each
-mutant as a probe and DETECTED by behaviour. Then A4.1 onward in order. Run the
-integrated tip's exact-head CI before closing A1/A2: the integration of groups
-A1+A2 is the next push; drop their `(implemented; CI pending)` markers by
-annotation once that CI is green.
+Implement task A4.1 (R5-05): build behavioural fixtures (real synthetic Git
+repositories and real producer output, never text anchors) for each collector and
+classifier guard named in `audit.md` R5-05 — N1 `headSha`, N2 porcelain, N3 range
+class, N4 changedFiles filter, N5 range callback, N6 `certifying`, N7-N9 the
+G18/G12/G20 relations, N10 `bindingReceiptVerifier`, V1 the digest path, R1-R5
+(`archiveMoveHolds`, `touchedGuardedFiles`, unlistable range, classifier
+`verifyReceipt`, unreadable archive diff) and the two R4-08 literals
+(`evidenceArtifactAtSha`, `artifactDemoted`). Then A4.2 (register every mutant as a
+probe, all DETECTED by behaviour) and A4.3 (commit the mutation harness: one entry
+point that applies each registered mutant to a scratch copy, runs `hardening:check`
+plus the guard's focused tests, and fails on any survivor; run it in
+`gate:milestone`). Producer-literal mutants deferred from A3 (the
+`sourceRootCleanAtEmit` call sites in `bin/quality-gate.mjs`) register with their
+focused test under the harness. Then A5.1 onward in order. A3's `(implemented; CI
+pending)` markers drop once CI is observed green at a tip containing them.
 
 ## Files Changed
 
@@ -85,6 +91,8 @@ annotation once that CI is green.
 
 ## Validation Ledger
 
+- 2026-10-02 — exact-head CI run 37009611291 at `67d8757e` (A1+A2 integration tip) completed `success`.
+- 2026-10-02 — A3.1 + A3.2 (local): `typecheck`, `typecheck:bin` (1412, 14/76), `hardening:check`, `agent:check` pass; focused suites (projectState, productionCompletionLaneState, gateReceiptPersistence incl. the real-gate clean/dirty producer tests, plannerHandoff, phase23QualityGate) 243/243; probes HC-266..HC-272 registered (campaign result recorded at the next entry).
 - 2026-10-02 — A1.1 + A2.1 (local). `hardening:rules` 95 rules / 263 probes /
   263 DETECTED (every mutation restored) after the A1/A2 guards were committed;
   focused suites (archiveMoveIntegrity 7/7, nameListingRenameTotality 6/6,

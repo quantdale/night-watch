@@ -58,6 +58,18 @@ function readJson(file) {
   return JSON.parse(fs.readFileSync(file, 'utf8'));
 }
 
+/**
+ * R5-03 / review-5 task A3.1 — whether the source tree was CLEAN when this
+ * receipt was emitted. `null` (unreadable) is never certifying. The receipt
+ * records the fact; `gate:local` may run on a dirty tree, and its receipt then
+ * carries `false` and verifies for nothing.
+ * @returns {boolean | null}
+ */
+function sourceRootCleanAtEmit() {
+  const porcelain = gitValue(['status', '--porcelain']);
+  return porcelain === null ? null : porcelain === '';
+}
+
 function gitValue(args) {
   const result = spawnSync('git', args, { cwd: root, encoding: 'utf8', timeout: 10_000, maxBuffer: 256 * 1024, stdio: ['ignore', 'pipe', 'ignore'] });
   if (result.status !== 0) return null;
@@ -341,7 +353,7 @@ function main(cli) {
   }
   if (!head || packageLock === null || nodeMajor < 20 || ((mode === 'ci' || mode === 'clean') && nodeMajor !== 22)) {
     // An environment rejection is exactly the kind of result worth persisting.
-    const receipt = { schemaVersion: 'nightwatch.quality-gate-receipt.v1', subject: 'authoritative-gate', gateDefinitionDigest: `sha256:${sha256(canonical(definition))}`, gitHead: head, packageLockDigest: packageLock === null ? null : `sha256:${sha256(packageLock)}`, nodeMajor, nodeVersion, npmVersion, environmentClass: mode.toUpperCase(), receiptPersistenceRequested: true, groups: [], finalResult: 'ENVIRONMENT_MISMATCH' };
+    const receipt = { schemaVersion: 'nightwatch.quality-gate-receipt.v1', subject: 'authoritative-gate', gateDefinitionDigest: `sha256:${sha256(canonical(definition))}`, gitHead: head, packageLockDigest: packageLock === null ? null : `sha256:${sha256(packageLock)}`, nodeMajor, nodeVersion, npmVersion, environmentClass: mode.toUpperCase(), receiptPersistenceRequested: true, sourceRootCleanAtEmit: sourceRootCleanAtEmit(), groups: [], finalResult: 'ENVIRONMENT_MISMATCH' };
     emitReceipt(receipt, target, 1);
     return;
   }
@@ -376,6 +388,8 @@ function main(cli) {
     // Deterministic, and part of the digested body: the OUTCOME of persistence
     // cannot be, because the digest must exist before the bytes are written.
     receiptPersistenceRequested: true,
+    // R5-03: measured at emit, inside the digested body.
+    sourceRootCleanAtEmit: sourceRootCleanAtEmit(),
     groupIds: groups.map((group) => group.id),
     groups,
     gateDurationMs,

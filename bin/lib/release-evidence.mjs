@@ -30,6 +30,7 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { RECEIPT_SCHEMAS, subjectsOfSchemas } from './receipt-schemas.mjs';
 
 export const RELEASE_EVIDENCE_SCHEMA = 'nightwatch.release-evidence.v1';
 export const RELEASE_EVIDENCE_FILE = 'config/release-evidence.v1.json';
@@ -116,8 +117,12 @@ export const RECEIPT_KINDS = Object.freeze({
     directory: 'artifacts/receipts',
     schemas: Object.freeze(['nightwatch.quality-gate-receipt.v1', 'nightwatch.ui-harness-receipt.v1']),
     verdictFields: Object.freeze(['finalResult', 'gateResult', 'result']),
-    requireCleanEmit: false,
-    subjects: null,
+    // R5-03: every certifying kind requires a CLEAN emit; a gate receipt from a
+    // dirty tree (the `gate:local` pre-commit run) verifies for nothing.
+    requireCleanEmit: true,
+    // R5-04: the closed union of the subjects its declared schemas may certify
+    // (`bin/lib/receipt-schemas.mjs`) — never `null`/open.
+    subjects: subjectsOfSchemas(['nightwatch.quality-gate-receipt.v1', 'nightwatch.ui-harness-receipt.v1']),
   }),
 });
 
@@ -581,12 +586,23 @@ export function verifyPersistedReceipt(root, subject, digest, sha) {
     }
     const declared = receiptDeclaredSubjects(body);
     if (declared.length === 0) return { verified: false, reason: 'RECEIPT_SUBJECT_ABSENT' };
+    // R5-04: the schema's subject set is CLOSED. A receipt naming a subject its
+    // schema's producer does not certify never verifies — not even for the
+    // legitimate subject it also names.
+    const schema = RECEIPT_SCHEMAS[body.schemaVersion];
+    if (schema === undefined) return { verified: false, reason: `RECEIPT_SCHEMA_UNSUPPORTED:${String(body.schemaVersion)}` };
+    const foreign = declared.filter((entry) => !schema.subjects.includes(entry));
+    if (foreign.length > 0) return { verified: false, reason: `RECEIPT_SUBJECT_NOT_CERTIFIABLE:${foreign.join(',')}` };
     if (!declared.includes(wantedSubject)) return { verified: false, reason: `RECEIPT_SUBJECT_MISMATCH:${declared.join(',')}` };
     const presentVerdicts = kind.verdictFields.filter((field) => typeof body[field] === 'string');
     if (presentVerdicts.length === 0) return { verified: false, reason: 'RECEIPT_VERDICT_MISSING' };
     const failedVerdict = presentVerdicts.find((field) => body[field] !== 'PASS');
     if (failedVerdict !== undefined) return { verified: false, reason: `RECEIPT_VERDICT_NOT_PASS:${failedVerdict}=${String(body[failedVerdict])}` };
-    if (kind.requireCleanEmit && body.sourceRootCleanAtEmit !== true) return { verified: false, reason: 'RECEIPT_CLEAN_EMIT_UNPROVEN' };
+    // R5-04: derived from the BODY — the producer must have executed the very
+    // subject being certified (a hand-shaped `{subject, finalResult: PASS}` that
+    // records no executed groups/tests proves nothing).
+    if (!schema.executed(body).includes(wantedSubject)) return { verified: false, reason: `RECEIPT_SUBJECT_NOT_EXECUTED:${wantedSubject}` };
+    if (kind.requireCleanEmit && body[schema.cleanEmitField] !== true) return { verified: false, reason: 'RECEIPT_CLEAN_EMIT_UNPROVEN' };
     return { verified: true, reason: 'VERIFIED' };
   }
   return { verified: false, reason: firstRefusal ?? 'RECEIPT_NOT_FOUND_OR_UNBOUND' };

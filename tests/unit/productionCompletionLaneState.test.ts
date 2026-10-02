@@ -285,14 +285,14 @@ test.describe('validation lane state', () => {
       fs.writeFileSync(path.join(root, file), text);
     };
     const receiptDigest = (subject: string) => {
-      const body = { schemaVersion: 'nightwatch.quality-gate-receipt.v1', subject, gitHead: 'b'.repeat(40), finalResult: 'PASS' };
+      const body = { schemaVersion: 'nightwatch.quality-gate-receipt.v1', subject, gitHead: 'b'.repeat(40), finalResult: 'PASS', sourceRootCleanAtEmit: true, groupIds: ['STATIC'], groups: [{ id: 'STATIC', required: true, status: 'PASS' }] };
       return `receipt:sha256:${createHash('sha256').update(stableCanonical(body)).digest('hex').slice(0, 24)}`;
     };
     const persistReceipt = (subject: string, name: string) => {
-      const body = { schemaVersion: 'nightwatch.quality-gate-receipt.v1', subject, gitHead: 'b'.repeat(40), finalResult: 'PASS' };
+      const body = { schemaVersion: 'nightwatch.quality-gate-receipt.v1', subject, gitHead: 'b'.repeat(40), finalResult: 'PASS', sourceRootCleanAtEmit: true, groupIds: ['STATIC'], groups: [{ id: 'STATIC', required: true, status: 'PASS' }] };
       write(`artifacts/receipts/${name}.json`, `${JSON.stringify({ ...body, receiptDigest: receiptDigest(subject) })}\n`);
     };
-    const binding = (sha: string | null, receipt: string | null) => `${JSON.stringify({ schemaVersion: 'nightwatch.release-evidence.v1', bindings: [{ subject: 'root-compile', evidenceSha: sha, receiptDigest: receipt, observedAt: receipt === null ? null : '2026-09-30T00:00:00.000Z', executor: receipt === null ? null : 'gate:local', artifactPaths: [], certifying: true }] }, null, 2)}\n`;
+    const binding = (sha: string | null, receipt: string | null) => `${JSON.stringify({ schemaVersion: 'nightwatch.release-evidence.v1', bindings: [{ subject: 'authoritative-gate', evidenceSha: sha, receiptDigest: receipt, observedAt: receipt === null ? null : '2026-09-30T00:00:00.000Z', executor: receipt === null ? null : 'gate:local', artifactPaths: [], certifying: true }] }, null, 2)}\n`;
     try {
       git(['init', '--quiet', '-b', 'main']);
       git(['config', 'user.email', 'probe@nightwatch.local']);
@@ -310,8 +310,8 @@ test.describe('validation lane state', () => {
       // receipt is persisted, subject-matching, schema-valid, PASS and
       // digest-matching for the bound SHA. Without the production verifier it
       // is substantive (the fail-closed direction R4-01 broke in production).
-      persistReceipt('root-compile', 'gate-root-compile');
-      write('config/release-evidence.v1.json', binding('b'.repeat(40), receiptDigest('root-compile')));
+      persistReceipt('authoritative-gate', 'gate-root-compile');
+      write('config/release-evidence.v1.json', binding('b'.repeat(40), receiptDigest('authoritative-gate')));
       git(['add', '--all']);
       git(['commit', '--quiet', '--no-gpg-sign', '-m', 'verified receipt binding']);
       const verified = git(['rev-parse', 'HEAD']).stdout!.trim();
@@ -323,9 +323,9 @@ test.describe('validation lane state', () => {
       // Fail-closed without a verifier, and fail-closed for a MISMATCHED
       // subject: a receipt that names another subject never certifies this one.
       expect(checkpointRoleViolations(root, ['config/release-evidence.v1.json'], { kind: 'commit', commit: verified })).toEqual(['config/release-evidence.v1.json']);
-      expect(verifier('root-compile', receiptDigest('root-compile'), 'b'.repeat(40))).toBe(true);
-      persistReceipt('authoritative-gate', 'gate-other-subject');
-      expect(verifier('root-compile', receiptDigest('authoritative-gate'), 'b'.repeat(40))).toBe(false);
+      expect(verifier('authoritative-gate', receiptDigest('authoritative-gate'), 'b'.repeat(40))).toBe(true);
+      persistReceipt('ui-error-taxonomy-rendering', 'gate-other-subject');
+      expect(verifier('authoritative-gate', receiptDigest('ui-error-taxonomy-rendering'), 'b'.repeat(40))).toBe(false);
       expect(checkpointRoleViolations(root, ['config/release-evidence.v1.json'], { kind: 'range', from: base, to: verified, verifyBindingReceipt: () => false })).toEqual(['config/release-evidence.v1.json']);
     } finally {
       fs.rmSync(root, { recursive: true, force: true });

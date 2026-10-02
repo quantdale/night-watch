@@ -475,7 +475,7 @@ function makeFixture(options: FixtureOptions = {}): Fixture {
     };
     fs.writeFileSync(path.join(root, 'config/release-evidence.v1.json'), `${JSON.stringify(registry, null, 2)}\n`);
   }
-  for (const bin of ['bin/agent-state.mjs', 'bin/agent-continuity-protocol.mjs', 'bin/child-environment.mjs', 'bin/project-state-check.mjs', 'bin/workspace-integrity.mjs', 'bin/lib/checkpoint-role.mjs', 'bin/lib/operator-cli.mjs', 'bin/lib/openspec-ledger.mjs', 'bin/lib/openspec-archive-index.mjs', 'bin/lib/programme-state.mjs', 'bin/lib/release-evidence.mjs', 'bin/lib/typescript-runtime-loader.mjs', 'bin/lib/validation-lane-state.mjs', 'bin/lib/ci-block-record.mjs', 'bin/lib/accessibility-record.mjs', 'bin/lib/certification-demotion.mjs']) {
+  for (const bin of ['bin/agent-state.mjs', 'bin/agent-continuity-protocol.mjs', 'bin/child-environment.mjs', 'bin/project-state-check.mjs', 'bin/workspace-integrity.mjs', 'bin/lib/checkpoint-role.mjs', 'bin/lib/operator-cli.mjs', 'bin/lib/openspec-ledger.mjs', 'bin/lib/openspec-archive-index.mjs', 'bin/lib/programme-state.mjs', 'bin/lib/release-evidence.mjs', 'bin/lib/receipt-schemas.mjs', 'bin/lib/typescript-runtime-loader.mjs', 'bin/lib/validation-lane-state.mjs', 'bin/lib/ci-block-record.mjs', 'bin/lib/accessibility-record.mjs', 'bin/lib/certification-demotion.mjs']) {
     const destination = path.join(root, bin);
     fs.mkdirSync(path.dirname(destination), { recursive: true });
     fs.copyFileSync(path.join(process.cwd(), bin), destination);
@@ -2047,13 +2047,36 @@ test.describe('RV-02 — a SHA without a receipt is a claim, not an observation'
       expect(verifyPersistedReceipt(root, 'NOT A SUBJECT', cleanDigest, sha)).toEqual({ verified: false, reason: 'RECEIPT_SUBJECT_INVALID' });
       // receipt: stable-canonical body, gitHead-bound, subject-declaring.
       fs.mkdirSync(path.join(root, 'artifacts/receipts'), { recursive: true });
-      const gateBody = { schemaVersion: 'nightwatch.quality-gate-receipt.v1', subject: 'authoritative-gate', gitHead: sha, finalResult: 'PASS' };
+      // R5-03/R5-04: a gate receipt records the groups it EXECUTED and whether the
+      // tree was clean at emit; a bare subject + PASS is not an executed record.
+      const gateBody = { schemaVersion: 'nightwatch.quality-gate-receipt.v1', subject: 'authoritative-gate', gitHead: sha, finalResult: 'PASS', sourceRootCleanAtEmit: true, groupIds: ['STATIC'], groups: [{ id: 'STATIC', required: true, status: 'PASS' }] };
       const gateDigest = `receipt:sha256:${createHash('sha256').update(stableCanonical(gateBody)).digest('hex').slice(0, 24)}`;
       fs.writeFileSync(path.join(root, 'artifacts/receipts/gate.json'), `${JSON.stringify({ ...gateBody, receiptDigest: gateDigest })}\n`);
       expect(verifyPersistedReceipt(root, 'authoritative-gate', gateDigest, sha).verified).toBe(true);
       expect(verifyPersistedReceipt(root, 'authoritative-gate', gateDigest, other).verified).toBe(false);
       // R4-03: a receipt that declares ANOTHER subject never certifies this one.
-      expect(verifyPersistedReceipt(root, 'root-compile', gateDigest, sha)).toEqual({ verified: false, reason: 'RECEIPT_SUBJECT_MISMATCH:authoritative-gate' });
+      expect(verifyPersistedReceipt(root, 'ui-error-taxonomy-rendering', gateDigest, sha)).toEqual({ verified: false, reason: 'RECEIPT_SUBJECT_MISMATCH:authoritative-gate' });
+      // R5-04: a subject NO gate-kind schema certifies is refused at the kind (the
+      // gate subject set is closed, no longer `null`).
+      expect(verifyPersistedReceipt(root, 'root-compile', gateDigest, sha)).toEqual({ verified: false, reason: 'RECEIPT_SUBJECT_KIND_MISMATCH' });
+      // R5-03: the same executed receipt emitted from a DIRTY (or unmeasured) tree
+      // verifies for nothing; R5-04: so does one that names a subject its producer
+      // never certifies, and one that records no executed group.
+      const persistGate = (name: string, body: Record<string, unknown>): string => {
+        const digest = `receipt:sha256:${createHash('sha256').update(stableCanonical(body)).digest('hex').slice(0, 24)}`;
+        fs.writeFileSync(path.join(root, `artifacts/receipts/${name}.json`), `${JSON.stringify({ ...body, receiptDigest: digest })}\n`);
+        return digest;
+      };
+      expect(verifyPersistedReceipt(root, 'authoritative-gate', persistGate('dirty-gate', { ...gateBody, sourceRootCleanAtEmit: false }), sha)).toEqual({ verified: false, reason: 'RECEIPT_CLEAN_EMIT_UNPROVEN' });
+      expect(verifyPersistedReceipt(root, 'authoritative-gate', persistGate('unmeasured-gate', { ...gateBody, sourceRootCleanAtEmit: null }), sha)).toEqual({ verified: false, reason: 'RECEIPT_CLEAN_EMIT_UNPROVEN' });
+      const { sourceRootCleanAtEmit: _omitted, ...withoutCleanField } = gateBody;
+      expect(verifyPersistedReceipt(root, 'authoritative-gate', persistGate('no-clean-field-gate', withoutCleanField), sha).verified).toBe(false);
+      const foreignDigest = persistGate('foreign-gate', { ...gateBody, subjects: ['autonomous-yield-proof'] });
+      expect(verifyPersistedReceipt(root, 'authoritative-gate', foreignDigest, sha)).toEqual({ verified: false, reason: 'RECEIPT_SUBJECT_NOT_CERTIFIABLE:autonomous-yield-proof' });
+      expect(verifyPersistedReceipt(root, 'autonomous-yield-proof', foreignDigest, sha).verified).toBe(false);
+      expect(verifyPersistedReceipt(root, 'authoritative-gate', persistGate('unexecuted-gate', { ...gateBody, groups: [], groupIds: [] }), sha)).toEqual({ verified: false, reason: 'RECEIPT_SUBJECT_NOT_EXECUTED:authoritative-gate' });
+      expect(verifyPersistedReceipt(root, 'authoritative-gate', persistGate('failed-group-gate', { ...gateBody, groups: [{ id: 'STATIC', required: true, status: 'TEST_FAILURE' }] }), sha)).toEqual({ verified: false, reason: 'RECEIPT_SUBJECT_NOT_EXECUTED:authoritative-gate' });
+      expect(verifyPersistedReceipt(root, 'authoritative-gate', persistGate('mismatched-ids-gate', { ...gateBody, groupIds: ['OTHER'] }), sha)).toEqual({ verified: false, reason: 'RECEIPT_SUBJECT_NOT_EXECUTED:authoritative-gate' });
       // R4-03: a hand-written FAIL receipt with a correctly recomputed digest
       // still never verifies — the verdict is part of the check.
       const failBody = { ...gateBody, finalResult: 'FAIL' };
