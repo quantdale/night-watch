@@ -5602,3 +5602,45 @@ contain only classification tokens, hashes and test identities — no cookie,
 token, header, DOM, message or path — and the repository returns to private at
 the owner's close-out step; this record exists so the exposure window is
 stated rather than assumed.
+
+## D-152 — review-5: integrity fixes AND reachable certification, in one bounded child campaign
+
+Source: the owner-reviewed corrective campaign prompt `RESUME_PROMPT_5.md`
+(header and §1; the file lives in the owner's local scratchpad and is cited by
+name, never by path). The owner decision is recorded VERBATIM below and binds
+the child campaign `nightwatch-final-completion-review5-v1`.
+
+> **Owner decision (2026-10-02): "both".** Keep OD-2 (target
+> `PROJECT_COMPLETE_AND_CI_CERTIFIED` under D-129, all 16 conditions). Do two
+> things together in one bounded child campaign,
+> `nightwatch-final-completion-review5-v1`:
+>
+> - **Track A — integrity and product fixes.** Real defects. Do this track first.
+> - **Track B — make certification reachable, honestly.** Every one of the 16
+>   conditions gets a real producer that can be verified from a clean clone.
+
+Binding rules from the same prompt (§1), recorded so a later reader sees the
+whole decision and not only its headline:
+
+- **Design certification before coding it.** Track B code starts only after the
+  Certification Producer Matrix (all 16 conditions, all 11 lanes) is complete in
+  the child `design.md` and strict-validated. A row that cannot be completed
+  honestly is an owner question (STOP), never a guess.
+- **Certification evidence must be verifiable from a clean clone.** A receipt
+  that lives only in git-ignored host directories certifies nothing CI or
+  `gate:clean` checks. The persistence mechanism is chosen and recorded in this
+  decision by task B1 (recommended: receipts produced at S committed as tracked
+  files under one approved, schema-validated evidence path, in a documentary
+  descendant of S). OD-5 still holds: receipts are tamper-evident, not
+  tamper-proof.
+- **Mutation testing is behavioural and committed.** Every guard added or fixed
+  has a behavioural test (a source-text anchor alone never counts); every
+  registered mutant is DETECTED; one committed mutation harness runs in
+  `gate:milestone` and fails on any survivor.
+- **Exit rule — no review-6 by default.** If Track B cannot make all 16
+  conditions reachable honestly, STOP and report which ones and why; the owner
+  then decides whether to narrow OD-2.
+
+**Revisit trigger.** Any owner statement contradicting "both", or a Producer
+Matrix row that cannot be completed honestly, stops the campaign for an owner
+decision.

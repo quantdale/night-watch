@@ -16,16 +16,14 @@ Last substantive checkpoint SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-final-product-complet-0e405e6b
-Last checkpoint: 2026-10-01 — PARENT PAUSED AT A CLEAN CHECKPOINT FOR
-REVIEW-4 (60/76 declared, 4 library-retained, 12 pending). After the
-corrective child campaign `nightwatch-final-completion-corrections-v1` closed
-and archived, the parent resumed in session `sess-83d720703401` and completed
-M9 10.2 resume batch 1: `ai-local-canary` was migrated to the shared
-operator-CLI contract (3 flags, group `validate`), so conformance advanced
-55 → 60 of 76 declared. Exact-head CI is GREEN at `07dd9506` (run
-36808189880) and at `ce289948` (run 36809415911). RESUME POINT: M9 task 10.2
-remainder (60/76 declared; next bin `auth-configure`), then 10.3-10.6, M10-M14
-and the 13-section final report. Previous: 2026-09-28 — M9 10.2 IN PROGRESS
+Last checkpoint: 2026-10-02 — PARENT PAUSED FOR THE REVIEW-5 CHILD CAMPAIGN
+(`nightwatch-final-completion-review5-v1`, D-152). M9 10.2 is COMPLETE (76/76
+declared: 72 operator-CLI + 4 library-retained, 0 pending) and 10.3 is COMPLETE.
+Exact-head CI run 36916725274 is GREEN (15/15) at `2e0cfda0`. RESUME POINT: M9
+task 10.4 (measured baseline 1412 diagnostics; not started), then 10.5-10.6,
+M10-M14 (the single paid run is 12.3) and the 13-section final report.
+Previous: 2026-10-01 — the review-4 child campaign closed and the parent resumed in a fresh session through 10.2 resume batch 1 (60/76 at that point).
+Previous: 2026-09-28 — M9 10.2 IN PROGRESS
 (59/76 declared, 4 library-retained, 13 pending): the Phase 0 formatter
 blocker is RESOLVED (owner disposition of the 16 disposable files, harness
 formatter/autofix disabled, canonical clean at `df0a6d35`, workspace:check
@@ -57,14 +55,11 @@ ledger, and end at `PROJECT_COMPLETE_AND_CI_CERTIFIED` under D-129 with a
 ## Current Milestone
 
 M9 D-129 CLI contract and bin type-check (group 10, tasks 10.1-10.6): 10.1
-DONE, 10.2 COMPLETE (76/76 declared: 72 operator-CLI + 4 library-retained, 0 pending). The
-corrective child campaign (`nightwatch-final-completion-corrections-v1`) is
-CLOSED and archived; the parent resumed at "M9 task 10.2 remainder" in the
-fresh C-00 session `sess-83d720703401` (worktree
-`nightwatch-final-product-complet-e3ce743d`). The first resumed batch migrated
-`bin/ai-local-canary.mjs` (3 flags, group `validate`; registry counts updated;
-operatorCliSurface/cliImplementationContract/aiLocalCanary 56/56). The
-remaining 12 pending bins are named in tasks.md 10.2.
+DONE, 10.2 COMPLETE (76/76 declared: 72 operator-CLI + 4 library-retained, 0
+pending), 10.3 COMPLETE. The parent is PAUSED at task 10.4 (annotate bins to
+zero diagnostics; NOT STARTED) while the bounded review-5 child campaign
+`nightwatch-final-completion-review5-v1` runs; the review-4 child is closed and
+archived.
 
 ## Completed Milestones
 
@@ -549,6 +544,19 @@ exactly as in M4/M5.
 | `openspec/changes/nightwatch-final-product-completion-v1/tasks.md` | stable IDs restored (VA-01), reopened-by-corrections annotations | corrected by the child campaign (task 5.1) |
 
 ## Validation Ledger
+
+- 2026-10-02 — PARENT PAUSED (review-5 preconditions). Resume point M9 task
+  10.4. Owner decision "both" recorded as D-152 (RESUME_PROMPT_5). Stale
+  continuity prose synced (R5-17): ACTIVE_TASK `TASK_NEXT_ID` 10.2 → 10.4, the
+  "no live session"/60-of-76 checkpoint prose, PLAN M9, and the
+  `config/bin-typecheck.v1.json` note now point at the structured fields
+  (totalCeiling 1412, 78 sources = 63 entry points + 15 bin/lib, any-budget 91).
+  Canonical MAINTENANCE-claim record for the claim era so far
+  (`sess-176d726bd6df`, role MAINTENANCE, created 2026-10-01T12:27:49Z, now
+  RELEASED): the canonical-routed docs commits `67eb3098`, `e5ec64ca` and `46c8b674`
+  (2026-10-01) are recorded by review-5 R5-11 as likely made without a live
+  MAINTENANCE claim, and no claim journal exists to prove otherwise — recorded
+  here as the A9.1 gaps; the append-only claim journal is review-5 task A9.1.
 
 - 2026-10-01 — M9 10.2/10.3 COMPLETE, 10.4 BASELINE MEASURED (parent). Task
   10.2 finished at 76/76 conformance across eight resume batches (auth-configure,
@@ -1173,7 +1181,7 @@ named in the routing block; integration is fast-forward only.
 
 ## Completion Snapshot
 
-Not complete. M9 task 10.2 is COMPLETE at 76/76 declared (0 pending); 10.3 is next.
+Not complete. M9 tasks 10.2 (76/76 declared, 0 pending) and 10.3 are COMPLETE; 10.4 is next (paused for the review-5 child).
 Terminal snapshot is written at M14: all 228 census items
 dispositioned (OD-1), `PROJECT_COMPLETE_AND_CI_CERTIFIED` under D-129 with CI
 `EXECUTED_PASS` at S (OD-2), operator proofs recorded, ledger closed, and a
