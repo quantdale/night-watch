@@ -91,6 +91,9 @@ export interface ProductRunReasonerIdentity {
   readonly kind: CampaignKind;
   readonly identityDigest: string | null;
   readonly printCliDigest: string | null;
+  /** R5-15: the provider and model LABELS the run was attributed to (the `rid:` digest covers them). */
+  readonly provider?: string | null;
+  readonly model?: string | null;
 }
 
 /** The Nightwatch repository identity a run executed at (design D3 binding). */
@@ -298,6 +301,12 @@ export function validateProductRunReceipt(value: unknown): ValidateProductRunRec
     if (identity.printCliDigest !== null && (typeof identity.printCliDigest !== 'string' || !/^sha256:[0-9a-f]{24,64}$/.test(identity.printCliDigest))) {
       errors.push('reasonerIdentity.printCliDigest');
     }
+    for (const label of ['provider', 'model'] as const) {
+      const value = identity[label];
+      if (value !== undefined && value !== null && (typeof value !== 'string' || !/^[A-Za-z0-9._:/-]{1,128}$/.test(value))) {
+        errors.push(`reasonerIdentity.${label}`);
+      }
+    }
   }
   const health = record.providerHealth;
   if (typeof health !== 'object' || health === null) {
@@ -394,6 +403,67 @@ function isRecordValue(value: unknown): value is Record<string, unknown> {
 }
 
 /**
+ * R5-15 / review-5 task B4.1 — the record of the SINGLE authorized paid provider run (the parent's
+ * task 12.3). A yield receipt qualifies only against a GRANTED record whose declared print-CLI
+ * digest, provider and model it carries; a NOT_GRANTED record (the repository default) makes the
+ * yield condition unreachable by any run. `declared` is all-null exactly when NOT_GRANTED.
+ */
+export const YIELD_RUN_AUTHORIZATION_VERSION = 'nightwatch.yield-run-authorization.v1' as const;
+export interface YieldRunAuthorization {
+  readonly grantId: string;
+  readonly state: 'NOT_GRANTED' | 'GRANTED';
+  readonly maxQualifyingRuns: number;
+  readonly declared: {
+    readonly printCliDigest: string | null;
+    readonly provider: string | null;
+    readonly model: string | null;
+  };
+}
+
+/** Strict, closed-schema parse of the authorization record. */
+export function parseYieldRunAuthorization(raw: unknown): { readonly ok: boolean; readonly errors: readonly string[]; readonly authorization: YieldRunAuthorization | null } {
+  const errors: string[] = [];
+  if (!isRecordValue(raw)) return { ok: false, errors: ['YIELD_AUTH_NOT_AN_OBJECT'], authorization: null };
+  const allowed = ['schemaVersion', 'note', 'grantId', 'state', 'maxQualifyingRuns', 'declared'];
+  for (const key of Object.keys(raw)) if (!allowed.includes(key)) errors.push(`YIELD_AUTH_UNKNOWN_KEY:${key.slice(0, 40)}`);
+  if (raw.schemaVersion !== YIELD_RUN_AUTHORIZATION_VERSION) errors.push('YIELD_AUTH_SCHEMA_MISMATCH');
+  if (typeof raw.grantId !== 'string' || !/^[a-z0-9._-]{1,40}$/.test(raw.grantId)) errors.push('YIELD_AUTH_GRANT_ID_INVALID');
+  if (raw.state !== 'NOT_GRANTED' && raw.state !== 'GRANTED') errors.push('YIELD_AUTH_STATE_INVALID');
+  if (typeof raw.maxQualifyingRuns !== 'number' || !Number.isInteger(raw.maxQualifyingRuns) || raw.maxQualifyingRuns < 1 || raw.maxQualifyingRuns > 3) errors.push('YIELD_AUTH_BUDGET_INVALID');
+  const declared = raw.declared;
+  let printCliDigest: string | null = null;
+  let provider: string | null = null;
+  let model: string | null = null;
+  if (!isRecordValue(declared)) {
+    errors.push('YIELD_AUTH_DECLARED_INVALID');
+  } else {
+    for (const key of Object.keys(declared)) if (!['printCliDigest', 'provider', 'model'].includes(key)) errors.push(`YIELD_AUTH_DECLARED_UNKNOWN_KEY:${key.slice(0, 40)}`);
+    const digest = declared.printCliDigest;
+    const label = (value: unknown) => (value === null || (typeof value === 'string' && /^[A-Za-z0-9._:/-]{1,128}$/.test(value)) ? (value as string | null) : undefined);
+    if (digest !== null && (typeof digest !== 'string' || !/^sha256:[0-9a-f]{24,64}$/.test(digest))) errors.push('YIELD_AUTH_DECLARED_DIGEST_INVALID');
+    else printCliDigest = digest as string | null;
+    const declaredProvider = label(declared.provider);
+    const declaredModel = label(declared.model);
+    if (declaredProvider === undefined) errors.push('YIELD_AUTH_DECLARED_PROVIDER_INVALID'); else provider = declaredProvider;
+    if (declaredModel === undefined) errors.push('YIELD_AUTH_DECLARED_MODEL_INVALID'); else model = declaredModel;
+    const present = [printCliDigest, provider, model].filter((value) => value !== null).length;
+    if (raw.state === 'GRANTED' && present !== 3) errors.push('YIELD_AUTH_GRANTED_WITHOUT_FULL_IDENTITY');
+    if (raw.state === 'NOT_GRANTED' && present !== 0) errors.push('YIELD_AUTH_NOT_GRANTED_WITH_IDENTITY');
+  }
+  if (errors.length > 0) return { ok: false, errors, authorization: null };
+  return {
+    ok: true,
+    errors: [],
+    authorization: {
+      grantId: raw.grantId as string,
+      state: raw.state as 'NOT_GRANTED' | 'GRANTED',
+      maxQualifyingRuns: raw.maxQualifyingRuns as number,
+      declared: { printCliDigest, provider, model },
+    },
+  };
+}
+
+/**
  * VD-03 / CF-03 (design D3): the ONLY route to a G12 pass. A yield-campaign
  * receipt is the D-7 manifest + summary + product-run receipt of a run that
  * passed, executed at a recorded clean Nightwatch commit, through the provider
@@ -406,6 +476,7 @@ function isRecordValue(value: unknown): value is Record<string, unknown> {
 export function evaluateYieldCampaignEvidence(
   evidence: { readonly manifest: unknown; readonly summary: unknown; readonly receipt: unknown },
   certifiedCheckpointSha: string | null,
+  authorization: YieldRunAuthorization | null,
 ): YieldCampaignEvaluation {
   const errors: string[] = [];
   const invalid = (): YieldCampaignEvaluation => ({ ok: false, errors, relation: 'INVALID', summary: null });
@@ -441,6 +512,18 @@ export function evaluateYieldCampaignEvidence(
     errors.push(`YIELD_RECEIPT_REASONER_NOT_PROVIDER:${reasoner.kind}`);
   } else if (typeof reasoner.identityDigest !== 'string' || !/^rid:sha256:[0-9a-f]{24,64}$/.test(reasoner.identityDigest)) {
     errors.push('YIELD_RECEIPT_REASONER_IDENTITY_INVALID');
+  }
+  // R5-15: a run qualifies only against the GRANTED record of the single authorized paid run, and
+  // only when it carries the exact print CLI, provider and model that record declares. Any print
+  // CLI (an arbitrary absolute executable) was enough before; an unrecorded or different one is not.
+  if (authorization === null || authorization.state !== 'GRANTED') {
+    errors.push('YIELD_RECEIPT_RUN_NOT_AUTHORIZED');
+  } else if (reasoner !== undefined && reasoner !== null) {
+    if (reasoner.printCliDigest === null || reasoner.printCliDigest !== authorization.declared.printCliDigest) errors.push('YIELD_RECEIPT_PRINT_CLI_NOT_AUTHORIZED');
+    if (reasoner.provider === undefined || reasoner.provider === null || reasoner.provider !== authorization.declared.provider
+      || reasoner.model === undefined || reasoner.model === null || reasoner.model !== authorization.declared.model) {
+      errors.push('YIELD_RECEIPT_MODEL_NOT_AUTHORIZED');
+    }
   }
   const manifestSha = evidence.manifest.nightwatchSha;
   if (typeof manifestSha !== 'string' || !/^[0-9a-f]{40}$/i.test(manifestSha)) errors.push('YIELD_RECEIPT_SHA_ABSENT');

@@ -2303,6 +2303,10 @@
       "signals": [
         "isolated-scratch"
       ]
+    },
+    "tests/unit/yieldAuthorization.test.ts": {
+      "class": "PARALLEL_SAFE",
+      "signals": []
     }
   }
 }

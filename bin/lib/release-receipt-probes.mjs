@@ -17,6 +17,8 @@ import { receiptBindingRelation, receiptNotAtCheckpoint } from './probe-binding.
 import { gitReadOnly, loadTypeScriptModule, readJsonAt } from './probe-io.mjs';
 
 const HEX40 = /^[0-9a-f]{40}$/i;
+/** The record of the single authorized paid provider run (the parent's task 12.3). */
+export const YIELD_AUTHORIZATION_PATH = 'config/yield-run-authorization.v1.json';
 /** Bound on how many newest run directories the G12 probe inspects. */
 const YIELD_RUN_SCAN_LIMIT = 50;
 
@@ -150,25 +152,40 @@ function probeYieldCampaignResult(root, certifiedCheckpointSha) {
   if (runs.length === 0) {
     return { state: 'UNMET', detail: 'no yield-campaign receipt: no artifacts/nightwatch-* run exists on this host (the receipt is host-local; a fresh clone has none)' };
   }
+  // R5-15: the record of the single authorized paid run. Unreadable or invalid is NOT_GRANTED.
+  const parsedAuthorization = receiptModule.parseYieldRunAuthorization(readJsonAt(root, YIELD_AUTHORIZATION_PATH));
+  const authorization = parsedAuthorization.ok ? parsedAuthorization.authorization : null;
   let boundToOther = null;
   let firstRejection = null;
+  let qualifyingBound = 0;
+  /** @type {{ state: string, detail: string } | null} */
+  let firstBound = null;
   for (const entry of runs) {
     const evaluated = receiptModule.evaluateYieldCampaignEvidence({
       manifest: readJsonAt(root, `artifacts/${entry}/manifest.json`),
       summary: readJsonAt(root, `artifacts/${entry}/summary.json`),
       receipt: readJsonAt(root, `artifacts/${entry}/product-run-receipt.json`),
-    }, certifiedCheckpointSha);
+    }, certifiedCheckpointSha, authorization);
     if (!evaluated.ok || evaluated.summary === null) {
       if (firstRejection === null) firstRejection = evaluated.errors.slice(0, 3).join('; ');
       continue;
     }
     if (evaluated.relation === 'BOUND') {
-      return {
+      qualifyingBound += 1;
+      firstBound ??= {
         state: 'MET',
         detail: `yield campaign ${evaluated.summary.runId} executed at ${evaluated.summary.sha.slice(0, 8)}: ${evaluated.summary.completedCalls} completed provider calls, ${evaluated.summary.reproductionCount} reproduction attempts, ${evaluated.summary.admissions} admissions, ${evaluated.summary.siblingsObserved} siblings observed, clean leak scan`,
       };
+      continue;
     }
     if (boundToOther === null) boundToOther = evaluated.summary.sha;
+  }
+  // R5-15: the authorization admits a bounded number of qualifying runs at S (one paid run).
+  if (firstBound !== null && authorization !== null) {
+    if (qualifyingBound > authorization.maxQualifyingRuns) {
+      return { state: 'UNMET', detail: `YIELD_BUDGET_EXCEEDED: ${qualifyingBound} qualifying runs at the certified checkpoint exceed the authorized ${authorization.maxQualifyingRuns}` };
+    }
+    return firstBound;
   }
   if (boundToOther !== null) return receiptNotAtCheckpoint('the newest qualifying yield-campaign receipt', boundToOther, certifiedCheckpointSha);
   return { state: 'UNMET', detail: `no qualifying yield-campaign receipt among the ${runs.length} newest runs; newest rejection: ${firstRejection ?? 'none'}` };

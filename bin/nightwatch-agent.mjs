@@ -95,7 +95,7 @@ const DURATIONS = new Map([
  *   before: readonly unknown[],
  *   nightwatchIdentity: { sha: string, treeClean: boolean } | null,
  *   campaignKind: string,
- *   reasonerIdentity: { kind: string, identityDigest: string | null, printCliDigest: string | null } | null,
+ *   reasonerIdentity: { kind: string, identityDigest: string | null, printCliDigest: string | null, provider: string | null, model: string | null } | null,
  * }} input
  */
 async function emitCampaignReceipt({ root, receiptMod, campaignId, result, repositoryIds, before, nightwatchIdentity, campaignKind, reasonerIdentity = null }) {
@@ -452,6 +452,8 @@ if (strayPositional) {
             kind: campaignKind,
             identityDigest: reasonerIdentity.identityDigest,
             printCliDigest: reasonerIdentity.printCliDigest,
+            provider: reasonerIdentity.provider ?? null,
+            model: reasonerIdentity.model ?? null,
           };
           const result = await mod.runLocalCliCampaign({
             pauseSignal: pause.signal,
@@ -631,6 +633,8 @@ if (strayPositional) {
           kind: campaignKind,
           identityDigest: reasonerIdentity.identityDigest,
           printCliDigest: reasonerIdentity.printCliDigest,
+          provider: reasonerIdentity.provider ?? null,
+          model: reasonerIdentity.model ?? null,
         };
         // M7 (8.1): the resume reads the same validated merge.
         // ceilingName is required input but resume runs under the checkpoint's

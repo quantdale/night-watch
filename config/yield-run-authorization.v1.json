@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "nightwatch.yield-run-authorization.v1",
+  "note": "The record of the SINGLE authorized paid provider run (parent task 12.3). NOT_GRANTED is the repository default: while it holds, no run can satisfy the autonomous-yield-proof condition. At execution the PARENT campaign sets state GRANTED and declares the exact print-CLI digest, provider and model of the run BEFORE the run's checkpoint is certified; a receipt then qualifies only when it carries exactly that identity, and at most maxQualifyingRuns qualifying runs may exist at the certified checkpoint. This child campaign never grants it.",
+  "grantId": "parent-12.3",
+  "state": "NOT_GRANTED",
+  "maxQualifyingRuns": 1,
+  "declared": {
+    "printCliDigest": null,
+    "provider": null,
+    "model": null
+  }
+}

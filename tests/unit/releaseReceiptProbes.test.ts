@@ -13,7 +13,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { ACCESSIBILITY_RECORD_PATH } from '../../bin/lib/accessibility-record.mjs';
-import { probeAccessibility, probeUiErrorTaxonomy, probeYieldCampaignResult } from '../../bin/lib/release-receipt-probes.mjs';
+import { YIELD_AUTHORIZATION_PATH, probeAccessibility, probeUiErrorTaxonomy, probeYieldCampaignResult } from '../../bin/lib/release-receipt-probes.mjs';
 import { UI_HARNESS_FILE, UI_HARNESS_RECEIPT_PATH, UI_HARNESS_REQUIRED_TESTS, UI_HARNESS_SUITE, buildUiHarnessReceipt } from '../../bin/lib/ui-harness-receipt.mjs';
 import { buildProductRunReceipt } from '../../src/core/agentRuntime/productRunReceipt';
 import { uiHarnessReceiptDigest } from '../../bin/lib/ui-harness-receipt.mjs';
@@ -211,7 +211,16 @@ test.describe('G18 UI-harness probe', () => {
 
 test.describe('G12 yield-campaign probe', () => {
   const sibling = { repository: 'mobingilabs/ouchan', headSha: '1'.repeat(40), statusDigest: 'sha256:aa', diffDigest: 'sha256:bb' };
-  function runArtifacts(sha: string, runId: string) {
+  const PRINT_CLI = `sha256:${'b'.repeat(24)}`;
+  const authorization = (overrides: Record<string, unknown> = {}) => ({
+    schemaVersion: 'nightwatch.yield-run-authorization.v1',
+    grantId: 'parent-12.3',
+    state: 'GRANTED',
+    maxQualifyingRuns: 1,
+    declared: { printCliDigest: PRINT_CLI, provider: 'test-provider', model: 'test-model' },
+    ...overrides,
+  });
+  function runArtifacts(sha: string, runId: string, identity: Record<string, unknown> = {}) {
     const observations = [sibling];
     const receipt = buildProductRunReceipt({
       campaignId: 'synthetic-yield',
@@ -229,18 +238,21 @@ test.describe('G12 yield-campaign probe', () => {
       leakScan: { result: 'CLEAN', findings: 0, scannedChars: 10 },
       nightwatchIdentity: { sha, treeClean: true },
       campaignKind: 'PRINT_CLI_PROVIDER' as never,
-      reasonerIdentity: { kind: 'PRINT_CLI_PROVIDER', identityDigest: `rid:sha256:${'a'.repeat(24)}`, printCliDigest: `sha256:${'b'.repeat(24)}` } as never,
+      reasonerIdentity: { kind: 'PRINT_CLI_PROVIDER', identityDigest: `rid:sha256:${'a'.repeat(24)}`, printCliDigest: PRINT_CLI, provider: 'test-provider', model: 'test-model', ...identity } as never,
     });
     return { manifest: { runId, product: 'campaign', nightwatchSha: sha }, summary: { passed: true }, receipt };
   }
-  function yieldRoot(sha: string): { root: string; cleanup: () => void } {
+  function yieldRoot(sha: string, options: { identity?: Record<string, unknown>; authorization?: unknown; runs?: number } = {}): { root: string; cleanup: () => void } {
     const s = scratchRoot();
     // The probe loads the receipt evaluator as TypeScript FROM the root it is given.
     fs.symlinkSync(path.join(REPO, 'src'), path.join(s.root, 'src'), 'dir');
-    const run = runArtifacts(sha, 'run-1');
-    writeJson(s.root, 'artifacts/nightwatch-run-1/manifest.json', run.manifest);
-    writeJson(s.root, 'artifacts/nightwatch-run-1/summary.json', run.summary);
-    writeJson(s.root, 'artifacts/nightwatch-run-1/product-run-receipt.json', run.receipt);
+    for (let index = 1; index <= (options.runs ?? 1); index += 1) {
+      const run = runArtifacts(sha, `run-${index}`, options.identity ?? {});
+      writeJson(s.root, `artifacts/nightwatch-run-${index}/manifest.json`, run.manifest);
+      writeJson(s.root, `artifacts/nightwatch-run-${index}/summary.json`, run.summary);
+      writeJson(s.root, `artifacts/nightwatch-run-${index}/product-run-receipt.json`, run.receipt);
+    }
+    if (options.authorization !== null) writeJson(s.root, YIELD_AUTHORIZATION_PATH, options.authorization ?? authorization());
     return s;
   }
 
@@ -259,6 +271,48 @@ test.describe('G12 yield-campaign probe', () => {
       bound.cleanup();
       other.cleanup();
       empty.cleanup();
+    }
+  });
+
+  // R5-15 / review-5 task B4.1 — a run qualifies only against the GRANTED record of the single
+  // authorized paid run and only with the exact print CLI, provider and model it declares.
+  test('a run with no GRANTED authorization, a different print CLI, provider or model, or an unrecorded identity never qualifies', () => {
+    const cases: Array<[string, Parameters<typeof yieldRoot>[1], RegExp]> = [
+      ['no authorization record', { authorization: null }, /YIELD_RECEIPT_RUN_NOT_AUTHORIZED/],
+      ['NOT_GRANTED', { authorization: authorization({ state: 'NOT_GRANTED', declared: { printCliDigest: null, provider: null, model: null } }) }, /YIELD_RECEIPT_RUN_NOT_AUTHORIZED/],
+      ['a different print CLI', { identity: { printCliDigest: `sha256:${'c'.repeat(24)}` } }, /YIELD_RECEIPT_PRINT_CLI_NOT_AUTHORIZED/],
+      ['an unrecorded print CLI', { identity: { printCliDigest: null } }, /YIELD_RECEIPT_PRINT_CLI_NOT_AUTHORIZED/],
+      ['a different model', { identity: { model: 'other-model' } }, /YIELD_RECEIPT_MODEL_NOT_AUTHORIZED/],
+      ['a different provider', { identity: { provider: 'other-provider' } }, /YIELD_RECEIPT_MODEL_NOT_AUTHORIZED/],
+      ['an unrecorded model', { identity: { model: null } }, /YIELD_RECEIPT_MODEL_NOT_AUTHORIZED/],
+      ['an invalid authorization record', { authorization: { schemaVersion: 'x' } }, /YIELD_RECEIPT_RUN_NOT_AUTHORIZED/],
+    ];
+    for (const [label, options, expected] of cases) {
+      const r = yieldRoot(S, options);
+      try {
+        const probed = probeYieldCampaignResult(r.root, S);
+        expect(probed.state, label).toBe('UNMET');
+        expect(probed.detail, label).toMatch(expected);
+      } finally {
+        r.cleanup();
+      }
+    }
+  });
+
+  test('the authorized budget bounds the qualifying runs at S', () => {
+    const one = yieldRoot(S, { runs: 1 });
+    const two = yieldRoot(S, { runs: 2 });
+    const twoAllowed = yieldRoot(S, { runs: 2, authorization: authorization({ maxQualifyingRuns: 2 }) });
+    try {
+      expect(probeYieldCampaignResult(one.root, S).state).toBe('MET');
+      const exceeded = probeYieldCampaignResult(two.root, S);
+      expect(exceeded.state).toBe('UNMET');
+      expect(exceeded.detail).toContain('YIELD_BUDGET_EXCEEDED');
+      expect(probeYieldCampaignResult(twoAllowed.root, S).state).toBe('MET');
+    } finally {
+      one.cleanup();
+      two.cleanup();
+      twoAllowed.cleanup();
     }
   });
 });

@@ -3279,6 +3279,8 @@ test.describe('UI-harness execution receipt (VD-02)', () => {
 // ---------------------------------------------------------------------------
 
 test.describe('yield-campaign receipt (VD-03 / CF-03)', () => {
+  // R5-15: the GRANTED record of the single authorized paid run the test receipts were produced under.
+  const GRANTED = { grantId: 'parent-12.3', state: 'GRANTED' as const, maxQualifyingRuns: 1, declared: { printCliDigest: `sha256:${'b'.repeat(24)}`, provider: 'test-provider', model: 'test-model' } };
   const S = 'e'.repeat(40);
   const OTHER = 'f'.repeat(40);
   const sibling = { repository: 'mobingilabs/ouchan', headSha: '1'.repeat(40), statusDigest: 'sha256:aa', diffDigest: 'sha256:bb', dirty: false };
@@ -3326,7 +3328,7 @@ test.describe('yield-campaign receipt (VD-03 / CF-03)', () => {
       ...(overrides.kind === null ? {} : { campaignKind: (overrides.kind ?? 'PRINT_CLI_PROVIDER') as never }),
       // R3-06 / corrections task 8.5: the recorded reasoner identity.
       reasonerIdentity: overrides.reasonerIdentity === undefined
-        ? { kind: 'PRINT_CLI_PROVIDER', identityDigest: `rid:sha256:${'a'.repeat(24)}`, printCliDigest: `sha256:${'b'.repeat(24)}` } as never
+        ? { kind: 'PRINT_CLI_PROVIDER', identityDigest: `rid:sha256:${'a'.repeat(24)}`, printCliDigest: `sha256:${'b'.repeat(24)}`, provider: 'test-provider', model: 'test-model' } as never
         : overrides.reasonerIdentity as never,
     });
     const manifest = { runId: 'run-1', product: overrides.product ?? 'campaign', nightwatchSha: overrides.manifestSha === undefined ? sha : overrides.manifestSha };
@@ -3334,18 +3336,18 @@ test.describe('yield-campaign receipt (VD-03 / CF-03)', () => {
   }
 
   test('a provider campaign that passed at a clean S with executed provider calls certifies', () => {
-    const evaluated = evaluateYieldCampaignEvidence(evidence(), S);
+    const evaluated = evaluateYieldCampaignEvidence(evidence(), S, GRANTED);
     expect(evaluated.errors).toEqual([]);
     expect(evaluated).toMatchObject({ ok: true, relation: 'BOUND', summary: { sha: S, completedCalls: 3, admissions: 0 } });
   });
 
   test('a run at another commit is valid evidence about that commit, not about S', () => {
-    expect(evaluateYieldCampaignEvidence(evidence({ sha: OTHER }), S)).toMatchObject({ ok: true, relation: 'BOUND_TO_OTHER' });
+    expect(evaluateYieldCampaignEvidence(evidence({ sha: OTHER }), S, GRANTED)).toMatchObject({ ok: true, relation: 'BOUND_TO_OTHER' });
   });
 
   test('a smoke run, a blocked provider, an unbound run and every weaker receipt never qualify', () => {
     const rejected = (input: Parameters<typeof evidence>[0], code: string) => {
-      const evaluated = evaluateYieldCampaignEvidence(evidence(input), S);
+      const evaluated = evaluateYieldCampaignEvidence(evidence(input), S, GRANTED);
       expect(evaluated.ok, code).toBe(false);
       expect(evaluated.errors.join('|'), code).toContain(code);
     };
@@ -3372,14 +3374,14 @@ test.describe('yield-campaign receipt (VD-03 / CF-03)', () => {
     const full = evidence();
     const { caseTerminationCounts: _omitCounts, ...receiptWithoutCases } = full.receipt as unknown as Record<string, unknown>;
     void _omitCounts;
-    expect(evaluateYieldCampaignEvidence({ ...full, receipt: receiptWithoutCases }, S).errors).toContain('YIELD_RECEIPT_NO_COMPLETED_CASE');
+    expect(evaluateYieldCampaignEvidence({ ...full, receipt: receiptWithoutCases }, S, GRANTED).errors).toContain('YIELD_RECEIPT_NO_COMPLETED_CASE');
     rejected({ reasonerIdentity: { kind: 'CUSTOM_REASONER_SCRIPT', identityDigest: `rid:sha256:${'a'.repeat(24)}`, printCliDigest: null } }, 'YIELD_RECEIPT_REASONER_NOT_PROVIDER:CUSTOM_REASONER_SCRIPT');
     // A null identity digest passes schema validation (legacy tolerance) and
     // is refused by the G12 evaluator; a malformed digest is refused earlier.
     rejected({ reasonerIdentity: { kind: 'PRINT_CLI_PROVIDER', identityDigest: null, printCliDigest: null } }, 'YIELD_RECEIPT_REASONER_IDENTITY_INVALID');
     rejected({ reasonerIdentity: { kind: 'PRINT_CLI_PROVIDER', identityDigest: 'not-a-digest', printCliDigest: null } }, 'YIELD_RECEIPT_INVALID:reasonerIdentity.identityDigest');
-    expect(evaluateYieldCampaignEvidence({ manifest: null, summary: null, receipt: null }, S).errors).toEqual(['YIELD_RECEIPT_RUN_ARTIFACTS_MISSING']);
-    expect(evaluateYieldCampaignEvidence({ manifest: {}, summary: {}, receipt: { schemaVersion: 'x' } }, S).errors[0]).toContain('YIELD_RECEIPT_INVALID');
+    expect(evaluateYieldCampaignEvidence({ manifest: null, summary: null, receipt: null }, S, GRANTED).errors).toEqual(['YIELD_RECEIPT_RUN_ARTIFACTS_MISSING']);
+    expect(evaluateYieldCampaignEvidence({ manifest: {}, summary: {}, receipt: { schemaVersion: 'x' } }, S, GRANTED).errors[0]).toContain('YIELD_RECEIPT_INVALID');
   });
 
   test('the additive receipt fields are validated when present and remain optional for legacy receipts', () => {

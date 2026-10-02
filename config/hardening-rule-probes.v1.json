@@ -3107,7 +3107,13 @@
     "R5-16/topology-proven-evidence",
     "R5-16/topology-class-agreement",
     "R5-16/topology-consumer-admits",
-    "R5-13/ui-tracked-fallback"
+    "R5-13/ui-tracked-fallback",
+    "R5-15/yield-needs-grant",
+    "R5-15/yield-print-cli-bound",
+    "R5-15/yield-model-bound",
+    "R5-15/yield-budget",
+    "R5-15/auth-granted-full-identity",
+    "R5-15/auth-not-granted-empty"
   ],
   "behaviouralMutants": [
     {
@@ -5055,6 +5061,126 @@
         }
       ],
       "focusedTests": [
+        {
+          "file": "tests/unit/releaseReceiptProbes.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-109",
+      "finding": "R5-15/yield-needs-grant",
+      "guard": "a yield run qualifies only against a GRANTED authorization",
+      "ops": [
+        {
+          "file": "src/core/agentRuntime/productRunReceipt.ts",
+          "search": "  if (authorization === null || authorization.state !== 'GRANTED') {",
+          "replace": "  if (false) {"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/yieldAuthorization.test.ts"
+        },
+        {
+          "file": "tests/unit/releaseReceiptProbes.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-110",
+      "finding": "R5-15/yield-print-cli-bound",
+      "guard": "a yield run carries exactly the declared print CLI digest",
+      "ops": [
+        {
+          "file": "src/core/agentRuntime/productRunReceipt.ts",
+          "search": "    if (reasoner.printCliDigest === null || reasoner.printCliDigest !== authorization.declared.printCliDigest) errors.push(",
+          "replace": "    if (false) errors.push("
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/yieldAuthorization.test.ts"
+        },
+        {
+          "file": "tests/unit/releaseReceiptProbes.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-111",
+      "finding": "R5-15/yield-model-bound",
+      "guard": "a yield run carries exactly the declared provider and model",
+      "ops": [
+        {
+          "file": "src/core/agentRuntime/productRunReceipt.ts",
+          "search": "      errors.push('YIELD_RECEIPT_MODEL_NOT_AUTHORIZED');",
+          "replace": "      void 0;"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/yieldAuthorization.test.ts"
+        },
+        {
+          "file": "tests/unit/releaseReceiptProbes.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-112",
+      "finding": "R5-15/yield-budget",
+      "guard": "the authorized budget bounds the qualifying runs at S",
+      "ops": [
+        {
+          "file": "bin/lib/release-receipt-probes.mjs",
+          "search": "    if (qualifyingBound > authorization.maxQualifyingRuns) {",
+          "replace": "    if (false) {"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/yieldAuthorization.test.ts"
+        },
+        {
+          "file": "tests/unit/releaseReceiptProbes.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-113",
+      "finding": "R5-15/auth-granted-full-identity",
+      "guard": "a GRANTED record declares the full identity",
+      "ops": [
+        {
+          "file": "src/core/agentRuntime/productRunReceipt.ts",
+          "search": "    if (raw.state === 'GRANTED' && present !== 3) errors.push('YIELD_AUTH_GRANTED_WITHOUT_FULL_IDENTITY');",
+          "replace": "    void present;"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/yieldAuthorization.test.ts"
+        },
+        {
+          "file": "tests/unit/releaseReceiptProbes.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-114",
+      "finding": "R5-15/auth-not-granted-empty",
+      "guard": "a NOT_GRANTED record declares no identity",
+      "ops": [
+        {
+          "file": "src/core/agentRuntime/productRunReceipt.ts",
+          "search": "    if (raw.state === 'NOT_GRANTED' && present !== 0) errors.push(",
+          "replace": "    if (false) errors.push("
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/yieldAuthorization.test.ts"
+        },
         {
           "file": "tests/unit/releaseReceiptProbes.test.ts"
         }
