@@ -10,13 +10,12 @@
 // or MAC; never describe it as forgery-proof or unforgeable.
 
 import crypto from 'node:crypto';
-import { CERTIFICATION_SCHEMA_SUBJECTS } from './certification-subjects.mjs';
-import { stableCanonical } from './release-evidence.mjs';
+import { CERTIFICATION_EVIDENCE_DIRECTORY, CERTIFICATION_SCHEMA_SUBJECTS } from './certification-subjects.mjs';
+import { stableCanonical } from './stable-canonical.mjs';
 
 export const CERTIFICATION_RECEIPT_SCHEMA = 'nightwatch.certification-evidence-receipt.v1';
 export const CERTIFICATION_RECEIPT_DIGEST_PREFIX = 'receipt:sha256:';
-/** Tracked directory (relative to the repository root) holding committed receipts. */
-export const CERTIFICATION_EVIDENCE_DIRECTORY = 'evidence/certification';
+export { CERTIFICATION_EVIDENCE_DIRECTORY };
 
 const SHA40_RE = /^[0-9a-f]{40}$/;
 /** Every string a receipt carries is a bounded token: no path separator, whitespace or host value. */

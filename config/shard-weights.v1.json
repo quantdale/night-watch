@@ -105,6 +105,7 @@
     "tests/unit/endpointSemantics.test.ts": 14,
     "tests/unit/evidence.test.ts": 93,
     "tests/unit/evidenceEvaluationInputs.test.ts": 3,
+    "tests/unit/evidenceReceiptGuard.test.ts": 1500,
     "tests/unit/evidenceRetention.test.ts": 16844,
     "tests/unit/explainIdFlagTolerance.test.ts": 3168,
     "tests/unit/explainSurfaceArgForms.test.ts": 35596,

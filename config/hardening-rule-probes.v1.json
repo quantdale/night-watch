@@ -2778,8 +2778,8 @@
         "ops": [
           {
             "file": "bin/lib/release-evidence.mjs",
-            "search": "    if (foreign.length > 0) return { verified: false,",
-            "replace": "    if (false) return { verified: false,"
+            "search": "  if (foreign.length > 0) return { outcome: 'FINAL', verified: false,",
+            "replace": "  if (false) return { outcome: 'FINAL', verified: false,"
           }
         ]
       },
@@ -2788,8 +2788,8 @@
         "ops": [
           {
             "file": "bin/lib/release-evidence.mjs",
-            "search": "    if (!schema.executed(body).includes(wantedSubject)) return {",
-            "replace": "    if (false) return {"
+            "search": "  if (!schema.executed(body).includes(wantedSubject)) return { outcome: 'FINAL',",
+            "replace": "  if (false) return { outcome: 'FINAL',"
           }
         ]
       },
@@ -2818,7 +2818,7 @@
         "ops": [
           {
             "file": "bin/lib/release-evidence.mjs",
-            "search": "    subjects: subjectsOfSchemas(['nightwatch.quality-gate-receipt.v1', 'nightwatch.ui-harness-receipt.v1']),",
+            "search": "    subjects: subjectsOfSchemas(['nightwatch.quality-gate-receipt.v1', 'nightwatch.ui-harness-receipt.v1', 'nightwatch.certification-evidence-receipt.v1']),",
             "replace": "    subjects: null,"
           }
         ]
@@ -2828,8 +2828,8 @@
         "ops": [
           {
             "file": "bin/lib/release-evidence.mjs",
-            "search": "    if (kind.requireCleanEmit && body[schema.cleanEmitField] !== true) return",
-            "replace": "    if (false) return"
+            "search": "  if (kind.requireCleanEmit && body[schema.cleanEmitField] !== true) return",
+            "replace": "  if (false) return"
           }
         ]
       },
@@ -3091,7 +3091,14 @@
     "R5-14/ui-digest-prefix",
     "R5-14/ui-verdict-derived",
     "R5-14/ui-executed-all-pass",
-    "R5-14/ui-verdict-rederived"
+    "R5-14/ui-verdict-rederived",
+    "R5-13/evidence-add-only",
+    "R5-13/evidence-content-verified",
+    "R5-13/evidence-path-guarded",
+    "R5-13/evidence-path-shape",
+    "R5-13/verifier-reads-tracked",
+    "R5-12/schema-strict-validation",
+    "R5-12/body-kind-mapping"
   ],
   "behaviouralMutants": [
     {
@@ -3197,8 +3204,8 @@
       "ops": [
         {
           "file": "bin/lib/release-evidence.mjs",
-          "search": "    if (foreign.length > 0) return { verified: false,",
-          "replace": "    if (false) return { verified: false,"
+          "search": "  if (foreign.length > 0) return { outcome: 'FINAL', verified: false,",
+          "replace": "  if (false) return { outcome: 'FINAL', verified: false,"
         }
       ],
       "focusedTests": [
@@ -3215,8 +3222,8 @@
       "ops": [
         {
           "file": "bin/lib/release-evidence.mjs",
-          "search": "    if (!schema.executed(body).includes(wantedSubject)) return {",
-          "replace": "    if (false) return {"
+          "search": "  if (!schema.executed(body).includes(wantedSubject)) return { outcome: 'FINAL',",
+          "replace": "  if (false) return { outcome: 'FINAL',"
         }
       ],
       "focusedTests": [
@@ -3403,8 +3410,8 @@
       "ops": [
         {
           "file": "bin/lib/release-evidence.mjs",
-          "search": "    if (candidate !== digest) {",
-          "replace": "    if (candidate !== digest && body.finalResult !== 'PASS') {"
+          "search": "  if (candidate !== digest) return { outcome: 'CONTINUE'",
+          "replace": "  if (candidate !== digest && body.finalResult !== 'PASS') return { outcome: 'CONTINUE'"
         }
       ],
       "focusedTests": [
@@ -4569,8 +4576,8 @@
       "ops": [
         {
           "file": "bin/certify-evidence.mjs",
-          "search": "errors.length > 0 || record['result'] !== 'PASS' || record['sourceHead'] !== sha",
-          "replace": "errors.length > 0 || record['sourceHead'] !== sha"
+          "search": "if (!strict || typeof digest !== 'string' || !verifyReceiptBody(body, subject, digest, sha).verified) {",
+          "replace": "if (!strict || typeof digest !== 'string') {"
         }
       ],
       "focusedTests": [
@@ -4609,8 +4616,8 @@
       "ops": [
         {
           "file": "bin/certify-evidence.mjs",
-          "search": "if (validateCertificationReceipt(body).length === 0 && record['subject'] === subject && record['sourceHead'] === sha) valid.push(subject);",
-          "replace": "if (validateCertificationReceipt(body).length === 0) valid.push(subject);"
+          "search": "if (sound && typeof digest === 'string' && verifyReceiptBody(body, subject, digest, sha).verified) valid.push(subject);",
+          "replace": "if (sound && typeof digest === 'string') valid.push(subject);"
         }
       ],
       "focusedTests": [
@@ -4727,6 +4734,167 @@
       "focusedTests": [
         {
           "file": "tests/unit/releaseReceiptProbes.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-093",
+      "finding": "R5-13/evidence-add-only",
+      "guard": "a committed evidence receipt is add-only (an edit is substantive)",
+      "ops": [
+        {
+          "file": "bin/lib/release-evidence.mjs",
+          "search": "  if (beforeText !== null && beforeText !== afterText) return false;\n",
+          "replace": "\n"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/evidenceReceiptGuard.test.ts"
+        },
+        {
+          "file": "tests/unit/certifyEvidence.test.ts"
+        },
+        {
+          "file": "tests/unit/certificationEvidence.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-094",
+      "finding": "R5-13/evidence-content-verified",
+      "guard": "a committed evidence receipt must verify for its own path subject and SHA",
+      "ops": [
+        {
+          "file": "bin/lib/release-evidence.mjs",
+          "search": "  return typeof digest === 'string' && verifyReceiptBody(body, named.subject, digest, named.sha).verified;",
+          "replace": "  return typeof digest === 'string';"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/evidenceReceiptGuard.test.ts"
+        },
+        {
+          "file": "tests/unit/certifyEvidence.test.ts"
+        },
+        {
+          "file": "tests/unit/certificationEvidence.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-095",
+      "finding": "R5-13/evidence-path-guarded",
+      "guard": "the evidence receipt path is a guarded path, not a free path",
+      "ops": [
+        {
+          "file": "bin/lib/release-evidence.mjs",
+          "search": "  return parseEvidenceReceiptPath(file) === null ? null : 'ADD_ONLY_EVIDENCE_RECEIPT';",
+          "replace": "  return null;"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/evidenceReceiptGuard.test.ts"
+        },
+        {
+          "file": "tests/unit/certifyEvidence.test.ts"
+        },
+        {
+          "file": "tests/unit/certificationEvidence.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-096",
+      "finding": "R5-13/evidence-path-shape",
+      "guard": "only the exact 40-hex one-level evidence path is guarded",
+      "ops": [
+        {
+          "file": "bin/lib/release-evidence.mjs",
+          "search": "([0-9a-f]{40})\\/([a-z0-9][a-z0-9-]{0,63})\\.json$/.exec(file)",
+          "replace": "([0-9a-f]{4,40})\\/([a-z0-9][a-z0-9-]{0,63})\\.json$/.exec(file)"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/evidenceReceiptGuard.test.ts"
+        },
+        {
+          "file": "tests/unit/certifyEvidence.test.ts"
+        },
+        {
+          "file": "tests/unit/certificationEvidence.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-097",
+      "finding": "R5-13/verifier-reads-tracked",
+      "guard": "the verifier reads the tracked evidence directory (clean-clone verification)",
+      "ops": [
+        {
+          "file": "bin/lib/release-evidence.mjs",
+          "search": "  const directories = [kind.directory, `${CERTIFICATION_EVIDENCE_DIRECTORY}/${sha.toLowerCase()}`];",
+          "replace": "  const directories = [kind.directory];"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/evidenceReceiptGuard.test.ts"
+        },
+        {
+          "file": "tests/unit/certifyEvidence.test.ts"
+        },
+        {
+          "file": "tests/unit/certificationEvidence.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-098",
+      "finding": "R5-12/schema-strict-validation",
+      "guard": "the verifier runs the schema strict validation before subject judgement",
+      "ops": [
+        {
+          "file": "bin/lib/release-evidence.mjs",
+          "search": "  const schemaErrors = schema.validate === undefined ? [] : schema.validate(body);",
+          "replace": "  const schemaErrors = [];"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/evidenceReceiptGuard.test.ts"
+        },
+        {
+          "file": "tests/unit/certifyEvidence.test.ts"
+        },
+        {
+          "file": "tests/unit/certificationEvidence.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-099",
+      "finding": "R5-12/body-kind-mapping",
+      "guard": "verifyReceiptBody refuses a subject no receipt kind certifies",
+      "ops": [
+        {
+          "file": "bin/lib/release-evidence.mjs",
+          "search": "  if (!RECEIPT_KINDS[kindName].subjects.includes(wantedSubject)) return { verified: false, reason: 'RECEIPT_SUBJECT_KIND_MISMATCH' };\n",
+          "replace": "\n"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/evidenceReceiptGuard.test.ts"
+        },
+        {
+          "file": "tests/unit/certifyEvidence.test.ts"
+        },
+        {
+          "file": "tests/unit/certificationEvidence.test.ts"
         }
       ]
     }

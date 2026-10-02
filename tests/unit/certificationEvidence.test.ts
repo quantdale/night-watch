@@ -12,8 +12,8 @@ import {
   validateCertificationReceipt,
 } from '../../bin/lib/certification-evidence.mjs';
 import { CERTIFICATION_SCHEMA_SUBJECTS, CERTIFICATION_SUBJECTS, certificationSubject } from '../../bin/lib/certification-subjects.mjs';
-import { RECEIPT_SCHEMAS } from '../../bin/lib/receipt-schemas.mjs';
-import { verifyPersistedReceipt } from '../../bin/lib/release-evidence.mjs';
+import { RECEIPT_SCHEMAS, certificationExecutedSubjects } from '../../bin/lib/receipt-schemas.mjs';
+import { verifyPersistedReceipt, verifyReceiptBody } from '../../bin/lib/release-evidence.mjs';
 
 const ROOT = path.join(__dirname, '..', '..');
 const S = 'a'.repeat(40);
@@ -101,6 +101,19 @@ test.describe('the receipt builder and validator', () => {
   });
 });
 
+test.describe('verifyReceiptBody judges one body exactly as the directory scan does', () => {
+  test('a verifying body passes; a subject no kind certifies, a foreign SHA and a non-object are refused', () => {
+    const body = receipt();
+    const digest = String(body.receiptDigest);
+    expect(verifyReceiptBody(body, 'documentation-currency', digest, S)).toEqual({ verified: true, reason: 'VERIFIED' });
+    expect(verifyReceiptBody(body, 'owner-manual', digest, S)).toEqual({ verified: false, reason: 'RECEIPT_SUBJECT_KIND_MISMATCH' });
+    expect(verifyReceiptBody(body, 'documentation-currency', digest, 'c'.repeat(40)).verified).toBe(false);
+    expect(verifyReceiptBody(body, 'completion-ledger-truth', digest, S).verified).toBe(false);
+    expect(verifyReceiptBody(null, 'documentation-currency', digest, S).verified).toBe(false);
+    expect(verifyReceiptBody({ ...body, extra: 'x' }, 'documentation-currency', digest, S).verified).toBe(false);
+  });
+});
+
 test.describe('the real verifier over real builder output', () => {
   test('a PASS receipt verifies for its subject at its SHA', () => {
     const body = receipt();
@@ -112,18 +125,31 @@ test.describe('the real verifier over real builder output', () => {
     }
   });
 
-  // The executed-subject derivation is its own guard: a body that CLAIMS PASS while its recorded
-  // check was not MET (re-digested so every earlier check is satisfied) must still execute nothing.
+  // A body that CLAIMS PASS over a check that was not MET, re-digested so the digest check passes, is
+  // refused by the schema's strict validation before any subject judgement.
   test('a receipt claiming PASS over a non-MET check, with a re-derived digest, certifies nothing', () => {
     const forged: Record<string, unknown> = { ...receipt({ checkState: 'UNMET' }), result: 'PASS' };
     forged.receiptDigest = certificationReceiptDigest(forged);
     const root = persist(forged);
     try {
       const verdict = verifyPersistedReceipt(root, 'documentation-currency', String(forged.receiptDigest), S);
-      expect(verdict).toEqual({ verified: false, reason: 'RECEIPT_SUBJECT_NOT_EXECUTED:documentation-currency' });
+      expect(verdict.verified).toBe(false);
+      expect(verdict.reason).toBe('RECEIPT_SCHEMA_INVALID:CERT_RECEIPT_PASS_WITHOUT_MET_CLEAN');
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
     }
+  });
+
+  // The executed-subject derivation is its own guard (independent of validation and verdict).
+  test('the executed-subject derivation names the subject only for a MET PASS', () => {
+    expect(certificationExecutedSubjects({ subject: 'documentation-currency', checkState: 'MET', result: 'PASS' })).toEqual(['documentation-currency']);
+    for (const body of [
+      { subject: 'documentation-currency', checkState: 'UNMET', result: 'PASS' },
+      { subject: 'documentation-currency', checkState: 'MET', result: 'NOT_MET' },
+      { subject: 'documentation-currency', checkState: 'MET' },
+      { checkState: 'MET', result: 'PASS' },
+      { subject: '', checkState: 'MET', result: 'PASS' },
+    ]) expect(certificationExecutedSubjects(body), JSON.stringify(body)).toEqual([]);
   });
 
   test('another subject, another SHA, an UNMET check and a dirty emit never verify', () => {

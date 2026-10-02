@@ -10,3 +10,4 @@ export interface CertificationSubject {
 export const CERTIFICATION_SUBJECTS: readonly CertificationSubject[];
 export const CERTIFICATION_SCHEMA_SUBJECTS: readonly string[];
 export function certificationSubject(id: string): CertificationSubject | null;
+export const CERTIFICATION_EVIDENCE_DIRECTORY: 'evidence/certification';

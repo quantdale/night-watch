@@ -82,3 +82,7 @@ export function evidenceLaneDisagreements(
   conditions: ReadonlyArray<{ id: string; evidence?: unknown; evidenceSha: string | null }>,
   laneEvidence: ReadonlyMap<string, string | null>,
 ): string[];
+export const CERTIFICATION_EVIDENCE_DIRECTORY: 'evidence/certification';
+export function verifyReceiptBody(body: unknown, subject: string, digest: string, sha: string | null): { verified: boolean; reason: string };
+export function parseEvidenceReceiptPath(file: string): { sha: string; subject: string } | null;
+export function evidenceReceiptChangeHolds(file: string, beforeText: string | null, afterText: string | null): boolean;

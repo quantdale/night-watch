@@ -20,6 +20,13 @@
 //   COMMAND        a fixed allowlisted command; exit 0 is MET, anything else NOT_MET
 //   OBSERVE_CI     a read-only GitHub Actions observation of the run at S
 
+/**
+ * The TRACKED evidence directory (relative to the repository root): a receipt committed at
+ * `evidence/certification/<sha>/<subject>.json` is read by the verifier in addition to the
+ * host-local ignored directory of its kind, so CI and `gate:clean` verify what the host produced.
+ */
+export const CERTIFICATION_EVIDENCE_DIRECTORY = 'evidence/certification';
+
 /** @typedef {{ id: string, kind: 'CONDITION' | 'LANE', route: 'CERTIFICATION' | 'UI_HARNESS' | 'GATE_COPY' | 'CLEAN_COPY' | 'NONE', producer: 'PROJECT_CHECK' | 'COMMAND' | 'OBSERVE_CI' | 'COPY_THROUGH' | 'UNAVAILABLE', command: readonly string[] | null, checkOf: string | null }} CertificationSubject */
 
 /**

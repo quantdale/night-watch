@@ -13,6 +13,7 @@ import { test, expect } from '@playwright/test';
 import { buildCertificationReceipt } from '../../bin/lib/certification-evidence.mjs';
 import { commandDigest, produceCertificationReceipt, selectCiObservation } from '../../bin/lib/certify-producers.mjs';
 import { verifyPersistedReceipt } from '../../bin/lib/release-evidence.mjs';
+import { UI_HARNESS_FILE, buildUiHarnessReceipt } from '../../bin/lib/ui-harness-receipt.mjs';
 
 const ROOT = path.join(__dirname, '..', '..');
 const CLI = path.join(ROOT, 'bin', 'certify-evidence.mjs');
@@ -165,6 +166,65 @@ test.describe('certify-evidence produce / publish / verify (real CLI, synthetic 
       const other = buildCertificationReceipt({ subject: 'root-compile', sourceHead: 'c'.repeat(40), observedAtHead: fx.head, sourceRootCleanAtEmit: true, checkId: 'cmd-root-compile', checkState: 'MET', producer: 'COMMAND' });
       fs.writeFileSync(path.join(directory, 'root-compile.json'), `${JSON.stringify(other, null, 2)}\n`);
       expect(fx.run(['verify']).json).toMatchObject({ ok: false, invalid: ['root-compile'] });
+    } finally {
+      fx.cleanup();
+    }
+  });
+
+  // R5-13 — the evidence must verify from a CLEAN clone: the host-local ignored directories do not
+  // exist there, so the tracked directory alone has to carry both a produced certification receipt and
+  // a verbatim copy of a host receipt.
+  test('a host UI-harness receipt is imported verbatim, published, and both receipts verify with NO host-local directory', () => {
+    const fx = fixture();
+    try {
+      fx.verdict([]);
+      const harnessFile = { filepath: `/repo/ui/control-center/${UI_HARNESS_FILE}`, tasks: [{ type: 'suite', name: 'suite', tasks: [{ type: 'test', name: 'renders', result: { state: 'pass' } }] }] };
+      const host = buildUiHarnessReceipt({ files: [harnessFile], headSha: fx.head, treeClean: true, typesSource: null, harnessSource: 'it(\'renders\')', executedAt: '2026-10-03T00:00:00.000Z' }) as Record<string, unknown>;
+      fs.mkdirSync(path.join(fx.root, 'artifacts', 'receipts'), { recursive: true });
+      const hostFile = path.join(fx.root, 'artifacts', 'receipts', 'ui-harness-receipt.v1.json');
+      fs.writeFileSync(hostFile, `${JSON.stringify(host, null, 2)}\n`);
+      expect(fx.run(['produce', '--subject', 'root-compile']).status).toBe(0);
+      const imported = fx.run(['import', '--subject', 'ui-error-taxonomy-rendering']);
+      expect(imported.status, imported.stderr).toBe(0);
+      expect(imported.json).toMatchObject({ ok: true, code: 'CERTIFY_IMPORTED', digest: host.receiptDigest });
+      const published = fx.run(['publish']);
+      expect(published.json).toMatchObject({ ok: true, skipped: [] });
+      expect((published.json as { published: string[] }).published.sort()).toEqual(['root-compile', 'ui-error-taxonomy-rendering']);
+      const tracked = path.join(fx.root, 'evidence', 'certification', fx.head, 'ui-error-taxonomy-rendering.json');
+      expect(fs.readFileSync(tracked, 'utf8')).toBe(fs.readFileSync(hostFile, 'utf8'));
+      expect(fx.run(['verify']).json).toMatchObject({ ok: true, invalid: [] });
+      // A "clean clone": only the TRACKED evidence directory exists.
+      const clone = fs.mkdtempSync(path.join(os.tmpdir(), 'nw-certify-clone-'));
+      try {
+        fs.cpSync(path.join(fx.root, 'evidence'), path.join(clone, 'evidence'), { recursive: true });
+        expect(fs.existsSync(path.join(clone, 'artifacts'))).toBe(false);
+        const rootReceipt = JSON.parse(fs.readFileSync(path.join(clone, 'evidence', 'certification', fx.head, 'root-compile.json'), 'utf8')) as Record<string, unknown>;
+        expect(verifyPersistedReceipt(clone, 'root-compile', String(rootReceipt.receiptDigest), fx.head)).toEqual({ verified: true, reason: 'VERIFIED' });
+        expect(verifyPersistedReceipt(clone, 'ui-error-taxonomy-rendering', String(host.receiptDigest), fx.head)).toEqual({ verified: true, reason: 'VERIFIED' });
+        // The tracked receipt of one SHA never verifies at another.
+        expect(verifyPersistedReceipt(clone, 'root-compile', String(rootReceipt.receiptDigest), 'd'.repeat(40)).verified).toBe(false);
+      } finally {
+        fs.rmSync(clone, { recursive: true, force: true });
+      }
+    } finally {
+      fx.cleanup();
+    }
+  });
+
+  test('import refuses a non-importable subject and a host receipt that does not verify', () => {
+    const fx = fixture();
+    try {
+      fx.verdict([]);
+      expect(fx.run(['import', '--subject', 'root-compile']).json).toMatchObject({ ok: false, code: 'CERTIFY_SUBJECT_NOT_IMPORTABLE' });
+      expect(fx.run(['import', '--subject', 'root-compile']).status).toBe(3);
+      expect(fx.run(['import']).status).toBe(2);
+      // No host receipt at all, then one bound to ANOTHER checkpoint: neither is importable.
+      expect(fx.run(['import', '--subject', 'ui-error-taxonomy-rendering']).status).toBe(1);
+      const harnessFile = { filepath: `/repo/ui/control-center/${UI_HARNESS_FILE}`, tasks: [{ type: 'suite', name: 'suite', tasks: [{ type: 'test', name: 'renders', result: { state: 'pass' } }] }] };
+      const other = buildUiHarnessReceipt({ files: [harnessFile], headSha: 'e'.repeat(40), treeClean: true, typesSource: null, harnessSource: 'it(\'renders\')', executedAt: '2026-10-03T00:00:00.000Z' });
+      fs.mkdirSync(path.join(fx.root, 'artifacts', 'receipts'), { recursive: true });
+      fs.writeFileSync(path.join(fx.root, 'artifacts', 'receipts', 'ui-harness-receipt.v1.json'), JSON.stringify(other));
+      expect(fx.run(['import', '--subject', 'ui-error-taxonomy-rendering']).json).toMatchObject({ ok: false, code: 'CERTIFY_IMPORT_NO_VERIFIED_RECEIPT' });
     } finally {
       fx.cleanup();
     }

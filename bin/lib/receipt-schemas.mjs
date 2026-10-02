@@ -15,9 +15,16 @@
 // added where its executing producer is declared, and a producer cannot emit a
 // subject the verifier does not know.
 
+import { validateCertificationReceipt } from './certification-evidence.mjs';
 import { CERTIFICATION_SCHEMA_SUBJECTS } from './certification-subjects.mjs';
 
-/** @typedef {{ subjects: readonly string[], cleanEmitField: string, executed: (body: Record<string, unknown>) => string[] }} ReceiptSchema */
+/**
+ * @typedef {object} ReceiptSchema
+ * @property {readonly string[]} subjects
+ * @property {string} cleanEmitField
+ * @property {(body: Record<string, unknown>) => string[]} executed
+ * @property {(body: Record<string, unknown>) => string[]} [validate] strict structural validation (a closed allowlist); every error refuses the receipt
+ */
 
 /** @param {unknown} value */
 function isRecord(value) {
@@ -96,6 +103,7 @@ export const RECEIPT_SCHEMAS = Object.freeze({
     subjects: CERTIFICATION_SCHEMA_SUBJECTS,
     cleanEmitField: 'sourceRootCleanAtEmit',
     executed: certificationExecutedSubjects,
+    validate: validateCertificationReceipt,
   }),
   'nightwatch.clean-checkout-receipt.v1': Object.freeze({
     subjects: Object.freeze(['clean-checkout']),

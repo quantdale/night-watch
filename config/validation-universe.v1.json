@@ -2,7 +2,7 @@
   "schemaVersion": "nightwatch.validation-universe.v1",
   "definitionName": "Nightwatch validation universe classification (NW-08)",
   "note": "Every discovered executable test or check belongs to exactly one class. AUTHORITATIVE_GATE is DERIVED from what the required gate lanes actually select and is therefore not declarable here; every other discovered file must appear below exactly once, with the reason it is not in the gate and the evidence lane that does cover it. A newly added test that is in no lane and no class fails the gate rather than joining the repository silently.",
-  "inventoryDigest": "sha256:82fdc004b98fc4b87a61b4f8",
+  "inventoryDigest": "sha256:043629980a445190d8fc7887",
   "classes": {
     "FULL_REGRESSION": {
       "reason": "Offline, deterministic suites that the full canonical regression executes. They are not in a required gate lane because the authoritative gate is bounded for CI runtime; leaving them unclassified is what made the gap invisible.",
@@ -71,6 +71,7 @@
         "tests/unit/endpointSemantics.test.ts",
         "tests/unit/environmentSignatureRefusal.test.ts",
         "tests/unit/evidenceEvaluationInputs.test.ts",
+        "tests/unit/evidenceReceiptGuard.test.ts",
         "tests/unit/explainIdFlagTolerance.test.ts",
         "tests/unit/explainSurfaceArgForms.test.ts",
         "tests/unit/exploration.test.ts",
@@ -328,6 +329,7 @@
         "bin/lib/semantic-skip-policy.mjs",
         "bin/lib/session-authority.mjs",
         "bin/lib/shard-child-environment.mjs",
+        "bin/lib/stable-canonical.mjs",
         "bin/lib/topology-gate.mjs",
         "bin/lib/topology-receipts.mjs",
         "bin/lib/transportEffectCensus.mjs",

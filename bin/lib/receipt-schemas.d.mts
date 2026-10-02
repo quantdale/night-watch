@@ -3,6 +3,7 @@ export interface ReceiptSchema {
   readonly subjects: readonly string[];
   readonly cleanEmitField: string;
   readonly executed: (body: Record<string, unknown>) => string[];
+  readonly validate?: (body: Record<string, unknown>) => string[];
 }
 export const RECEIPT_SCHEMAS: Readonly<Record<string, ReceiptSchema>>;
 export function subjectsOfSchemas(schemas: readonly string[]): readonly string[];

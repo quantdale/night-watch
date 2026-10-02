@@ -655,6 +655,12 @@
         "isolated-scratch"
       ]
     },
+    "tests/unit/evidenceReceiptGuard.test.ts": {
+      "class": "PROCESS_ISOLATED_ONLY",
+      "signals": [
+        "isolated-scratch"
+      ]
+    },
     "tests/unit/evidenceRetention.test.ts": {
       "class": "PROCESS_ISOLATED_ONLY",
       "signals": [

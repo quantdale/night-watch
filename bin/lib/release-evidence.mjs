@@ -26,6 +26,8 @@
 // checkouts keep resolving, and are never authoritative when the new file
 // carries the subject.
 
+import { CERTIFICATION_EVIDENCE_DIRECTORY } from './certification-subjects.mjs';
+import { stableCanonical } from './stable-canonical.mjs';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -103,6 +105,8 @@ export const GUARD_CLASSES = Object.freeze({
  * a clean-checkout receipt certifies exactly one subject, and a gate receipt
  * certifies only subjects it declares.
  */
+export { CERTIFICATION_EVIDENCE_DIRECTORY };
+
 export const RECEIPT_KINDS = Object.freeze({
   clean: Object.freeze({
     digestPrefix: 'clean-receipt:',
@@ -145,7 +149,43 @@ export function receiptDeclaredSubjects(body) {
 
 /** @param {string} file */
 export function guardClassForPath(file) {
-  return Object.hasOwn(GUARD_CLASSES, file) ? GUARD_CLASSES[file] : null;
+  if (Object.hasOwn(GUARD_CLASSES, file)) return GUARD_CLASSES[file];
+  return parseEvidenceReceiptPath(file) === null ? null : 'ADD_ONLY_EVIDENCE_RECEIPT';
+}
+
+/**
+ * R5-13 / review-5 task B3.1 — the exact shape of a committed evidence receipt path:
+ * `evidence/certification/<40-hex sha>/<subject>.json`, one level, no other file.
+ * @param {string} file
+ * @returns {{ sha: string, subject: string } | null}
+ */
+export function parseEvidenceReceiptPath(file) {
+  const match = /^evidence\/certification\/([0-9a-f]{40})\/([a-z0-9][a-z0-9-]{0,63})\.json$/.exec(file);
+  return match === null ? null : { sha: String(match[1]), subject: String(match[2]) };
+}
+
+/**
+ * R5-13 — a committed evidence receipt is documentary only when it is ADD-ONLY (a new file, or
+ * bytes identical to the parent's: never an edit or a deletion) AND the real receipt judgement
+ * verifies the body for the subject and SHA its own path names. A path is never approved alone.
+ * @param {string} file
+ * @param {string | null} beforeText
+ * @param {string | null} afterText
+ * @returns {boolean}
+ */
+export function evidenceReceiptChangeHolds(file, beforeText, afterText) {
+  const named = parseEvidenceReceiptPath(file);
+  if (named === null || afterText === null) return false;
+  if (beforeText !== null && beforeText !== afterText) return false;
+  /** @type {unknown} */
+  let body;
+  try {
+    body = JSON.parse(afterText);
+  } catch {
+    return false;
+  }
+  const digest = body !== null && typeof body === 'object' ? /** @type {Record<string, unknown>} */ (body).receiptDigest : null;
+  return typeof digest === 'string' && verifyReceiptBody(body, named.subject, digest, named.sha).verified;
 }
 
 /**
@@ -476,6 +516,98 @@ export function isAppendOnlyCorrectionsChange(beforeText, afterText) {
 }
 
 /**
+ * @typedef {object} ReceiptJudgement
+ * @property {'SKIP' | 'CONTINUE' | 'FINAL'} outcome SKIP: not the receipt under verification (unbound SHA); CONTINUE: a refusal that must not shadow a later candidate; FINAL: the verdict
+ * @property {boolean} verified
+ * @property {string} reason
+ */
+
+/**
+ * Judge ONE parsed receipt body against the digest, subject and SHA under verification. Pure: it
+ * reads no file, so the directory scan and the publish step share exactly one judgement.
+ * @param {'clean' | 'gate'} kindName
+ * @param {Record<string, unknown>} body
+ * @param {string} wantedSubject
+ * @param {string} digest
+ * @param {string} sha
+ * @returns {ReceiptJudgement}
+ */
+function judgeReceiptBody(kindName, body, wantedSubject, digest, sha) {
+  const kind = RECEIPT_KINDS[kindName];
+  const prefix = kind.digestPrefix;
+  const recordedSha = typeof body.sourceHead === 'string' ? body.sourceHead
+    : typeof body.gitHead === 'string' ? body.gitHead
+      : typeof body.nightwatchSha === 'string' ? body.nightwatchSha
+        : null;
+  if (recordedSha === null || recordedSha.toLowerCase() !== sha.toLowerCase()) return { outcome: 'SKIP', verified: false, reason: '' };
+  // The candidate is SHA-bound. Re-derive its content digest FIRST: only the
+  // receipt whose digest equals the requested digest IS the receipt under
+  // verification, so its own failures are the ones reported. Refusals from
+  // unrelated candidates are never allowed to shadow it.
+  const clone = { ...body };
+  delete clone.receiptDigest;
+  const candidate = kindName === 'clean'
+    ? `${prefix}sha256:${crypto.createHash('sha256').update(JSON.stringify(clone), 'utf8').digest('hex').slice(0, 24)}`
+    : `${prefix}sha256:${crypto.createHash('sha256').update(stableCanonical(clone), 'utf8').digest('hex').slice(0, 24)}`;
+  if (candidate !== digest) return { outcome: 'CONTINUE', verified: false, reason: 'RECEIPT_DIGEST_MISMATCH' };
+  // This IS the receipt the digest names: every remaining property is now
+  // REQUIRED (R4-03 / OD-5).
+  if (typeof body.schemaVersion !== 'string' || !kind.schemas.includes(body.schemaVersion)) {
+    return { outcome: 'FINAL', verified: false, reason: `RECEIPT_SCHEMA_UNSUPPORTED:${String(body.schemaVersion)}` };
+  }
+  const declared = receiptDeclaredSubjects(body);
+  if (declared.length === 0) return { outcome: 'FINAL', verified: false, reason: 'RECEIPT_SUBJECT_ABSENT' };
+  // R5-04: the schema's subject set is CLOSED. A receipt naming a subject its
+  // schema's producer does not certify never verifies — not even for the
+  // legitimate subject it also names.
+  const schema = RECEIPT_SCHEMAS[body.schemaVersion];
+  if (schema === undefined) return { outcome: 'FINAL', verified: false, reason: `RECEIPT_SCHEMA_UNSUPPORTED:${String(body.schemaVersion)}` };
+  // The schema's own strict validation (a closed allowlist for the certification schema) runs before any
+  // subject judgement, so a body carrying an unknown key or a path-like token never verifies.
+  const schemaErrors = schema.validate === undefined ? [] : schema.validate(body);
+  if (schemaErrors.length > 0) return { outcome: 'FINAL', verified: false, reason: `RECEIPT_SCHEMA_INVALID:${schemaErrors[0]}` };
+  const foreign = declared.filter((entry) => !schema.subjects.includes(entry));
+  if (foreign.length > 0) return { outcome: 'FINAL', verified: false, reason: `RECEIPT_SUBJECT_NOT_CERTIFIABLE:${foreign.join(',')}` };
+  if (!declared.includes(wantedSubject)) return { outcome: 'FINAL', verified: false, reason: `RECEIPT_SUBJECT_MISMATCH:${declared.join(',')}` };
+  const presentVerdicts = kind.verdictFields.filter((field) => typeof body[field] === 'string');
+  if (presentVerdicts.length === 0) return { outcome: 'FINAL', verified: false, reason: 'RECEIPT_VERDICT_MISSING' };
+  const failedVerdict = presentVerdicts.find((field) => body[field] !== 'PASS');
+  if (failedVerdict !== undefined) return { outcome: 'FINAL', verified: false, reason: `RECEIPT_VERDICT_NOT_PASS:${failedVerdict}=${String(body[failedVerdict])}` };
+  // R5-04: derived from the BODY — the producer must have executed the very
+  // subject being certified (a hand-shaped `{subject, finalResult: PASS}` that
+  // records no executed groups/tests proves nothing).
+  if (!schema.executed(body).includes(wantedSubject)) return { outcome: 'FINAL', verified: false, reason: `RECEIPT_SUBJECT_NOT_EXECUTED:${wantedSubject}` };
+  if (kind.requireCleanEmit && body[schema.cleanEmitField] !== true) return { outcome: 'FINAL', verified: false, reason: 'RECEIPT_CLEAN_EMIT_UNPROVEN' };
+  return { outcome: 'FINAL', verified: true, reason: 'VERIFIED' };
+}
+
+/**
+ * Verify ONE already-parsed receipt body (for example a staged receipt about to be published)
+ * with exactly the judgement the directory scan applies.
+ * @param {unknown} body
+ * @param {string} subject
+ * @param {string} digest
+ * @param {string | null} sha
+ * @returns {{ verified: boolean, reason: string }}
+ */
+export function verifyReceiptBody(body, subject, digest, sha) {
+  const wantedSubject = typeof subject === 'string' ? subject.trim() : '';
+  if (wantedSubject === '' || !SUBJECT_RE.test(wantedSubject)) return { verified: false, reason: 'RECEIPT_SUBJECT_INVALID' };
+  if (typeof digest !== 'string' || typeof sha !== 'string' || !SHA40_RE.test(sha)) return { verified: false, reason: 'RECEIPT_INPUT_INVALID' };
+  const kindName = digest.startsWith(RECEIPT_KINDS.clean.digestPrefix) ? 'clean'
+    : digest.startsWith(RECEIPT_KINDS.gate.digestPrefix) ? 'gate'
+      : null;
+  if (kindName === null) return { verified: false, reason: 'RECEIPT_KIND_UNSUPPORTED' };
+  if (!RECEIPT_KINDS[kindName].subjects.includes(wantedSubject)) return { verified: false, reason: 'RECEIPT_SUBJECT_KIND_MISMATCH' };
+  if (body === null || typeof body !== 'object' || Array.isArray(body)) return { verified: false, reason: 'RECEIPT_NOT_FOUND_OR_UNBOUND' };
+  const record = /** @type {Record<string, unknown>} */ (body);
+  if (typeof record.receiptDigest !== 'string') return { verified: false, reason: 'RECEIPT_NOT_FOUND_OR_UNBOUND' };
+  const judged = judgeReceiptBody(kindName, record, wantedSubject, digest, sha);
+  if (judged.outcome === 'FINAL') return { verified: judged.verified, reason: judged.reason };
+  return { verified: false, reason: judged.outcome === 'CONTINUE' ? judged.reason : 'RECEIPT_NOT_FOUND_OR_UNBOUND' };
+}
+
+/**
  * R3-05 / corrections task 8.4 — the receipt verifier: a digest is evidence
  * only when a PERSISTED receipt file, re-read at check time, re-derives to
  * that exact digest and is bound to the same commit.
@@ -533,78 +665,48 @@ export function verifyPersistedReceipt(root, subject, digest, sha) {
   const prefix = kind.digestPrefix;
   const marker = `${prefix}sha256:`;
   if (!digest.startsWith(marker)) return { verified: false, reason: 'RECEIPT_DIGEST_MALFORMED' };
-  const directory = kind.directory;
-  let entries;
-  try {
-    entries = fs.readdirSync(path.join(root, directory));
-  } catch {
-    return { verified: false, reason: 'RECEIPT_DIRECTORY_ABSENT' };
-  }
+  // The host-local directory of the kind, then the TRACKED directory bound to this SHA.
+  const directories = [kind.directory, `${CERTIFICATION_EVIDENCE_DIRECTORY}/${sha.toLowerCase()}`];
+  let anyDirectory = false;
   /** @type {string | null} */
   let firstRefusal = null;
   const refuse = (reason) => {
     if (firstRefusal === null) firstRefusal = reason;
   };
-  for (const entry of entries.slice().sort()) {
-    if (!entry.endsWith('.json')) continue;
-    let text;
+  for (const directory of directories) {
+    let entries;
     try {
-      text = fs.readFileSync(path.join(root, directory, entry), 'utf8');
+      entries = fs.readdirSync(path.join(root, directory));
     } catch {
       continue;
     }
-    let body;
-    try {
-      body = JSON.parse(text);
-    } catch {
-      continue;
+    anyDirectory = true;
+    for (const entry of entries.slice().sort()) {
+      if (!entry.endsWith('.json')) continue;
+      let text;
+      try {
+        text = fs.readFileSync(path.join(root, directory, entry), 'utf8');
+      } catch {
+        continue;
+      }
+      let body;
+      try {
+        body = JSON.parse(text);
+      } catch {
+        continue;
+      }
+      if (body === null || typeof body !== 'object' || Array.isArray(body)) continue;
+      if (typeof body.receiptDigest !== 'string') continue;
+      const judged = judgeReceiptBody(kindName, body, wantedSubject, digest, sha);
+      if (judged.outcome === 'SKIP') continue;
+      if (judged.outcome === 'CONTINUE') {
+        refuse(judged.reason);
+        continue;
+      }
+      return { verified: judged.verified, reason: judged.reason };
     }
-    if (body === null || typeof body !== 'object' || Array.isArray(body)) continue;
-    if (typeof body.receiptDigest !== 'string') continue;
-    const recordedSha = typeof body.sourceHead === 'string' ? body.sourceHead
-      : typeof body.gitHead === 'string' ? body.gitHead
-        : typeof body.nightwatchSha === 'string' ? body.nightwatchSha
-          : null;
-    if (recordedSha === null || recordedSha.toLowerCase() !== sha.toLowerCase()) continue;
-    // The candidate is SHA-bound. Re-derive its content digest FIRST: only the
-    // receipt whose digest equals the requested digest IS the receipt under
-    // verification, so its own failures are the ones reported. Refusals from
-    // unrelated candidates are never allowed to shadow it.
-    const clone = { ...body };
-    delete clone.receiptDigest;
-    const candidate = kindName === 'clean'
-      ? `${prefix}sha256:${crypto.createHash('sha256').update(JSON.stringify(clone), 'utf8').digest('hex').slice(0, 24)}`
-      : `${prefix}sha256:${crypto.createHash('sha256').update(stableCanonical(clone), 'utf8').digest('hex').slice(0, 24)}`;
-    if (candidate !== digest) {
-      refuse('RECEIPT_DIGEST_MISMATCH');
-      continue;
-    }
-    // This IS the receipt the digest names: every remaining property is now
-    // REQUIRED (R4-03 / OD-5).
-    if (typeof body.schemaVersion !== 'string' || !kind.schemas.includes(body.schemaVersion)) {
-      return { verified: false, reason: `RECEIPT_SCHEMA_UNSUPPORTED:${String(body.schemaVersion)}` };
-    }
-    const declared = receiptDeclaredSubjects(body);
-    if (declared.length === 0) return { verified: false, reason: 'RECEIPT_SUBJECT_ABSENT' };
-    // R5-04: the schema's subject set is CLOSED. A receipt naming a subject its
-    // schema's producer does not certify never verifies — not even for the
-    // legitimate subject it also names.
-    const schema = RECEIPT_SCHEMAS[body.schemaVersion];
-    if (schema === undefined) return { verified: false, reason: `RECEIPT_SCHEMA_UNSUPPORTED:${String(body.schemaVersion)}` };
-    const foreign = declared.filter((entry) => !schema.subjects.includes(entry));
-    if (foreign.length > 0) return { verified: false, reason: `RECEIPT_SUBJECT_NOT_CERTIFIABLE:${foreign.join(',')}` };
-    if (!declared.includes(wantedSubject)) return { verified: false, reason: `RECEIPT_SUBJECT_MISMATCH:${declared.join(',')}` };
-    const presentVerdicts = kind.verdictFields.filter((field) => typeof body[field] === 'string');
-    if (presentVerdicts.length === 0) return { verified: false, reason: 'RECEIPT_VERDICT_MISSING' };
-    const failedVerdict = presentVerdicts.find((field) => body[field] !== 'PASS');
-    if (failedVerdict !== undefined) return { verified: false, reason: `RECEIPT_VERDICT_NOT_PASS:${failedVerdict}=${String(body[failedVerdict])}` };
-    // R5-04: derived from the BODY — the producer must have executed the very
-    // subject being certified (a hand-shaped `{subject, finalResult: PASS}` that
-    // records no executed groups/tests proves nothing).
-    if (!schema.executed(body).includes(wantedSubject)) return { verified: false, reason: `RECEIPT_SUBJECT_NOT_EXECUTED:${wantedSubject}` };
-    if (kind.requireCleanEmit && body[schema.cleanEmitField] !== true) return { verified: false, reason: 'RECEIPT_CLEAN_EMIT_UNPROVEN' };
-    return { verified: true, reason: 'VERIFIED' };
   }
+  if (!anyDirectory) return { verified: false, reason: 'RECEIPT_DIRECTORY_ABSENT' };
   return { verified: false, reason: firstRefusal ?? 'RECEIPT_NOT_FOUND_OR_UNBOUND' };
 }
 
@@ -633,17 +735,7 @@ export function productionBindingReceiptVerifier(root) {
   };
 }
 
-/**
- * The quality gate's canonical computation: object keys sorted, arrays in
- * order. Exported for the verifier and its tests.
- * @param {unknown} value
- * @returns {string}
- */
-export function stableCanonical(value) {
-  if (value === null || typeof value !== 'object') return JSON.stringify(value) ?? 'null';
-  if (Array.isArray(value)) return `[${value.map(stableCanonical).join(',')}]`;
-  return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${stableCanonical(/** @type {Record<string, unknown>} */ (value)[key])}`).join(',')}}`;
-}
+export { stableCanonical };
 
 /**
  * Evaluate one file's guard for a raw byte change. Unknown guard classes fail
@@ -707,6 +799,7 @@ export function guardHoldsForChange(file, beforeText, afterText, options = {}) {
   const guard = guardClassForPath(file);
   if (guard === 'VALUES_ONLY_BINDINGS') return isValuesOnlyBindingChange(beforeText, afterText, options).valuesOnly;
   if (guard === 'APPEND_ONLY_CORRECTIONS') return isAppendOnlyCorrectionsChange(beforeText, afterText).appendOnly;
+  if (guard === 'ADD_ONLY_EVIDENCE_RECEIPT') return evidenceReceiptChangeHolds(file, beforeText, afterText);
   return false;
 }
 

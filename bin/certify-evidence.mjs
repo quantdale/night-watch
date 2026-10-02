@@ -7,8 +7,9 @@
 // receipt under the git-ignored `artifacts/certification-staging/<S>/` (so the
 // tree stays clean for the next producer). `publish` copies the staged PASS
 // receipts of S into the TRACKED `evidence/certification/<S>/` directory, ready
-// to be committed in a documentary descendant of S. `verify` re-derives every
-// tracked receipt of S offline.
+// to be committed in a documentary descendant of S. `import` stages an existing
+// host receipt (gate, clean checkout, UI harness) byte-for-byte after the real
+// verifier accepts it. `verify` re-derives every tracked receipt of S offline.
 //
 // Receipts are tamper-evident, not tamper-proof (OD-5): no signature, key or
 // MAC. Nothing here contacts an Alphaus system; the only external read is the
@@ -21,8 +22,10 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { buildChildEnvironment } from './child-environment.mjs';
 import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
-import { CERTIFICATION_EVIDENCE_DIRECTORY, certificationReceiptPath, validateCertificationReceipt } from './lib/certification-evidence.mjs';
+import { CERTIFICATION_EVIDENCE_DIRECTORY, certificationReceiptPath } from './lib/certification-evidence.mjs';
+import { certificationSubject } from './lib/certification-subjects.mjs';
 import { produceCertificationReceipt, selectCiObservation } from './lib/certify-producers.mjs';
+import { RECEIPT_KINDS, verifyReceiptBody } from './lib/release-evidence.mjs';
 import { gitReadOnly } from './lib/probe-io.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -40,7 +43,8 @@ const CLI_METADATA = {
   group: 'validate',
   commands: [
     { name: 'produce', summary: 'measure one subject at the certified checkpoint and stage its receipt (git-ignored)' },
-    { name: 'publish', summary: 'copy the staged PASS receipts of the certified checkpoint into the tracked evidence directory' },
+    { name: 'import', summary: 'stage a verified host receipt (gate, clean checkout or UI harness) of the certified checkpoint verbatim' },
+    { name: 'publish', summary: 'copy the staged verified receipts of the certified checkpoint into the tracked evidence directory' },
     { name: 'verify', summary: 'offline re-derivation of every tracked receipt of the certified checkpoint' },
   ],
   commandRequired: true,
@@ -164,6 +168,44 @@ function certifiedCheckpoint(root) {
   return typeof sha === 'string' && SHA40_RE.test(sha) ? sha : null;
 }
 
+/**
+ * Stage a host receipt of the certified checkpoint VERBATIM (the digest is computed over the
+ * body, so any rewrite would invalidate it) once the real verifier accepts it for the subject.
+ * @param {string} root
+ * @param {string} subject
+ */
+function importHostReceipt(root, subject) {
+  const entry = certificationSubject(subject);
+  const kindDirectories = { GATE_COPY: RECEIPT_KINDS.gate.directory, UI_HARNESS: RECEIPT_KINDS.gate.directory, CLEAN_COPY: RECEIPT_KINDS.clean.directory };
+  const directory = entry === null ? undefined : kindDirectories[/** @type {keyof typeof kindDirectories} */ (entry.route)];
+  if (entry === null || entry.producer !== 'COPY_THROUGH' || directory === undefined) {
+    process.stdout.write(`${JSON.stringify({ ok: false, subject, code: 'CERTIFY_SUBJECT_NOT_IMPORTABLE' })}\n`);
+    process.exitCode = 3;
+    return;
+  }
+  const sha = certifiedCheckpoint(root);
+  if (sha === null) {
+    process.stdout.write(`${JSON.stringify({ ok: false, subject, code: 'CERTIFY_CHECKPOINT_UNRESOLVED' })}\n`);
+    process.exitCode = 3;
+    return;
+  }
+  for (const name of jsonFiles(path.join(root, directory)).reverse()) {
+    const text = fs.readFileSync(path.join(root, directory, name), 'utf8');
+    /** @type {unknown} */
+    let body = null;
+    try { body = JSON.parse(text); } catch { body = null; }
+    const digest = body !== null && typeof body === 'object' ? /** @type {Record<string, unknown>} */ (body)['receiptDigest'] : null;
+    if (typeof digest !== 'string' || !verifyReceiptBody(body, subject, digest, sha).verified) continue;
+    const staged = path.join(root, STAGING_DIRECTORY, sha);
+    fs.mkdirSync(staged, { recursive: true });
+    fs.writeFileSync(path.join(staged, `${subject}.json`), text, { mode: 0o600 });
+    process.stdout.write(`${JSON.stringify({ ok: true, subject, code: 'CERTIFY_IMPORTED', digest, sourceHead: sha })}\n`);
+    return;
+  }
+  process.stdout.write(`${JSON.stringify({ ok: false, subject, code: 'CERTIFY_IMPORT_NO_VERIFIED_RECEIPT' })}\n`);
+  process.exitCode = 1;
+}
+
 /** @param {string} root */
 function publish(root) {
   const sha = certifiedCheckpoint(root);
@@ -180,9 +222,14 @@ function publish(root) {
     /** @type {unknown} */
     let body = null;
     try { body = JSON.parse(text); } catch { body = null; }
-    const errors = validateCertificationReceipt(body);
     const record = /** @type {Record<string, unknown>} */ (body ?? {});
-    if (errors.length > 0 || record['result'] !== 'PASS' || record['sourceHead'] !== sha || record['subject'] !== subject) {
+    const entry = certificationSubject(subject);
+    const digest = record['receiptDigest'];
+    // One judgement for every kind: the real verifier over the staged body (it binds the receipt to
+    // the subject and S its file names and runs the schema's strict allowlist validation). A staged
+    // file must also be a subject this producer certifies at all.
+    const strict = entry !== null && (entry.route === 'CERTIFICATION' || entry.producer === 'COPY_THROUGH');
+    if (!strict || typeof digest !== 'string' || !verifyReceiptBody(body, subject, digest, sha).verified) {
       skipped.push(subject);
       continue;
     }
@@ -217,7 +264,10 @@ function verify(root) {
     let body = null;
     try { body = JSON.parse(fs.readFileSync(path.join(directory, name), 'utf8')); } catch { body = null; }
     const record = /** @type {Record<string, unknown>} */ (body ?? {});
-    if (validateCertificationReceipt(body).length === 0 && record['subject'] === subject && record['sourceHead'] === sha) valid.push(subject);
+    const entry = certificationSubject(subject);
+    const digest = record['receiptDigest'];
+    const sound = entry !== null && (entry.route === 'CERTIFICATION' || entry.producer === 'COPY_THROUGH');
+    if (sound && typeof digest === 'string' && verifyReceiptBody(body, subject, digest, sha).verified) valid.push(subject);
     else invalid.push(subject);
   }
   process.stdout.write(`${JSON.stringify({ ok: invalid.length === 0, sourceHead: sha, valid, invalid })}\n`);
@@ -233,6 +283,12 @@ if (cli.ok === true && cli.stop !== true) {
       process.stdout.write(`${JSON.stringify({ ok: false, code: 'CERTIFY_SUBJECT_REQUIRED' })}\n`);
       process.exitCode = 2;
     } else produce(root, subject);
+  } else if (cli.command === 'import') {
+    const subject = cli.flags['--subject'];
+    if (typeof subject !== 'string' || subject === '') {
+      process.stdout.write(`${JSON.stringify({ ok: false, code: 'CERTIFY_SUBJECT_REQUIRED' })}\n`);
+      process.exitCode = 2;
+    } else importHostReceipt(root, subject);
   } else if (cli.command === 'publish') publish(root);
   else if (cli.command === 'verify') verify(root);
 }
