@@ -338,6 +338,25 @@ test.describe('stable task-ID ledger (VA-01 / task 5.2)', () => {
     expect(archived.info.join(' ')).toContain('LEDGER_TASK_ID_CHANGE_NOT_ACTIVE');
   });
 
+  // R5-10 / review-5 A8.1 — an archived change's ledger entry is a stale pin that must be removed.
+  test('an entry whose change is archived is LEDGER_TASK_ID_ARCHIVED_ENTRY, while an unknown change stays information', () => {
+    const root = fixtureRoot();
+    writeChange(root, 'c-one', '- [x] 1.1 first\n- [x] 1.2 second\n- [x] 2.1 third');
+    fs.mkdirSync(path.join(root, 'openspec', 'changes', 'archive', '2026-10-01-c-done'), { recursive: true });
+    fs.writeFileSync(path.join(root, 'openspec', 'changes', 'archive', '2026-10-01-c-done', 'tasks.md'), '- [x] 1.1 done\n');
+    ledger(root, [{ changeId: 'c-one', bootstrapSha: sha }, { changeId: 'c-done', bootstrapSha: sha }]);
+    const verdict = inspectTaskIdLedger(root, () => bootstrap);
+    expect(verdict.errors.join(' ')).toContain('LEDGER_TASK_ID_ARCHIVED_ENTRY: change c-done is archived');
+    // A change that is neither active nor archived is information, not this error.
+    ledger(root, [{ changeId: 'c-one', bootstrapSha: sha }, { changeId: 'c-nowhere', bootstrapSha: sha }]);
+    const unknown = inspectTaskIdLedger(root, () => bootstrap);
+    expect(unknown.errors.join(' ')).not.toContain('LEDGER_TASK_ID_ARCHIVED_ENTRY');
+    expect(unknown.info.join(' ')).toContain('LEDGER_TASK_ID_CHANGE_NOT_ACTIVE: change c-nowhere');
+    // A lookalike archive directory for ANOTHER change never matches (exact id after the date prefix).
+    fs.mkdirSync(path.join(root, 'openspec', 'changes', 'archive', '2026-10-01-c-nowhere-extra'), { recursive: true });
+    expect(inspectTaskIdLedger(root, () => bootstrap).errors.join(' ')).not.toContain('LEDGER_TASK_ID_ARCHIVED_ENTRY');
+  });
+
   test('R3-10: rewording, striking an in-scope ID and a missing entry are all errors', () => {
     const root = fixtureRoot();
     writeChange(root, 'c-one', '- [x] 1.1 a REWORDED task\n- [ ] 1.2 second\n- [ ] 2.1 third');

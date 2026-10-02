@@ -67,7 +67,7 @@
       "to": "docs/ARCHITECTURE.md",
       "date": "2026-09-12",
       "digest": "sha256:61a7918d02d7a32e7d96e369",
-      "summary": "The master plan's review-time §2 'Repository and system overview' (inventory and method, major boundaries and flows, evidence and limits at review close) moved byte-identically into the architecture archive to keep the current-truth plan under its declared bound."
+      "summary": "The master plan's review-time \u00a72 'Repository and system overview' (inventory and method, major boundaries and flows, evidence and limits at review close) moved byte-identically into the architecture archive to keep the current-truth plan under its declared bound."
     }
   ]
 }

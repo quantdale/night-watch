@@ -443,6 +443,12 @@
       "class": "PARALLEL_SAFE",
       "signals": []
     },
+    "tests/unit/claimJournal.test.ts": {
+      "class": "PARALLEL_SAFE",
+      "signals": [
+        "isolated-scratch"
+      ]
+    },
     "tests/unit/cliImplementationContract.test.ts": {
       "class": "PARALLEL_SAFE",
       "signals": [

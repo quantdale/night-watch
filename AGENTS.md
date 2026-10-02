@@ -73,6 +73,7 @@ cd <printed worktree path>
 node bin/nightwatch-session.mjs claim --task <task-id> --adopt --expect-session <predecessor-session-id>
 …implement and validate…
 node bin/nightwatch-session.mjs reconcile --expect-session <session-id>   # only if the base is stale
+npm run prepush   # R5-11: hardening:check, agent:check, project:check, typecheck, typecheck:bin and the affected suites MUST pass at this exact HEAD before every integrate
 node bin/nightwatch-session.mjs integrate --expect-session <session-id> --expect-head <40-hex-head>
 node bin/nightwatch-session.mjs release --expect-session <session-id>
 node bin/nightwatch-session.mjs remove --name <session> --expect-session <session-id> --delete-branch   # from canonical

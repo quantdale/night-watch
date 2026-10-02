@@ -1,5 +1,6 @@
 // F-PERF-5 validation lane composition tests.
 
+import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { test, expect } from '@playwright/test';
@@ -63,4 +64,27 @@ test('an unknown lane is refused', () => {
   const result = spawnSync(process.execPath, [CLI, 'certify-everything', '--dry-run', '--json'], { cwd: ROOT, encoding: 'utf8', timeout: 120_000 });
   expect(result.status).toBe(2);
   expect(result.stderr).toContain('CLI_UNKNOWN_COMMAND');
+});
+
+// R5-11 / review-5 task A9.2 — the pre-push lane every integrate step runs first.
+
+test('the prepush lane carries every component whose omission caused a red CI run, and nothing milestone-scoped', () => {
+  const prepush = VALIDATION_LANE_DEFINITIONS.prepush;
+  expect(prepush.authority).toBe('NOT_CERTIFICATION');
+  const ids = prepush.steps.map((step) => step.id);
+  for (const required of ['typecheck', 'typecheck-bin', 'hardening-check', 'agent-check', 'project-check', 'affected-tests', 'affected-shards']) expect(ids, required).toContain(required);
+  const commands = prepush.steps.map((step) => (step.command ?? []).join(' '));
+  for (const forbidden of ['hardening:rules', 'hardening:mutants', 'gate:local', 'gate:clean', 'gate:ci']) expect(commands.some((command) => command.includes(forbidden)), forbidden).toBe(false);
+  expect(validateLaneDefinitions().violations).toEqual([]);
+  const execution = buildLaneExecution({ lane: 'prepush', base: 'origin/main', selectedTests: ['tests/unit/a.test.ts'], parallelShardCount: 2 });
+  expect(execution.steps.find((step) => step.id === 'project-check')?.argv).toEqual(['npm', 'run', 'project:check']);
+  expect(execution.steps.find((step) => step.id === 'affected-tests')?.argv).toContain('--base=origin/main');
+});
+
+test('npm run prepush runs the prepush lane, and the session integrate step names it', () => {
+  const manifest = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', 'package.json'), 'utf8')) as { scripts: Record<string, string> };
+  expect(manifest.scripts.prepush).toBe('node bin/validation-lane.mjs prepush');
+  const session = fs.readFileSync(path.join(__dirname, '..', '..', 'bin', 'nightwatch-session.mjs'), 'utf8');
+  expect(session).toContain("emit('SESSION_PREPUSH_REQUIRED'");
+  expect(fs.readFileSync(path.join(__dirname, '..', '..', 'AGENTS.md'), 'utf8')).toContain('npm run prepush');
 });

@@ -493,6 +493,20 @@ export function taskIdLedgerViolations(baselineText, currentText) {
 }
 
 /**
+ * Whether `openspec/changes/archive/<YYYY-MM-DD>-<changeId>/` exists.
+ * @param {string} root
+ * @param {string} changeId
+ */
+function isArchivedChange(root, changeId) {
+  try {
+    return fs.readdirSync(path.join(root, 'openspec', 'changes', 'archive'), { withFileTypes: true })
+      .some((entry) => entry.isDirectory() && entry.name === entry.name.slice(0, 11) + changeId && /^\d{4}-\d{2}-\d{2}-/.test(entry.name));
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Check every ledger entry. `readBlobAtCommit(sha, relativePath)` returns the
  * file text at that commit or null when it cannot be read; it is injected so
  * this module stays free of process authority. An entry whose change is
@@ -537,6 +551,13 @@ export function inspectTaskIdLedger(root, readBlobAtCommit) {
     const relative = `openspec/changes/${changeId}/tasks.md`;
     const current = readFileIfPresent(path.join(root, relative));
     if (current === null) {
+      // R5-10 / review-5 A8.1: an ARCHIVED change's entry is a stale pin (the review-4 entry
+      // outlived its archive), detected here instead of being skipped as information. The
+      // archive step of a child campaign removes its own entry in the same change.
+      if (isArchivedChange(root, changeId)) {
+        errors.push(`LEDGER_TASK_ID_ARCHIVED_ENTRY: change ${changeId} is archived under openspec/changes/archive; remove its entry from ${TASK_ID_LEDGER_PATH} (an archived change's IDs are no longer enforced)`);
+        continue;
+      }
       info.push(`LEDGER_TASK_ID_CHANGE_NOT_ACTIVE: change ${changeId} has no active tasks.md; its ID baseline is not enforced`);
       continue;
     }

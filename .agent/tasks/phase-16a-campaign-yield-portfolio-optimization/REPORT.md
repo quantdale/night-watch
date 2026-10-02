@@ -10,7 +10,7 @@ Status: COMPLETE (IMPLEMENTED_FOCUSED_GREEN_AWAITING_HARDENING)
   `1553253ffb89907aa519b55ff6c0dd28849a90fe` -> `7ef8968f905cb16f1c3c7631be396eb9945a351c`
   (HEAD == origin/main at activation; the Phase 16A publication package).
 - Implementation was produced by the context-free implementation session
-  (pi session `01a028ae-0325-7d95-b228-f8e079f2c7ab`, 2026-08-22) and fully
+  (an earlier agent session, 2026-08-22) and fully
   revalidated + closed by the follow-up continuity/closure session.
 
 ## 2. Portfolio universe and authority proof

@@ -5644,3 +5644,14 @@ whole decision and not only its headline:
 **Revisit trigger.** Any owner statement contradicting "both", or a Producer
 Matrix row that cannot be completed honestly, stops the campaign for an owner
 decision.
+
+**Record (2026-10-02, R5-18 / review-5 task A8.2 — appended).** Three references to
+an earlier agent session (one full identifier, two prefixes) survived the review-4
+redaction: an archived corrections `tasks.md` line, a phase-16a `REPORT.md` line and
+a phase-16a `STATE.md` line. They are replaced in place by non-identifying
+references and registered as `CORR-R5-18-001..003` in
+`config/document-role-corrections.v1.json` (with the identifier itself kept OUT of
+the registered excerpts). The redaction is a working-tree redaction only: **the full
+identifier remains in earlier public git history** (the repository is temporarily
+public and history is never rewritten here), so it must be treated as already
+published; the repository returns to private at the owner's close-out step.

@@ -792,6 +792,14 @@
           "a Prettier run leaves an unmarked probe untouched and formats a pragma-marked one"
         ],
         "reasonToken": "PRETTIER_BINARY_ABSENT"
+      },
+      {
+        "file": "tests/unit/formatterPolicy.test.ts",
+        "titlePath": [
+          "Prettier neutralisation (R3-14)",
+          "a Prettier run from the parent directory leaves an in-repo probe untouched"
+        ],
+        "reasonToken": "PRETTIER_BINARY_ABSENT"
       }
     ]
   },

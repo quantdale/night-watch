@@ -142,22 +142,24 @@ test.describe('Prettier neutralisation (R3-14)', () => {
     // runs PRETTIER ITSELF from the parent cwd, not a node one-liner — the
     // per-file `requirePragma` config is what neutralises it there.
     expect(nearestPrettierConfig(target)?.config.requirePragma).toBe(true);
-    const prettier = resolvePrettierBinary();
-    if (prettier === null) {
-      // Declared absence, never a silent pass: the lane's skip identity names
-      // PRETTIER_BINARY_ABSENT, and the config assertions above still hold.
-      expect(fs.existsSync(path.join(REPO_ROOT, 'node_modules', 'prettier')) || process.env.NIGHTWATCH_PRETTIER_BIN !== undefined).toBe(false);
-    } else {
-      const probe = repoProbe('parent-cwd');
-      try {
-        fs.writeFileSync(probe, MISFORMATTED_PROBE);
-        const before = fs.readFileSync(probe, 'utf8');
-        const parentRun = run(prettier, ['--write', probe], path.dirname(REPO_ROOT));
-        expect(parentRun.status, String(parentRun.stderr)).toBe(0);
-        expect(fs.readFileSync(probe, 'utf8')).toBe(before);
-      } finally {
-        fs.rmSync(probe, { force: true });
-      }
+  });
+
+  // R5-10 / review-5 A8.1: the behavioural parent-cwd control is its OWN test, so an absent
+  // Prettier is a DECLARED skip identity (PRETTIER_BINARY_ABSENT) and never a silent pass.
+  const parentCwdPrettier = resolvePrettierBinary();
+  test('a Prettier run from the parent directory leaves an in-repo probe untouched', () => {
+    test.skip(parentCwdPrettier === null, 'PRETTIER_BINARY_ABSENT: no Prettier executable on this host; the requirePragma config and the file-relative resolution are asserted by the sibling test, and this control runs wherever a binary is available');
+    const target = path.join(REPO_ROOT, 'src', 'core', 'qualityGate', 'definition.ts');
+    expect(nearestPrettierConfig(target)?.config.requirePragma).toBe(true);
+    const probe = repoProbe('parent-cwd');
+    try {
+      fs.writeFileSync(probe, MISFORMATTED_PROBE);
+      const before = fs.readFileSync(probe, 'utf8');
+      const parentRun = run(parentCwdPrettier as string, ['--write', probe], path.dirname(REPO_ROOT));
+      expect(parentRun.status, String(parentRun.stderr)).toBe(0);
+      expect(fs.readFileSync(probe, 'utf8')).toBe(before);
+    } finally {
+      fs.rmSync(probe, { force: true });
     }
   });
 

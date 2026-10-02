@@ -15,7 +15,7 @@
 
 export const VALIDATION_LANE_PLAN_SCHEMA = 'nightwatch.validation-lane-plan.v1' as const;
 
-export type LaneId = 'dev' | 'milestone';
+export type LaneId = 'dev' | 'milestone' | 'prepush';
 
 export type StepKind = 'command' | 'affected-tests' | 'shards';
 
@@ -78,6 +78,24 @@ export const VALIDATION_LANE_DEFINITIONS: Readonly<Record<LaneId, ValidationLane
       { id: 'affected-shards', kind: 'shards', summary: 'concurrent serial shards over the selected tests' },
     ],
   },
+  // R5-11 / review-5 A9.2: the lane every integrate step runs first. It is the dev lane plus the
+  // checks whose omission caused four red CI runs (typecheck:bin ceilings, project truth,
+  // workspace integrity): hardening:check, agent:check, project:check, typecheck, typecheck:bin
+  // and the affected focused suites. It deliberately omits the probe campaign and the mutation
+  // harness (milestone scope).
+  prepush: {
+    id: 'prepush',
+    title: 'Pre-push validation (run before every integrate)',
+    authority: 'NOT_CERTIFICATION',
+    targetSeconds: 600,
+    steps: [
+      ...CHEAP_STATIC_STEPS,
+      { id: 'typecheck-bin', kind: 'command', summary: 'bin JavaScript declaration conformance and ceiling ratchet', command: ['npm', 'run', 'typecheck:bin'] },
+      ...GOVERNANCE_STEPS,
+      { id: 'affected-tests', kind: 'affected-tests', summary: 'deterministic affected-test selection from the explicit base' },
+      { id: 'affected-shards', kind: 'shards', summary: 'concurrent serial shards over the selected tests' },
+    ],
+  },
 });
 
 export interface LaneDefinitionViolation {
@@ -86,13 +104,16 @@ export interface LaneDefinitionViolation {
 }
 
 const FORBIDDEN_IN_DEV = ['hardening:rules', 'hardening:mutants', 'gate:local', 'gate:clean', 'gate:ci'];
+/** The checks the pre-push lane must always carry (R5-11 / A9.2). */
+const PREPUSH_REQUIRED_STEPS = ['typecheck', 'typecheck-bin', 'hardening-check', 'agent-check', 'project-check', 'affected-tests', 'affected-shards'];
 
 /** Mechanical composition rules; a violation refuses the lane definition. */
 export function validateLaneDefinitions(): { readonly ok: boolean; readonly violations: readonly LaneDefinitionViolation[] } {
   const violations: LaneDefinitionViolation[] = [];
   const dev = VALIDATION_LANE_DEFINITIONS.dev;
   const milestone = VALIDATION_LANE_DEFINITIONS.milestone;
-  for (const lane of [dev, milestone]) {
+  const prepush = VALIDATION_LANE_DEFINITIONS.prepush;
+  for (const lane of [dev, milestone, prepush]) {
     if (lane.authority !== 'NOT_CERTIFICATION') violations.push({ code: 'LANE_AUTHORITY_INVALID', detail: lane.id });
     if (!Number.isInteger(lane.targetSeconds) || lane.targetSeconds <= 0) violations.push({ code: 'LANE_TARGET_INVALID', detail: lane.id });
     for (const required of ['validation-universe', 'execution-classes', 'typecheck', 'hardening-check', 'affected-tests', 'affected-shards']) {
@@ -104,6 +125,13 @@ export function validateLaneDefinitions(): { readonly ok: boolean; readonly viol
     if (FORBIDDEN_IN_DEV.some((forbidden) => rendered.includes(forbidden))) {
       violations.push({ code: 'LANE_DEV_FORBIDDEN_STEP', detail: `${step.id}: ${rendered}` });
     }
+  }
+  for (const required of PREPUSH_REQUIRED_STEPS) {
+    if (!prepush.steps.some((step) => step.id === required)) violations.push({ code: 'LANE_PREPUSH_STEP_MISSING', detail: required });
+  }
+  for (const step of prepush.steps) {
+    const rendered = (step.command ?? []).join(' ');
+    if (FORBIDDEN_IN_DEV.some((forbidden) => rendered.includes(forbidden))) violations.push({ code: 'LANE_PREPUSH_FORBIDDEN_STEP', detail: `${step.id}: ${rendered}` });
   }
   if (dev.targetSeconds > milestone.targetSeconds) violations.push({ code: 'LANE_TARGET_ORDER_INVALID', detail: 'dev target exceeds milestone target' });
   const devIds = new Set(dev.steps.map((step) => step.id));

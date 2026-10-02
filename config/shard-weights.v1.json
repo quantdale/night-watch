@@ -75,6 +75,7 @@
     "tests/unit/checkpointBindingFacts.test.ts": 4,
     "tests/unit/childEnvironment.test.ts": 270,
     "tests/unit/ciBlockRecord.test.ts": 47,
+    "tests/unit/claimJournal.test.ts": 6,
     "tests/unit/cliImplementationContract.test.ts": 25625,
     "tests/unit/cliRegressionsR5.test.ts": 10,
     "tests/unit/containedTestReplay.test.ts": 6746,

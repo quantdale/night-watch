@@ -861,6 +861,10 @@ function commandIntegrate(context, options) {
     dryRunComplete('integrate');
     return { pushed: false, dryRun: true, head: localHead };
   }
+  // R5-11 / review-5 A9.2: every integrate step is preceded by `npm run prepush` (hardening:check,
+  // agent:check, project:check, typecheck, typecheck:bin and the affected focused suites) at THIS exact
+  // HEAD; four pushes once reached CI red because those components were skipped.
+  emit('SESSION_PREPUSH_REQUIRED', `npm run prepush must have passed at ${options.expectHead ?? 'this HEAD'} before this push`);
   // The transition lock is held through fetch, fast-forward recheck, push,
   // verification fetch and the durable record update. No other lifecycle
   // command may transition this record while the network effects are pending.

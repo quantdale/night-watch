@@ -24,11 +24,12 @@ const CLI_METADATA = {
   schemaVersion: OPERATOR_CLI_SCHEMA,
   name: 'validation-lane',
   entry: 'bin/validation-lane.mjs',
-  purpose: 'Run the fast development or milestone validation lane (not certification).',
+  purpose: 'Run the fast development, milestone or pre-push validation lane (not certification).',
   group: 'validate',
   commands: [
     { name: 'dev', summary: 'fast development validation over the affected scope' },
     { name: 'milestone', summary: 'broader milestone integration validation' },
+    { name: 'prepush', summary: 'the lane every integrate step runs first (hardening, agent, project, typecheck, typecheck:bin, affected suites)' },
   ],
   commandRequired: true,
   flags: [

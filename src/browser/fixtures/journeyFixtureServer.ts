@@ -28,7 +28,8 @@ export type JourneyFixtureVariant =
   | 'csp-block'
   | 'unhandled-rejection'
   | 'console-warning'
-  | 'late-response';
+  | 'late-response'
+  | 'response-burst';
 
 export interface JourneyFixtureHandle {
   origin: string;
@@ -96,6 +97,11 @@ function pageHtml(pathname: string, variant: JourneyFixtureVariant): string {
     : pathname.includes('global-exchange-rate')
       ? "fetch('/m/ripple/exchange_rate/global/aws').then(() => {}).catch(() => {});"
       : "fetch('/m/blue/billing/v1/billinggroups').then(() => {}).catch(() => {}); fetch('/m/ripple/accts?vendor=aws').then(() => {}).catch(() => {});";
+  // A BURST of reviewed known-read responses: the observer's response handlers overlap, cross the
+  // bounded body-read gate and are REFUSED (counted), so the run summary must carry the count.
+  const burst = variant === 'response-burst'
+    ? "Promise.all(Array.from({ length: 200 }, () => fetch('/m/ripple/v2/payer/exchange_rate/2026-08').then((response) => response.json()).catch(() => {})));"
+    : '';
   const passiveUnknown = "fetch('/m/ripple/passive-bootstrap').catch(() => {});";
   return `<!doctype html>
 <html><head><meta charset="utf-8">${csp}<title>Synthetic Ripple Journey</title>${resourceTags}</head>
@@ -103,6 +109,7 @@ function pageHtml(pathname: string, variant: JourneyFixtureVariant): string {
 <script>
 ${readScript}
 ${passiveUnknown}
+${burst}
 ${actionScript}
 ${routeMutation}
 ${runtime}

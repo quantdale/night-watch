@@ -24,6 +24,7 @@ import {
 } from './agent-continuity-protocol.mjs';
 import { inspectWorkspace, listWorktreeBranches } from './workspace-integrity.mjs';
 import { checkpointRoleViolations } from './lib/checkpoint-role.mjs';
+import { inspectClaimJournal } from './lib/claim-journal.mjs';
 import { bindingReceiptVerifier } from './lib/checkpoint-binding.mjs';
 import { validateProgrammeState } from './lib/programme-state.mjs';
 import { collectCiBlockStale, validateCiBlockRecord } from './lib/ci-block-record.mjs';
@@ -1338,6 +1339,25 @@ export function validate(root, auditMode = false) {
   errors.push(...idLedger.errors);
   warnings.push(...idLedger.warnings);
   for (const line of idLedger.info) console.log(`[agent-ledger] ${line}`);
+
+  // R5-11 / review-5 A9.1: every commit on main from the claim era onward lies in a recorded
+  // claim window (a SESSION or a canonical MAINTENANCE claim) in the append-only journal.
+  const claimJournal = inspectClaimJournal({
+    readText: (relative) => {
+      try {
+        return fs.readFileSync(path.join(root, relative), 'utf8');
+      } catch {
+        return null;
+      }
+    },
+    git: (args) => {
+      const result = gitSpawn(root, args);
+      return { status: result.status, stdout: typeof result.stdout === 'string' ? result.stdout : '' };
+    },
+  });
+  errors.push(...claimJournal.errors);
+  warnings.push(...claimJournal.warnings);
+  for (const line of claimJournal.info) console.log(`[agent-claims] ${line}`);
 
   // G1 published-baseline integrity: the archive index is parsed as data
   // (strict 1:1 rows, published names must exist) and every published

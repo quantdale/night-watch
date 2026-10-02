@@ -112,6 +112,7 @@
     "efficacy:compare": "node bin/efficacy-corpus.mjs compare",
     "gate:dev": "node bin/validation-lane.mjs dev",
     "gate:milestone": "node bin/validation-lane.mjs milestone",
+    "prepush": "node bin/validation-lane.mjs prepush",
     "test:serial": "NIGHTWATCH_TIMING_LANE=full-regression NODE_OPTIONS=--expose-gc playwright test",
     "agent:campaign": "node bin/nightwatch-agent.mjs campaign"
   },

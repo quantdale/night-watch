@@ -251,6 +251,24 @@ test('the recorded run summary carries captureFailureCounts on both exit paths',
   expect(Object.prototype.hasOwnProperty.call(invalidRecorded.entry, 'captureFailureCounts')).toBe(true);
 });
 
+// R5-10 / review-5 task A8.1 — the previous test only checked that the key EXISTS, so a
+// hard-coded `{}` passed it. A real refusal must reach the RECORDED summary as a non-zero count.
+test('a real body-read refusal reaches the recorded run summary as a non-zero BODY_READ_ACQUISITION_BOUND count', async ({ browser }) => {
+  const run = await runFixture(browser, 'response-burst');
+  const manifest = JSON.parse(fs.readFileSync(path.join(run.recorder.dir, 'manifest.json'), 'utf8')) as Record<string, unknown>;
+  const entry = manifest.journeyEvidence as { captureFailureCounts?: Record<string, number>; captureFailureCodes?: string[]; captureStatus?: string } | undefined;
+  expect(entry).toBeDefined();
+  expect(entry!.captureStatus).toBe('INCOMPLETE');
+  expect(entry!.captureFailureCodes).toContain('BODY_READ_ACQUISITION_BOUND');
+  expect(entry!.captureFailureCounts?.['BODY_READ_ACQUISITION_BOUND'] ?? 0).toBeGreaterThanOrEqual(1);
+  const events = fs.readFileSync(path.join(run.recorder.dir, 'events.jsonl'), 'utf8')
+    .split('\n').filter(Boolean).map((line) => JSON.parse(line) as { type?: string; data?: { captureFailureCounts?: Record<string, number> } });
+  const completion = events.filter((event) => event.type === 'journey').at(-1);
+  expect(completion?.data?.captureFailureCounts?.['BODY_READ_ACQUISITION_BOUND'] ?? 0).toBeGreaterThanOrEqual(1);
+  // The evidence the engine returns carries the same count (one source of truth).
+  expect(run.evidence.captureFailureCounts?.['BODY_READ_ACQUISITION_BOUND'] ?? 0).toBe(entry!.captureFailureCounts?.['BODY_READ_ACQUISITION_BOUND']);
+});
+
 test('fresh replay comparator accepts bounded timing/request variance', () => {
   const definition = getRippleJourneyDefinition('ripple-payer-exchange-read');
   const base = {

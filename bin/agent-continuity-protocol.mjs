@@ -1074,7 +1074,7 @@ export const APPROVED_CHECKPOINT_PATHS = [
   /^README\.md$/,
   // The executor prompt is a planning-only checkpoint. It may change the
   // campaign route without relabeling the prior substantive implementation.
-  /^\.agent\/(?:ACTIVE_TASK\.md|EXECUTION_PROMPT\.md|README\.md|PLANS\.md|templates\/[^/]+\.md)$/,
+  /^\.agent\/(?:ACTIVE_TASK\.md|EXECUTION_PROMPT\.md|README\.md|PLANS\.md|CLAIM_JOURNAL\.md|templates\/[^/]+\.md)$/,
   /^\.agent\/tasks\/[^/]+\/(?:SPEC|PLAN|STATE|REPORT|HANDOFF|WORKSTREAMS|ACCEPTANCE_MATRIX|DEFECT_LEDGER|ACTIONS|MODELS|EXPLORATION|FRESHNESS|ADVERSARIAL_REVIEW|PROPOSAL|SUBAGENT_LEDGER|INTEGRATION_LEDGER|MASS_IMPLEMENTATION_HANDOFF)\.md$/,
   // Durable program artifacts mandated by AGENTS.md and the multi-session
   // program plans (HARDENING_HANDOFF/MASTER_PLAN; SESSION_* specs), plus the

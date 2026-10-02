@@ -217,6 +217,34 @@
       "oldLineSha256": "sha256:fc7b05c2951fbc1892b8499c",
       "oldLineExcerpt": "> Durable memory for the next agent/session. Last updated: **2026-10-01**",
       "reason": "The review-5 child bootstrap (2026-10-02) advanced the governed LIVE_TASK_ID/LIVE_PHASE machine fields; the header date must cover the document's own last change, while the statement itself is unchanged (same pattern as CORR-CORR-001)."
+    },
+    {
+      "id": "CORR-R5-002",
+      "path": "docs/CURRENT_STATE.md",
+      "oldLineSha256": "sha256:fe8c63059e11087b6b2074de",
+      "oldLineExcerpt": "### Exact-head CI state (current live CI state)",
+      "reason": "R5-10 / review-5 task A8.1: the heading labelled a snapshot of the 53152cff baseline (CI NOT_OBSERVED) as the CURRENT live CI state while the machine block states EXECUTED_PASS at 027367d9; the heading now says the snapshot below is history and a current paragraph states the truth. No governed status word changed."
+    },
+    {
+      "id": "CORR-R5-18-001",
+      "path": "openspec/changes/archive/2026-10-01-nightwatch-final-completion-corrections-v1/tasks.md",
+      "oldLineSha256": "sha256:cc9af54ba3e7ecdc98079446",
+      "oldLineExcerpt": "- [x] 8.14 Correct D-149 Decision 4 with the verbatim owner question and answer and their ",
+      "reason": "R5-18 / review-5 task A8.2: the line quoted an agent-session identifier (full or prefix); the repository is temporarily public, so it is replaced by a non-identifying reference and the statement is otherwise unchanged. A full identifier remains in earlier public git history (recorded in DECISIONS D-152)."
+    },
+    {
+      "id": "CORR-R5-18-002",
+      "path": ".agent/tasks/phase-16a-campaign-yield-portfolio-optimization/REPORT.md",
+      "oldLineSha256": "sha256:2c45c31de975b71d28749555",
+      "oldLineExcerpt": "(pi session `<identifier redacted>`, 2026-08-22) and fully",
+      "reason": "R5-18 / review-5 task A8.2: the line quoted an agent-session identifier (full or prefix); the repository is temporarily public, so it is replaced by a non-identifying reference and the statement is otherwise unchanged. A full identifier remains in earlier public git history (recorded in DECISIONS D-152)."
+    },
+    {
+      "id": "CORR-R5-18-003",
+      "path": ".agent/tasks/phase-16a-campaign-yield-portfolio-optimization/STATE.md",
+      "oldLineSha256": "sha256:ec46561d3dc4610a77e80f05",
+      "oldLineExcerpt": "Prior-session rows (pi implementation session <identifier redacted>, 2026-08-22) are",
+      "reason": "R5-18 / review-5 task A8.2: the line quoted an agent-session identifier (full or prefix); the repository is temporarily public, so it is replaced by a non-identifying reference and the statement is otherwise unchanged. A full identifier remains in earlier public git history (recorded in DECISIONS D-152)."
     }
   ]
 }

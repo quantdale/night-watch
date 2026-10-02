@@ -956,7 +956,17 @@ LIVE_NEXT_ACTION_STATE: CONTINUE
 LIVE_COMPLETION_CLAIM: NONE
 ```
 
-### Exact-head CI state (current live CI state)
+### Exact-head CI state (current: see the paragraph below; the older observations that follow are history)
+
+**Current (2026-10-02).** At the certified substantive baseline `027367d9` CI is
+`EXECUTED_PASS`: `CI_OBSERVED_SHA` and `CI_EXECUTED_SHA` both name `027367d9`
+(exact-head run `36790169165`), and the machine-checked project-state block above
+is the authority. `config/ci-block-record.v1.json` holds the run history in RUN
+ORDER (oldest first; its top level is the newest observed run, and the NEWEST
+observation at a SHA decides the claim). The two observations below
+(`53152cff` NOT_OBSERVED and `c18db55` NO_STEPS_EXTERNAL_NON_EVIDENCE) are
+historical records of earlier baselines, kept because they explain the CI
+history, not because they describe the present.
 
 At the W1 substantive baseline `53152cff` no CI run has been observed:
 `CI_STATUS` is `NOT_OBSERVED` with `CI_OBSERVED_SHA` and `CI_EXECUTED_SHA`

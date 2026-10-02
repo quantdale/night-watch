@@ -123,7 +123,7 @@ implementation checkpoint):
 
 ## Validation Ledger
 
-Prior-session rows (pi implementation session 01a028ae, 2026-08-22) are
+Prior-session rows (an earlier implementation session, 2026-08-22) are
 historical evidence pending revalidation; the revalidation rows appended at
 the end are this session's authoritative record:
 
