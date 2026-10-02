@@ -5,9 +5,9 @@ Phase: COMPLETION_REVIEW5_V1
 Title: Review-5 corrective campaign (bounded child of the terminal campaign)
 Status: IN_PROGRESS
 TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1
-TASK_GROUPS_COMPLETE: A1,A2,A3,A4,A5,A6,A7,A8,A9
-TASK_GROUP_NEXT: B1
-TASK_NEXT_ID: B1.1
+TASK_GROUPS_COMPLETE: A1,A2,A3,A4,A5,A6,A7,A8,A9,B1
+TASK_GROUP_NEXT: B2
+TASK_NEXT_ID: B2.1
 Task directory: .agent/tasks/nightwatch-final-completion-review5-v1
 Starting SHA: d68bb1a7c7cf244da654815a1e7f266e1985f30c
 Last validated implementation SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
@@ -23,12 +23,13 @@ resolved by groups A1-A9, B1-B6 and C; there is no review-6 by default (the
 exit rule: if Track B cannot make all 16 conditions reachable honestly, STOP
 and report). The parent `nightwatch-final-product-completion-v1` stays paused;
 on close-out ACTIVE_TASK routes back to it at "M9 task 10.4".
-Current milestone: group B1 — the Certification Producer Matrix (B1.1). Track A
-(A1-A9) is implemented; A1-A3 are CI-observed green, A4-A9 are implemented
-(CI pending).
-Next action: integrate Track A and observe exact-head CI; then B1.1 — fill the
-Producer Matrix in design.md for all 16 conditions and 11 lanes and
-strict-validate it before any Track B code.
+Current milestone: group B2 — the producers (B2.1, B2.2). Track A (A1-A9) and
+B1 (the Producer Matrix) are implemented; A1-A3 are CI-observed green, the rest
+are implemented (CI pending) until the exact-head run at the integrated tip is
+observed.
+Next action: B2.1 — implement `certify:evidence` and the closed receipt table
+extension per the matrix (real producer output, never hand-shaped receipts), then
+B2.2 (the UI receipt repair).
 Authorization class: COMPLETION_REVIEW5_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2

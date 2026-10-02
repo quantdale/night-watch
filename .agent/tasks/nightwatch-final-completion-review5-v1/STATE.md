@@ -7,9 +7,9 @@ Phase: COMPLETION_REVIEW5_V1
 CHILD OF: nightwatch-final-product-completion-v1
 Status: IN_PROGRESS
 TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1
-TASK_GROUPS_COMPLETE: A1,A2,A3,A4,A5,A6,A7,A8,A9
-TASK_GROUP_NEXT: B1
-TASK_NEXT_ID: B1.1
+TASK_GROUPS_COMPLETE: A1,A2,A3,A4,A5,A6,A7,A8,A9,B1
+TASK_GROUP_NEXT: B2
+TASK_NEXT_ID: B2.1
 Starting SHA: d68bb1a7c7cf244da654815a1e7f266e1985f30c
 Last validated implementation SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
 Last substantive checkpoint SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
@@ -43,14 +43,12 @@ ACTIVE_TASK routed back to the parent at "M9 task 10.4".
 
 ## Current Milestone
 
-group B1 — the Certification Producer Matrix (task B1.1, R5-12/R5-13): fill the
-matrix in `design.md` for all 16 conditions and 11 lanes (producer, gate group,
-receipt kind/schema/subjects, verdict fields, persistence, clean-clone
-verifiability, binding route), record the persistence mechanism in D-152 and
-strict-validate it before any Track B code. Track A (groups A1-A9) is
-implemented; A1-A3 are CI-observed green (A3: run 37011881613 at `a2e04648`);
-A4-A9 are implemented (CI pending) until the exact-head run at the integrated
-tip is observed.
+group B2 — the producers (tasks B2.1-B2.2, R5-12/R5-14): implement
+`certify:evidence` and the closed receipt-table extension per the Producer Matrix
+in `design.md`, with end-to-end tests that use REAL producer output; then repair
+the UI receipt (verdict field, `receipt:` prefix). Track A (A1-A9) is integrated
+at `4f4d7bfd`; B1 (the matrix, D-152 mechanism) is implemented at `440cf888`
+(CI pending). A1-A3 are CI-observed green.
 
 ## Completed Milestones
 
@@ -65,12 +63,11 @@ after the Track A integration and its exact-head CI observation.
 
 ## Exact Next Action
 
-Integrate Track A (`npm run prepush`, then `nightwatch-session.mjs integrate`),
-observe exact-head CI, record the run in the CI block record and drop the
-`(implemented; CI pending)` annotations of A4-A9 by annotation. Then B1.1: fill
-the Certification Producer Matrix in `design.md` for all 16 conditions and 11
-lanes and strict-validate it before any Track B code; a row that cannot be
-completed honestly is a STOP.
+Observe exact-head CI for the Track A integration (`4f4d7bfd`) and record it in
+the CI block record. Then B2.1: the approved-path and content-guard groundwork is
+B3.1, but the receipt schema, the closed subject table and `certify:evidence`
+come first (B2.1) so B3.1 has real output to guard; B2.2 repairs the UI receipt.
+Each lands with real-producer-output tests and registered behavioural mutants.
 
 ## Files Changed
 

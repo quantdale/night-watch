@@ -44,7 +44,7 @@
 
 ## B1. Certification Producer Matrix (design before code)
 
-- [ ] B1.1 Fill the Producer Matrix in design.md for all 16 conditions and 11 lanes (producer, gate group, receipt kind/schema/subjects, verdict fields, persistence, clean-clone verifiability, binding route); record the persistence mechanism in D-152; strict-validate; any row that cannot be completed honestly → STOP for owner decision (R5-12, R5-13).
+- [x] B1.1 Fill the Producer Matrix in design.md for all 16 conditions and 11 lanes (producer, gate group, receipt kind/schema/subjects, verdict fields, persistence, clean-clone verifiability, binding route); record the persistence mechanism in D-152; strict-validate; any row that cannot be completed honestly → STOP for owner decision (R5-12, R5-13). — DONE (implemented; CI pending): the matrix is complete (27 rows, none EMPTY, no owner decision needed), the mechanism is recorded in D-152 (tracked `evidence/certification/<S>/<subject>.json`, documentary descendant, approved path + content guard), and `openspec validate --strict` passes.
 
 ## B2. Producers
 
