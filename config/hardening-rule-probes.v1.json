@@ -3050,7 +3050,12 @@
     "R5-08/help-effect-agent",
     "R5-08/help-effect-phase22-dev",
     "R5-08/help-effect-portfolio",
-    "R5-08/library-listed-as-undeclared"
+    "R5-08/library-listed-as-undeclared",
+    "R5-09/oldest-wins",
+    "R5-09/last-in-list-wins",
+    "R5-09/history-order",
+    "R5-09/top-level-run-order",
+    "R5-09/job-duplicate"
   ],
   "behaviouralMutants": [
     {
@@ -3938,6 +3943,91 @@
       "focusedTests": [
         {
           "file": "tests/unit/cliRegressionsR5.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-052",
+      "finding": "R5-09/oldest-wins",
+      "guard": "newest observation per SHA decides (oldest-wins mutant)",
+      "ops": [
+        {
+          "file": "bin/lib/ci-block-record.mjs",
+          "search": "if (held === undefined || BigInt(observation.runId) > BigInt(held.runId))",
+          "replace": "if (held === undefined || BigInt(observation.runId) < BigInt(held.runId))"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/ciBlockRecord.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-053",
+      "finding": "R5-09/last-in-list-wins",
+      "guard": "newest observation per SHA decides (list order mutant)",
+      "ops": [
+        {
+          "file": "bin/lib/ci-block-record.mjs",
+          "search": "if (held === undefined || BigInt(observation.runId) > BigInt(held.runId))",
+          "replace": "if (held === undefined || true)"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/ciBlockRecord.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-054",
+      "finding": "R5-09/history-order",
+      "guard": "history is oldest-first by run order",
+      "ops": [
+        {
+          "file": "bin/lib/ci-block-record.mjs",
+          "search": "    else if (current < previous) errors.push({ code: 'CI_BLOCK_RECORD_HISTORY_ORDER',",
+          "replace": "    else if (false) errors.push({ code: 'CI_BLOCK_RECORD_HISTORY_ORDER',"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/ciBlockRecord.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-055",
+      "finding": "R5-09/top-level-run-order",
+      "guard": "top level is the newest run by run order",
+      "ops": [
+        {
+          "file": "bin/lib/ci-block-record.mjs",
+          "search": "BigInt(record.runId) < BigInt(newest)",
+          "replace": "false && BigInt(record.runId) < BigInt(newest)"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/ciBlockRecord.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-056",
+      "finding": "R5-09/job-duplicate",
+      "guard": "a job id belongs to one run only",
+      "ops": [
+        {
+          "file": "bin/lib/ci-block-record.mjs",
+          "search": "      if (jobIds.has(entry.jobId)) errors.push(",
+          "replace": "      if (false) errors.push("
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/ciBlockRecord.test.ts"
         }
       ]
     }

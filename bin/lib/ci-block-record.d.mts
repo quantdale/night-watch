@@ -74,3 +74,9 @@ export function classifyCiExecutionEvidence(evidence: unknown): CiExecutionClass
 export function applyCiExecutionEvidence(field: CiExecutionField, evidence: unknown): CiExecutionApplication;
 export function evaluateCiCertification(input: CiCertificationInput): CiCertificationJudgement;
 export function validateCiRouteCandidates(record: unknown): CiRouteJudgement;
+
+// R5-09 / review-5 A7.1.
+export interface CiObservationLike { runId?: string; observedSha?: string; classification?: string }
+export interface CiRecordLike { runId?: string; observedSha?: string; blockClass?: string; history?: CiObservationLike[] }
+export function newestObservationPerSha(record: CiRecordLike | null | undefined): Map<string, { runId: string; classification: string }>;
+export function deriveCiStatusFromRecord(input: { value: string; observed: string; executed: string; record: CiRecordLike }): string | null;

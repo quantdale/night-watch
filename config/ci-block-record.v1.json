@@ -2,15 +2,15 @@
   "schemaVersion": "nightwatch.ci-block-record.v1",
   "definitionName": "Nightwatch exact-head CI block record (F-02)",
   "note": "The block is RETIRED: GitHub Actions executes the hardening workflow on every push, and the record's top level is the latest observed executed run (D-03 / R2-61). The block-record judgements stay load-bearing as the single CI authority shared by agent:check, project:check and gate:topology; the revisit date keeps the record from going stale. Candidate routes remain recorded with their trade-offs, and the materialised owner route is the restored GitHub-hosted execution.",
-  "runId": "36912796291",
-  "jobId": "110539346332",
-  "observedSha": "6e4c6ee1d5c6b628d20e688d667a8535db939bd8",
-  "blockClass": "EXECUTED_TEST_FAILURE",
-  "observedDate": "2026-10-01",
+  "runId": "37011881613",
+  "jobId": "110853310286",
+  "observedSha": "a2e04648e82686b386669aabd9fe9872b82fb89b",
+  "blockClass": "EXECUTED_PASS",
+  "observedDate": "2026-10-02",
   "ownerAction": "None required while the hardening workflow executes on every push; re-observe the next exact-head run and refresh this record before the revisit date.",
   "revisitCondition": "Re-observe each push: refresh runId, jobId, observedSha and observedDate from the latest hardening run, and record any red run with its classification.",
   "revisitDate": "2026-12-31",
-  "observedStepCount": 4,
+  "observedStepCount": 10,
   "history": [
     {
       "runId": "33572572053",
@@ -29,7 +29,8 @@
           "suite": "tests/unit/l6Containment.test.ts",
           "detail": "asserted rootless L6 containment is always available; the ubuntu-24.04 image ships no Bubblewrap binary, so qualification correctly failed closed with BWRAP_UNAVAILABLE"
         }
-      ]
+      ],
+      "runCreatedAt": "2026-09-01T23:47:35Z"
     },
     {
       "runId": "34304312294",
@@ -37,7 +38,8 @@
       "observedSha": "c18db55970a6497470191c8c9ef58f5012a96c8c",
       "observedDate": "2026-09-04",
       "classification": "NO_STEPS_BILLING_OR_PLATFORM_BLOCK",
-      "detail": "the workflow was platform-blocked with zero executed steps; retired when GitHub Actions execution was restored. The block record for that period is preserved here as history; the retired owner action was: Restore GitHub Actions execution (billing or spending-limit change on the GitHub account) or authorize one of the recorded candidate routes; the owner selects the route under task 3.11."
+      "detail": "the workflow was platform-blocked with zero executed steps; retired when GitHub Actions execution was restored. The block record for that period is preserved here as history; the retired owner action was: Restore GitHub Actions execution (billing or spending-limit change on the GitHub account) or authorize one of the recorded candidate routes; the owner selects the route under task 3.11.",
+      "runCreatedAt": "2026-09-09T02:42:58Z"
     },
     {
       "runId": "36243034942",
@@ -45,11 +47,21 @@
       "observedSha": "aa78a014cd18b5cdc1c90b27286f12e0e6bb345f",
       "observedDate": "2026-09-26",
       "classification": "EXECUTED_PASS",
-      "detail": "first exact-head run observed green after the M3 spine repair"
+      "detail": "first exact-head run observed green after the M3 spine repair",
+      "runCreatedAt": "2026-09-26T12:47:28Z"
+    },
+    {
+      "runId": "36513017223",
+      "jobId": "109229118794",
+      "observedSha": "2b5d8178592fb7a6307767e3510e1f8418dc5efa",
+      "observedDate": "2026-09-29",
+      "classification": "EXECUTED_TEST_FAILURE",
+      "detail": "SYNTHETIC_CAMPAIGN failed in the exact-head gate (skip policy UNDECLARED_SKIP: 40 skipped, 4 undeclared; deep-containment lane NOT_EXERCISED_BWRAP_UNAVAILABLE); PATCH_INTEGRITY, WORKSPACE_INTEGRITY, TOPOLOGY and UI_CONTROL_CENTER were NOT_RUN. Recorded by review-5 R5-09, which found this red run absent from the record; later green runs supersede it.",
+      "runCreatedAt": "2026-09-29T02:31:42Z"
     },
     {
       "runId": "36537649045",
-      "jobId": "108926734997",
+      "jobId": "109305291927",
       "observedSha": "491b5ef9b4ba5f393f002ce6e3c0b1aee253e3a2",
       "observedDate": "2026-09-29",
       "classification": "EXECUTED_TEST_FAILURE",
@@ -60,11 +72,21 @@
           "suite": "tests/unit/observerSemanticLedger.test.ts",
           "detail": "the 550-request overflow loop assumed every response body is captured; a saturated acquisition gate correctly refuses a read"
         }
-      ]
+      ],
+      "runCreatedAt": "2026-09-29T07:36:30Z"
+    },
+    {
+      "runId": "36552500573",
+      "jobId": "109353777809",
+      "observedSha": "3c9c1a0671068c8de6bafb54c62f9cd107fed78a",
+      "observedDate": "2026-09-29",
+      "classification": "EXECUTED_PASS",
+      "detail": "exact-head CI green with the SHA-bound runner-topology receipt (the corrections campaign M4 close, cited by commit 88f8eaf7); recorded by review-5 R5-09.",
+      "runCreatedAt": "2026-09-29T09:57:25Z"
     },
     {
       "runId": "36596242188",
-      "jobId": "108940112256",
+      "jobId": "109501770329",
       "observedSha": "88f8eaf7f87eb333685d23900ae0688db40af80f",
       "observedDate": "2026-09-29",
       "classification": "EXECUTED_TEST_FAILURE",
@@ -75,11 +97,21 @@
           "suite": "bin/hardening-check.mjs --probe-campaign",
           "detail": "the probe campaign reported an undetected member; repaired by the following commits"
         }
-      ]
+      ],
+      "runCreatedAt": "2026-09-29T16:14:20Z"
+    },
+    {
+      "runId": "36630587780",
+      "jobId": "109618501110",
+      "observedSha": "eef9c00e63a9dbc5da76034e41f44605b4c61906",
+      "observedDate": "2026-09-29",
+      "classification": "EXECUTED_PASS",
+      "detail": "exact-head CI green at eef9c00e; recorded by review-5 R5-09, which found this run absent from the record.",
+      "runCreatedAt": "2026-09-29T21:02:38Z"
     },
     {
       "runId": "36787018515",
-      "jobId": "110110217144",
+      "jobId": "110130750034",
       "observedSha": "673e2ddbf28b7013aef04ff14d9058d71ee9f051",
       "observedDate": "2026-09-30",
       "classification": "EXECUTED_TEST_FAILURE",
@@ -90,11 +122,30 @@
           "suite": "SYNTHETIC_CAMPAIGN",
           "detail": "the synthetic campaign group failed its shard bucket; repaired forward"
         }
-      ]
+      ],
+      "runCreatedAt": "2026-09-30T22:41:35Z"
+    },
+    {
+      "runId": "36790169165",
+      "jobId": "110140941857",
+      "observedSha": "027367d9da22ea1198c0a60fb1b11805f6719d40",
+      "observedDate": "2026-10-01",
+      "classification": "EXECUTED_PASS",
+      "detail": "the corrective child campaign's close-out head: the run that certifies the anchor 027367d9 recorded in the project-state block (CI_EXECUTED_SHA). Recorded so the block's execution claim is supported by an observation at that exact SHA (R4-11/R4-12). [review-5 A7.1: the run id was recorded as 36797226757, which is b4d0c611's run; 027367d9's own exact-head run is 36790169165.]",
+      "runCreatedAt": "2026-09-30T23:15:56Z"
+    },
+    {
+      "runId": "36797226757",
+      "jobId": "110163333140",
+      "observedSha": "b4d0c611a7848df675390d47aa21f008d078cde6",
+      "observedDate": "2026-10-01",
+      "classification": "EXECUTED_PASS",
+      "detail": "the corrections campaign close-out head b4d0c611 (its session branch tip, later deleted); recorded by review-5 R5-09 \u2014 the SHA was first recorded only after that branch was deleted.",
+      "runCreatedAt": "2026-10-01T00:39:01Z"
     },
     {
       "runId": "36806004712",
-      "jobId": "110243796114",
+      "jobId": "110190362160",
       "observedSha": "a408d31bc37d6ed59ed05d005c5c97ccbe4af68b",
       "observedDate": "2026-10-01",
       "classification": "EXECUTED_TEST_FAILURE",
@@ -105,43 +156,48 @@
           "suite": "bin/hardening-check.mjs",
           "detail": "checkDocumentationFreshness (header date) and checkGovernedStatusWords (CI_STATUS literal) failed together"
         }
-      ]
+      ],
+      "runCreatedAt": "2026-10-01T02:28:30Z"
     },
     {
       "runId": "36806699016",
-      "jobId": "110245202199",
+      "jobId": "110192520318",
       "observedSha": "e97b38aaeea500ede1e9862b656b787440978c79",
       "observedDate": "2026-10-01",
       "classification": "EXECUTED_PASS",
-      "detail": "repair of run 36806004712; exact-head CI green at the repair tip"
+      "detail": "repair of run 36806004712; exact-head CI green at the repair tip",
+      "runCreatedAt": "2026-10-01T02:37:21Z"
     },
     {
       "runId": "36808189880",
-      "jobId": "110266119590",
+      "jobId": "110197133226",
       "observedSha": "07dd950672d82b5f106a16d42a59b40822272e70",
       "observedDate": "2026-10-01",
       "classification": "EXECUTED_PASS",
-      "detail": "M9 10.2 resume batch 1 record (documentation-only descendant of the substantive anchor)"
+      "detail": "M9 10.2 resume batch 1 record (documentation-only descendant of the substantive anchor)",
+      "runCreatedAt": "2026-10-01T02:56:35Z"
     },
     {
       "runId": "36809415911",
-      "jobId": "110268933853",
+      "jobId": "110200903690",
       "observedSha": "ce289948aa6f2ec8edf4439c39cbe72593149074",
       "observedDate": "2026-10-01",
       "classification": "EXECUTED_PASS",
-      "detail": "the review-4 validated range tip (review-4 validated b9306626..ce289948)"
+      "detail": "the review-4 validated range tip (review-4 validated b9306626..ce289948)",
+      "runCreatedAt": "2026-10-01T03:12:14Z"
     },
     {
       "runId": "36830613569",
-      "jobId": "110294555976",
+      "jobId": "110266119590",
       "observedSha": "aea15b47f7f0473626eefb9e7619460b9cbd60af",
       "observedDate": "2026-10-01",
       "classification": "EXECUTED_PASS",
-      "detail": "parent pause checkpoint (continuity sync) green before the parent session was released"
+      "detail": "parent pause checkpoint (continuity sync) green before the parent session was released",
+      "runCreatedAt": "2026-10-01T07:29:25Z"
     },
     {
       "runId": "36867934911",
-      "jobId": "110375824527",
+      "jobId": "110388052924",
       "observedSha": "ae1ff3a67c5cade13f97f01f264a05ef67438685",
       "observedDate": "2026-10-01",
       "classification": "EXECUTED_TEST_FAILURE",
@@ -152,19 +208,12 @@
           "suite": "bin/bin-typecheck.mjs",
           "detail": "the migration's `cli.stop` narrowing did not discriminate the OperatorCliParseResult union, so `cli.flags` was untyped; fixed by narrowing on `cli.ok !== true || cli.stop === true` and by typing the entry parameter"
         }
-      ]
-    },
-    {
-      "runId": "36797226757",
-      "jobId": "110267957125",
-      "observedSha": "027367d9da22ea1198c0a60fb1b11805f6719d40",
-      "observedDate": "2026-10-01",
-      "classification": "EXECUTED_PASS",
-      "detail": "the corrective child campaign's close-out head: the run that certifies the anchor 027367d9 recorded in the project-state block (CI_EXECUTED_SHA). Recorded so the block's execution claim is supported by an observation at that exact SHA (R4-11/R4-12)."
+      ],
+      "runCreatedAt": "2026-10-01T13:20:13Z"
     },
     {
       "runId": "36869760469",
-      "jobId": "110394710341",
+      "jobId": "110394202632",
       "observedSha": "011c408be77060308f74f9dd255ccaba670624cc",
       "observedDate": "2026-10-01",
       "classification": "EXECUTED_TEST_FAILURE",
@@ -175,7 +224,8 @@
           "suite": "tests/unit/ciBlockRecord.test.ts, tests/unit/gateTopology.test.ts",
           "detail": "two tests asserted a pinned CI blockClass rather than the newest-observation property R4-12 requires"
         }
-      ]
+      ],
+      "runCreatedAt": "2026-10-01T13:35:09Z"
     },
     {
       "runId": "36875579501",
@@ -184,11 +234,12 @@
       "observedDate": "2026-10-01",
       "classification": "EXECUTED_PASS",
       "detail": "green at the M9 10.2 resume batch 3 tip (BIN_TYPECHECK_CEILING, SYNTHETIC_CAMPAIGN and every other group PASS) after repairing both red runs recorded above",
-      "defectClasses": []
+      "defectClasses": [],
+      "runCreatedAt": "2026-10-01T14:20:35Z"
     },
     {
       "runId": "36889920975",
-      "jobId": "110421590611",
+      "jobId": "110462649686",
       "observedSha": "f87108992924a7ac9abbdb776ffdff6fdb0ba68e",
       "observedDate": "2026-10-01",
       "classification": "EXECUTED_TEST_FAILURE",
@@ -199,7 +250,17 @@
           "suite": "tests/unit/phase16hCliHandoffHardening.test.ts",
           "detail": "an H01 boundary test pinned the pre-migration module exit code 1 for an unknown subcommand"
         }
-      ]
+      ],
+      "runCreatedAt": "2026-10-01T16:10:01Z"
+    },
+    {
+      "runId": "36892137774",
+      "jobId": "110470103177",
+      "observedSha": "92b5907d36e5817f0b0dee3d9cdcaa593ccb3754",
+      "observedDate": "2026-10-01",
+      "classification": "EXECUTED_PASS",
+      "detail": "green at the portfolio-migration repair 92b5907d (repair of red run 36889920975); recorded by review-5 R5-09.",
+      "runCreatedAt": "2026-10-01T16:27:31Z"
     },
     {
       "runId": "36912796291",
@@ -207,14 +268,69 @@
       "observedSha": "6e4c6ee1d5c6b628d20e688d667a8535db939bd8",
       "observedDate": "2026-10-01",
       "classification": "EXECUTED_TEST_FAILURE",
-      "detail": "BIN_TYPECKECK_CEILING failed: the new checkSharedOperatorParserStructure rule added 2 bin diagnostics (an untyped entry parameter). Repaired forward by typing both parameters; typecheck:bin is PASS at 1412 with every ceiling unchanged.",
+      "detail": "BIN_TYPECHECK_CEILING failed: the new checkSharedOperatorParserStructure rule added 2 bin diagnostics (an untyped entry parameter). Repaired forward by typing both parameters; typecheck:bin is PASS at 1412 with every ceiling unchanged.",
       "defectClasses": [
         {
           "class": "BIN_TYPECHECK_RATCHET",
           "suite": "bin/bin-typecheck.mjs",
           "detail": "a new hardening rule shipped with 2 implicit-any diagnostics"
         }
-      ]
+      ],
+      "runCreatedAt": "2026-10-01T19:14:20Z"
+    },
+    {
+      "runId": "36913655505",
+      "jobId": "110542212500",
+      "observedSha": "2894f334ae030eeff5ffde23d53b7991cdd4507f",
+      "observedDate": "2026-10-01",
+      "classification": "EXECUTED_PASS",
+      "detail": "repair of red run 36912796291 (BIN_TYPECHECK_CEILING): green at 2894f334; recorded by review-5 R5-09.",
+      "runCreatedAt": "2026-10-01T19:21:14Z"
+    },
+    {
+      "runId": "36916725274",
+      "jobId": "110552400511",
+      "observedSha": "2e0cfda03096ae69484024ed90f64f2030bf2cb7",
+      "observedDate": "2026-10-01",
+      "classification": "EXECUTED_PASS",
+      "detail": "M9 10.2/10.3 completion record (the exact-head run the review-5 prompt verified at 2e0cfda0).",
+      "runCreatedAt": "2026-10-01T19:46:16Z"
+    },
+    {
+      "runId": "37002989900",
+      "jobId": "110824717248",
+      "observedSha": "d68bb1a7c7cf244da654815a1e7f266e1985f30c",
+      "observedDate": "2026-10-02",
+      "classification": "EXECUTED_PASS",
+      "detail": "the parent pause commit d68bb1a7 (review-5 owner decision D-152 recorded, stale continuity prose synced).",
+      "runCreatedAt": "2026-10-02T11:47:56Z"
+    },
+    {
+      "runId": "37005160783",
+      "jobId": "110831597880",
+      "observedSha": "8f8693c2b44b64621475b47b7252a96f402369ef",
+      "observedDate": "2026-10-02",
+      "classification": "EXECUTED_PASS",
+      "detail": "the review-5 child bootstrap (change, continuity v2, routing) and its task-ID ledger registration, 8f8693c2.",
+      "runCreatedAt": "2026-10-02T12:10:49Z"
+    },
+    {
+      "runId": "37009611291",
+      "jobId": "110845928977",
+      "observedSha": "67d8757e975079812e9083c48daf33a5091a171f",
+      "observedDate": "2026-10-02",
+      "classification": "EXECUTED_PASS",
+      "detail": "review-5 groups A1 and A2 (archive-move integrity, --no-renames totality) at 67d8757e.",
+      "runCreatedAt": "2026-10-02T12:55:07Z"
+    },
+    {
+      "runId": "37011881613",
+      "jobId": "110853310286",
+      "observedSha": "a2e04648e82686b386669aabd9fe9872b82fb89b",
+      "observedDate": "2026-10-02",
+      "classification": "EXECUTED_PASS",
+      "detail": "review-5 group A3 (clean-emit and closed, executed-derived receipt subjects) at a2e04648.",
+      "runCreatedAt": "2026-10-02T13:16:15Z"
     }
   ],
   "routeSelection": {

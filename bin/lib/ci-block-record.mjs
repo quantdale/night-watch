@@ -104,25 +104,104 @@ export function validateCiBlockRecord(record) {
   if (typeof record.revisitDate !== 'string' || !DATE_RE.test(record.revisitDate)) {
     incomplete('revisitDate must be a YYYY-MM-DD date');
   }
-  // R4-12 / review-4 task 3.3: the TOP LEVEL is the LATEST observation. A
-  // record whose top-level observation is older than one of its recorded
-  // history observations is stale — the newest observation must be promoted,
-  // or a red run silently stops being the record's current fact.
-  let newestHistoryDate = null;
-  for (const entry of Array.isArray(record.history) ? record.history : []) {
-    if (!isObject(entry)) continue;
-    const observedDate = entry.observedDate;
-    if (typeof observedDate === 'string' && DATE_RE.test(observedDate) && (newestHistoryDate === null || observedDate > newestHistoryDate)) {
-      newestHistoryDate = observedDate;
+  // R4-12 / review-4 task 3.3, corrected by R5-09 / review-5 task A7.1: the TOP LEVEL is the
+  // LATEST observation, judged by RUN ORDER (GitHub run ids increase with creation), never by
+  // date: two runs on one day have the same date, so the old date comparison could not tell a
+  // refreshed record from a stale one.
+  const history = Array.isArray(record.history) ? record.history : [];
+  /** @type {string[]} */
+  const runIds = [];
+  const jobIds = new Set();
+  for (const [index, entry] of history.entries()) {
+    if (!isObject(entry)) {
+      errors.push({ code: 'CI_BLOCK_RECORD_HISTORY_ENTRY_INVALID', detail: `history[${index}] is not an object` });
+      continue;
     }
+    const where = `history[${index}] (run ${String(entry.runId)})`;
+    if (typeof entry.runId !== 'string' || !RUN_ID_RE.test(entry.runId)) errors.push({ code: 'CI_BLOCK_RECORD_HISTORY_ENTRY_INVALID', detail: `${where}: runId must be numeric` });
+    if (typeof entry.jobId !== 'string' || !RUN_ID_RE.test(entry.jobId)) errors.push({ code: 'CI_BLOCK_RECORD_HISTORY_ENTRY_INVALID', detail: `${where}: jobId must be numeric` });
+    if (typeof entry.observedSha !== 'string' || !SHA_RE.test(entry.observedSha)) errors.push({ code: 'CI_BLOCK_RECORD_HISTORY_ENTRY_INVALID', detail: `${where}: observedSha must be 40-hex` });
+    if (typeof entry.classification !== 'string' || !CI_BLOCK_CLASSES.includes(entry.classification)) errors.push({ code: 'CI_BLOCK_RECORD_HISTORY_ENTRY_INVALID', detail: `${where}: classification must be a declared class` });
+    if (typeof entry.observedDate !== 'string' || !DATE_RE.test(entry.observedDate)) errors.push({ code: 'CI_BLOCK_RECORD_HISTORY_ENTRY_INVALID', detail: `${where}: observedDate must be YYYY-MM-DD` });
+    if (typeof entry.jobId === 'string') {
+      if (jobIds.has(entry.jobId)) errors.push({ code: 'CI_BLOCK_RECORD_JOB_DUPLICATE', detail: `job ${entry.jobId} is attributed to more than one run` });
+      jobIds.add(entry.jobId);
+    }
+    if (typeof entry.runId === 'string' && RUN_ID_RE.test(entry.runId)) runIds.push(entry.runId);
   }
-  if (newestHistoryDate !== null && typeof record.observedDate === 'string' && DATE_RE.test(record.observedDate) && record.observedDate < newestHistoryDate) {
+  for (let index = 1; index < runIds.length; index += 1) {
+    const previous = BigInt(runIds[index - 1] ?? '0');
+    const current = BigInt(runIds[index] ?? '0');
+    if (current === previous) errors.push({ code: 'CI_BLOCK_RECORD_HISTORY_DUPLICATE_RUN', detail: `run ${runIds[index]} is recorded twice` });
+    else if (current < previous) errors.push({ code: 'CI_BLOCK_RECORD_HISTORY_ORDER', detail: `run ${runIds[index]} is recorded after the newer run ${runIds[index - 1]}; history is oldest-first by run order` });
+  }
+  const newest = runIds.reduce((best, candidate) => (best === null || BigInt(candidate) > BigInt(best) ? candidate : best), /** @type {string | null} */ (null));
+  if (newest !== null && typeof record.runId === 'string' && RUN_ID_RE.test(record.runId) && BigInt(record.runId) < BigInt(newest)) {
     errors.push({
       code: 'CI_BLOCK_RECORD_TOP_LEVEL_STALE',
-      detail: `the top-level observation ${record.observedDate} is older than the newest recorded observation ${newestHistoryDate}; promote the newest observation to the top level`,
+      detail: `the top-level run ${record.runId} is older than the newest recorded run ${newest}; promote the newest observation to the top level`,
     });
   }
   return { ok: errors.length === 0, errors };
+}
+
+/**
+ * @typedef {object} CiObservationLike
+ * @property {string} [runId]
+ * @property {string} [observedSha]
+ * @property {string} [classification]
+ * @typedef {object} CiRecordLike
+ * @property {string} [runId]
+ * @property {string} [observedSha]
+ * @property {string} [blockClass]
+ * @property {CiObservationLike[]} [history]
+ */
+
+/**
+ * R5-09 — the NEWEST observation per SHA, by run order. A SHA can be observed more than once
+ * (a rerun, a repair on the same tree); the claim "CI passed at S" is only as good as the
+ * LATEST run at S, so an earlier pass never outlives a later failure.
+ *
+ * @param {CiRecordLike | null | undefined} record
+ * @returns {Map<string, { runId: string, classification: string }>}
+ */
+export function newestObservationPerSha(record) {
+  /** @type {Map<string, { runId: string, classification: string }>} */
+  const newest = new Map();
+  const observations = [
+    { sha: record?.observedSha, runId: record?.runId, classification: record?.blockClass },
+    ...(Array.isArray(record?.history) ? record.history.map((entry) => ({ sha: entry?.observedSha, runId: entry?.runId, classification: entry?.classification })) : []),
+  ];
+  for (const observation of observations) {
+    if (typeof observation.sha !== 'string' || typeof observation.runId !== 'string' || !RUN_ID_RE.test(observation.runId) || typeof observation.classification !== 'string') continue;
+    const key = observation.sha.toLowerCase();
+    const held = newest.get(key);
+    if (held === undefined || BigInt(observation.runId) > BigInt(held.runId)) newest.set(key, { runId: observation.runId, classification: observation.classification });
+  }
+  return newest;
+}
+
+/**
+ * R4-11 / R5-09 — the governed CI status word, derived from the project-state block's CI fields
+ * and the CI block record. Pure (the rule performs the reads). `null` means the claim is not
+ * supported: an unknown word, a malformed or contradictory SHA pair, no observation at the claimed
+ * SHA, or an observation whose NEWEST run at that SHA disagrees with the claim.
+ *
+ * @param {{ value: string, observed: string, executed: string, record: CiRecordLike }} input
+ * @returns {string | null}
+ */
+export function deriveCiStatusFromRecord(input) {
+  const { value, observed, executed, record } = input;
+  if (!['NOT_OBSERVED', 'NO_STEPS_EXTERNAL_NON_EVIDENCE', 'EXECUTED_PASS', 'EXECUTED_FAIL'].includes(value)) return null;
+  if (value === 'EXECUTED_PASS' || value === 'EXECUTED_FAIL') {
+    if (!SHA_RE.test(observed) || observed !== executed) return null;
+    const latest = newestObservationPerSha(record).get(observed.toLowerCase());
+    if (latest === undefined) return null;
+    if (value === 'EXECUTED_PASS') return latest.classification === 'EXECUTED_PASS' ? value : null;
+    return latest.classification === 'EXECUTED_TEST_FAILURE' || latest.classification === 'EXECUTED_INFRA_FAILURE' ? value : null;
+  }
+  if (observed !== 'NONE' || executed !== 'NONE') return null;
+  return value;
 }
 
 /**

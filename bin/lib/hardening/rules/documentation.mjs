@@ -32,7 +32,7 @@ import {
   loadReleaseEvidenceBindings,
 } from '../../release-evidence.mjs';
 import { removedLineDigestsFromDiff, unpairedCorrectionsInRange } from '../../checkpoint-role.mjs';
-import { collectCiBlockStale, validateCiBlockRecord } from '../../ci-block-record.mjs';
+import { collectCiBlockStale, deriveCiStatusFromRecord, validateCiBlockRecord } from '../../ci-block-record.mjs';
 
 /**
  * NW-08. The gate had no mechanical relationship to the set of tests that
@@ -1017,34 +1017,11 @@ export function deriveCiObservationStatus() {
   const completeness = validateCiBlockRecord(record);
   if (!completeness.ok) return null;
   if (collectCiBlockStale(record, new Date().toISOString().slice(0, 10)).length > 0) return null;
-  // An execution claim must carry a 40-hex observed == executed pair; a
-  // non-observation must not claim one.
+  // R5-09: the claim is judged by the pure derivation — the NEWEST run at the claimed SHA decides
+  // (an earlier pass never outlives a later failure at the same tree).
   const observed = /^CI_OBSERVED_SHA:[ \t]*(\S+)[ \t]*$/m.exec(blockBody)?.[1] ?? '';
   const executed = /^CI_EXECUTED_SHA:[ \t]*(\S+)[ \t]*$/m.exec(blockBody)?.[1] ?? '';
-  if (value === 'EXECUTED_PASS' || value === 'EXECUTED_FAIL') {
-    if (!/^[0-9a-f]{40}$/i.test(observed) || observed !== executed) return null;
-    // The block's CI fields describe the CERTIFIED ANCHOR, while the record's
-    // top level is the LATEST observation — a newer run may legitimately be a
-    // red one. The claim must therefore be supported by SOME recorded
-    // observation at that exact SHA, not necessarily by the top level.
-    const observations = [
-      { sha: record.observedSha, classification: record.blockClass },
-      ...(Array.isArray(record.history)
-        ? record.history.map((/** @type {Record<string, unknown> | null} */ entry) => {
-            const item = /** @type {Record<string, unknown>} */ (entry ?? {});
-            return { sha: item.observedSha, classification: item.classification };
-          })
-        : []),
-    ].filter((entry) => typeof entry.sha === 'string');
-    const matching = observations.filter((entry) => String(entry.sha).toLowerCase() === observed.toLowerCase());
-    if (matching.length === 0) return null;
-    const hasPass = matching.some((entry) => entry.classification === 'EXECUTED_PASS');
-    const hasFail = matching.some((entry) => entry.classification === 'EXECUTED_TEST_FAILURE' || entry.classification === 'EXECUTED_INFRA_FAILURE');
-    if (value === 'EXECUTED_PASS' ? !hasPass : !hasFail) return null;
-  } else if (observed !== 'NONE' || executed !== 'NONE') {
-    return null;
-  }
-  return value;
+  return deriveCiStatusFromRecord({ value, observed, executed, record });
 }
 
 export function checkGovernedStatusWords() {

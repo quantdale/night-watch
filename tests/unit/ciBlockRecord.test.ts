@@ -12,7 +12,9 @@ import {
   applyCiExecutionEvidence,
   classifyCiExecutionEvidence,
   collectCiBlockStale,
+  deriveCiStatusFromRecord,
   evaluateCiCertification,
+  newestObservationPerSha,
   validateCiBlockRecord,
   validateCiRouteCandidates,
 } from '../../bin/lib/ci-block-record.mjs';
@@ -38,8 +40,9 @@ test.describe('CI block record completeness and staleness', () => {
     // property is therefore "the top level is the newest recorded observation
     // and its class is a declared class", never a pinned class.
     const history = RECORD.history as Array<{ runId: string; observedDate: string; classification: string }>;
-    const newest = history.map((entry) => entry.observedDate).sort().at(-1) as string;
-    expect(RECORD.observedDate).toBe(newest);
+    // R5-09: the top level is the newest run BY RUN ORDER (two runs share a date).
+    const newestRun = history.map((entry) => BigInt(entry.runId)).reduce((best, id) => (id > best ? id : best), 0n);
+    expect(BigInt(RECORD.runId)).toBe(newestRun);
     const topLevelEntry = history.find((entry) => entry.runId === RECORD.runId);
     expect(topLevelEntry).toBeDefined();
     expect(RECORD.blockClass).toBe(topLevelEntry!.classification);
@@ -74,14 +77,63 @@ test.describe('CI block record completeness and staleness', () => {
   // run recorded in history whose observation is NEWER than the top level
   // means the record was never refreshed, so the record silently stopped
   // describing current CI truth.
-  test('a top level older than its newest recorded observation is CI_BLOCK_RECORD_TOP_LEVEL_STALE', () => {
-    const stale = { ...RECORD, observedDate: '2026-09-01', history: [...RECORD.history, { runId: '1', jobId: '2', observedSha: SHA_A, observedDate: '2026-09-15', classification: 'EXECUTED_TEST_FAILURE' }] };
-    expect(validateCiBlockRecord(stale).ok).toBe(false);
-    expect(validateCiBlockRecord(stale).errors.map((entry) => entry.code)).toContain('CI_BLOCK_RECORD_TOP_LEVEL_STALE');
-    // The shipped record IS refreshed: its top level is the newest observation.
+  test('a top level older than its newest recorded RUN is CI_BLOCK_RECORD_TOP_LEVEL_STALE (run order, not date)', () => {
+    const newerRun = { runId: String(BigInt(RECORD.runId) + 1n), jobId: '999000111', observedSha: SHA_A, observedDate: RECORD.observedDate, classification: 'EXECUTED_TEST_FAILURE' };
+    // SAME date as the top level: the old date comparison could not see this stale record.
+    const stale = { ...RECORD, history: [...RECORD.history, newerRun] };
+    const verdict = validateCiBlockRecord(stale);
+    expect(verdict.ok).toBe(false);
+    expect(verdict.errors.map((entry) => entry.code)).toContain('CI_BLOCK_RECORD_TOP_LEVEL_STALE');
     expect(validateCiBlockRecord(RECORD).errors.map((entry) => entry.code)).not.toContain('CI_BLOCK_RECORD_TOP_LEVEL_STALE');
-    const newest = RECORD.history.map((entry: { observedDate: string }) => entry.observedDate).sort().at(-1);
-    expect(RECORD.observedDate >= newest).toBe(true);
+  });
+
+  test('history is oldest-first with unique runs and unique jobs, and every entry is well formed', () => {
+    const first = RECORD.history[0];
+    const codes = (history: unknown[]) => validateCiBlockRecord({ ...RECORD, history }).errors.map((entry) => entry.code);
+    expect(codes([...RECORD.history].reverse())).toContain('CI_BLOCK_RECORD_HISTORY_ORDER');
+    expect(codes([first, first, ...RECORD.history.slice(1)])).toContain('CI_BLOCK_RECORD_HISTORY_DUPLICATE_RUN');
+    const sharedJob = RECORD.history.map((entry: Record<string, unknown>, index: number) => (index === 1 ? { ...entry, jobId: first.jobId } : entry));
+    expect(codes(sharedJob)).toContain('CI_BLOCK_RECORD_JOB_DUPLICATE');
+    expect(codes([{ ...first, observedSha: 'short' }, ...RECORD.history.slice(1)])).toContain('CI_BLOCK_RECORD_HISTORY_ENTRY_INVALID');
+    expect(codes([{ ...first, classification: 'MOSTLY_GREEN' }, ...RECORD.history.slice(1)])).toContain('CI_BLOCK_RECORD_HISTORY_ENTRY_INVALID');
+    expect(codes([null, ...RECORD.history.slice(1)])).toContain('CI_BLOCK_RECORD_HISTORY_ENTRY_INVALID');
+    // The shipped history satisfies every rule, and no run id belongs to two SHAs.
+    expect(validateCiBlockRecord(RECORD).errors).toEqual([]);
+    const shaByRun = new Map<string, string>();
+    for (const entry of RECORD.history as Array<{ runId: string; observedSha: string }>) {
+      expect(shaByRun.has(entry.runId), `run ${entry.runId} recorded twice`).toBe(false);
+      shaByRun.set(entry.runId, entry.observedSha);
+    }
+  });
+
+  // R5-09 — the claim "CI passed at S" is only as good as the NEWEST run at S.
+  test('the newest observation per SHA decides: a later failure at the same SHA supersedes an earlier pass', () => {
+    const at = (runId: string, classification: string) => ({ runId, jobId: String(Number(runId) + 1), observedSha: SHA_A, observedDate: '2026-10-02', classification });
+    const failedAfterPass = { ...RECORD, runId: '300', jobId: '301', observedSha: SHA_B, blockClass: 'EXECUTED_PASS', history: [at('100', 'EXECUTED_PASS'), at('200', 'EXECUTED_TEST_FAILURE'), { ...at('300', 'EXECUTED_PASS'), observedSha: SHA_B }] };
+    expect(newestObservationPerSha(failedAfterPass).get(SHA_A)).toEqual({ runId: '200', classification: 'EXECUTED_TEST_FAILURE' });
+    expect(deriveCiStatusFromRecord({ value: 'EXECUTED_PASS', observed: SHA_A, executed: SHA_A, record: failedAfterPass })).toBeNull();
+    expect(deriveCiStatusFromRecord({ value: 'EXECUTED_FAIL', observed: SHA_A, executed: SHA_A, record: failedAfterPass })).toBe('EXECUTED_FAIL');
+    // The reverse order: a later pass supersedes an earlier failure — and the array order never matters.
+    const passAfterFail = { ...failedAfterPass, history: [at('200', 'EXECUTED_PASS'), at('100', 'EXECUTED_TEST_FAILURE'), { ...at('300', 'EXECUTED_PASS'), observedSha: SHA_B }] };
+    expect(deriveCiStatusFromRecord({ value: 'EXECUTED_PASS', observed: SHA_A, executed: SHA_A, record: passAfterFail })).toBe('EXECUTED_PASS');
+    expect(deriveCiStatusFromRecord({ value: 'EXECUTED_FAIL', observed: SHA_A, executed: SHA_A, record: passAfterFail })).toBeNull();
+    // Run ids compare numerically, not as strings ("99" < "100").
+    const numeric = { ...failedAfterPass, history: [at('99', 'EXECUTED_TEST_FAILURE'), at('100', 'EXECUTED_PASS'), { ...at('300', 'EXECUTED_PASS'), observedSha: SHA_B }] };
+    expect(deriveCiStatusFromRecord({ value: 'EXECUTED_PASS', observed: SHA_A, executed: SHA_A, record: numeric })).toBe('EXECUTED_PASS');
+  });
+
+  test('the derivation fails closed: an unknown word, a malformed or contradictory pair and an unobserved SHA all return null', () => {
+    const run = (value: string, observed: string, executed: string) => deriveCiStatusFromRecord({ value, observed, executed, record: RECORD });
+    expect(run('MOSTLY_GREEN', 'NONE', 'NONE')).toBeNull();
+    expect(run('EXECUTED_PASS', 'short', 'short')).toBeNull();
+    expect(run('EXECUTED_PASS', SHA_A, SHA_B)).toBeNull();
+    expect(run('EXECUTED_PASS', SHA_A, SHA_A)).toBeNull();
+    expect(run('NOT_OBSERVED', SHA_A, 'NONE')).toBeNull();
+    expect(run('NOT_OBSERVED', 'NONE', 'NONE')).toBe('NOT_OBSERVED');
+    // The live anchor: its own exact-head run (36790169165) is the newest at 027367d9.
+    const anchor = '027367d9da22ea1198c0a60fb1b11805f6719d40';
+    expect(newestObservationPerSha(RECORD).get(anchor)).toMatchObject({ runId: '36790169165', classification: 'EXECUTED_PASS' });
+    expect(run('EXECUTED_PASS', anchor, anchor)).toBe('EXECUTED_PASS');
   });
 
   // R4-12: the red runs the review named are recorded, with their repair runs.
