@@ -41,7 +41,10 @@ function persist(body: Record<string, unknown>): string {
 
 test.describe('the closed subject table matches the Producer Matrix', () => {
   test('every matrix row is a declared subject and every declared subject is a matrix row', () => {
-    const design = fs.readFileSync(path.join(ROOT, 'openspec', 'changes', 'nightwatch-final-completion-review5-v1', 'design.md'), 'utf8');
+    // The change is ARCHIVED at close-out; its design (the Producer Matrix) stays readable there.
+    const archived = path.join(ROOT, 'openspec', 'changes', 'archive', '2026-10-03-nightwatch-final-completion-review5-v1', 'design.md');
+    const active = path.join(ROOT, 'openspec', 'changes', 'nightwatch-final-completion-review5-v1', 'design.md');
+    const design = fs.readFileSync(fs.existsSync(archived) ? archived : active, 'utf8');
     const matrix = [...design.matchAll(/^\| (\d+) \| `([a-z0-9-]+)` \|/gm)].map((match) => match[2]);
     expect(matrix).toHaveLength(27);
     expect([...matrix].sort()).toEqual(CERTIFICATION_SUBJECTS.map((entry) => entry.id).sort());
