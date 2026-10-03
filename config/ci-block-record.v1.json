@@ -2,9 +2,9 @@
   "schemaVersion": "nightwatch.ci-block-record.v1",
   "definitionName": "Nightwatch exact-head CI block record (F-02)",
   "note": "The block is RETIRED: GitHub Actions executes the hardening workflow on every push, and the record's top level is the latest observed executed run (D-03 / R2-61). The block-record judgements stay load-bearing as the single CI authority shared by agent:check, project:check and gate:topology; the revisit date keeps the record from going stale. Candidate routes remain recorded with their trade-offs, and the materialised owner route is the restored GitHub-hosted execution.",
-  "runId": "37120079300",
-  "jobId": "111194325030",
-  "observedSha": "15a8d1e848466eeba2fef27edce00c07beda8906",
+  "runId": "37123923541",
+  "jobId": "111205308346",
+  "observedSha": "dce05da13ad0975ea84fdc367a827c9a4557cc36",
   "blockClass": "EXECUTED_PASS",
   "observedDate": "2026-10-03",
   "ownerAction": "None required while the hardening workflow executes on every push; re-observe the next exact-head run and refresh this record before the revisit date.",
@@ -358,6 +358,15 @@
       "classification": "EXECUTED_PASS",
       "detail": "review-5 close-out tip (REPORT, the per-ID disposition table, the full validation set recorded, the child record held IN_PROGRESS) integrated at 15a8d1e8.",
       "runCreatedAt": "2026-10-03T11:34:19Z"
+    },
+    {
+      "runId": "37123923541",
+      "jobId": "111205308346",
+      "observedSha": "dce05da13ad0975ea84fdc367a827c9a4557cc36",
+      "observedDate": "2026-10-03",
+      "classification": "EXECUTED_PASS",
+      "detail": "review-5 close-out: the archive with spec sync, the COMPLETE child record, the parent route-back (declaring the close-out session) and the recorded gate:clean receipt, integrated at dce05da1.",
+      "runCreatedAt": "2026-10-03T12:45:49Z"
     }
   ],
   "routeSelection": {

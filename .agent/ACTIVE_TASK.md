@@ -90,7 +90,7 @@ reconcile every operator-truth surface, close the ledger, and end with a
 ```text
 CAMPAIGN: nightwatch-final-product-completion-v1
 CHILD TASK: NONE
-SESSION WORKTREE: session/nightwatch-final-product-complet-db1073bd
+SESSION WORKTREE: NONE
 
 IMPLEMENTATION AUTHORIZED:
   Nightwatch source, tests, hardening rules/probes, schemas/configuration,
@@ -106,10 +106,9 @@ CURRENT STATUS:
   IN_PROGRESS — RESUME AT M9 TASK 10.4 (10.2 and 10.3 COMPLETE). The review-5 child
   campaign `nightwatch-final-completion-review5-v1` is COMPLETE and archived
   (`2026-10-03-nightwatch-final-completion-review5-v1`); exact-head CI is GREEN at each of its
-  integrated tips (runs 37044532848, 37062959122, 37120079300). This close-out session holds the
-  worktree declared above only until it is released and removed; one canonical maintenance commit then
-  sets `SESSION WORKTREE: NONE` and the STATE `Branch` to `main`, and the next parent session starts its
-  own worktree.
+  integrated tips (runs 37044532848, 37062959122, 37120079300, 37123923541). No session is live; the
+  canonical checkout is clean at `origin/main`. The next session starts its own worktree and replaces
+  `SESSION WORKTREE: NONE` and the STATE `Branch` with its session branch.
 
 ALPHAUS DEV / NEXT / PRODUCTION CONTACT:   NOT AUTHORIZED
 AUTHENTICATED ALPHAUS RUNTIME:             NOT AUTHORIZED
