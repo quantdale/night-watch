@@ -245,6 +245,13 @@
       "oldLineSha256": "sha256:ec46561d3dc4610a77e80f05",
       "oldLineExcerpt": "Prior-session rows (pi implementation session <identifier redacted>, 2026-08-22) are",
       "reason": "R5-18 / review-5 task A8.2: the line quoted an agent-session identifier (full or prefix); the repository is temporarily public, so it is replaced by a non-identifying reference and the statement is otherwise unchanged. A full identifier remains in earlier public git history (recorded in DECISIONS D-152)."
+    },
+    {
+      "id": "CORR-R5-003",
+      "path": "docs/CURRENT_STATE.md",
+      "oldLineSha256": "sha256:f694df503eeb19ec2c2a5996",
+      "oldLineExcerpt": "> Durable memory for the next agent/session. Last updated: **2026-10-02**",
+      "reason": "The review-5 close-out (2026-10-03) rebound the governed LIVE_TASK_ID/LIVE_PHASE machine fields back to the parent campaign; the header date must cover the document's own last change, while the statement itself is unchanged."
     }
   ]
 }
