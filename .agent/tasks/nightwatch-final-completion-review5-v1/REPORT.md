@@ -130,6 +130,10 @@ closed and opened accordingly.
   (`SESSION_BRANCH_DELETED`, `SESSION_WORKTREE_REMOVED`) before the archive and route-back commit, which
   a fresh close-out session owned by the parent task made (the continuity guard requires the active task to
   equal the session's task, so the route back cannot be integrated by the child's own session).
+- `gate:clean`: PASS over the close-out tree `3362bdb0` (`clean-receipt:sha256:59f8982ee3178e3d6adca79c`, `declaredSessionWorktree = NONE`,
+  `sourceRootCleanAtEmit = true`, `liveSessionCount = 1`); it was run from the close-out session worktree and the
+  receipt's `sourceWorktreePathClass` reads `CANONICAL_CHECKOUT` because the classifier compares the source with
+  its own root. A run from the canonical checkout with no live session after release is recorded in the parent STATE.
 - Archive (the close-out commit that follows the integration of `15a8d1e8`): the change moved to `openspec/changes/archive/<date>-nightwatch-final-completion-review5-v1/`
   with spec sync (`openspec/specs/review5-closure/`); its `config/task-id-ledger.v1.json` entry is
   removed in the same commit (an archived change's IDs are no longer enforced).

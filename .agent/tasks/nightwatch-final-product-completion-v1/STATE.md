@@ -545,6 +545,11 @@ exactly as in M4/M5.
 
 ## Validation Ledger
 
+- 2026-10-03 — review-5 child CLOSED. Exact-head CI GREEN at the close-out tip `15a8d1e8` (run 37120079300)
+  after Track A `4f4d7bfd` (37044532848) and Track B `5b2ea0f7` (37062959122). `gate:clean` PASS over the
+  close-out tree `3362bdb0` (`clean-receipt:sha256:59f8982ee3178e3d6adca79c`). The child session was released and removed; a fresh session owned by this
+  task made the archive and route-back commit. The repository is clean at `origin/main` with no live session
+  other than the one that made it.
 - 2026-10-02 — PARENT PAUSED (review-5 preconditions). Resume point M9 task
   10.4. Owner decision "both" recorded as D-152 (RESUME_PROMPT_5). Stale
   continuity prose synced (R5-17): ACTIVE_TASK `TASK_NEXT_ID` 10.2 → 10.4, the

@@ -73,6 +73,13 @@ remaining work from M9 task 10.4 onward (see ACTIVE_TASK); this child has no fur
 
 ## Validation Ledger
 
+- 2026-10-03 — close-out. Exact-head CI at the close-out tip `15a8d1e8` is run 37120079300 (success). The
+  session was released and removed (`SESSION_BRANCH_DELETED`, `SESSION_WORKTREE_REMOVED`). `gate:clean`
+  PASS over the close-out tree `3362bdb0`: `clean-receipt:sha256:59f8982ee3178e3d6adca79c`, `declaredSessionWorktree = NONE`,
+  `sourceRootCleanAtEmit = true`, `liveSessionCount = 1`; it was run from the close-out session worktree and the
+  receipt's `sourceWorktreePathClass` reads `CANONICAL_CHECKOUT` because the classifier compares the source with
+  its own root. The route back was made by a fresh session owned by the parent task (the continuity guard
+  requires the active task to equal the session's task).
 - 2026-10-02 — Track A close (local): `typecheck`, `typecheck:bin` (1402), `hardening:check`, `agent:check`, `project:check` pass; focused suites agent-state/claimJournal/validationLane pass (147 + 8); mutation harness BM-057..070 each DETECTED_BY_TESTS (BM-063/064 first SURVIVED, the lane validator was never run on a mutated lane; a refusal test now kills both). A3 exact-head CI run 37011881613 at `a2e04648` completed `success`.
 - 2026-10-02 — exact-head CI run 37009611291 at `67d8757e` (A1+A2 integration tip) completed `success`.
 - 2026-10-02 — A3.1 + A3.2 (local): `typecheck`, `typecheck:bin` (1412, 14/76), `hardening:check`, `agent:check` pass; focused suites (projectState, productionCompletionLaneState, gateReceiptPersistence incl. the real-gate clean/dirty producer tests, plannerHandoff, phase23QualityGate) 243/243; probes HC-266..HC-272 registered (campaign result recorded at the next entry).

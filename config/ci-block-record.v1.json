@@ -2,9 +2,9 @@
   "schemaVersion": "nightwatch.ci-block-record.v1",
   "definitionName": "Nightwatch exact-head CI block record (F-02)",
   "note": "The block is RETIRED: GitHub Actions executes the hardening workflow on every push, and the record's top level is the latest observed executed run (D-03 / R2-61). The block-record judgements stay load-bearing as the single CI authority shared by agent:check, project:check and gate:topology; the revisit date keeps the record from going stale. Candidate routes remain recorded with their trade-offs, and the materialised owner route is the restored GitHub-hosted execution.",
-  "runId": "37062959122",
-  "jobId": "111023757937",
-  "observedSha": "5b2ea0f70eef53ff73163d87d67454713c70eab3",
+  "runId": "37120079300",
+  "jobId": "111194325030",
+  "observedSha": "15a8d1e848466eeba2fef27edce00c07beda8906",
   "blockClass": "EXECUTED_PASS",
   "observedDate": "2026-10-03",
   "ownerAction": "None required while the hardening workflow executes on every push; re-observe the next exact-head run and refresh this record before the revisit date.",
@@ -349,6 +349,15 @@
       "classification": "EXECUTED_PASS",
       "detail": "review-5 Track B (groups B1-B6: the Producer Matrix, the certification evidence receipt and certify:evidence, the tracked evidence directory and add-only guard, the yield authorization binding, the topology verdict verification and the reachability proof) integrated at 5b2ea0f7.",
       "runCreatedAt": "2026-10-02T20:48:47Z"
+    },
+    {
+      "runId": "37120079300",
+      "jobId": "111194325030",
+      "observedSha": "15a8d1e848466eeba2fef27edce00c07beda8906",
+      "observedDate": "2026-10-03",
+      "classification": "EXECUTED_PASS",
+      "detail": "review-5 close-out tip (REPORT, the per-ID disposition table, the full validation set recorded, the child record held IN_PROGRESS) integrated at 15a8d1e8.",
+      "runCreatedAt": "2026-10-03T11:34:19Z"
     }
   ],
   "routeSelection": {
