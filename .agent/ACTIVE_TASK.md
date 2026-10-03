@@ -14,7 +14,7 @@ Last validated implementation SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
 Last checkpoint: 2026-10-03 — CLOSE-OUT VALIDATED, INTEGRATING. Track A (A1-A9) is integrated at `4f4d7bfd`
 (exact-head CI GREEN, run 37044532848) and Track B (B1-B6) at `5b2ea0f7` (run 37062959122 GREEN); the full
 authoritative set is green; the REPORT carries the per-ID disposition table for R5-01..R5-18; the change
-is archived with spec sync. The remaining close-out is mechanical and happens after this tip is
+is archived with spec sync in the canonical close-out commit (task C.4). The remaining close-out is mechanical and happens after this tip is
 integrated: observe its exact-head CI, release and remove this session, run `gate:clean` from canonical,
 then ONE canonical maintenance commit flips this record to COMPLETE and routes ACTIVE_TASK back to
 `nightwatch-final-product-completion-v1` at M9 task 10.4.

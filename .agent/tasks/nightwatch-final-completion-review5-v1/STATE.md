@@ -20,7 +20,7 @@ Last checkpoint: 2026-10-03 — CLOSE-OUT VALIDATED, INTEGRATING. Track A (A1-A9
 `4f4d7bfd` (exact-head run 37044532848 GREEN) and Track B (B1-B6) at `5b2ea0f7` (run 37062959122 GREEN);
 the full authoritative set is green at `5b2ea0f7` (`npm test` 6029/0, `gate:local` PASS, `gate:dev`/
 `gate:milestone` PASS, `hardening:rules` 273/273, `hardening:mutants` 116/116); the REPORT carries the
-per-ID disposition table; the change is archived with spec sync. Remaining: observe this tip's exact-head
+per-ID disposition table. Remaining: the archive with spec sync (task C.4),  observe this tip's exact-head
 CI, release and remove the session, `gate:clean` from canonical, then one canonical maintenance commit
 that flips this record to COMPLETE and routes ACTIVE_TASK to the parent at M9 task 10.4.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2

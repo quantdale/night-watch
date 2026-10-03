@@ -6,6 +6,10 @@ Phase: COMPLETION_REVIEW5_V1
 CHILD OF: nightwatch-final-product-completion-v1
 Starting SHA: d68bb1a7c7cf244da654815a1e7f266e1985f30c
 
+Note: the archive, the ledger-entry removal, the publication of `review5-closure` and the COMPLETE flip described
+below land in the canonical close-out commit that follows the integration of this tip and the release of the
+session (the handoff and continuity guards keep an IN_PROGRESS record's change un-archived until then).
+
 ## Scope
 
 The groups of `tasks.md` (Track A: A1-A9, Track B: B1-B6, close-out C), one spec
