@@ -5,24 +5,24 @@
 Task ID: nightwatch-final-completion-review5-v1
 Phase: COMPLETION_REVIEW5_V1
 CHILD OF: nightwatch-final-product-completion-v1
-Status: COMPLETE
+Status: IN_PROGRESS
 TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1
-TASK_GROUPS_COMPLETE: A1,A2,A3,A4,A5,A6,A7,A8,A9,B1,B2,B3,B4,B5,B6,C
-TASK_GROUP_NEXT: NONE
-TASK_NEXT_ID: NONE
+TASK_GROUPS_COMPLETE: A1,A2,A3,A4,A5,A6,A7,A8,A9,B1,B2,B3,B4,B5,B6
+TASK_GROUP_NEXT: C
+TASK_NEXT_ID: C.3
 Starting SHA: d68bb1a7c7cf244da654815a1e7f266e1985f30c
 Last validated implementation SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
 Last substantive checkpoint SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-final-completion-revi-305cc65d
-Last checkpoint: 2026-10-03 — COMPLETE. Track A (A1-A9) is integrated at `4f4d7bfd`
-(exact-head run 37044532848 GREEN) and Track B (B1-B6) at `5b2ea0f7` (run 37062959122
-GREEN); the full authoritative set is green at `5b2ea0f7` (`npm test` 6029/0, `gate:local`
-PASS, `gate:dev`/`gate:milestone` PASS, `hardening:rules` 273/273, `hardening:mutants`
-116/116); the REPORT carries the per-ID disposition table; the change is archived with spec
-sync and ACTIVE_TASK routes to the parent at M9 task 10.4. Previous: the bootstrap, Track A
-and Track B checkpoints recorded below.
+Last checkpoint: 2026-10-03 — CLOSE-OUT VALIDATED, INTEGRATING. Track A (A1-A9) is integrated at
+`4f4d7bfd` (exact-head run 37044532848 GREEN) and Track B (B1-B6) at `5b2ea0f7` (run 37062959122 GREEN);
+the full authoritative set is green at `5b2ea0f7` (`npm test` 6029/0, `gate:local` PASS, `gate:dev`/
+`gate:milestone` PASS, `hardening:rules` 273/273, `hardening:mutants` 116/116); the REPORT carries the
+per-ID disposition table; the change is archived with spec sync. Remaining: observe this tip's exact-head
+CI, release and remove the session, `gate:clean` from canonical, then one canonical maintenance commit
+that flips this record to COMPLETE and routes ACTIVE_TASK to the parent at M9 task 10.4.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: d68bb1a7c7cf244da654815a1e7f266e1985f30c
@@ -30,7 +30,7 @@ LAST_VALIDATED_IMPLEMENTATION_SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_COMPLETION_REVIEW5_V1_STATUS: COMPLETE
+PHASE_COMPLETION_REVIEW5_V1_STATUS: IN_PROGRESS
 
 ## Objective
 
@@ -44,8 +44,8 @@ ACTIVE_TASK routed back to the parent at "M9 task 10.4".
 
 ## Current Milestone
 
-COMPLETE — the bounded review-5 child campaign is closed: Track A (A1-A9), Track B (B1-B6) and the
-close-out (C) are done, group C ticked, and every finding R5-01..R5-18 has one recorded disposition.
+group C — close-out, task C.3 (integration, exact-head CI, release and removal of the session,
+`gate:clean` from canonical, route back to the parent); C.1, C.2 and C.4 are done.
 
 ## Completed Milestones
 
@@ -55,12 +55,14 @@ close-out (C) are done, group C ticked, and every finding R5-01..R5-18 has one r
 
 ## Work In Progress
 
-None — the campaign is COMPLETE and nothing is uncommitted.
+None between milestones — the close-out tip is committed and awaiting integration.
 
 ## Exact Next Action
 
-NONE — the campaign is COMPLETE. The parent `nightwatch-final-product-completion-v1` owns the
-remaining work from M9 task 10.4 onward (see ACTIVE_TASK); this child has no further action.
+Integrate this tip with `nightwatch-session.mjs integrate`, observe its exact-head CI run and record it in
+the CI block record, release and remove the session (`remove --delete-branch`), run `gate:clean` from
+canonical with no live session, then one canonical maintenance commit under a MAINTENANCE claim flips this
+record to COMPLETE (STATE, REPORT, ACTIVE_TASK, live block) and routes ACTIVE_TASK to the parent. Task C.3.
 
 ## Files Changed
 
@@ -142,21 +144,14 @@ C-00 fast-forward pushes of validated checkpoints and `gh` CI observations.
 
 ## Resume Recipe
 
-Task complete. Do not resume this child; a future task requires a separate fresh owner
-authorization. The parent campaign's own records name its resume point.
+Resume from this file: read `.agent/ACTIVE_TASK.md`, then SPEC, PLAN and this STATE, reconcile against
+`git status`/`git log` and the session record (re-adopt a stale session with `claim --adopt`), run the
+smallest decisive validation, and continue the Exact Next Action.
 
 ## Completion Snapshot
 
-COMPLETE. All 28 tasks ticked; every review-5 finding R5-01..R5-18 has exactly one recorded
-disposition with evidence (the REPORT's per-ID table); all 116 registered behavioural mutants are
-DETECTED (`hardening:mutants` 116/116, `hardening:rules` 95 rules / 273 probes / 273 detected); the
-full authoritative set is green at `5b2ea0f70eef53ff73163d87d67454713c70eab3` (`npm test` 6029/0 with
-33 declared skips, `gate:local` PASS with receipt persisted, `gate:dev` and `gate:milestone` PASS,
-`npm run prepush` PASS, `openspec validate --all --strict`); Track A and Track B carry exact-head CI
-runs 37044532848 and 37062959122 GREEN; the change is archived with spec sync; ACTIVE_TASK routes to
-the parent at "M9 task 10.4". Reachability: every one of the 16 conditions is REACHABLE from committed,
-clean-clone-verifiable evidence (proved over real producers, classifier, verifier and evaluator with a
-declared stand-in for the sixteen live checks); on the real tree conditions 3, 8 and 10 depend on the
-parent's 12.3, 15.4 and M9 10.4-10.6 and the final S does not exist yet, so the exit rule did not
-trigger. Recorded limits: receipts are tamper-evident, not tamper-proof (OD-5); `owner-manual` is a
-recorded unavailable lane; the child claimed neither single-use grant.
+Not complete. Group C task C.3 remains: the integration of this close-out tip, its exact-head CI, the
+release and removal of the session, `gate:clean` from canonical and the canonical route-back to the parent.
+Everything else is done: all findings R5-01..R5-18 are dispositioned in the REPORT, the full authoritative
+set is green, Track A and Track B carry exact-head CI GREEN runs 37044532848 and 37062959122, and the
+change is archived with spec sync.
