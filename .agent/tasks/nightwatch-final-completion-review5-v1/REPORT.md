@@ -1,14 +1,10 @@
 # Report — review-5 corrective campaign
 
-Status: IN_PROGRESS
+Status: COMPLETE
 Task ID: nightwatch-final-completion-review5-v1
 Phase: COMPLETION_REVIEW5_V1
 CHILD OF: nightwatch-final-product-completion-v1
 Starting SHA: d68bb1a7c7cf244da654815a1e7f266e1985f30c
-
-Note: the archive, the ledger-entry removal, the publication of `review5-closure` and the COMPLETE flip described
-below land in the canonical close-out commit that follows the integration of this tip and the release of the
-session (the handoff and continuity guards keep an IN_PROGRESS record's change un-archived until then).
 
 ## Scope
 
@@ -129,9 +125,12 @@ closed and opened accordingly.
 ## Close-out record
 
 - Integrated: Track A `4f4d7bfd` (run 37044532848 GREEN), Track B `5b2ea0f7` (run 37062959122
-  GREEN), then the close-out documentary commits; each tip's exact-head run is recorded in
-  `config/ci-block-record.v1.json`.
-- Archive: the change moved to `openspec/changes/archive/<date>-nightwatch-final-completion-review5-v1/`
+  GREEN) and the close-out tip `15a8d1e8` (run **37120079300** GREEN); every run is recorded in
+  `config/ci-block-record.v1.json`. The session was released and removed with its branch deleted
+  (`SESSION_BRANCH_DELETED`, `SESSION_WORKTREE_REMOVED`) before the archive and route-back commit, which
+  a fresh close-out session owned by the parent task made (the continuity guard requires the active task to
+  equal the session's task, so the route back cannot be integrated by the child's own session).
+- Archive (the close-out commit that follows the integration of `15a8d1e8`): the change moved to `openspec/changes/archive/<date>-nightwatch-final-completion-review5-v1/`
   with spec sync (`openspec/specs/review5-closure/`); its `config/task-id-ledger.v1.json` entry is
   removed in the same commit (an archived change's IDs are no longer enforced).
 - Route: `.agent/ACTIVE_TASK.md` returns to `nightwatch-final-product-completion-v1`, resuming at M9

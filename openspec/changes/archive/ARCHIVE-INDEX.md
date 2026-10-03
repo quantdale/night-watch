@@ -65,3 +65,4 @@ capability spec stays readable after archiving.
 | nightwatch-current-source-unknown-yield-w12-v1 | COMPLETE | CAPABILITY_BEARING | archived with specs; published: current-source-yield-measurement |
 | nightwatch-final-completion-corrections-v1 | COMPLETE | BLOCKED_NOT_PUBLISHED | archived with --skip-specs (task 6.4): its requirements enforce the parent campaign's specs and publish no new capability |
 | nightwatch-final-completion-review4-v1 | COMPLETE | CAPABILITY_BEARING | archived with specs; published: review4-closure |
+| nightwatch-final-completion-review5-v1 | COMPLETE | CAPABILITY_BEARING | archived with specs; published: review5-closure |

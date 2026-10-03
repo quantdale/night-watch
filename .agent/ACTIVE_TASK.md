@@ -1,63 +1,96 @@
 # Active Task
 
-Task ID: nightwatch-final-completion-review5-v1
-Phase: COMPLETION_REVIEW5_V1
-Title: Review-5 corrective campaign (bounded child of the terminal campaign)
+Task ID: nightwatch-final-product-completion-v1
+Phase: FINAL_PRODUCT_COMPLETION_V1
+Title: Final product completion (terminal campaign)
 Status: IN_PROGRESS
 TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1
-TASK_GROUPS_COMPLETE: A1,A2,A3,A4,A5,A6,A7,A8,A9,B1,B2,B3,B4,B5,B6
-TASK_GROUP_NEXT: C
-TASK_NEXT_ID: C.3
-Task directory: .agent/tasks/nightwatch-final-completion-review5-v1
-Starting SHA: d68bb1a7c7cf244da654815a1e7f266e1985f30c
+TASK_GROUPS_COMPLETE: 1,2,3,4,5,6,7,8
+TASK_GROUP_NEXT: 10
+TASK_NEXT_ID: 10.4
+TASK_GROUP_DEFERRED: 9.5b
+Task directory: .agent/tasks/nightwatch-final-product-completion-v1
+Starting SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
 Last validated implementation SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
-Last checkpoint: 2026-10-03 — CLOSE-OUT VALIDATED, INTEGRATING. Track A (A1-A9) is integrated at `4f4d7bfd`
-(exact-head CI GREEN, run 37044532848) and Track B (B1-B6) at `5b2ea0f7` (run 37062959122 GREEN); the full
-authoritative set is green; the REPORT carries the per-ID disposition table for R5-01..R5-18; the change
-is archived with spec sync in the canonical close-out commit (task C.4). The remaining close-out is mechanical and happens after this tip is
-integrated: observe its exact-head CI, release and remove this session, run `gate:clean` from canonical,
-then ONE canonical maintenance commit flips this record to COMPLETE and routes ACTIVE_TASK back to
-`nightwatch-final-product-completion-v1` at M9 task 10.4.
-Current milestone: group C — close-out, tasks C.1-C.2 and C.4 done; C.3 (integration, CI, release,
-`gate:clean`) is in progress.
-Next action: observe the exact-head CI run at the integrated tip, then release and remove the session,
-run `gate:clean` from canonical, flip this record to COMPLETE and route ACTIVE_TASK to the parent.
-Authorization class: COMPLETION_REVIEW5_V1
+Last checkpoint: 2026-10-03 — THE REVIEW-5 CHILD CAMPAIGN IS COMPLETE AND ARCHIVED
+(`2026-10-03-nightwatch-final-completion-review5-v1`, spec published as
+`openspec/specs/review5-closure/`; owner decision D-152 in docs/DECISIONS.md). Track A is integrated
+and exact-head CI GREEN (run 37044532848 at `4f4d7bfd`); Track B is integrated and exact-head CI
+GREEN (run 37062959122 at `5b2ea0f7`): the integrity fixes, the Producer Matrix and the certification
+evidence mechanism (`npm run certify:evidence`, the tracked `evidence/certification/<S>/` directory),
+the yield authorization record (NOT_GRANTED until this campaign's 12.3), the verified topology verdict
+and the reachability proof. The parent resumes at M9 task 10.4 in a fresh session; M9 tasks 10.2
+(76/76 at the time) and 10.3 are COMPLETE. RESUME POINT: M9 task 10.4 (annotate bins to zero
+diagnostics; measured baseline 1402 diagnostics, 15 of 77 bins conforming under the lane), then
+10.5-10.6, M10-M14 (including the single paid run 12.3 and the 15.4 npm query) and the 13-section
+final report. The final certification pass is also owed here: rebind the lanes and conditions at the
+final S with `certify:evidence` (see `docs/RELEASE-ADVANCE-CONDITIONS.md`).
+Previous checkpoint: 2026-09-27 — M8 COMPLETE (9.1-9.13): DEV-lane
+preconditions + launcher guard, credential effect binding, bundle
+transactions, PREPARED/TERMINAL records, guard acquisitions, bounded
+body-read, run evidence, per-start nonce, relay invocation credential,
+ChangeSet validation, child-process census, M8 guard totality, gate pair
+5712/0 and exact-head CI green (run 36349771611 @ `badb6f88`).
+Previous checkpoint: 2026-09-27 — M6 COMPLETE (7.1-7.11): the derived protocol
+dossier readiness, the total Control Center status mapping, role-typed replay
+contexts, the campaign-state subtree with dossier-family-first findings, the
+newest-N run window, the read-only agent-campaign view, the measured Safety
+Center, one resolveSiblingRoot() with a hardening rule and probe, the
+SYNTHETIC_PREVIEW labelling, the status:local auth heading, and the UI/browser
+coverage of the new view.
+Previous checkpoint: 2026-09-27 — M5 COMPLETE (6.1-6.17): the durable
+identity-bound agent finding record with its atomic store and verbatim
+terminated resume, the full reasoner identity, resumed-budget conservation,
+provider attribution with the honest termination class, tier-scaled failure
+ceilings with bounded backoff, the `failures` rename, the streaming dispatcher
+with signal-driven pause, HEAD-bound Git reproduction, environment-signature
+refusal, the product run receipt, measured findings surfaces, malformed-state
+refusal with marked presentation defaults, the bounded operator launch and the
+synthetic hunt suite registered in the gate.
+Previous checkpoint: 2026-09-26 — M4 COMPLETE (5.1-5.7): six release probes wired
+(`d595c7c8`), the G20 accessibility record with its fail-closed parser
+(`cab67d76`), the `implemented` honesty rule + X-04 demotion + A-19/A-20 schema
+states + the CI block-record single authority (`a784e668`), and the final
+integration `137207b1` after reconciling origin/main `946b52c4` and restoring
+the ledger-governed README status block; gate:dev/gate:milestone 5520/0.
+Current milestone: M9 task 10.4 (annotate bins to zero diagnostics) — NOT
+STARTED; tasks 10.2 and 10.3 are COMPLETE and the review-5 child campaign is closed.
+Next action: implement task 10.4 in safety-critical-first batches with the gate plus probe
+campaign after each batch (start a fresh session with `nightwatch-session.mjs start`); then 10.5
+and 10.6.
+Authorization class: FINAL_PRODUCT_COMPLETION_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
-STARTING_SHA: d68bb1a7c7cf244da654815a1e7f266e1985f30c
+STARTING_SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
 LAST_VALIDATED_IMPLEMENTATION_SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
 LIVE_HEAD_AUTHORITY: GIT
-PHASE_COMPLETION_REVIEW5_V1_STATUS: IN_PROGRESS
+PHASE_FINAL_PRODUCT_COMPLETION_V1_STATUS: IN_PROGRESS
 
 ## Mission
 
-Resolve every finding of the independent review-5 (`audit.md`, verbatim from
-`RESUME_PROMPT_5.md` §3) in two tracks: first the real integrity and product
-defects (Track A), then make release certification reachable honestly (Track B)
-— a real producer for every one of the 16 conditions and 11 lanes, verifiable
-from a clean clone, ending in a fixture-repository proof of 16/16. Close the
-child with the full authoritative validation set (including the committed
-mutation harness at zero survivors), exact-head CI green, `gate:clean` from
-canonical, a per-ID disposition table for R5-01..R5-18, archival with spec
-sync, and ACTIVE_TASK routed back to the parent at M9 task 10.4.
+Execute the single terminal campaign that makes an honest
+`PROJECT_COMPLETE_AND_CI_CERTIFIED` verdict reachable and stable (OD-1/OD-2):
+disposition every audited census item, make the certification spine
+checkpoint-neutral and CI-green, persist truthful autonomous-hunt results,
+reconcile every operator-truth surface, close the ledger, and end with a
+`main`-only clean topology equal to `origin/main`.
 
 ## Read order
 
-1. `.agent/tasks/nightwatch-final-completion-review5-v1/{SPEC,PLAN,STATE}.md`
-2. `openspec/changes/nightwatch-final-completion-review5-v1/{proposal,design,audit,tasks}.md`
-3. `AGENTS.md`, `docs/CURRENT_STATE.md`, `docs/SAFETY_MODEL.md`,
-   `docs/DECISIONS.md` (D-150, D-152), `docs/FLAKE-LEDGER.md`
-4. The cited live source for each finding
+1. `.agent/tasks/nightwatch-final-product-completion-v1/{SPEC,PLAN,STATE}.md`
+2. `openspec/changes/nightwatch-final-product-completion-v1/{proposal,design,audit,tasks}.md`
+3. `AGENTS.md`, `docs/CURRENT_STATE.md`, `docs/SAFETY_MODEL.md`, and
+   `docs/DECISIONS.md`
+4. Current audit/OpenSpec ledgers and cited live source
 
 ## Routing and safety
 
 ```text
-CAMPAIGN: nightwatch-final-completion-review5-v1
+CAMPAIGN: nightwatch-final-product-completion-v1
 CHILD TASK: NONE
-SESSION WORKTREE: session/nightwatch-final-completion-revi-305cc65d
+SESSION WORKTREE: NONE
 
 IMPLEMENTATION AUTHORIZED:
   Nightwatch source, tests, hardening rules/probes, schemas/configuration,
@@ -66,12 +99,16 @@ IMPLEMENTATION AUTHORIZED:
   C-00 commits and fast-forward integration from this session only.
 
 EXTERNAL CONTACT AUTHORIZED (OD-3 ONLY):
-  GitHub Actions read/observe; C-00 fast-forward pushes.
+  GitHub Actions read/observe; C-00 fast-forward pushes; one bounded paid
+  provider proof run; one npm registry advisory query.
 
 CURRENT STATUS:
-  IN_PROGRESS — close-out: the change is archived, the REPORT is written and the full validation set
-  is green; the tip is being integrated. The parent `nightwatch-final-product-completion-v1` stays
-  paused until the canonical route-back commit.
+  IN_PROGRESS — RESUME AT M9 TASK 10.4 (10.2 and 10.3 COMPLETE). The review-5 child
+  campaign `nightwatch-final-completion-review5-v1` is COMPLETE and archived
+  (`2026-10-03-nightwatch-final-completion-review5-v1`); its Track A and Track B tips carry
+  exact-head CI GREEN (runs 37044532848 and 37062959122). No session is live; the canonical
+  checkout is clean at `origin/main`. The next session starts its own worktree and replaces
+  `SESSION WORKTREE: NONE` and the STATE `Branch` with its session branch.
 
 ALPHAUS DEV / NEXT / PRODUCTION CONTACT:   NOT AUTHORIZED
 AUTHENTICATED ALPHAUS RUNTIME:             NOT AUTHORIZED
@@ -85,6 +122,4 @@ LOCAL READ-ONLY COMMANDS AND TESTS:        AUTHORIZED
 
 Never force-push, never rebase or amend another agent's commits, never discard
 a newer canonical tip, and never touch another owner's worktree. Do not claim
-completion, exhaustion, or release readiness without evidence. The parent's
-single-use grants (the 12.3 paid provider run and the 15.4 npm advisory query)
-are NOT claimed by this child.
+completion, exhaustion, or release readiness without evidence.

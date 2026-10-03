@@ -92,6 +92,16 @@ into the archive with `--skip-specs`; the pre-move locations are declared here.
 - `openspec/changes/nightwatch-final-completion-corrections-v1/specs/completion-correction-ledger-truth/spec.md`
 - `openspec/changes/nightwatch-final-completion-corrections-v1/specs/completion-correction-validation-spine/spec.md`
 
+Archived child change (2026-10-03, review-5 task C.4): the corrective change moved into the
+archive with spec sync (published as `openspec/specs/review5-closure/`); the pre-move locations are
+declared here.
+
+- `openspec/changes/nightwatch-final-completion-review5-v1/audit.md`
+- `openspec/changes/nightwatch-final-completion-review5-v1/design.md`
+- `openspec/changes/nightwatch-final-completion-review5-v1/proposal.md`
+- `openspec/changes/nightwatch-final-completion-review5-v1/tasks.md`
+- `openspec/changes/nightwatch-final-completion-review5-v1/specs/review5-closure/spec.md`
+
 Planned tracked-file deletions are declared here before they happen (exact
 paths, one per line, per the WORKSPACE_DECLARED_DELETIONS gate). Deletions
 identified later (for example the M9 retirement of superseded `bin/*.mjs`
