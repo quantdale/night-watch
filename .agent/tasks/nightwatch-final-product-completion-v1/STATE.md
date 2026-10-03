@@ -15,14 +15,14 @@ Last validated implementation SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
 Last substantive checkpoint SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
-Branch: main
+Branch: session/nightwatch-final-product-complet-db1073bd
 Last checkpoint: 2026-10-03 — THE REVIEW-5 CHILD CAMPAIGN IS COMPLETE AND ARCHIVED
 (`2026-10-03-nightwatch-final-completion-review5-v1`, D-152); its Track A and Track B tips carry
 exact-head CI GREEN (runs 37044532848 at `4f4d7bfd` and 37062959122 at `5b2ea0f7`). M9 10.2 is COMPLETE
 (76/76 declared at the time: 72 operator-CLI + 4 library-retained; the registry now counts 77 with
 `certify-evidence`) and 10.3 is COMPLETE. RESUME POINT: M9 task 10.4 (annotate bins to zero
 diagnostics; measured baseline 1402 diagnostics; not started), then 10.5-10.6, M10-M14 (the single paid
-run is 12.3, the npm query 15.4) and the 13-section final report. No session is live (`Branch: main`).
+run is 12.3, the npm query 15.4) and the 13-section final report. The close-out session named in `Branch` is released after integration; a canonical maintenance commit then sets `Branch: main`.
 Previous: 2026-10-01 — the review-4 child campaign closed and the parent resumed in a fresh session through 10.2 resume batch 1 (60/76 at that point).
 Previous: 2026-09-28 — M9 10.2 IN PROGRESS
 (59/76 declared, 4 library-retained, 13 pending): the Phase 0 formatter
