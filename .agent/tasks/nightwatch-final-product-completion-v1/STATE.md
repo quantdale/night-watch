@@ -15,13 +15,14 @@ Last validated implementation SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
 Last substantive checkpoint SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
-Branch: session/nightwatch-final-product-complet-0e405e6b
-Last checkpoint: 2026-10-02 — PARENT PAUSED FOR THE REVIEW-5 CHILD CAMPAIGN
-(`nightwatch-final-completion-review5-v1`, D-152). M9 10.2 is COMPLETE (76/76
-declared: 72 operator-CLI + 4 library-retained, 0 pending) and 10.3 is COMPLETE.
-Exact-head CI run 36916725274 is GREEN (15/15) at `2e0cfda0`. RESUME POINT: M9
-task 10.4 (measured baseline 1412 diagnostics; not started), then 10.5-10.6,
-M10-M14 (the single paid run is 12.3) and the 13-section final report.
+Branch: main
+Last checkpoint: 2026-10-03 — THE REVIEW-5 CHILD CAMPAIGN IS COMPLETE AND ARCHIVED
+(`2026-10-03-nightwatch-final-completion-review5-v1`, D-152); its Track A and Track B tips carry
+exact-head CI GREEN (runs 37044532848 at `4f4d7bfd` and 37062959122 at `5b2ea0f7`). M9 10.2 is COMPLETE
+(76/76 declared at the time: 72 operator-CLI + 4 library-retained; the registry now counts 77 with
+`certify-evidence`) and 10.3 is COMPLETE. RESUME POINT: M9 task 10.4 (annotate bins to zero
+diagnostics; measured baseline 1402 diagnostics; not started), then 10.5-10.6, M10-M14 (the single paid
+run is 12.3, the npm query 15.4) and the 13-section final report. No session is live (`Branch: main`).
 Previous: 2026-10-01 — the review-4 child campaign closed and the parent resumed in a fresh session through 10.2 resume batch 1 (60/76 at that point).
 Previous: 2026-09-28 — M9 10.2 IN PROGRESS
 (59/76 declared, 4 library-retained, 13 pending): the Phase 0 formatter
@@ -56,10 +57,9 @@ ledger, and end at `PROJECT_COMPLETE_AND_CI_CERTIFIED` under D-129 with a
 
 M9 D-129 CLI contract and bin type-check (group 10, tasks 10.1-10.6): 10.1
 DONE, 10.2 COMPLETE (76/76 declared: 72 operator-CLI + 4 library-retained, 0
-pending), 10.3 COMPLETE. The parent is PAUSED at task 10.4 (annotate bins to
-zero diagnostics; NOT STARTED) while the bounded review-5 child campaign
-`nightwatch-final-completion-review5-v1` runs; the review-4 child is closed and
-archived.
+pending), 10.3 COMPLETE. The parent resumes at task 10.4 (annotate bins to
+zero diagnostics; NOT STARTED); the review-4 and review-5 child campaigns are
+closed and archived.
 
 ## Completed Milestones
 
@@ -1181,7 +1181,7 @@ named in the routing block; integration is fast-forward only.
 
 ## Completion Snapshot
 
-Not complete. M9 tasks 10.2 (76/76 declared, 0 pending) and 10.3 are COMPLETE; 10.4 is next (paused for the review-5 child).
+Not complete. M9 tasks 10.2 (76/76 declared, 0 pending) and 10.3 are COMPLETE; 10.4 is next (the review-5 child is closed).
 Terminal snapshot is written at M14: all 228 census items
 dispositioned (OD-1), `PROJECT_COMPLETE_AND_CI_CERTIFIED` under D-129 with CI
 `EXECUTED_PASS` at S (OD-2), operator proofs recorded, ledger closed, and a

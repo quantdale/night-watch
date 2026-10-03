@@ -65,83 +65,83 @@ that contains its close-out.
 
 - Objective: no test or source file can be smuggled through an archive move.
 - Files/areas: `bin/lib/checkpoint-role.mjs`, its fixtures and probes.
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE
 
 ### MA2 — Deletions (A2.1)
 
 - Objective: `--no-renames` everywhere with a real totality rule.
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE
 
 ### MA3 — Receipt verification completeness (A3.1-A3.2)
 
 - Objective: clean emit for every certifying kind; closed subject sets.
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE
 
 ### MA4 — Behavioural guard coverage (A4.1-A4.3)
 
 - Objective: R5-05 mutants detected by behaviour; the mutation harness runs in
   `gate:milestone`.
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE
 
 ### MA5 — DEV-launcher effect analysis (A5.1)
 
 - Objective: an AST effect scan; all 12 R5-06 mutants detected.
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE
 
 ### MA6 — CLI correctness (A6.1-A6.2)
 
 - Objective: the M9 migration regressions fixed; the shared-parser rule is
   behavioural.
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE
 
 ### MA7 — CI record truth (A7.1)
 
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE
 
 ### MA8 — Small truths (A8.1-A8.2)
 
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE
 
 ### MA9 — Process and continuity (A9.1-A9.4)
 
 - Objective: claim journal, `npm run prepush`, record corrections, parent
   prose sync; also makes the task-group ledger see letter-prefixed task IDs
   (discovery D-1 in STATE).
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE
 
 ### MB1 — Certification Producer Matrix (B1.1)
 
 - Objective: the matrix complete for 16 conditions and 11 lanes, the
   persistence mechanism recorded in D-152, strict-validated; any incomplete
   row is an owner STOP.
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE
 
 ### MB2 — Producers (B2.1-B2.2)
 
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE
 
 ### MB3 — Clean-clone verifiability (B3.1)
 
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE
 
 ### MB4 — Yield proof (B4.1)
 
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE
 
 ### MB5 — Topology verdict (B5.1)
 
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE
 
 ### MB6 — Reachability proof (B6.1)
 
 - Objective: fixture end-to-end 16/16 MET, or the exit rule.
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE
 
 ### MC — Close-out (C.1-C.4)
 
 - Objective: the full authoritative set, integration, CI observation, release,
   removal, `gate:clean`, REPORT, archival, route back to the parent.
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE
 
 ## Validation Strategy
 

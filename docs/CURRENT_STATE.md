@@ -947,8 +947,8 @@ informational and are not interpreted as current authority.
 
 ```
 LIVE_STATE_PROTOCOL_VERSION: nightwatch.live-state.v1
-LIVE_TASK_ID: nightwatch-final-completion-review5-v1
-LIVE_PHASE: COMPLETION_REVIEW5_V1
+LIVE_TASK_ID: nightwatch-final-product-completion-v1
+LIVE_PHASE: FINAL_PRODUCT_COMPLETION_V1
 LIVE_TASK_STATUS: IN_PROGRESS
 LIVE_PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 LIVE_PROJECT_VERDICT_EFFECT: PRESERVE

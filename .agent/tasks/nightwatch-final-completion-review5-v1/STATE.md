@@ -5,23 +5,24 @@
 Task ID: nightwatch-final-completion-review5-v1
 Phase: COMPLETION_REVIEW5_V1
 CHILD OF: nightwatch-final-product-completion-v1
-Status: IN_PROGRESS
+Status: COMPLETE
 TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1
-TASK_GROUPS_COMPLETE: A1,A2,A3,A4,A5,A6,A7,A8,A9,B1,B2,B3,B4,B5,B6
-TASK_GROUP_NEXT: C
-TASK_NEXT_ID: C.1
+TASK_GROUPS_COMPLETE: A1,A2,A3,A4,A5,A6,A7,A8,A9,B1,B2,B3,B4,B5,B6,C
+TASK_GROUP_NEXT: NONE
+TASK_NEXT_ID: NONE
 Starting SHA: d68bb1a7c7cf244da654815a1e7f266e1985f30c
 Last validated implementation SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
 Last substantive checkpoint SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-final-completion-revi-305cc65d
-Last checkpoint: 2026-10-02 — BOOTSTRAP. The review-5 change
-(`openspec/changes/nightwatch-final-completion-review5-v1/`: proposal, design with D152-1..D152-5 and
-the empty Certification Producer Matrix, audit = the 18 findings verbatim,
-tasks = the Track A / Track B / close-out groups verbatim, one spec requirement
-per group) and this continuity v2 record are the single bootstrap commit from
-the parent's pause checkpoint `d68bb1a7` (= `origin/main`). Group A1 is next.
+Last checkpoint: 2026-10-03 — COMPLETE. Track A (A1-A9) is integrated at `4f4d7bfd`
+(exact-head run 37044532848 GREEN) and Track B (B1-B6) at `5b2ea0f7` (run 37062959122
+GREEN); the full authoritative set is green at `5b2ea0f7` (`npm test` 6029/0, `gate:local`
+PASS, `gate:dev`/`gate:milestone` PASS, `hardening:rules` 273/273, `hardening:mutants`
+116/116); the REPORT carries the per-ID disposition table; the change is archived with spec
+sync and ACTIVE_TASK routes to the parent at M9 task 10.4. Previous: the bootstrap, Track A
+and Track B checkpoints recorded below.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: d68bb1a7c7cf244da654815a1e7f266e1985f30c
@@ -29,7 +30,7 @@ LAST_VALIDATED_IMPLEMENTATION_SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_COMPLETION_REVIEW5_V1_STATUS: IN_PROGRESS
+PHASE_COMPLETION_REVIEW5_V1_STATUS: COMPLETE
 
 ## Objective
 
@@ -43,11 +44,8 @@ ACTIVE_TASK routed back to the parent at "M9 task 10.4".
 
 ## Current Milestone
 
-group C — close-out (tasks C.1-C.4): the focused suites, `gate:dev`/`gate:milestone` with the mutation
-harness at zero survivors and `hardening:rules`; the full authoritative set; the Track B integration with
-exact-head CI green; then the REPORT with the per-ID disposition table, archive with spec sync and the
-route back to the parent at M9 task 10.4. Track A (A1-A9) is integrated and CI-green at `4f4d7bfd`
-(run 37044532848); Track B (B1-B6) is implemented locally and not yet integrated.
+COMPLETE — the bounded review-5 child campaign is closed: Track A (A1-A9), Track B (B1-B6) and the
+close-out (C) are done, group C ticked, and every finding R5-01..R5-18 has one recorded disposition.
 
 ## Completed Milestones
 
@@ -57,16 +55,12 @@ route back to the parent at M9 task 10.4. Track A (A1-A9) is integrated and CI-g
 
 ## Work In Progress
 
-NONE — Track A is committed locally; the next unit is the Producer Matrix (B1.1)
-after the Track A integration and its exact-head CI observation.
+None — the campaign is COMPLETE and nothing is uncommitted.
 
 ## Exact Next Action
 
-C.1: run `npm run prepush`, `npm run hardening:rules` and `npm run hardening:mutants` on the committed
-Track B tree (all must be green, zero survivors), then C.2 the full authoritative set (`gate:local`,
-`npm test`, the UI gate, `openspec validate --all --strict`, `agent:check`, `project:check`), then C.3
-integrate via `nightwatch-session.mjs integrate` and observe exact-head CI, release and remove the
-session, and run `gate:clean` from canonical; then C.4 the REPORT, archive and the route back to the parent.
+NONE — the campaign is COMPLETE. The parent `nightwatch-final-product-completion-v1` owns the
+remaining work from M9 task 10.4 onward (see ACTIVE_TASK); this child has no further action.
 
 ## Files Changed
 
@@ -148,17 +142,21 @@ C-00 fast-forward pushes of validated checkpoints and `gh` CI observations.
 
 ## Resume Recipe
 
-Resume from this file: read `.agent/ACTIVE_TASK.md`, then `SPEC.md`, `PLAN.md`
-and this STATE, reconcile against `git status`/`git log` and the session
-record, run the smallest decisive validation, and continue the Exact Next
-Action. All work happens in the session worktree named in the routing block;
-integration is fast-forward only.
+Task complete. Do not resume this child; a future task requires a separate fresh owner
+authorization. The parent campaign's own records name its resume point.
 
 ## Completion Snapshot
 
-Not complete. Terminal snapshot is written at close-out: every task ticked,
-every review-5 finding dispositioned with evidence, all registered mutants
-DETECTED with zero survivors in the mutation harness, the full authoritative
-set exit 0, exact-head CI green at the integrated tip, the session released and
-removed with its branch deleted, `gate:clean` PASS from canonical with no live
-session, and ACTIVE_TASK routed back to the parent.
+COMPLETE. All 28 tasks ticked; every review-5 finding R5-01..R5-18 has exactly one recorded
+disposition with evidence (the REPORT's per-ID table); all 116 registered behavioural mutants are
+DETECTED (`hardening:mutants` 116/116, `hardening:rules` 95 rules / 273 probes / 273 detected); the
+full authoritative set is green at `5b2ea0f70eef53ff73163d87d67454713c70eab3` (`npm test` 6029/0 with
+33 declared skips, `gate:local` PASS with receipt persisted, `gate:dev` and `gate:milestone` PASS,
+`npm run prepush` PASS, `openspec validate --all --strict`); Track A and Track B carry exact-head CI
+runs 37044532848 and 37062959122 GREEN; the change is archived with spec sync; ACTIVE_TASK routes to
+the parent at "M9 task 10.4". Reachability: every one of the 16 conditions is REACHABLE from committed,
+clean-clone-verifiable evidence (proved over real producers, classifier, verifier and evaluator with a
+declared stand-in for the sixteen live checks); on the real tree conditions 3, 8 and 10 depend on the
+parent's 12.3, 15.4 and M9 10.4-10.6 and the final S does not exist yet, so the exit rule did not
+trigger. Recorded limits: receipts are tamper-evident, not tamper-proof (OD-5); `owner-manual` is a
+recorded unavailable lane; the child claimed neither single-use grant.
