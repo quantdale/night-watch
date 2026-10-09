@@ -15,7 +15,7 @@ Last validated implementation SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
 Last substantive checkpoint SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
-Branch: main
+Branch: session/nightwatch-final-product-complet-bd061869
 Last checkpoint: 2026-10-03 — THE REVIEW-5 CHILD CAMPAIGN IS COMPLETE AND ARCHIVED
 (`2026-10-03-nightwatch-final-completion-review5-v1`, D-152); its Track A and Track B tips carry
 exact-head CI GREEN (runs 37044532848 at `4f4d7bfd` and 37062959122 at `5b2ea0f7`). M9 10.2 is COMPLETE
