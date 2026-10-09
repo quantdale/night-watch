@@ -387,16 +387,15 @@ test.describe('exhaustive operator CLI sweep', () => {
             timeout: 10_000,
             maxBuffer: 2 * 1024 * 1024,
           });
-          // The unknown argument must be REFUSED before any effect. For a
-          // DEV-ONLY launcher the DEV-lane precondition gate is the FIRST
-          // refusal (it refuses every non-help argument path), which is at
-          // least as strict as a usage error; for every other bin the shared
-          // parser refuses with its categorical USAGE code.
+          // The unknown argument must be REFUSED before any effect. A DEV-lane
+          // launcher refuses first through its precondition gate (a FAIL-CLOSED
+          // refusal, exit 3) or through the shared parser's usage code (exit 2);
+          // both are a refusal, and neither may reach execution.
           const unknownStderr = String(unknownResult.stderr ?? '');
           if (unknownResult.status === OPERATOR_CLI_EXIT.USAGE) {
             expect(unknownStderr, `${item.bin} unknown flag must be refused by the shared parser`).toContain('CLI_UNKNOWN_ARGUMENT');
           } else {
-            expect(unknownResult.status, `${item.bin} unknown flag must be refused`).toBe(OPERATOR_CLI_EXIT.FAILURE);
+            expect([OPERATOR_CLI_EXIT.FAILURE, OPERATOR_CLI_EXIT.REFUSAL], `${item.bin} unknown flag must be refused`).toContain(unknownResult.status);
             expect(unknownStderr, `${item.bin} must refuse an unknown argument before execution`).toContain('DEV_LANE_PRECONDITION_OPEN');
           }
         }

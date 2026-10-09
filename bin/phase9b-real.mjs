@@ -26,7 +26,13 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 // M8 (9.1): refuse a DEV-lane launch while a DEV-lane precondition is OPEN,
 // BEFORE argument validation, auth validation or any child process.
-guardDevLane({ root, launcher: 'phase9b-real.mjs', args: process.argv.slice(2) });
+// M12 (13.1): clean coded refusal, never an uncaught throw (see phase2b-real).
+try {
+  guardDevLane({ root, launcher: 'phase9b-real.mjs', args: process.argv.slice(2) });
+} catch (error) {
+  console.error(`[phase9b] ${error instanceof Error ? error.message : String(error)}`);
+  process.exit(3);
+}
 
 /** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
 const CLI_METADATA = {
@@ -54,7 +60,18 @@ if (cli.stop) {
   // unknown argument), so the bin must not overwrite it with 0.
   process.exit(process.exitCode ?? 0);
 }
-const parsed = parsePhase9bLauncherArgs(process.argv.slice(2));
+// M12 (13.1): the launcher's own argument validation refuses as a CLEAN usage
+// refusal (coded stderr, exit 2). An uncaught throw exited 1 and printed a
+// stack trace carrying the checkout's absolute path (an operator-surface leak).
+let parsed;
+try {
+  parsed = parsePhase9bLauncherArgs(process.argv.slice(2));
+} catch (error) {
+  const message = error instanceof Error ? error.message : String(error);
+  if (!message.startsWith('phase9b-real ')) throw error;
+  console.error(`[phase9b] ${message}`);
+  process.exit(2);
+}
 if (parsed.help) {
   console.log(PHASE_9B_LAUNCHER_USAGE);
   process.exit(0);

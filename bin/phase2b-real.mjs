@@ -19,7 +19,15 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 // M8 (9.1): refuse a DEV-lane launch while a DEV-lane precondition is OPEN,
 // BEFORE argument validation, auth validation or any child process.
-guardDevLane({ root, launcher: 'phase2b-real.mjs', args: process.argv.slice(2) });
+// M12 (13.1): the refusal is a CLEAN operator-CLI refusal — coded stderr and
+// exit 3. Letting the authority's throw escape exited 1 and printed a stack
+// trace carrying the checkout's absolute path (an operator-surface leak).
+try {
+  guardDevLane({ root, launcher: 'phase2b-real.mjs', args: process.argv.slice(2) });
+} catch (error) {
+  console.error(`[phase2b] ${error instanceof Error ? error.message : String(error)}`);
+  process.exit(3);
+}
 
 /** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
 const CLI_METADATA = {
@@ -54,29 +62,37 @@ let env;
 let storage;
 let uiUrl;
 let journeyId;
-for (const arg of args) {
-  if (arg.startsWith('--env=')) {
-    if (env !== undefined) throw new Error('phase2b-real accepts --env only once');
-    env = arg.slice('--env='.length);
-  } else if (arg.startsWith('--storage-state=')) {
-    if (storage !== undefined) throw new Error('phase2b-real accepts --storage-state only once');
-    storage = arg.slice('--storage-state='.length);
-  } else if (arg.startsWith('--ui-url=')) {
-    if (uiUrl !== undefined) throw new Error('phase2b-real accepts --ui-url only once');
-    uiUrl = arg.slice('--ui-url='.length);
-  } else if (arg.startsWith('--journey-id=')) {
-    if (journeyId !== undefined) throw new Error('phase2b-real accepts --journey-id only once');
-    journeyId = arg.slice('--journey-id='.length);
-    if (journeyId.trim() === '') throw new Error('phase2b-real --journey-id must not be empty');
-  } else if (arg === '--help' || arg === '-h') {
-    console.log('Usage: npm run journey:real -- --env=dev|next --storage-state=/absolute/external/state.json [--ui-url=https://verified-host/] [--journey-id=ripple-payer-exchange-read|ripple-common-exchange-read|ripple-account-inventory]');
-    process.exit(0);
-  } else {
-    throw new Error(`phase2b-real does not accept option ${arg}`);
+// M12 (13.1): the launcher's own argument validation refuses as a CLEAN usage
+// refusal (coded stderr, exit 2). An uncaught throw exited 1 and printed a
+// stack trace carrying the checkout's absolute path (an operator-surface leak).
+try {
+  for (const arg of args) {
+    if (arg.startsWith('--env=')) {
+      if (env !== undefined) throw new Error('phase2b-real accepts --env only once');
+      env = arg.slice('--env='.length);
+    } else if (arg.startsWith('--storage-state=')) {
+      if (storage !== undefined) throw new Error('phase2b-real accepts --storage-state only once');
+      storage = arg.slice('--storage-state='.length);
+    } else if (arg.startsWith('--ui-url=')) {
+      if (uiUrl !== undefined) throw new Error('phase2b-real accepts --ui-url only once');
+      uiUrl = arg.slice('--ui-url='.length);
+    } else if (arg.startsWith('--journey-id=')) {
+      if (journeyId !== undefined) throw new Error('phase2b-real accepts --journey-id only once');
+      journeyId = arg.slice('--journey-id='.length);
+      if (journeyId.trim() === '') throw new Error('phase2b-real --journey-id must not be empty');
+    } else if (arg === '--help' || arg === '-h') {
+      console.log('Usage: npm run journey:real -- --env=dev|next --storage-state=/absolute/external/state.json [--ui-url=https://verified-host/] [--journey-id=ripple-payer-exchange-read|ripple-common-exchange-read|ripple-account-inventory]');
+      process.exit(0);
+    } else {
+      throw new Error(`phase2b-real does not accept option ${arg}`);
+    }
   }
-}
-if (env !== 'dev' || storage === undefined || storage.trim() === '') {
-  throw new Error('phase2b-real requires exactly one --env=dev and --storage-state=/absolute/external/state.json; NEXT is reserved for human-led auth capture');
+  if (env !== 'dev' || storage === undefined || storage.trim() === '') {
+    throw new Error('phase2b-real requires exactly one --env=dev and --storage-state=/absolute/external/state.json; NEXT is reserved for human-led auth capture');
+  }
+} catch (error) {
+  console.error(`[phase2b] ${error instanceof Error ? error.message : String(error)}`);
+  process.exit(2);
 }
 
 try {

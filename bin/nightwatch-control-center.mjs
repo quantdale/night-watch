@@ -147,13 +147,25 @@ try {
   {
     const surfaceModule = loadTypeScriptModule('src/core/config/environmentSurface.ts');
     const surface = surfaceModule.loadEnvironmentSurface();
-    const merged = surfaceModule.mergeDotEnvLayer(process.env, surfaceModule.loadDotEnvLayer(ROOT, surface.variables.map((entry) => entry.name)), surface);
-    for (const line of surfaceModule.reportUnknownEnvironmentVariables(merged, surface)) {
-      process.stderr.write(`NIGHTWATCH_CONTROL_CENTER: ${line}\n`);
-    }
+    // M12 (13.1): the `.env` layer load joins the value assertion inside the
+    // clean-refusal boundary. A DotEnvLoadError used to escape this inner
+    // block and be flattened by the outer catch to the generic
+    // CONTROL_CENTER_START_FAILED, losing the authority's own code; the
+    // specific code is now written here (paths and file content never are).
     try {
+      const layer = surfaceModule.loadDotEnvLayer(ROOT, surface.variables.map((entry) => entry.name));
+      const merged = surfaceModule.mergeDotEnvLayer(process.env, layer, surface);
+      for (const line of surfaceModule.reportUnknownEnvironmentVariables(merged, surface)) {
+        process.stderr.write(`NIGHTWATCH_CONTROL_CENTER: ${line}\n`);
+      }
       surfaceModule.assertEnvironmentSurface(merged, surface, { mode: 'startup' });
-    } catch {
+    } catch (error) {
+      const code = typeof error === 'object' && error !== null && 'code' in error ? String(error.code) : 'ENVIRONMENT_VALUE_MALFORMED';
+      if (code === 'ENVIRONMENT_VALUE_MALFORMED' || code.startsWith('DOTENV_')) {
+        // The authority's own code names the refusal precisely; the outer catch
+        // still reports only the allowlisted CONTROL_CENTER_* code.
+        process.stderr.write(`NIGHTWATCH_CONTROL_CENTER: ${error instanceof Error ? error.message : code}\n`);
+      }
       throw new Error('CONTROL_CENTER_ENVIRONMENT_CONFIGURATION_REFUSED');
     }
   }

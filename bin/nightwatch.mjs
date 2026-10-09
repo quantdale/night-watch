@@ -73,7 +73,18 @@ function main() {
   if (args[0] === 'config') {
     const [surfaceMod] = loadTypeScriptModules(['src/core/config/environmentSurface.ts'], { root });
     const surface = surfaceMod.loadEnvironmentSurface();
-    const fileEnvironment = surfaceMod.loadDotEnvLayer(root, surface.variables.map((entry) => entry.name));
+    // M12 (13.1): a malformed, unknown, duplicate or unreadable `.env` layer
+    // refuses as a CLEAN coded refusal carrying the authority's own code. The
+    // uncaught DotEnvLoadError exited 1 with a stack trace that printed the
+    // checkout's absolute path (an operator-surface leak).
+    let fileEnvironment;
+    try {
+      fileEnvironment = surfaceMod.loadDotEnvLayer(root, surface.variables.map((entry) => entry.name));
+    } catch (error) {
+      const code = typeof error === 'object' && error !== null && 'code' in error ? String(error.code) : 'DOTENV_LAYER_INVALID';
+      refuseOperatorCli('nightwatch', code, error instanceof Error ? error.message : '.env layer could not be loaded');
+      return;
+    }
     const merged = surfaceMod.mergeDotEnvLayer(process.env, fileEnvironment, surface);
     const verdict = surfaceMod.validateEnvironmentValues(merged, surface);
     const rows = surfaceMod.effectiveConfiguration(merged, surface, fileEnvironment);
@@ -114,15 +125,21 @@ function main() {
   {
     const [surfaceMod] = loadTypeScriptModules(['src/core/config/environmentSurface.ts'], { root });
     const surface = surfaceMod.loadEnvironmentSurface();
-    const fileEnvironment = surfaceMod.loadDotEnvLayer(root, surface.variables.map((entry) => entry.name));
-    const merged = surfaceMod.mergeDotEnvLayer(process.env, fileEnvironment, surface);
-    for (const line of surfaceMod.reportUnknownEnvironmentVariables(merged, surface)) {
-      console.error(`NIGHTWATCH: ${line}`);
-    }
+    // M12 (13.1): the `.env` layer is loaded inside the same clean-refusal
+    // boundary as the value assertion, so a malformed/unknown/duplicate/
+    // unreadable layer refuses with the authority's own code instead of an
+    // uncaught throw (exit 1 plus a stack trace carrying the absolute path).
+    let merged;
     try {
+      const fileEnvironment = surfaceMod.loadDotEnvLayer(root, surface.variables.map((entry) => entry.name));
+      merged = surfaceMod.mergeDotEnvLayer(process.env, fileEnvironment, surface);
+      for (const line of surfaceMod.reportUnknownEnvironmentVariables(merged, surface)) {
+        console.error(`NIGHTWATCH: ${line}`);
+      }
       surfaceMod.assertEnvironmentSurface(merged, surface, { mode: 'startup' });
     } catch (error) {
-      refuseOperatorCli('nightwatch', 'ENVIRONMENT_VALUE_MALFORMED', error instanceof Error ? error.message : 'environment validation refused');
+      const code = typeof error === 'object' && error !== null && 'code' in error ? String(error.code) : 'ENVIRONMENT_VALUE_MALFORMED';
+      refuseOperatorCli('nightwatch', code, error instanceof Error ? error.message : 'environment validation refused');
       return;
     }
     mergedEnvironment = merged;

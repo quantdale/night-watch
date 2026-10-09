@@ -45,7 +45,7 @@ test('Phase 8A.1 verify CLI accepts only one exact ID and performs no write', ()
       encoding: 'utf8',
       timeout: 10_000,
     });
-    expect(forbidden.status).toBe(1);
+    expect(forbidden.status).toBe(2);
     expect(forbidden.stdout).toContain('SELFDEV_VERIFY_USAGE_INVALID');
     expect(fs.readdirSync(privateRoot)).toEqual([]);
   } finally {

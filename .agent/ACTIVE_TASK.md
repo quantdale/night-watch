@@ -5,9 +5,9 @@ Phase: FINAL_PRODUCT_COMPLETION_V1
 Title: Final product completion (terminal campaign)
 Status: IN_PROGRESS
 TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1
-TASK_GROUPS_COMPLETE: 1,2,3,4,5,6,7,8,10
-TASK_GROUP_NEXT: 11
-TASK_NEXT_ID: 11.7
+TASK_GROUPS_COMPLETE: 1,2,3,4,5,6,7,8,10,11,12,13
+TASK_GROUP_NEXT: 14
+TASK_NEXT_ID: 14.1
 TASK_GROUP_DEFERRED: 9.5b
 Task directory: .agent/tasks/nightwatch-final-product-completion-v1
 Starting SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
@@ -57,21 +57,24 @@ Previous checkpoint: 2026-09-26 — M4 COMPLETE (5.1-5.7): six release probes wi
 states + the CI block-record single authority (`a784e668`), and the final
 integration `137207b1` after reconciling origin/main `946b52c4` and restoring
 the ledger-governed README status block; gate:dev/gate:milestone 5520/0.
-Current milestone: M10 — residual dispositions, quality debt and behaviour documentation
-(group 11, tasks 11.1-11.7). M9 (group 10) is COMPLETE: the bin type-check lane is BLOCKING at
+Current milestone: M13 — ledger closure and live-rendered documentation (group 14,
+tasks 14.1-14.6). M9 (group 10) is COMPLETE: the bin type-check lane is BLOCKING at
 0 diagnostics across all 143 tracked implementations with 0 exemptions and 0 widening
 annotations; the recorded 1402 baseline was a FLOOR because `tsconfig.bin.json` used to include
 `bin/**/*.d.mts` and TypeScript dropped 53 shadowed implementations from the program.
 M10 tasks 11.1-11.6 are COMPLETE (2026-10-09): the S-fixes and ratchets at `b7afa9e9`, and the
 documentation of record (DECISIONS D-153..D-167, SAFETY_MODEL §25-§32, the ARCHITECTURE M10
-record, the `NIGHTWATCH_REASONER_PRINT` removal). Task 11.6 is COMPLETE (2026-10-09, the UI
-lockfile dependency assessment and the GHSA-82fw disposition), so task 11.7 (commit) is the last
-M10 box.
-Next action: execute M10 task 11.7 (commit the M10 documentation of record), then
-M11-M14 (including the single paid run 12.3 and the 15.4 npm query) and the 13-section final
-report. The deferred `9.5b` (NW-AUD-020 tasks 3.2/4.2) continues to be carried by 14.1/14.2.
-Sequencing constraint recorded in D-148: run the paid proof (12.3) after the last substantive fix
-so G12's receipt binds to S.
+record, the `NIGHTWATCH_REASONER_PRINT` removal). Task 11.7 (commit) and M11/M12 are COMPLETE: the operator journey and the durable finding record
+(12.1/12.4), the deterministic synthetic proof and the clean-clone proof (12.2/12.5), the executed
+autonomous hunt (12.3), and the adversarial completion audit that found and repaired four
+refusals-delivered-as-uncaught-throws (the DEV-lane guard across 13 launchers, the phase*-real
+argv validation across 7 launchers, `nightwatch-agent status`, and the `.env` layer in three
+launchers plus the Control Center) with permanent regressions.
+Next action: M13 task 14.1 - reconcile the NW-AUD originals against their successors with SHA
+citations - then 14.2-14.6, M14 (the certified paid proof at S, the exact-head CI observation, the
+canonical gate trio and the topology proof) and the 13-section final report. The deferred `9.5b`
+(NW-AUD-020 tasks 3.2/4.2) continues to be carried by 14.1/14.2. Sequencing constraint recorded in
+D-148: the certified paid proof (12.3) runs at the final substantive SHA S on a clean tree.
 Authorization class: FINAL_PRODUCT_COMPLETION_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2

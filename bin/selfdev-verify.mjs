@@ -162,7 +162,10 @@ function main() {
   } catch (error) {
     const code = failureDetail(error).message?.split(':')[0] ?? 'SELFDEV_VERIFY_FAILED';
     console.log(JSON.stringify(safeFailure(code)));
-    process.exitCode = 1;
+    // M12 (13.1): a usage error is exit 2 per the operator-CLI convention
+    // (0 success, 1 failure, 2 usage, 3 fail-closed refusal, 4 external
+    // block); this closes the recorded exit-1 deviation for the help sweep.
+    process.exitCode = code.endsWith('_USAGE_INVALID') ? 2 : 1;
   }
 }
 

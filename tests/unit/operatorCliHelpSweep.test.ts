@@ -18,16 +18,18 @@ const ROOT = path.join(__dirname, '..', '..');
 const CONCURRENCY = 8;
 const REFUSAL_EXIT_CODES = new Set([2, 3, 4]);
 /**
- * Bins whose unknown-flag refusal is known to exit 1 instead of the contract's 2/3/4. Each is a
- * recorded deviation (a follow-up for the parent census), bounded EXACTLY: the entry must still
- * deviate and must still emit its refusal code, so the list can only shrink and never hide a new one.
+ * Bins whose unknown-flag refusal is known to exit 1 instead of the contract's
+ * 2/3/4. Each is a recorded deviation (a follow-up for the parent census),
+ * bounded EXACTLY: the entry must still deviate and must still emit its refusal
+ * code, so the list can only shrink and never hide a new one.
+ *
+ * M12 (13.1/13.2): the four recorded entries were REPAIRED — the DEV-lane guard
+ * and the selfdev exact-shape parsers now refuse as clean coded operator-CLI
+ * refusals (exit 3 / exit 2), so every entry was removed and the list is empty.
+ * A new deviation must be added here explicitly, which fails this sweep's own
+ * cleanliness requirement through review, never silently.
  */
-const KNOWN_EXIT_ONE_REFUSALS: Readonly<Record<string, RegExp>> = {
-  'bin/phase23-dev.mjs': /DEV_LANE_PRECONDITION_OPEN/,
-  'bin/selfdev-adopt-sandbox.mjs': /SELFDEV_ADOPT_SANDBOX_USAGE_INVALID/,
-  'bin/selfdev-promote-canonical.mjs': /SELFDEV_PROMOTE_CANONICAL_USAGE_INVALID/,
-  'bin/selfdev-verify.mjs': /SELFDEV_VERIFY_USAGE_INVALID/,
-};
+const KNOWN_EXIT_ONE_REFUSALS: Readonly<Record<string, RegExp>> = {};
 
 interface Outcome { status: number | null; stdout: string; stderr: string }
 

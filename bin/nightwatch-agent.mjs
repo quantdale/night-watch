@@ -217,12 +217,23 @@ function fail(code, message) {
 function assertStartupEnvironment() {
   const [surfaceMod] = loadTypeScriptModules(['src/core/config/environmentSurface.ts'], { root });
   const surface = surfaceMod.loadEnvironmentSurface();
-  const fileEnvironment = surfaceMod.loadDotEnvLayer(root, surface.variables.map((entry) => entry.name));
-  const merged = surfaceMod.mergeDotEnvLayer(process.env, fileEnvironment, surface);
-  for (const line of surfaceMod.reportUnknownEnvironmentVariables(merged, surface)) {
-    console.error(`NIGHTWATCH_AGENT: ${line}`);
+  // M12 (13.1): both the `.env` layer load and the value assertion refuse as
+  // CLEAN fail-closed refusals (coded stderr, exit 3). Letting the
+  // DotEnvLoadError / EnvironmentSurfaceError escape exited 1 and printed a
+  // stack trace carrying the checkout's absolute path (an operator-surface
+  // leak); the `status` path had no wrapper of its own, unlike `test`/`campaign`.
+  let merged;
+  try {
+    const fileEnvironment = surfaceMod.loadDotEnvLayer(root, surface.variables.map((entry) => entry.name));
+    merged = surfaceMod.mergeDotEnvLayer(process.env, fileEnvironment, surface);
+    for (const line of surfaceMod.reportUnknownEnvironmentVariables(merged, surface)) {
+      console.error(`NIGHTWATCH_AGENT: ${line}`);
+    }
+    surfaceMod.assertEnvironmentSurface(merged, surface, { mode: 'startup' });
+  } catch (error) {
+    fail(3, error instanceof Error ? error.message : 'ENVIRONMENT_VALUE_MALFORMED');
+    process.exit(3);
   }
-  surfaceMod.assertEnvironmentSurface(merged, surface, { mode: 'startup' });
   return merged;
 }
 

@@ -22,7 +22,13 @@ import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 // M8 (9.1): the DEV operator surface refuses while a DEV-lane precondition is OPEN.
-guardDevLane({ root: ROOT, launcher: 'phase23-dev.mjs', args: process.argv.slice(2), devOnly: true });
+// M12 (13.1): clean coded refusal, never an uncaught throw (see phase2b-real).
+try {
+  guardDevLane({ root: ROOT, launcher: 'phase23-dev.mjs', args: process.argv.slice(2), devOnly: true });
+} catch (error) {
+  console.error(`[phase23-dev] ${error instanceof Error ? error.message : String(error)}`);
+  process.exit(3);
+}
 
 // A-12 / 10.2: the shared operator-CLI contract, declared AFTER the DEV-lane
 // guard so the guard still runs first, and used for the help/metadata

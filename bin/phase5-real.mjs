@@ -21,7 +21,13 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 // M8 (9.1): refuse a DEV-lane launch while a DEV-lane precondition is OPEN,
 // BEFORE argument validation, auth validation or any child process.
-guardDevLane({ root, launcher: 'phase5-real.mjs', args: process.argv.slice(2) });
+// M12 (13.1): clean coded refusal, never an uncaught throw (see phase2b-real).
+try {
+  guardDevLane({ root, launcher: 'phase5-real.mjs', args: process.argv.slice(2) });
+} catch (error) {
+  console.error(`[phase5] ${error instanceof Error ? error.message : String(error)}`);
+  process.exit(3);
+}
 
 /** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
 const CLI_METADATA = {
@@ -54,31 +60,43 @@ const args = process.argv.slice(2);
 let env;
 let storage;
 let uiUrl;
-for (const arg of args) {
-  if (arg.startsWith('--env=')) {
-    if (env !== undefined) throw new Error('phase5-real accepts --env only once');
-    env = arg.slice('--env='.length);
-  } else if (arg.startsWith('--storage-state=')) {
-    if (storage !== undefined) throw new Error('phase5-real accepts --storage-state only once');
-    storage = arg.slice('--storage-state='.length);
-  } else if (arg.startsWith('--ui-url=')) {
-    if (uiUrl !== undefined) throw new Error('phase5-real accepts --ui-url only once');
-    uiUrl = arg.slice('--ui-url='.length);
-  } else if (arg === '--help' || arg === '-h') {
-    console.log('Usage: npm run api:phase5 -- --env=dev --storage-state=/absolute/external/state.json [--ui-url=https://verified-host/]');
-    process.exit(0);
-  } else {
-    throw new Error(`phase5-real does not accept option ${arg}`);
+// M12 (13.1): the launcher's own argument validation refuses as a CLEAN usage
+// refusal (coded stderr, exit 2). An uncaught throw exited 1 and printed a
+// stack trace carrying the checkout's absolute path (an operator-surface leak).
+// Only the launcher's own 'phase5-real …' refusals are usage errors; any other
+// throw inside the region re-propagates as a launcher defect.
+try {
+  for (const arg of args) {
+    if (arg.startsWith('--env=')) {
+      if (env !== undefined) throw new Error('phase5-real accepts --env only once');
+      env = arg.slice('--env='.length);
+    } else if (arg.startsWith('--storage-state=')) {
+      if (storage !== undefined) throw new Error('phase5-real accepts --storage-state only once');
+      storage = arg.slice('--storage-state='.length);
+    } else if (arg.startsWith('--ui-url=')) {
+      if (uiUrl !== undefined) throw new Error('phase5-real accepts --ui-url only once');
+      uiUrl = arg.slice('--ui-url='.length);
+    } else if (arg === '--help' || arg === '-h') {
+      console.log('Usage: npm run api:phase5 -- --env=dev --storage-state=/absolute/external/state.json [--ui-url=https://verified-host/]');
+      process.exit(0);
+    } else {
+      throw new Error(`phase5-real does not accept option ${arg}`);
+    }
   }
-}
-if (env !== 'dev') throw new Error('phase5-real requires --env=dev; production and next are not Phase 5 targets');
-if (storage === undefined) storage = path.join(os.homedir(), '.nightwatch', 'auth', 'ripple-dev-state.json');
-if (storage.trim() === '' || !path.isAbsolute(storage)) throw new Error('phase5-real requires an absolute external storage-state path');
-if (storage === path.join(os.homedir(), '.nightwatch', 'auth', 'ripple-dev-state.json') && fs.existsSync(storage)) {
-  const stat = fs.lstatSync(storage);
-  if (stat.isSymbolicLink() || !stat.isFile()) throw new Error('phase5-real refuses an unsafe default DEV storage-state path');
-  fs.chmodSync(storage, 0o600);
-  fs.chmodSync(path.dirname(storage), 0o700);
+  if (env !== 'dev') throw new Error('phase5-real requires --env=dev; production and next are not Phase 5 targets');
+  if (storage === undefined) storage = path.join(os.homedir(), '.nightwatch', 'auth', 'ripple-dev-state.json');
+  if (storage.trim() === '' || !path.isAbsolute(storage)) throw new Error('phase5-real requires an absolute external storage-state path');
+  if (storage === path.join(os.homedir(), '.nightwatch', 'auth', 'ripple-dev-state.json') && fs.existsSync(storage)) {
+    const stat = fs.lstatSync(storage);
+    if (stat.isSymbolicLink() || !stat.isFile()) throw new Error('phase5-real refuses an unsafe default DEV storage-state path');
+    fs.chmodSync(storage, 0o600);
+    fs.chmodSync(path.dirname(storage), 0o700);
+  }
+} catch (error) {
+  const message = error instanceof Error ? error.message : String(error);
+  if (!message.startsWith('phase5-real ')) throw error;
+  console.error(`[phase5] ${message}`);
+  process.exit(2);
 }
 
 try {

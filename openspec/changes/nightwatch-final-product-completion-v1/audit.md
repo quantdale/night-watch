@@ -436,3 +436,74 @@ and are corrected here rather than in the rows:
   is retained.
 - The conformance counts are derived from the registry, so no document restates
   them as a literal.
+
+## M12 13.1 adversarial completion audit (2026-10-10)
+
+Method: one writing session in the declared session worktree, read-only attack
+lanes except for the four repairs 13.2 required. Every case below names its
+construction and the EXACT observed behaviour; nothing is inferred. No Alphaus
+environment, database, cloud, credential or sibling mutation was contacted; all
+provider/browser/sibling attacks used synthetic fixtures under `/tmp`.
+
+| # | Attack case | Construction | Observed behaviour | Verdict | Regression |
+|---|---|---|---|---|---|
+| 1 | Malformed CLI args, all 77 bins | `--print-metadata` + `--help` enumeration; then unknown flag, repeated value flag (same/different), missing value, over-supplied positional, `--help` + invalid flag, empty argv, per bin, derived from each bin's own declared metadata | 73 entry points conform through the shared parser (unknown → exit 2 `CLI_UNKNOWN_ARGUMENT`, repeat → `CLI_ARGUMENT_CONFLICT`, missing value → `CLI_ARGUMENT_INVALID`, extra positional → `CLI_UNEXPECTED_POSITIONAL`, help wins over an invalid flag, command-required bins → `CLI_ARGUMENT_MISSING`); 4 library-retained modules no-op; the print CLI fails closed (`set NIGHTWATCH_PRINT_CLI…`, exit 1, no spawn) | **DEFECT-REPAIRED (2)** | `tests/unit/malformedCliRefusal.test.ts` |
+| 2 | Unknown env vars | undeclared `NIGHTWATCH_*` in the process env; malformed declared values (enum/integer shapes); `.env` with an unknown key, a malformed line, a duplicate key, an unreadable layer | undeclared names REPORTED (`ENVIRONMENT_VARIABLE_UNKNOWN` + closest neighbour), never silently accepted; malformed values refused by shape on every launch path | **DEFECT-REPAIRED (2)** | `tests/unit/environmentSurfaceRefusal.test.ts` |
+| 3 | Provider missing / non-zero / timeout / garbage / empty | synthetic print CLIs under `/tmp` driven through `bin/nightwatch-reasoner-print.mjs` with `{}` on stdin | ENOENT → exit 2 `spawnSync … ENOENT`; exit 7 → exit 2 `print CLI exited 7`; 300 s hang → exit 2 `ETIMEDOUT` at the adapter's own 120 s bound, child killed; garbage → exit 2 `stdout is not JSON`; empty → exit 2 `did not emit a Nightwatch reasoner-turn-response`; valid envelope → exit 0 canonicalized; zero prompt/cwd leftovers on every path | CORRECT | syntheticHuntSuite 5/5, providerAttribution/campaignSignalPause/reasonerIdentityBinding 10/10 |
+| 4 | Interrupted campaign + resume | deterministic fake-reasoner hunt chain (the registered synthetic suite) + reasoner identity binding suite | SIGINT → PAUSED checkpoint with durable progress; TERMINATED resume returns persisted records verbatim; a changed reasoner identity refuses `REASONER_IDENTITY_MISMATCH` before any turn; a dead provider is `PROVIDER_BLOCKED_BEFORE_SOURCE_ACTION`, never budget exhaustion | CORRECT | `tests/unit/syntheticHuntSuite.test.ts` 5/5, `tests/unit/reasonerIdentityBinding.test.ts` |
+| 5 | Missing/stale/malformed auth sidecar | synthetic storage state + sidecar built through the module's own writer, then MISSING / UNREADABLE (directory, malformed, non-JSON) / UNKNOWN_AGE (no record, tampered digest) / EXPIRED (elapsed cookie, elapsed window) / WRONG_ENVIRONMENT / future capture instant | each refused by its own `AUTH_CAPABILITY_*` code; a fresh valid sidecar is ADMITTED (budget warning only when under the declared run budget); the LIVE artefact inspection outranks a stale record field | CORRECT | `tests/unit/authBundleTransaction.test.ts`, `tests/unit/observeAuthenticatedRunner.test.ts`; live-proven |
+| 6 | Unavailable/stale sibling | `NIGHTWATCH_REPOS_ROOT` at an empty root and at a root holding an unapproved repo; plus the live-source suites | the intelligence surface reports `SOURCE_UNAVAILABLE` / `NOT_EVALUATED` honestly with no crash and no absolute-path leak; resolution is pinned by the single resolver's totality rule; live-source assertions run on synthetic twins with the four live cases skipped by declared identity | CORRECT | `tests/unit/siblingRootResolution.test.ts`, c02a/c03/c04/c07 (53 passed, 4 declared skips) |
+| 7 | Malformed state/dossier/review | `validateAgentFindingRecord` against a genuine derived record, a tampered payload, a forged id, an array, null, an unknown field, a missing field; truncated/empty/array JSON files; the review-envelope and dossier-readiness readers | tampered payload/forged id → `AGENT_FINDING_RECORD_ID_MISMATCH`; array/null → `AGENT_FINDING_RECORD_NOT_OBJECT`; unknown/missing fields → named codes; the dossier status is DERIVED (a forged `READY` is never consulted); the review envelope recomputes identity from the binding AND the file name | CORRECT | `tests/unit/agentFindingRecord.test.ts`, `dossierReadiness`, `reviewStoreHardening` (43/43); live-proven |
+| 8 | Missing browser / denied destinations / path+ symlink tricks | `resolveGateReceiptTarget` with a permitted temp path, a `..` traversal, an outside absolute path, an in-repository path, a relative path, a NUL byte, a missing parent, a leaf symlink, an ancestor symlink | `GATE_RECEIPT_PATH_UNCONFINED` / `_INSIDE_REPOSITORY` / `_NOT_ABSOLUTE` / `_PARENT_MISSING` / `_DESTINATION_SYMLINK` / `_PARENT_SYMLINK` each refused; the `..` case stays CONFINED inside the permitted root by construction; a NUL byte cannot escape (the write fails closed); the missing-browser case is the declared `CHROMIUM_UNAVAILABLE` skip identity | CORRECT | `tests/unit/gateReceiptPersistence.test.ts`, `tests/unit/nwAud009LocalReportPublication.test.ts` (61/61); live-proven |
+| 9 | Child termination | killed-writer and temp-collision cases in the run-evidence transaction suite; the dispatcher forwarding suite | a killed writer's torn line is refused by the strict reader; the dispatcher never kills a campaign; the child-process census totality holds (hardening:check PASS) | CORRECT | `tests/unit/runEvidenceBundleTransaction.test.ts`, `tests/unit/agentDispatcherForwarding.test.ts` (24/24) |
+| 10 | Invalid OpenSpec/task state | synthetic roots with a STATE disagreeing with ACTIVE_TASK, a duplicate continuity field, a future-value placeholder, a change with no task, a task with no change, a stale routing block | every broken shape exits non-zero; the specific codes are pinned per case (`DUPLICATE_CONTINUITY_FIELD` with line numbers, closure-placeholder refusal, `LEDGER_CHANGE_WITHOUT_TASK`, `ACTIVE_TASK_SESSION_WORKTREE_MISSING`, the v2 status state machine) | CORRECT | `tests/unit/agent-state.test.ts` + continuityLiveWaypoint + activeTaskRoutingBinding + productionCompletionOpenWork (193/193); live-proven |
+| 11 | Stale evidence | the demotion authority with an ancestor checkpoint + substantive change, + documentary change, an unrelated head, unknown ancestry, an unavailable change list, a malformed SHA, an exact head | `DESCENDANT_SUBSTANTIVE` + `CERTIFIED_AT_ANCESTOR` attention, `DESCENDANT_DOCUMENTARY`, `NOT_DESCENDANT` (ancestry unknown fails closed), `UNVERIFIABLE`, `UNKNOWN_CHECKPOINT`, `EXACT`; the ceiling/exemption ratchets are BLOCKING with `ceilings=0 exemptions=0` | CORRECT | `tests/unit/certificationEvidence.test.ts`, `certificationReachability`, `binTypecheckRatchet` (21/21); live-proven |
+| 12 | Empty-validation false positives | zero-execution and all-skipped shard receipts; an empty child-process census; the analyzer over an unguarded launcher; a probe campaign with a filter matching no rule and a rule with no probe; an empty gate definition | `NO_TESTS_EXECUTED` / `ALL_SKIPPED` (never PASS, shard fails); census floors refuse; `VACUOUS_CAMPAIGN` for zero rules and zero probes (exit 1); `UNPROVEN (no recorded probe)` fails; an empty gate definition is `QUALITY_GATE_SCHEMA_INVALID`; the bin lane's clean-surface and shadowing regressions hold | CORRECT | `tests/unit/validationShardPlan.test.ts`, `binTypecheckLaneCompleteness`, `semanticSkipIdentity`, `hardeningRuleQuantifiers` (45/45), `hardeningProbeCampaign` (10/10); live-proven |
+| 13 | Skip accounting | the skip-identity policy with a declared skip, an undeclared skip, a blanket allowlist entry, an unconfigured policy, a missing/malformed report, a reporter/identity count mismatch, a missing VC-01 execution | declared → PASS with `declared: 1` reported; undeclared → `UNDECLARED_SKIP`; blanket → `SKIP_POLICY_UNCONFIGURED`; missing/malformed report → distinct non-pass codes; mismatch → `SKIP_COUNT_MISMATCH`; unverifiable count never reads as agreement; VC-01 names the missing browser-backed test | CORRECT | `tests/unit/semanticSkipIdentity.test.ts`; live-proven (run-shards maps every non-PASS to a shard failure) |
+| 14 | Branch/worktree drift | the workspace-isolation suite's synthetic roots plus the live invariants | skip-worktree, shared `info/exclude` drift, a configured `core.hooksPath`, a duplicate session identity, an unresolvable worktree registration and an orphan session branch each fail closed by name; the live tree reports `drift=false base=INTEGRATED_CURRENT attention=0` | CORRECT | `tests/unit/workspaceIsolation.test.ts` (76/76), `tests/unit/sessionMutationAuthority.test.ts` (24/24) |
+
+### The four repaired defects (13.2), all T1-class operator-truth defects
+
+Each had the same shape: a fail-closed authority refused correctly, but the
+LAUNCHER delivered the refusal as an uncaught throw — exit 1, a Node stack
+trace, and the checkout's ABSOLUTE path on the operator surface, which is the
+leak class census item B-13 closed. No refusal was weakened anywhere; the
+codes, messages and effects are the authorities' own, and the previously
+fail-closed paths stay fail-closed with strictly cleaner exit classes.
+
+1. **DEV-lane guard refusals (13 launchers).** `guardDevLane` threw and the
+   launchers did not catch it: `node bin/phase23-dev.mjs --not-a-declared-option`
+   exited 1 printing `/home/dalepalaca/.../src/core/policy/devLanePreconditions.ts:136`
+   plus a stack. Fixed by a try/catch at each call site: `[<launcher>] DEV_LANE_PRECONDITION_OPEN: …`
+   on stderr, exit 3. The guard's throw contract (unit-pinned) is unchanged.
+2. **phase*-real own argv validation (7 launchers).** A missing required flag
+   (`node bin/phase2b-real.mjs`) threw from the bin's own loop: exit 1 + stack +
+   absolute path. Fixed per bin: the launcher's own `… requires …` refusal is
+   written as `[<bin>] <message>` and exits 2 (usage); a foreign throw inside the
+   same region re-propagates unchanged (only `phase5`/`phase7`, whose region also
+   performs the default-path chmod, use the message-prefix guard).
+3. **`nightwatch-agent status` startup assertion.** The `status` branch had no
+   wrapper, unlike `test`/`campaign`: a malformed declared value exited 1 with a
+   stack. The shared `assertStartupEnvironment` now refuses cleanly (exit 3).
+4. **The `.env` layer.** A malformed/unknown/duplicate/unreadable layer threw
+   `DotEnvLoadError` uncaught from `nightwatch.mjs` (both the `config` view and
+   the startup path) and the Control Center's outer allowlist flattened it to
+   the generic `CONTROL_CENTER_START_FAILED`, losing the code. All three
+   launchers now refuse with the authority's own `DOTENV_*` code (exit 3); the
+   Control Center writes the specific line before its allowlisted code.
+
+Also closed: the four `KNOWN_EXIT_ONE_REFUSALS` entries review-5 recorded as
+parent-census follow-ups (phase23-dev and the three selfdev bins). The selfdev
+bins now exit 2 on their own `*_USAGE_INVALID` codes (the operator-CLI
+convention's usage class); the sweep's deviation list is empty and its own
+comment ("the list can only shrink") is honoured. Three test expectations that
+pinned the old exit-1 class were corrected to exit 2 — the properties under
+test (the refusal code, the absence of writes) are unchanged.
+
+Attack-harness note, recorded for honesty: the first matrix run spawned
+`bin/review-mutation-campaign.mjs` with an empty argv under a 20 s timeout, and
+the kill interrupted its restore loop, leaving mutations B-01/B-02/B-04 in
+`src/core/policy/privateArtifacts.ts` and `src/core/reviewStore/store.ts`. The
+tree was restored path-scoped to HEAD, `hardening:check` returned PASS, and the
+harness now excludes that bin. The incident is itself a small proof: the
+review-store rules DETECTED the mutation and refused, exactly as designed.

@@ -1016,6 +1016,19 @@
         "child-process"
       ]
     },
+    "tests/unit/malformedCliRefusal.test.ts": {
+      "class": "PARALLEL_SAFE",
+      "signals": [
+        "child-process"
+      ]
+    },
+    "tests/unit/environmentSurfaceRefusal.test.ts": {
+      "class": "SERIAL_REQUIRED",
+      "signals": [
+        "repository-env-layer",
+        "child-process"
+      ]
+    },
     "tests/unit/operatorCliStructure.test.ts": {
       "class": "PARALLEL_SAFE",
       "signals": []

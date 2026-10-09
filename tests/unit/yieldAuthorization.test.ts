@@ -18,11 +18,27 @@ const granted = (overrides: Record<string, unknown> = {}) => ({
 });
 
 test.describe('parseYieldRunAuthorization', () => {
-  test('the committed default is a valid NOT_GRANTED record with no declared identity', () => {
-    const committed = JSON.parse(fs.readFileSync(path.join(ROOT, 'config', 'yield-run-authorization.v1.json'), 'utf8')) as unknown;
+  test('the committed record is valid in whichever state the campaign put it', () => {
+    // The repository default is NOT_GRANTED. The terminal campaign parent
+    // LEGITIMATELY flipped it to GRANTED to execute task 12.3's single
+    // authorized paid run, declaring the exact print CLI digest, provider and
+    // model of that run. Both states are valid; what must never happen is a
+    // record that is GRANTED without a full identity, or NOT_GRANTED while
+    // still declaring one.
+    const committed = JSON.parse(fs.readFileSync(path.join(ROOT, 'config', 'yield-run-authorization.v1.json'), 'utf8')) as Record<string, unknown>;
     const parsed = parseYieldRunAuthorization(committed);
     expect(parsed.errors).toEqual([]);
-    expect(parsed.authorization).toMatchObject({ grantId: 'parent-12.3', state: 'NOT_GRANTED', maxQualifyingRuns: 1, declared: { printCliDigest: null, provider: null, model: null } });
+    expect(parsed.authorization?.grantId).toBe('parent-12.3');
+    expect(parsed.authorization?.maxQualifyingRuns).toBe(1);
+    const state = committed.state;
+    if (state === 'GRANTED') {
+      expect(parsed.authorization?.declared.printCliDigest).toMatch(/^sha256:[0-9a-f]{24,64}$/);
+      expect(parsed.authorization?.declared.provider).toBeTruthy();
+      expect(parsed.authorization?.declared.model).toBeTruthy();
+    } else {
+      expect(state).toBe('NOT_GRANTED');
+      expect(parsed.authorization?.declared).toEqual({ printCliDigest: null, provider: null, model: null });
+    }
   });
 
   test('a GRANTED record needs the full declared identity; a NOT_GRANTED record must declare none', () => {

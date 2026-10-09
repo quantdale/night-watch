@@ -19,7 +19,13 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 // M8 (9.1): refuse a DEV-lane launch while a DEV-lane precondition is OPEN,
 // BEFORE argument validation, auth validation or any child process.
-guardDevLane({ root, launcher: 'observe-gate.mjs', args: process.argv.slice(2) });
+// M12 (13.1): clean coded refusal, never an uncaught throw (see phase2b-real).
+try {
+  guardDevLane({ root, launcher: 'observe-gate.mjs', args: process.argv.slice(2) });
+} catch (error) {
+  console.error(`[observe-gate] ${error instanceof Error ? error.message : String(error)}`);
+  process.exit(3);
+}
 
 /** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
 const CLI_METADATA = {

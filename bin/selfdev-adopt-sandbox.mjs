@@ -180,9 +180,13 @@ function main() {
     console.log(JSON.stringify({ ...result, disposition }));
     if (result.sandboxVerificationStatus !== 'PASS') process.exitCode = 1;
   } catch (error) {
-    const code = error instanceof Error ? error.message.split(':')[0] : 'SELFDEV_ADOPT_SANDBOX_FAILED';
+    const rawCode = error instanceof Error ? error.message.split(':')[0] : undefined;
+    const code = rawCode ?? 'SELFDEV_ADOPT_SANDBOX_FAILED';
     console.error(code);
-    process.exitCode = 1;
+    // M12 (13.1): a usage error is exit 2 per the operator-CLI convention
+    // (0 success, 1 failure, 2 usage, 3 fail-closed refusal, 4 external
+    // block); this closes the recorded exit-1 deviation for the help sweep.
+    process.exitCode = code.endsWith('_USAGE_INVALID') ? 2 : 1;
   }
 }
 

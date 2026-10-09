@@ -137,7 +137,9 @@ test('unrecognized commands and option combinations are rejected as usage-invali
       ['run', '--plan-id', `adoption-plan:sha256:${'b'.repeat(64)}`],
     ]) {
       const result = run(args, privateRoot);
-      expect(result.status).toBe(1);
+      // M12 (13.1): a usage error exits 2 per the operator-CLI convention
+      // (0 success, 1 failure, 2 usage, 3 fail-closed refusal, 4 external).
+      expect(result.status).toBe(2);
       expect(result.stderr).toContain('SELFDEV_ADOPT_SANDBOX_USAGE_INVALID');
     }
     expect(fs.existsSync(privateRoot) ? fs.readdirSync(privateRoot) : []).toEqual([]);

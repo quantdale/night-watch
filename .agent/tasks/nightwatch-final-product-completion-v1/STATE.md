@@ -6,9 +6,9 @@ Task ID: nightwatch-final-product-completion-v1
 Phase: FINAL_PRODUCT_COMPLETION_V1
 Status: IN_PROGRESS
 TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1
-TASK_GROUPS_COMPLETE: 1,2,3,4,5,6,7,8,10
-TASK_GROUP_NEXT: 11
-TASK_NEXT_ID: 11.7
+TASK_GROUPS_COMPLETE: 1,2,3,4,5,6,7,8,10,11,12,13
+TASK_GROUP_NEXT: 14
+TASK_NEXT_ID: 14.1
 TASK_GROUP_DEFERRED: 9.5b
 Starting SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
 Last validated implementation SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
@@ -73,9 +73,9 @@ ledger, and end at `PROJECT_COMPLETE_AND_CI_CERTIFIED` under D-129 with a
 
 ## Current Milestone
 
-M10 residual dispositions, quality debt and behaviour documentation (group 11,
-tasks 11.1-11.7) is the current group, and tasks 11.1-11.6 are COMPLETE
-(2026-10-09); task 11.7 (commit) is the remaining box. M9 D-129 CLI contract and bin type-check
+M13 ledger closure and live-rendered documentation (group 14, tasks 14.1-14.6) is
+the NEXT group. M9 (group 10), M10 (group 11), M11 (group 12) and M12 (group 13)
+are COMPLETE. M9 D-129 CLI contract and bin type-check
 (group 10, tasks 10.1-10.6) is COMPLETE: 10.1 DONE, 10.2 COMPLETE (76/76
 declared: 72 operator-CLI + 4 library-retained, 0 pending), 10.3 COMPLETE, 10.4
 and 10.5 COMPLETE, 10.6 COMPLETE. **10.4 and 10.5 are COMPLETE (2026-10-09)**: the bin
@@ -560,7 +560,7 @@ agent:check PASS (86 warnings).
 
 ## Exact Next Action
 
-M10 task **11.7** (commit). The deferred **9.5b** (NW-AUD-020 tasks
+M13 task **14.1**. The deferred **9.5b** (NW-AUD-020 tasks
 3.2/4.2) continues to be carried by 14.1/14.2. What 11.1-11.6 produced, so the
 next session does not redo it: 11.1/11.3 are implemented and validated at
 `b7afa9e9` (run-shards 6129/0/33 declared skips; typecheck and typecheck:bin

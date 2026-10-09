@@ -13,7 +13,13 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 // M8 (9.1): refuse a DEV-lane launch while a DEV-lane precondition is OPEN,
 // BEFORE argument validation, auth validation or any child process.
-guardDevLane({ root, launcher: 'phase2c-real.mjs', args: process.argv.slice(2) });
+// M12 (13.1): clean coded refusal, never an uncaught throw (see phase2b-real).
+try {
+  guardDevLane({ root, launcher: 'phase2c-real.mjs', args: process.argv.slice(2) });
+} catch (error) {
+  console.error(`[phase2c] ${error instanceof Error ? error.message : String(error)}`);
+  process.exit(3);
+}
 
 /** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
 const CLI_METADATA = {
@@ -46,23 +52,29 @@ const args = process.argv.slice(2);
 let env;
 let storage;
 let uiUrl;
-for (const arg of args) {
-  if (arg.startsWith('--env=')) {
-    if (env !== undefined) throw new Error('phase2c-real accepts --env only once');
-    env = arg.slice('--env='.length);
-  } else if (arg.startsWith('--storage-state=')) {
-    if (storage !== undefined) throw new Error('phase2c-real accepts --storage-state only once');
-    storage = arg.slice('--storage-state='.length);
-  } else if (arg.startsWith('--ui-url=')) {
-    if (uiUrl !== undefined) throw new Error('phase2c-real accepts --ui-url only once');
-    uiUrl = arg.slice('--ui-url='.length);
-  } else if (arg === '--help' || arg === '-h') {
-    console.log('Usage: npm run journey:phase2c -- --env=dev|next --storage-state=/absolute/external/state.json [--ui-url=https://verified-host/]');
-    process.exit(0);
-  } else throw new Error(`phase2c-real does not accept option ${arg}`);
-}
-if (env !== 'dev' || storage === undefined || storage.trim() === '') {
-  throw new Error('phase2c-real requires exactly one --env=dev and --storage-state=/absolute/external/state.json; NEXT is reserved for human-led auth capture');
+// M12 (13.1): clean usage refusal, never an uncaught throw (see phase2b-real).
+try {
+  for (const arg of args) {
+    if (arg.startsWith('--env=')) {
+      if (env !== undefined) throw new Error('phase2c-real accepts --env only once');
+      env = arg.slice('--env='.length);
+    } else if (arg.startsWith('--storage-state=')) {
+      if (storage !== undefined) throw new Error('phase2c-real accepts --storage-state only once');
+      storage = arg.slice('--storage-state='.length);
+    } else if (arg.startsWith('--ui-url=')) {
+      if (uiUrl !== undefined) throw new Error('phase2c-real accepts --ui-url only once');
+      uiUrl = arg.slice('--ui-url='.length);
+    } else if (arg === '--help' || arg === '-h') {
+      console.log('Usage: npm run journey:phase2c -- --env=dev|next --storage-state=/absolute/external/state.json [--ui-url=https://verified-host/]');
+      process.exit(0);
+    } else throw new Error(`phase2c-real does not accept option ${arg}`);
+  }
+  if (env !== 'dev' || storage === undefined || storage.trim() === '') {
+    throw new Error('phase2c-real requires exactly one --env=dev and --storage-state=/absolute/external/state.json; NEXT is reserved for human-led auth capture');
+  }
+} catch (error) {
+  console.error(`[phase2c] ${error instanceof Error ? error.message : String(error)}`);
+  process.exit(2);
 }
 
 try {
