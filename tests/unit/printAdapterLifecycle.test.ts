@@ -107,8 +107,33 @@ test.describe('print adapter lifecycle (6.10)', () => {
     expect(adapterLeftovers().sort()).toEqual(before.sort());
   });
 
-  test('a model-supplied proposal with no refs is never back-filled with campaign refs', () => {
+  test('a newline-delimited JSON event stream is accepted as a provider response', () => {
+    // OpenCode's `run --format json` emits one JSON EVENT per line
+    // (`step_start`, `text`, `step_end`, ...), so the whole stdout is not a
+    // single JSON document and the single-document parse fails at the second
+    // line. That is how a perfectly healthy provider call was read as a parse
+    // failure and the whole autonomous-hunt proof was blocked.
     const root = scratch();
+    const stream = path.join(root, 'stream-print.mjs');
+    fs.writeFileSync(
+      stream,
+      [
+        "process.stdout.write(JSON.stringify({ type: 'step_start', sessionID: 's', part: { type: 'step-start' } }) + '\\n');",
+        "process.stdout.write(JSON.stringify({ type: 'text', sessionID: 's', part: { type: 'text', text: 'Fenced reply:' } }) + '\\n');",
+        "process.stdout.write(JSON.stringify({ type: 'text', sessionID: 's', part: { type: 'text', text: '```json\\n' + JSON.stringify({ schemaVersion: '" + REASONER_TURN_RESPONSE_VERSION + "', intents: [{ kind: 'TERMINATE', reason: 'COMPLETE_NO_FINDING' }], hypotheses: [] }) + '\\n```' } }) + '\\n');",
+        "process.stdout.write(JSON.stringify({ type: 'step_end', sessionID: 's', part: { type: 'step-end' } }) + '\\n');",
+      ].join('\n') + '\n',
+      { mode: 0o700 },
+    );
+    const before = adapterLeftovers();
+    const result = runAdapter(stream, turnRequest(['ev:sha256:aaaaaaaaaaaaaaaaaaaaaaaa']));
+    expect(result.status, result.stderr).toBe(0);
+    expect(adapterLeftovers().sort()).toEqual(before.sort());
+    const parsed = JSON.parse(String(result.stdout));
+    expect(parsed.intents).toEqual([{ kind: 'TERMINATE', reason: 'COMPLETE_NO_FINDING' }]);
+  });
+
+  test('a model-supplied proposal with no refs is never back-filled with campaign refs', () => {    const root = scratch();
     const model = path.join(root, 'proposal-without-refs.mjs');
     fs.writeFileSync(
       model,

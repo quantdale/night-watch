@@ -494,19 +494,73 @@ function canonicalizeResponse(response, request) {
 }
 
 /**
+ * Extract the reasoner-turn response from a print CLI's stdout.
+ *
+ * `--format json` providers do not agree on the shape. OpenCode's `run` emits
+ * one JSON EVENT per line (newline-delimited JSON: `step_start`, `text`,
+ * `step_end`, …), so the whole stdout is not a single JSON document and
+ * `JSON.parse` of it fails at the second line — which is how a perfectly
+ * healthy provider call was read as a parse failure. The event stream is
+ * therefore accepted as well as the single-document and envelope shapes: the
+ * model's answer is the concatenation of the event stream's `text` parts, and
+ * the Nightwatch response is recovered from that text (raw, fenced or
+ * brace-balanced) exactly as before.
  * @param {string} stdout
  * @param {unknown} request
  */
 function extractResponse(stdout, request) {
-  const parsed = parseJsonObject(stdout);
-  if (parsed && typeof parsed === 'object' && parsed.schemaVersion === RESPONSE_VERSION) {
+  // A newline-delimited JSON event stream is recovered FIRST, and the
+  // single-document parse is tolerant: a provider that emits one event per line
+  // makes the whole stdout unparseable as one document, and the parse's own
+  // brace-slice fallback would slice the entire stream and fail on it. Both
+  // failures are "not a single document", never a malformed response.
+  /** @type {Record<string, unknown> | null} */
+  let parsed = null;
+  try {
+    parsed = parseJsonObject(stdout);
+  } catch {
+    parsed = null;
+  }
+  if (parsed !== null && typeof parsed === 'object' && parsed.schemaVersion === RESPONSE_VERSION) {
     return canonicalizeResponse(parsed, request);
   }
-  if (parsed && typeof parsed === 'object' && typeof parsed.text === 'string') {
+  if (parsed !== null && typeof parsed === 'object' && typeof parsed.text === 'string') {
     const inner = parseJsonObject(parsed.text);
     if (inner && inner.schemaVersion === RESPONSE_VERSION) return canonicalizeResponse(inner, request);
   }
+  // Newline-delimited event stream: recover the assistant text from every
+  // `text` part, then parse the response out of it.
+  const streamed = streamedAssistantText(stdout);
+  if (streamed !== null) {
+    const inner = parseJsonObject(streamed);
+    if (inner && inner.schemaVersion === RESPONSE_VERSION) return canonicalizeResponse(inner, request);
+  }
   throw new Error('print CLI did not emit a Nightwatch reasoner-turn-response');
+}
+
+/**
+ * The assistant text carried by a newline-delimited JSON event stream, or null
+ * when the stdout is not such a stream. Each line is parsed independently and a
+ * line that is not a JSON object is ignored, so a partially-written final line
+ * cannot turn a complete response into a failure.
+ * @param {string} stdout
+ * @returns {string | null}
+ */
+function streamedAssistantText(stdout) {
+  /** @type {string[]} */
+  const texts = [];
+  let sawEvent = false;
+  for (const line of stdout.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (trimmed === '') continue;
+    const event = parseJsonObject(trimmed);
+    if (event === null || typeof event !== 'object') return null;
+    sawEvent = true;
+    const part = event.part;
+    if (part !== null && typeof part === 'object' && typeof part.text === 'string') texts.push(part.text);
+  }
+  if (!sawEvent || texts.length === 0) return null;
+  return texts.join('\n');
 }
 
 const executable = process.env.NIGHTWATCH_PRINT_CLI;
