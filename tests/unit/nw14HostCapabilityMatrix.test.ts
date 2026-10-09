@@ -28,6 +28,7 @@ import {
   evaluateVueReviewConditions,
   parseDependencyCurrencyRecord,
   qualifyRuntime,
+  selectDependencyProbes,
   type DependencyCurrencyInput,
 } from '../../src/core/dependencyCurrency/index';
 import { loadLaneState } from '../../bin/lib/validation-lane-state.mjs';
@@ -369,9 +370,13 @@ test.describe('group 9 — dependency and supply-chain currency (F-11)', () => {
   });
 
   test('the registered probes are complete, unique and exercised', () => {
-    const parsed = parseDependencyCurrencyRecord(DEPENDENCY_RECORD);
-    expect(parsed.probes.length).toBeGreaterThanOrEqual(7);
-    const ids = parsed.probes.map((probe) => probe.id);
+    // D-08: the record's one shared probe array now carries the UI half's
+    // `UI_*` probes as well. This suite selects the ROOT half it claims, and
+    // `tests/unit/uiLockfileDependencyAssessment.test.ts` selects the UI half;
+    // a probe is never inherited by the half that does not exercise it.
+    const probes = selectDependencyProbes(DEPENDENCY_RECORD.probes);
+    expect(probes.length).toBeGreaterThanOrEqual(8);
+    const ids = probes.map((probe) => probe.id);
     expect(new Set(ids).size).toBe(ids.length);
     const exercised = new Set([
       'DEPENDENCY_VUE_SECOND_CALL_SITE',
@@ -383,9 +388,9 @@ test.describe('group 9 — dependency and supply-chain currency (F-11)', () => {
       'DEPENDENCY_REVIEW_DUE',
       'DEPENDENCY_LOCKFILE_DRIFT',
     ]);
-    for (const probe of parsed.probes) {
+    for (const probe of probes) {
       expect(exercised.has(probe.expectedFinding), `${probe.id} names an unexercised finding ${probe.expectedFinding}`).toBe(true);
     }
-    for (const code of exercised) expect(parsed.probes.map((probe) => probe.expectedFinding)).toContain(code);
+    for (const code of exercised) expect(probes.map((probe) => probe.expectedFinding)).toContain(code);
   });
 });

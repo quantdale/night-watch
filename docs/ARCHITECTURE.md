@@ -2323,3 +2323,79 @@ byte edit of an existing file. The `create` op refuses a target that already
 exists, so a probe can never silently overwrite real source, and it restores by
 deletion; the campaign's `git status --porcelain` equality check covers the
 rest.
+
+---
+
+## Terminal campaign M9/M10 behaviour record (appended 2026-10-09)
+
+The record of the successor wave's seven validation behaviours and of the M9/M10
+single authorities, as IMPLEMENTED. R2-63 recorded that the successor wave
+changed seven safety or validation behaviours with no durable record; R2-21
+(the child-process census and profiles), R2-38 (the credential effect binding)
+and R2-45 (the evidence architecture) named the same debt per successor. This
+section is the architecture half of that closure — the safety half is
+`docs/SAFETY_MODEL.md` §31, and the decision half is D-155.
+
+### The seven successor behaviours as implemented
+
+| # | Behaviour | Authority (implemented at) |
+| --- | --- | --- |
+| 1 | Per-shard execution receipts: a Playwright reporter records every `onTestEnd` outcome; the receipt is the execution authority and `PASS` requires `executed > 0` with zero failures and zero did-not-run | `bin/run-shards.mjs` + the per-shard reporter (`nightwatch-shard-certification-integrity-v1`) |
+| 2 | Child-process census totality: namespace `require` and method aliases discovered; unresolved dynamic `import()`, `createRequire`, string-built specifiers and namespace destructuring are explicit UNKNOWN records the rule fails on; every node is classified under the closed six-profile vocabulary | `bin/lib/childProcessCensus.mjs` + `KNOWN_CREATE_REQUIRE_SITES` (`nightwatch-child-process-census-indirection-v1`) |
+| 3 | Raw proxy-event firewall: exact runtime schema validated before any write; owner-only durable raw append; the proxy log registered as `PROXY_EVENT_WRITER` | `src/proxy/events.ts` + the writer census (`nightwatch-proxy-event-firewall-v1`) |
+| 4 | Run-evidence bundle transaction: exclusive run-directory admission; append fsync before acknowledgement; failure latch; durable JSONL reconciled before terminal publication | `src/core/evidence/runRecorder.ts` (`nightwatch-run-evidence-transaction-successor-v1`) |
+| 5 | One-shot credential effect binding: a non-secret expando verified at every effect boundary and always revoked; drift is `AUTH_FORM_BINDING_STALE` | `src/browser/` dev-login binding (`nightwatch-credential-use-binding-successor-v1`) |
+| 6 | Live-source test hermeticity: `CURRENT`/`STALE`/`UNAVAILABLE` classification through the confined sibling-source boundary; synthetic twins, never `test.skip` substitutions | `tests/helpers/liveSourceTestAuthority.ts` (`nightwatch-live-source-test-hermeticity-v1`) |
+| 7 | Shard temp isolation: per-shard run-unique temp directories, proxy port-lease coordination deliberately shared | `bin/run-shards.mjs` (`nightwatch-shard-temp-isolation-v1`) |
+
+Three further behaviours of the same wave carry their own decision records and
+are cross-referenced rather than repeated: the sharded canonical regression with
+its declared execution classes (D-142), the session-protocol mutation binding
+(D-143), and Git-HEAD-bound reproduction materialization (D-145).
+
+### The bin type-check lane (M9)
+
+`tsconfig.bin.json` includes the `bin/**/*.mjs` implementations ONLY. A sibling
+`.d.mts` still governs what IMPORTERS of the module see through module
+resolution and remains `skipLibCheck`ed, but it can never again shadow the
+counted implementation: `bin/bin-typecheck.mjs` refuses any include pattern
+matching a `.d.mts` or widening to `bin`, `bin/**` or `bin/**/*`
+(`BIN_TYPECHECK_DECLARATION_SHADOWED`), refuses a vacuous surface
+(`BIN_TYPECHECK_VACUOUS`), and judges a `runTsc` result by its exit status —
+0 is clean, 1 carries diagnostics, and only a spawn error, a kill signal or exit
+2 fails closed — so an empty output is no longer read as
+`BIN_TYPECHECK_TOOLCHAIN_UNAVAILABLE`. `config/bin-typecheck.v1.json` is
+`mode: BLOCKING`, `totalCeiling: 0`, `anyAnnotationBudget: 0`, and the lane
+measures 0 diagnostics across all 143 tracked implementations with 77 of 77
+entry points conforming.
+
+### The M10 single authorities and ratchets (campaign tasks 11.1/11.3)
+
+| Concern | Authority | Property |
+| --- | --- | --- |
+| Repository-local report/receipt publication | `src/core/policy/localReportPublication.ts` (`publishLocalReport`) | in-memory admission; symlink refusal over every ancestry component; same-directory `wx` staging + fsync + atomic rename; immutable no-replace history; refuses rather than downgrading |
+| Owner-scoped gated reads | `src/data/phase6/adapters.ts` (`assertGatedReadAllowed`) | one seam before any invoker; the only exemption is a module-private `unique symbol` synthetic seam whose invoker must be this module's own implementation |
+| Retention deletion evidence | `src/core/evidenceRetention/retentionJournal.ts` | a PREPARED intent before the first removal and a re-verified TERMINAL receipt after; only a verified terminal record is a deletion receipt |
+| Local toolchain admission | `src/core/policy/localToolchain.ts` (`admitLocalTypeScriptCompiler`) | repository-local `node_modules` + lockfile pin only; no `PATH`, no package runner, no install, no registry; refusal is not a fallback |
+| Unused exports | `checkUnusedExportBudget` + `config/reference-graph.v1.json` | re-measured every run; pin 635 of 3196 exported value symbols (2026-10-09); growth fails, lowering is an owner action |
+| Private retention scopes | `PRIVATE_RETENTION_SCOPES` (`src/core/policy/privateArtifacts.ts`) | every named private directory (`agent-findings`, `campaign-state`) carries `autoDelete: false`, `OWNER_EXPLICIT_APPLY`, whole-document granularity, unmeasurable-refused, and the refusal-first order |
+| CF-1 fuzz/property census | `config/cf1-fuzz-property.v1.json` + `src/core/validation/cf1FuzzProperty.ts` | 40 recorded cases against the floor of 20 (2026-10-09); removing a case fails the census |
+
+### The DEV-lane gateway, the demotion and the handoff classification
+
+`config/dev-lane-preconditions.v1.json` lists the six open contained-DEV
+redesigns (NW-AUD-016 full, 022 task 2.1 / R2-47, 025 full, 026, 037, 038) as
+OPEN with NO standing owner authorization;
+`src/core/policy/devLanePreconditions.ts` parses it fail-closed and
+`bin/lib/dev-lane-precondition.mjs` is the FIRST executable step of all thirteen
+DEV-contacting launchers, refusing with `DEV_LANE_PRECONDITION_OPEN` (or
+`DEV_LANE_OWNER_TOKEN_UNRECOGNIZED` for an unauthorized token). The registry
+adds a gate and never removes one.
+
+Post-certification, `bin/lib/certification-demotion.mjs` classifies HEAD against
+the certified checkpoint S as `EXACT`, `DESCENDANT_DOCUMENTARY`,
+`DESCENDANT_SUBSTANTIVE` (`CERTIFIED_AT_ANCESTOR` ATTENTION), `NOT_DESCENDANT`,
+`NOT_CLAIMED` or `UNVERIFIABLE`; in `ci`/`clean` modes a declared session
+worktree that is absent is `SESSION_DECLARED_ABSENT_EXPECTED` only when the
+declared branch equals the task STATE branch and every other handoff invariant
+passes. Both are recorded as decisions in D-156 and D-157.

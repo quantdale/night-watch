@@ -1684,3 +1684,291 @@ them; an explicit `NIGHTWATCH_GATE_RECEIPT_PATH` stays confined to the
 operator's temporary roots and is refused inside the repository, and the
 repository-local default is used only when Git provably ignores it. Tests never
 write receipts into the real checkout: collector tests use a fixture root.
+
+---
+
+## 25. The bin type-check lane is BLOCKING at zero diagnostics (M9/M10, appended 2026-10-09)
+
+The bin lane (`npm run typecheck:bin`, `bin/bin-typecheck.mjs` over
+`tsconfig.bin.json`) type-checks the `bin/**/*.mjs` implementations under
+`allowJs`/`checkJs`/`strict`/`noUncheckedIndexedAccess`. It now measures **0
+diagnostics across all 143 tracked implementations, with 77 of 77 entry points
+conforming, 0 exemptions and 0 diagnostic-silencing widening annotations**, and
+`config/bin-typecheck.v1.json` is `mode: BLOCKING` with `totalCeiling: 0`,
+`perFileCeilings: []` and `anyAnnotationBudget: 0`. The burn-down annotated 143
+implementations with accurate JSDoc types; no `@ts-` suppression, no
+`String()`/`Number()`/`Object()` wrapper, no compiler-option change and no
+behaviour change was used anywhere.
+
+**A declaration sibling can never shadow an implementation
+(`BIN_TYPECHECK_DECLARATION_SHADOWED`).** `tsconfig.bin.json` used to include
+`bin/**/*.d.mts` alongside `bin/**/*.mjs`. TypeScript treats a hand-written
+sibling declaration as its module's authoritative type and DROPS the counted
+implementation from the program, so 53 bin implementations — 30 of them carrying
+952 real diagnostics, including `bin/agent-continuity-protocol.mjs` (171),
+`bin/agent-state.mjs` (138), `bin/lib/operator-cli.mjs` (109),
+`bin/lib/release-evidence.mjs` (67) and `bin/lib/gate-receipt.mjs` (63) — were
+never checked at all while the lane reported a clean number for them. The
+shadowing is silent by construction: the declaration still satisfies importers,
+so the omitted implementation produces no diagnostic and no error, only an
+absent judgement. `include` is now the `.mjs` implementations ONLY; the
+declarations still govern what IMPORTERS of a module see through module
+resolution and remain `skipLibCheck`ed; and the lane refuses any include pattern
+that matches a `.d.mts` or widens to `bin`, `bin/**` or `bin/**/*`, so a vacuous
+clean surface is impossible. The recorded 1402-diagnostic baseline was a FLOOR,
+not a measurement. Regression: `tests/unit/binTypecheckLaneCompleteness.test.ts`,
+including the negative mutants (a `.d.mts` in the include; a broad include).
+
+**An empty `tsc` output is a CLEAN surface, not a missing toolchain.** `runTsc`
+used to read an empty output as `BIN_TYPECHECK_TOOLCHAIN_UNAVAILABLE`, so the
+first fully clean surface would have been reported as an absent toolchain. tsc
+exits 0 on a clean surface and 1 when it has diagnostics; only a spawn error, a
+kill signal, or exit code 2 (a configuration error, which carries no per-file
+judgement) fails closed now. Both repairs are pinned by the same suite, and the
+lane's `--config-check` hard-error path is pinned by
+`tests/unit/cliImplementationContract.test.ts`.
+
+## 26. One governed boundary for repository-local reports and receipts (NW-AUD-009, appended 2026-10-09)
+
+`publishLocalReport` (`src/core/policy/localReportPublication.ts`) is the single
+governed publication boundary for every ignored repository-local report and
+receipt — the six `current.json` writers and the immutable certification
+receipts all route through it. It admits the payload (serializable), the
+schema, the size, the destination ancestry and the leaf type IN MEMORY before
+anything changes; refuses a symlink over EVERY ancestry component and at the
+leaf; publishes replaceable reports through same-directory exclusive (`wx`)
+staging plus fsync plus an atomic rename; publishes historical receipts as
+immutable no-replace files; and refuses publication on a platform that cannot
+provide a required primitive rather than downgrading to a direct truncating
+write.
+
+The guaranteed property is narrow and stated: a normal, non-adversarial writer
+can no longer follow a prepared symlink into an owner file, truncate a complete
+report before its replacement is durable, or inherit an inconsistent file mode.
+The module provides NO hostile same-operating-system-account isolation — a
+process that can arbitrarily rewrite the repository can also rewrite this
+module — and it says so in its own header. The failure vocabulary is closed and
+categorical (`LEAF_SYMLINK`, `ANCESTOR_SYMLINK`, `COMMIT_UNSUPPORTED`,
+`VERIFICATION_FAILED`, …). Regression: `tests/unit/nwAud009LocalReportPublication.test.ts`.
+
+## 27. One owner-scope read authority for gated reads (NW-AUD-032, appended 2026-10-09)
+
+`assertGatedReadAllowed` (`src/data/phase6/adapters.ts`) is the SINGLE owner-scope
+read authority. The owner freeze previously lived only inside the default
+`GatedReadToolInvoker`, so any caller that injected its own `ReadToolInvoker`
+reached a datastore seam with no owner decision at all. The decision now happens
+at the adapter seam itself, BEFORE any invoker — default, synthetic or
+caller-supplied — is reached, and it is the one path every gated read goes
+through.
+
+The only exemption is the declared synthetic seam, and it is unforgeable by
+construction: the capability is a module-private `unique symbol`, so no caller
+can name it, forge it, or relabel an object with it, and the authority
+additionally requires the invoker's `invoke` to be exactly this module's own
+implementation, so a subclass override or a replaced method — the two shapes a
+relabelled foreign invoker would take — is refused. Everything else is a real
+datastore invocation, and under the permanent owner scope freeze every Phase-6
+datastore operation class is blocked (`OWNER_POLICY_BLOCKED` before an executor
+callback), so a foreign invoker fails closed rather than reaching a datastore.
+The default invoker keeps its own `REAL_DATA_GATE_BLOCKED` refusal as defense in
+depth. Regression: `tests/unit/nwAud032OwnerScopeTotality.test.ts`.
+
+## 28. Retention deletion is bracketed by two durable records (NW-AUD-005, appended 2026-10-09)
+
+Evidence retention performs irreversible directory deletion, so its receipt
+used to be one best-effort write claiming `STARTED` with an EMPTY deleted set,
+the deletion, and a second best-effort overwrite that could fail — a crash or a
+failed final write left the only durable receipt claiming nothing had been
+deleted while the command could still exit successfully with
+`result: APPLIED` and `receiptFinalized: false`.
+
+The rule is now mechanical: **a non-terminal record is never the last word.**
+`src/core/evidenceRetention/retentionJournal.ts` (`nightwatch.evidence-retention-operation-journal.v1`)
+brackets every deletion with a durable PREPARED intent published BEFORE the
+first removal — naming the operation, the reviewed candidates, the reviewed
+plan-confirmation digest and the refusal-set digest — and a TERMINAL receipt
+published and RE-VERIFIED after, naming the per-target outcome
+(`REMOVED`/`PRESERVED` with its reason code) and the byte-verified deleted set.
+Only a verified terminal record may be reported as a deletion receipt; a
+terminal record can never be replaced; and `bin/evidence-retention.mjs` writes
+the terminal record FIRST and asserts it before any receipt lands. The journal
+is deliberately repository-local (the ignored `.nightwatch/retention/` subtree)
+rather than owner-private: its access contract is the opposite one, and it
+inherits none of the private-store semantics. What may be deleted remains
+`planRetention`'s refusal-first classification, which stays pure. Regression:
+`tests/unit/nwAud005RetentionCrashConsistentReceipts.test.ts`.
+
+## 29. The repository-local toolchain is admitted, never fetched (NW-AUD-007, appended 2026-10-09)
+
+`admitLocalTypeScriptCompiler` (`src/core/policy/localToolchain.ts`) is the only
+toolchain admission path. `change:shadow` is documented as offline, but it
+bootstrapped its TypeScript compile through `npx tsc` — a local-or-remote
+package runner — so a missing local dependency could fetch and execute a
+compiler from a registry, with no no-install, offline, exact-package or
+repository-local admission at all.
+
+Admission resolves ONLY the repository-local `node_modules` install and refuses,
+categorically, a missing install (`PACKAGE_NOT_INSTALLED`), unreadable or
+malformed package metadata, a missing/symlinked/non-regular compiler entry
+(`COMPILER_ENTRY_MISSING`, `COMPILER_ENTRY_SYMLINK`,
+`COMPILER_ENTRY_NOT_A_FILE`), an unreadable or malformed lockfile
+(`LOCKFILE_UNREADABLE`, `LOCKFILE_MALFORMED`), a missing pin
+(`LOCKFILE_PIN_MISSING`) and any version that disagrees with the lockfile pin
+(`LOCKFILE_VERSION_MISMATCH`). It never consults `PATH`, never invokes a
+package runner, never installs and never contacts a registry: an unresolvable or
+unproven toolchain is a REFUSAL, not a fallback. The caller compiles with
+`spawnSync(process.execPath, [compilerScript, ...])`, so the exact same Node
+runtime drives the exact repository-pinned compiler.
+`bin/change-intelligence.mjs` compiles through it and fails closed before
+anything is created. Regression:
+`tests/unit/nwAud007ChangeShadowOfflineRuntime.test.ts`.
+
+## 30. Three ratchets that only turn one way (D-17, X-11, A-16, appended 2026-10-09)
+
+**Unused exports (D-17).** `checkUnusedExportBudget` re-measures, on every
+`hardening:check`, the count of exported VALUE symbols under `src/` whose
+identifier no tracked file outside their own definer names, and fails when the
+count grows. The pin in `config/reference-graph.v1.json` is **635**, measured
+2026-10-09 against 3196 exported value symbols (the audit's stale 122 had never
+been re-measured, so the number could only drift upward). One new unreferenced
+export fails the rule; lowering the pin is a deliberate owner action recorded in
+the config. Probe HC-283 appends one unreferenced export and is DETECTED.
+
+**Private retention scopes (X-11).** Every NAMED private directory —
+`agent-findings` and `campaign-state` — carries a documented retention scope
+(`PRIVATE_RETENTION_SCOPES`, published on the policy record a store returns):
+no automatic deletion by any sweep (`autoDelete: false`),
+`OWNER_EXPLICIT_APPLY` as the only removal authority, whole-document
+granularity, an unreadable or unmeasurable document refused
+(`unmeasurableRefused: true`), and the refusal-first order
+`REFUSED_REFERENCED`, `REFUSED_RECENT`, `REFUSED_UNPROVABLE`, `REFUSED_UNSAFE`
+— a referenced document is refused FIRST because tracked state naming a
+checkpoint makes it load-bearing evidence regardless of age. An unknown or
+undocumented directory is refused (`PRIVATE_ARTIFACT_DIRECTORY_UNKNOWN`,
+`PRIVATE_RETENTION_SCOPE_UNDECLARED`), so a future sweep can never guess. The
+M-21/M-21b structural mutations (remove a documented scope; let a scope permit
+automatic removal) fail the rule.
+
+**The CF-1 fuzz/property census (A-16).** `config/cf1-fuzz-property.v1.json`
+records the re-measurement the ledger entry "Fuzz/property >= 20 cases PASS"
+never had: **40 cases** — `fuzzProperty` 22, `frontierContractFuzz` 11,
+`alphausHandoffProperties` 7 — against the entry's own floor of **20**, measured
+2026-10-09. Removing a case fails the census; adding one does not. The
+judgement is pure (`src/core/validation/cf1FuzzProperty.ts`) and is recounted by
+`tests/unit/cf1FuzzPropertyCensus.test.ts`.
+
+## 31. The successor wave's validation behaviours, recorded (R2-63, appended 2026-10-09)
+
+The successor wave changed seven safety or validation behaviours with no durable
+record (R2-63); the per-item documentation debts were R2-21 (the child-process
+census and profiles), R2-38 (the credential effect binding: auth, safety and
+architecture docs) and R2-45 (the evidence architecture and safety truth for
+run evidence). The behaviours, and the guard each one makes mechanical:
+
+1. **Per-shard execution receipts.** A dedicated Playwright reporter records
+   every `onTestEnd` outcome and writes one schema-versioned receipt through an
+   atomic temporary/rename. `PASS` requires a known receipt, `executed > 0`,
+   known outcome counts, zero failures and zero did-not-run; `ALL_SKIPPED`,
+   `UNKNOWN_COUNTS`, `NO_TESTS_EXECUTED` and a malformed receipt are non-pass
+   categorical results. Text counts are diagnostics only and are never coerced
+   to zero.
+2. **Child-process census totality.** Namespace `require`, destructured and
+   direct method aliases are discovered against the closed invocation
+   vocabulary, and an unresolved dynamic `import()`, a `createRequire` second
+   graph, a string-built specifier or namespace destructuring yields an explicit
+   UNKNOWN record the hardening rule fails on. An import of the child-process
+   module with no recognized binding is never "zero invocations"; the two
+   legitimate `createRequire` sites are named in `KNOWN_CREATE_REQUIRE_SITES`
+   so a new one still fails. Every discovered node is classified under the
+   CLOSED `nightwatch.child-process-profile.v1` vocabulary —
+   `LOCAL_METADATA`, `OFFLINE_REPOSITORY_TOOL`, `TEST_LANE`,
+   `SCOPED_REMOTE_OBSERVER`, `AUTHENTICATED_CONTAINED` and `CONTAINED_ENVELOPE`
+   (the L6 envelope's one declared ambient exception) — so a call site with no
+   profile is an unclassified record, not a silent one.
+3. **The raw proxy-event firewall.** Raw `ProxyEvent` appends are validated
+   against an exact runtime schema before any write
+   (`PROXY_EVENT_SCHEMA_INVALID`), the raw log is owner-only and durably
+   appended, and the proxy writer is registered as its own class
+   (`PROXY_EVENT_WRITER`) so the census discovers it.
+4. **The run-evidence bundle transaction.** Run directories are admitted
+   exclusively (an existing identity fails before a second recorder writes),
+   appends are fsynced before acknowledgement, publication sits behind a
+   failure latch, and the durable JSONL is reconciled against memory before any
+   terminal summary is published.
+5. **The one-shot credential effect binding.** A one-shot, non-secret DOM
+   expando is set on the exact elements/form and verified at every effect
+   boundary before the username, password and submit effects; page/frame/URL,
+   unique visible controls and the form's action/method/target are re-checked
+   per effect; the attributes are revoked on every exit path; and drift is the
+   categorical `AUTH_FORM_BINDING_STALE` whose diagnostics carry no page text,
+   URL parameter or credential value.
+6. **Live-source test hermeticity.** The approved live-source test universe is
+   classified `CURRENT`/`STALE`/`UNAVAILABLE` through the confined sibling-source
+   boundary; live historical measurements run only when every required checkout
+   matches its pin; an unavailable or stale state is an explicit test state with
+   its synthetic twin — never a `test.skip` substitution and never a fabricated
+   live proof.
+7. **Shard temp isolation.** Each shard receives its own run-unique absolute
+   temp directory derived from the run scratch root and a validated shard
+   identity, overwriting the platform temp keys only AFTER the existing
+   child-environment allowlist, while the proxy port lease stays explicitly
+   shared process-coordination state through one validated variable.
+
+Each behaviour is mutation-proven (HC-150..HC-176 and the successor families,
+all DETECTED) and is recorded as a decision in D-155; the architecture record is
+in `docs/ARCHITECTURE.md`. A change to any of the seven requires a new DECISIONS
+entry.
+
+## 32. The print reasoner drives a LIVE provider; its authentication lives in HOME (C-30, appended 2026-10-09)
+
+**The print CLI is not deterministic — it is a live provider driver.**
+`bin/nightwatch-reasoner-print.mjs` reads one `ReasonerTurnRequest` JSON document
+from stdin, spawns the configured print-mode CLI (`NIGHTWATCH_PRINT_CLI` with
+the `NIGHTWATCH_PRINT_ARGS` JSON argv template, `__PROMPT__` /
+`__PROMPT_FILE__` / `__SESSION_ID__` / `__CWD__` substituted, never a shell),
+and extracts a `nightwatch.reasoner-turn-response.v1` document from its stdout.
+EVERY invocation is a real provider call: it can fail, it can be slow, it costs
+money, and its calls are attributed — the per-call provider-failure classes and
+the campaign's `terminationClass`
+(`VALID_PROVIDER_RUN` / `PROVIDER_BLOCKED_BEFORE_SOURCE_ACTION` /
+`PROVIDER_DEGRADED`) exist precisely so a provider outage is never reported as
+budget exhaustion or zero yield. The deterministic surfaces in this repository
+are the synthetic campaign lane and its fake-reasoner suite; the print adapter
+is not one of them. (This corrects the earlier wording in the unnumbered
+"Reasoner executable surface (F-19, group 19)" section that called
+`NIGHTWATCH_PRINT_CLI` the "deterministic print reasoner"; that sentence is
+preserved as history and is superseded by this section.)
+
+**Provider authentication lives in HOME, never in the repository.** The adapter
+hands the child a deliberately minimal environment — `PATH`, `HOME`
+(`os.homedir()`), `TMPDIR`, `LANG` — so the provider CLI authenticates from the
+operator's home directory (`~/.codex`-style and `~/.opencode`-style credentials,
+read by the provider itself, never by Nightwatch). Nightwatch never reads,
+forwards, persists or echoes a provider credential: the reasoner identity that
+IS recorded is the executable's resolved path and `sha256:<64>` digest, the
+adapter and print-CLI digests, `PRINT_ARGS`, and the declared provider and
+model labels. No credential, token, cookie or storage state may enter source,
+artifacts, `.agent` files or receipts; the four declared secret-bearing variables
+(`NIGHTWATCH_STORAGE_STATE`, `NIGHTWATCH_AUTH_FILE`, `NIGHTWATCH_OWNER_FINDINGS`,
+`NIGHTWATCH_PROXY_LEASE_TOKEN`) are owner-local test-seam state, never provider
+credentials, and none of them is read by the print adapter.
+
+**Declared surface.** `NIGHTWATCH_PRINT_CLI`, `NIGHTWATCH_PRINT_ARGS` and
+`NIGHTWATCH_PRINT_DEBUG` are all declared in
+`config/environment-surface.v1.json` (the declaration authority parsed by
+`src/core/config/environmentSurface.ts`), and `hardening:check` fails when a
+tracked source reads a `NIGHTWATCH_*` name with no declaration. The legacy
+`NIGHTWATCH_REASONER_PRINT` declaration was REMOVED on 2026-10-09: a whole-tree
+census proved nothing reads it (its only textual occurrence is the adapter's
+stderr error-message prefix, a label rather than an environment read), so a
+declaration that named a consumer which never reads it was exactly the stale
+claim this surface exists to prevent.
+
+**Bounds.** The adapter writes its prompt to a `0600` file in `os.tmpdir()`,
+runs the child in a fresh isolated cwd with `timeout` and `maxBuffer` budgets,
+and removes BOTH the prompt file and the isolated cwd in a `finally` on every
+exit path — a failure throws rather than calling `process.exit` so the cleanup
+always runs. Untrusted observation bytes and every memory field are quoted as
+inert DATA with ZERO instruction authority, and a missing model evidence ref is
+never back-filled with campaign refs (an ungrounded proposal is refused, not
+decorated).

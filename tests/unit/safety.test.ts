@@ -515,6 +515,40 @@ test.describe('environment surface declaration', () => {
     const defaultRow = rows.find((row) => row.name === 'NIGHTWATCH_HEADED');
     expect(defaultRow?.source).toBe('DECLARATION_DEFAULT');
   });
+
+  // C-30 / campaign task 11.5 — the print reasoner adapter's environment
+  // census. The adapter drives a LIVE provider, so the variables it reads must
+  // be exactly the declared ones, and the legacy selector
+  // NIGHTWATCH_REASONER_PRINT must stay undeclared: the whole-tree census
+  // proved nothing reads it (its only textual occurrence is the adapter's
+  // stderr error-message prefix, a label rather than an environment read), so
+  // re-declaring it would re-introduce a consumer claim that is false.
+  test('every NIGHTWATCH_* variable the print reasoner adapter reads is declared, and the legacy selector is not', () => {
+    const source = fs.readFileSync(
+      path.resolve(__dirname, '../../bin/nightwatch-reasoner-print.mjs'),
+      'utf8',
+    );
+    const reads = new Set<string>();
+    for (const match of source.matchAll(/process\.env\.(NIGHTWATCH_[A-Z0-9_]+)/g)) reads.add(match[1] ?? '');
+    for (const match of source.matchAll(/process\.env\[\s*'(NIGHTWATCH_[A-Z0-9_]+)'\s*\]/g)) reads.add(match[1] ?? '');
+    // The adapter reads the executable, the argv template and the debug path;
+    // it forwards HOME/TMPDIR/PATH/LANG to the child, which are not Nightwatch
+    // configuration names.
+    expect([...reads].sort()).toEqual([
+      'NIGHTWATCH_PRINT_ARGS',
+      'NIGHTWATCH_PRINT_CLI',
+      'NIGHTWATCH_PRINT_DEBUG',
+    ]);
+    const declared = new Set(surface.variables.map((entry) => entry.name));
+    for (const name of reads) {
+      expect(declared.has(name), `${name} is read by the print adapter but not declared`).toBe(true);
+    }
+    // The declaration names the LIVE provider surface, not a deterministic one.
+    const printCli = surface.variables.find((entry) => entry.name === 'NIGHTWATCH_PRINT_CLI');
+    expect(printCli?.purpose).toContain('LIVE');
+    expect(printCli?.purpose).not.toContain('deterministic');
+    expect(declared.has('NIGHTWATCH_REASONER_PRINT')).toBe(false);
+  });
 });
 
 test.describe('environment config schema validation', () => {

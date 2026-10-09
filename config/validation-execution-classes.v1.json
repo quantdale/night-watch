@@ -2256,6 +2256,10 @@
         "isolated-scratch"
       ]
     },
+    "tests/unit/uiLockfileDependencyAssessment.test.ts": {
+      "class": "PARALLEL_SAFE",
+      "signals": []
+    },
     "tests/unit/unusedExportBudget.test.ts": {
       "class": "MUTATION_CAMPAIGN_EXCLUSIVE",
       "signals": [

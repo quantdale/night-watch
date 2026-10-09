@@ -5676,3 +5676,985 @@ the npm registry query (15.4), the bin burn-down to BLOCKING (M9 10.4-10.6) and 
 GitHub Actions run at the final S; `owner-manual` is certified only as a recorded,
 current, unexpired unavailable lane. The matrix does not weaken any guard and does
 not claim any condition MET.
+
+---
+
+## D-153 — the terminal campaign's owner decisions OD-1..OD-4, recorded as one entry
+
+Source: the "Owner decisions taken during planning (2026-09-25)" table of
+`openspec/changes/nightwatch-final-product-completion-v1/audit.md`, carried
+verbatim into the change's `design.md`, the task `SPEC.md` authorization block
+and `.agent/ACTIVE_TASK.md`'s routing fence. They are the authority every later
+entry of this campaign cites.
+
+**Identifier note.** The change's planning documents reserved the label "D-144"
+for this entry ("Owner decisions taken while planning this change (2026-09-25)
+... to be entered as DECISIONS D-144"). That number was ALREADY ISSUED — D-144
+is the `retries` → `failures` budget-dimension rename (campaign task 6.7 cites
+it) — so, exactly as Erratum E-1's forward rule requires, this entry takes the
+next unused number above the highest issued (D-152 at the time of writing) and
+is cited as **D-153**. No line of either D-144 entry was touched, and no
+collision was created: the reserved label simply never reaches the document.
+
+**OD-1 — tiered terminal disposition.** Scope rule: EVERY census item ends in one
+recorded disposition; T0/T1/T2-FIX are fixed; T2-GATE is quarantined; T3 is
+accepted-residual unless it is S-effort; there is no discovery loop. This is the
+rejection of both alternatives — fix-everything (about 45-55 engineer-days, a
+perpetual programme) and truth-only closure (operator-visible false results).
+
+**OD-2 — the completion target.** `PROJECT_COMPLETE_AND_CI_CERTIFIED` under
+D-129: all 16 release conditions MET, the bin type-check lane BLOCKING with 0
+exemptions, all operator-CLI entry points on the shared contract, and exact-head
+CI green at the final substantive checkpoint S.
+
+**OD-3 — the authorized external contacts.** GitHub Actions read/observe; C-00
+fast-forward pushes; ONE bounded paid provider proof run; ONE npm registry
+advisory query over the root and UI lockfiles; and the deletion of orphan branch
+`session/nightwatch-successor-campaign-en-c8bcb74c` after its SHA `1441cc8a` was
+recorded (done in P0, task 1.3). Nothing else external is authorized by this
+campaign.
+
+**OD-4 — the bootstrap shape.** The proposal is written uncommitted in canonical;
+the implementation session moves it into its worktree and commits it TOGETHER
+with its task continuity. Until then `agent:check`, `project:check` and
+`handoff:check` fail with `LEDGER_CHANGE_WITHOUT_TASK`, which is expected and is
+why the change must never be committed alone.
+
+**Rationale.** A terminal campaign needs one recorded authority for what may be
+claimed and what may be touched. Recording the four decisions as ONE entry keeps
+them citable as a set (`OD-1..OD-4`, this entry) without inventing four numbers
+for one planning act.
+
+**Consequences.** Every ACCEPTED_RESIDUAL entry of campaign task 11.2 cites OD-1
+via this entry; the completion target of OD-2 is claimed only at S (D-148's
+sequencing constraint, D-150's reachability rule); OD-3's four external contacts
+are the campaign's entire external surface and are recorded per contact in the
+task STATE's safety accounting; OD-4 was satisfied by the M1 bootstrap checkpoint
+`ec6010a2`.
+
+**Revisit trigger.** Any owner statement that widens or narrows one of the four
+decisions, or a successor review showing a census item that OD-1's tiering
+mis-classifies, requires a new entry rather than an edit of this one.
+
+## D-154 — the residual-debt census, its tiering and the disposition vocabulary
+
+**Context.** `openspec/changes/nightwatch-final-product-completion-v1/audit.md`
+is the census of record: **228 items**, every one classified A-H (A real local
+defect · B real local quality debt · C completed later · D superseded ·
+E historical record · F external prerequisite · G intentional non-goal ·
+H invalid/stale claim), assigned a tier and exactly one disposition. Totals:
+A 71 · B 97 · C 19 · D 6 · E 4 · F 9 · G 5 · H 17.
+
+**Decision 1 — the tiering.** P0 owner pre-flight (2 items, authorized).
+T0-SPINE certification/CI/ledger truth (66) — always fixed. T0-D129 the D-129
+debt (10) — always fixed under OD-2. T1 operator-truth defects on normal local
+paths (54) — fixed, narrowing where a redesign is L/XL. T2-FIX contained-DEV,
+S/M effort, synthetically provable (28) — fixed. T2-GATE contained-DEV
+redesigns (4) — quarantined behind the DEV-lane precondition registry (D-158).
+T3 latent on frozen/no-caller/one-shot paths (19) — ACCEPTED_RESIDUAL unless
+S-effort. T4 quality debt without operator impact (7) — ratchet, with S items
+fixed. TF external prerequisites (8) — recorded owner action with a revisit
+date. Untiered (30) — completed later, superseded, historical or non-goal.
+
+**Decision 2 — the disposition vocabulary is closed.**
+
+| Disposition | Meaning | Required evidence |
+| --- | --- | --- |
+| FIX | defect removed | regression + probe where it is a guard |
+| NARROW | over-claim reduced to what is proven, guarded | test proving the narrower claim |
+| QUARANTINE | path refuses to run until fixed | registry entry + launcher refusal test |
+| ACCEPTED_RESIDUAL | latent on a frozen/no-caller path | DECISIONS entry citing OD-1/D-153 and a revisit trigger |
+| COMPLETED_LATER / SUPERSEDED | done elsewhere | SHA + file:line citation |
+| HISTORICAL / NON_GOAL / EXTERNAL | preserved / out of scope / owner action | cited record |
+
+**Decision 3 — a strike is not a settlement.** `bin/lib/openspec-ledger.mjs`
+refuses to count a struck item as settled unless its strike text carries a
+disposition token from this vocabulary (`LEDGER_UNDISPOSITIONED_ITEM`;
+`DEFERRED` is no longer accepted), reports BLOCKED tasks as their own open-work
+class rather than skipping them (R2-62), and holds the 527 legacy
+undispositioned strikes across 49 terminal changes behind the declared per-change
+ceiling in `config/ledger-legacy-drain.v1.json`, which may only turn down and is
+drained to zero at M13 closure.
+
+**Decision 4 — the residual list is confirmed once.** The owner confirms the
+ACCEPTED_RESIDUAL and QUARANTINE lists once, before the final substantive commit
+(campaign task 14.4). Until that confirmation the residuals are proposed, not
+final.
+
+**Rationale.** The campaign's own history is the argument: every earlier
+"complete" decayed because struck items were treated as settled without
+evidence, so open work became invisible. A closed vocabulary plus a mechanical
+token makes "dispositioned" a property a checker can see.
+
+**Consequences.** The owner-signed entries for the eight T3 residuals are
+D-160..D-167 (campaign task 11.2); the T3/T4 S-fixes that are NOT residual are
+implemented at `b7afa9e9` (task 11.1/11.3); the census reconciliation lands in
+`audit.md` and the task REPORT at M13 (task 14.3).
+
+## D-155 — the seven successor behaviours, recorded (R2-63)
+
+**Context.** R2-63 recorded that the successor wave changed seven safety or
+validation behaviours with no DECISIONS, SAFETY_MODEL or ARCHITECTURE record, so
+a reader of the durable documents could not learn what the guards actually do.
+R2-21 (NW-AUD-014 task 5.2), R2-38 (NW-AUD-021 task 5.2) and R2-45 (NW-AUD-024
+task 4.4) are the same debt named per successor: the census, the credential
+binding and the run-evidence transaction each carried an explicit documentation
+obligation that was never executed.
+
+**Decision.** The seven behaviours are enumerated here — derived from the
+successor wave's own change documents, because no earlier record enumerated
+them — and each is recorded with its implementing change, its behaviour and its
+regression:
+
+1. **Per-shard execution-receipt authority**
+   (`nightwatch-shard-certification-integrity-v1`). A dedicated Playwright
+   reporter records every `onTestEnd` outcome and writes one schema-versioned
+   receipt through an atomic temporary/rename; the receipt is the execution
+   authority. `PASS` requires a known receipt, `executed > 0`, known outcome
+   counts, zero failures and zero did-not-run; `NO_TESTS_EXECUTED`,
+   `ALL_SKIPPED`, `UNKNOWN_COUNTS` and `MALFORMED_RECEIPT`-class results are
+   non-pass categorical outcomes. Regex text counts remain human diagnostics
+   only and can never set the result; a missing count is never coerced to zero.
+2. **Child-process census totality**
+   (`nightwatch-child-process-census-indirection-v1`). Namespace `require`
+   bindings and destructured/direct method aliases are discovered against the
+   closed invocation vocabulary, and a file that imports the child-process module
+   with NO recognized binding — or with a dynamic `import()`, a `createRequire`
+   second graph, a string-built specifier or namespace destructuring — yields an
+   explicit UNKNOWN record that the hardening rule fails on. Zero invocations is
+   never a silent success, and every discovered node is classified under the
+   closed six-profile vocabulary (`nightwatch.child-process-profile.v1`).
+3. **Raw proxy-event firewall** (`nightwatch-proxy-event-firewall-v1`). Raw
+   `ProxyEvent` appends are validated against an exact runtime schema (closed key
+   allowlist, enums, numeric bounds, bounded control-character-free strings)
+   BEFORE any write (`PROXY_EVENT_SCHEMA_INVALID`), the raw log is initialized
+   and appended owner-only and durably, and `src/proxy/events.ts` is registered
+   as its own writer class (`PROXY_EVENT_WRITER`) so discovery sees it.
+4. **Run-evidence bundle transaction**
+   (`nightwatch-run-evidence-transaction-successor-v1`). Run directories are
+   admitted EXCLUSIVELY (an existing identity fails before a second recorder can
+   write), appends are fsynced before they are acknowledged, primary/view/
+   in-memory publication sits behind a failure latch, and the durable JSONL is
+   parsed and reconciled (sequence/count) against memory before any terminal
+   summary is published.
+5. **One-shot credential effect binding**
+   (`nightwatch-credential-use-binding-successor-v1`). A one-shot, non-secret
+   DOM expando is set on the exact elements/form and verified at every effect
+   boundary before the username, password and submit effects; page/frame/URL,
+   unique visible controls and form action/method/target are re-checked per
+   effect; the attributes are revoked on every exit path; and drift is the
+   categorical `AUTH_FORM_BINDING_STALE` whose diagnostics carry no page text,
+   URL parameter or credential value.
+6. **Live-source test hermeticity**
+   (`nightwatch-live-source-test-hermeticity-v1`). The approved live-source test
+   universe is classified `CURRENT` / `STALE` / `UNAVAILABLE` through the
+   confined sibling-source boundary, live historical measurements run only when
+   every required checkout matches its pin, and an unavailable or stale state is
+   an explicit test state with its synthetic twin — never a `test.skip`
+   substitution and never a fabricated live proof.
+7. **Shard temp isolation** (`nightwatch-shard-temp-isolation-v1`). Every shard
+   receives its own run-unique absolute temp directory derived from the run
+   scratch root and a validated shard identity (overwriting the platform temp
+   keys only AFTER the existing child-environment allowlist), while the proxy
+   port lease stays explicitly shared process-coordination state through one
+   validated variable.
+
+**Already recorded, deliberately not re-decided.** Three further behaviours of
+the same wave already carry their own entries and are cross-referenced rather
+than duplicated here: the sharded canonical full regression with its declared
+execution classes (D-142), the session-protocol mutation binding (D-143), and
+reproduction materialized from the recorded Git HEAD's tree (D-145).
+
+**Rationale.** A guard nobody can read is a guard nobody can review. Enumerating
+the seven behaviours in the decision record is what closes R2-63; the matching
+SAFETY_MODEL and ARCHITECTURE appends (D-159) close R2-21/R2-38/R2-45 by putting
+the same content where a safety or architecture reader looks for it.
+
+**Consequences.** Each behaviour keeps its successor change's own regression and
+mutation probes (registered as HC-150..HC-176 by campaign task 9.12, all
+DETECTED). A future change to any of the seven requires a new decision entry;
+this one is the record of what already shipped.
+
+---
+
+## D-156 — post-certification demotion, not hard failure (X-04)
+
+**Context.** The certification trap: once an advance was claimed at a checkpoint
+S, any later substantive commit — or a revisit date passing — hard-failed
+PROJECT_TRUTH, so the terminal state decayed into a new re-certification
+campaign. That is why no earlier completion claim survived (audit.md's
+"Structural traps", item 4).
+
+**Decision.** `project:check` classifies HEAD's relation to the certified
+checkpoint S and DEMOTIONS instead of failing:
+
+- `EXACT` — certified at S;
+- `DESCENDANT_DOCUMENTARY` — certified at S, reported;
+- `DESCENDANT_SUBSTANTIVE` — `CERTIFIED_AT_ANCESTOR` ATTENTION: the advance is
+  NOT re-claimed at HEAD and PROJECT_TRUTH still passes;
+- `NOT_DESCENDANT`, `NOT_CLAIMED` and `UNVERIFIABLE` stay fail-closed states.
+
+A revisit date that has passed yields ATTENTION plus a named owner action —
+never a silent pass and never a gate break. The classification lives in
+`bin/lib/certification-demotion.mjs`; the receipt carries `certificationDemotion`
+with the ATTENTION and its owner action, and the real-tree pin asserts
+`relation: NOT_CLAIMED` so a repository with no claim cannot read as certified.
+
+**Total invariant.** The advance is still claimed ONLY at an EXACT S; a
+descendant reports `CERTIFIED_AT_ANCESTOR` and never claims at HEAD. Demotion
+changes the FAILURE MODE of a later commit, not the evidence bar for the claim.
+D-129's meaning — the status is bound to S with its lane counts — is preserved.
+
+**Rationale.** A certification scheme that breaks the moment its own repository
+moves is not a certification scheme; but one that silently re-claims at a
+descendant is a lie. Demotion keeps both properties: the claim stays true about
+S, and later work is visible as later work.
+
+**Revisit trigger.** A successor review showing a demotion class that can be
+reached without an owner action, or an owner decision to re-tighten
+`DESCENDANT_SUBSTANTIVE` into a failure, requires a new entry.
+
+## D-157 — a session-declared worktree may be ABSENT-EXPECTED in CI and clean modes (D-04)
+
+**Context.** HANDOFF_TRUTH failed on every push whose `.agent/ACTIVE_TASK.md`
+declares a session worktree, because a fresh CI/clean checkout has no registered
+worktree — while release condition 2 demands exact-head CI `EXECUTED_PASS` at the
+substantive checkpoint. CI's dominant signal was therefore noise about the
+runner, not about the repository.
+
+**Decision.** In `ci` and `clean` modes only, an absent declared worktree is
+classified `SESSION_DECLARED_ABSENT_EXPECTED` when ALL of the following hold:
+
+- the gate label `NIGHTWATCH_GATE_ENVIRONMENT` is `CI` or `CLEAN`;
+- the declared branch equals the task STATE's own branch;
+- there is no prior routing error; and
+- every other handoff invariant passes.
+
+The label is forwarded through the handoff and project-state continuity spawns
+and is narrowly permitted in the handoff environment rule. Any other mismatch —
+a different branch, campaign drift, a local mode without the label — still fails
+hard. The classification is pinned by positive and negative unit probes
+(mismatched branch, campaign drift) and by a live clone proof: the same clone
+passes under `NIGHTWATCH_GATE_ENVIRONMENT=CI` and still fails without the label.
+
+**Total invariant.** This is a CLASSIFICATION of a checkout-shaped fact, not a
+weakening: it applies only to an absent declared worktree whose branch matches
+STATE, and every other handoff invariant is still enforced. The name is the
+claim — expected, because a CI checkout legitimately has no session worktree.
+
+**Revisit trigger.** Any HANDOFF_TRUTH failure that reaches this classification
+with a branch that is NOT the STATE branch, or an owner decision to require
+exact-head CI from a worktree-bearing checkout, requires a new entry.
+
+## D-158 — the DEV-lane precondition registry gates every contained-DEV launcher (T2-GATE)
+
+**Context.** Four contained-DEV redesigns are L/XL and are non-goals of this
+campaign by OD-1: NW-AUD-016 (full runtime-instance attestation), NW-AUD-022
+task 2.1 / R2-47 (journal binding to the attested instance), NW-AUD-025
+(attested generations), NW-AUD-026 (exploration observed postcondition),
+NW-AUD-037 (real-source expectation authority) and NW-AUD-038 (semantic receipt
+acceptance). Leaving them merely described would let a future launcher run into
+them silently.
+
+**Decision.** `config/dev-lane-preconditions.v1.json`
+(`nightwatch.dev-lane-preconditions.v1`) lists exactly those six preconditions
+as OPEN with NO standing owner authorization. `src/core/policy/devLanePreconditions.ts`
+parses it fail-closed (schema version, refusal code, id/scope/status/summary
+shapes, duplicate ids, `D-<n>` citations) and `assertDevLanePreconditionClear`
+refuses with `DEV_LANE_PRECONDITION_OPEN`, naming every open id; an unrecognized
+or unauthorized owner token is `DEV_LANE_OWNER_TOKEN_UNRECOGNIZED`.
+`bin/lib/dev-lane-precondition.mjs` is called as the FIRST executable step by
+all thirteen DEV-contacting launchers — before argument validation, auth
+validation or any child process — and the no-contact `observe-preflight.mjs` is
+exempt BY CONSTRUCTION (pinned: no spawn, browser, socket or cookie read), so its
+argument-validation coverage survives.
+
+**Total invariant.** The registry ADDS a gate; it never removes one. The shipped
+default refuses unconditionally; the one-shot acceptance token path exists for
+tests through a declared registry-path seam and a registered authorization
+helper, and the shipped launchers still refuse.
+
+**Rationale.** Quarantine is only real if the path refuses to run. A registry
+entry that nothing reads is documentation; a registry entry every launcher reads
+before its first effect is a gate.
+
+**Revisit trigger.** An owner decision to unblock any one of the six — which
+requires its own DECISIONS entry and its own evidence — or the completion of
+NW-AUD-016's remaining enforcement, which closes R2-47's dependency.
+
+## D-159 — the M10 documentation of record: append-only alignment and the new single authorities
+
+**Context.** R2-63/R2-21/R2-38/R2-45: the successor wave and this campaign's own
+M2-M10 work changed safety and validation behaviour faster than the durable
+documents recorded it. `docs/SAFETY_MODEL.md` and `docs/ARCHITECTURE.md` are
+declared `APPEND_ONLY_ARCHIVE` documents (`config/document-role.v1.json`), so the
+alignment cannot rewrite history: it appends dated sections that state the
+IMPLEMENTED behaviour and names the record that governs it.
+
+**Decision 1 — the bin type-check lane is BLOCKING at zero, and its two
+structural defects are permanently closed** (campaign M9 10.4/10.5,
+`tests/unit/binTypecheckLaneCompleteness.test.ts`):
+
+- `BIN_TYPECHECK_DECLARATION_SHADOWED`. `tsconfig.bin.json` used to include
+  `bin/**/*.d.mts` beside `bin/**/*.mjs`; TypeScript treats a hand-written
+  sibling declaration as its module's authoritative type and DROPS the counted
+  implementation from the program. 53 bin implementations — 30 of them carrying
+  952 real diagnostics, including `bin/agent-continuity-protocol.mjs` (171),
+  `bin/agent-state.mjs` (138) and `bin/lib/operator-cli.mjs` (109) — were never
+  checked at all while the lane reported a clean number for them. `include` is
+  now the `.mjs` implementations only; the declarations still govern IMPORTERS
+  through module resolution and remain `skipLibCheck`ed; and a hard error
+  refuses any include pattern that matches a `.d.mts` or widens to `bin`,
+  `bin/**` or `bin/**/*`, so a declaration sibling can never shadow an
+  implementation again. The recorded 1402-diagnostic baseline was a FLOOR, not
+  a measurement.
+- The `runTsc` empty-output rule. An EMPTY tsc output was read as
+  `BIN_TYPECHECK_TOOLCHAIN_UNAVAILABLE`, so the first fully clean surface would
+  have been reported as a missing toolchain. tsc exits 0 on a clean surface and
+  1 with diagnostics; only a spawn error, a kill signal, or exit 2
+  (configuration error, no per-file judgement) fails closed now.
+
+The lane measures **0 diagnostics across all 143 tracked `bin/**/*.mjs`
+implementations, 77 of 77 entry points conforming, 0 exemptions, 0 per-file
+ceilings, 0 diagnostic-silencing widening annotations**, and `config/bin-typecheck.v1.json`
+is `mode: BLOCKING` with `totalCeiling: 0` and `anyAnnotationBudget: 0`.
+
+**Decision 2 — the single governed authorities the M10 work installed**
+(campaign tasks 11.1/11.3, all with permanent regressions):
+
+- `publishLocalReport` (`src/core/policy/localReportPublication.ts`,
+  NW-AUD-009) is the single governed report boundary for every ignored
+  repository-local report and receipt: bytes, schema, size, destination
+  ancestry and leaf type are admitted IN MEMORY before anything changes; a
+  symlink is refused over every ancestry component; replaceable reports are
+  published through same-directory `wx` staging plus fsync plus atomic rename,
+  and historical receipts as immutable no-replace files; a platform that
+  cannot provide a primitive REFUSES rather than downgrading to a direct
+  write. All six `current.json` writers route through it.
+- `assertGatedReadAllowed` (`src/data/phase6/adapters.ts`, NW-AUD-032) is the
+  single owner-scope read authority: every gated read passes through the one
+  adapter seam BEFORE any invoker is reached, and the only exemption is the
+  module-private `unique symbol` synthetic seam whose invoker must be exactly
+  this module's own implementation — a relabelled or overridden foreign
+  invoker fails closed.
+- The retention journal (`src/core/evidenceRetention/retentionJournal.ts`,
+  NW-AUD-005) brackets every deletion with a durable PREPARED intent published
+  before the first removal and a TERMINAL receipt published and RE-VERIFIED
+  after; only a verified terminal record may be reported as a deletion
+  receipt, a terminal record can never be replaced, and `bin/evidence-retention.mjs`
+  writes and asserts the terminal record before any receipt lands.
+- `admitLocalTypeScriptCompiler` (`src/core/policy/localToolchain.ts`,
+  NW-AUD-007) is the only toolchain admission path: it resolves the
+  repository-local `node_modules` install, refuses a missing install, a
+  non-regular or linked compiler entry and any version that disagrees with the
+  lockfile pin, and never consults `PATH`, never invokes a package runner,
+  never installs and never contacts a registry. `bin/change-intelligence.mjs`
+  compiles through it, failing closed before anything is created.
+- The unused-export ratchet (D-17): `checkUnusedExportBudget` re-measures, on
+  every `hardening:check`, the count of exported VALUE symbols under `src/`
+  whose identifier no tracked file outside their own definer names, and fails
+  when it grows. The pin in `config/reference-graph.v1.json` is **635**
+  (measured 2026-10-09 against 3196 exported value symbols; the audit's stale
+  122 had never been re-measured, so the number could only drift upward).
+  Probe HC-283 appends one unreferenced export and is DETECTED.
+- The private retention scopes (X-11): `PRIVATE_RETENTION_SCOPES` gives EVERY
+  named private directory — `agent-findings` and `campaign-state` — a
+  documented scope: no automatic deletion by any sweep, `OWNER_EXPLICIT_APPLY`
+  as the only removal authority, whole-document granularity, an unmeasurable
+  document refused, and the refusal-first order `REFUSED_REFERENCED`,
+  `REFUSED_RECENT`, `REFUSED_UNPROVABLE`, `REFUSED_UNSAFE`. An unknown or
+  undocumented directory is refused, and the M-21/M-21b structural mutations
+  (remove a scope; let a scope permit automatic removal) fail the rule.
+- The CF-1 census (A-16): `config/cf1-fuzz-property.v1.json` records the
+  re-measurement — **40 cases** (`fuzzProperty` 22, `frontierContractFuzz` 11,
+  `alphausHandoffProperties` 7) against the ledger entry's own floor of **20**,
+  measured 2026-10-09. The ratchet only turns one way: REMOVING a case fails
+  the census, adding one does not.
+
+**Decision 3 — how the alignment is written.** Every alignment is an APPEND to
+`docs/SAFETY_MODEL.md` or `docs/ARCHITECTURE.md`, dated and naming the record
+that governs it; no existing archive line is modified, and a correction entry
+in `config/document-role-corrections.v1.json` is registered in the SAME commit
+as any removal it exempts (D-146). The appended content is in
+`docs/SAFETY_MODEL.md` §25-§32 and `docs/ARCHITECTURE.md`'s M10 record, both
+dated 2026-10-09.
+
+**Rationale.** An append-only archive is the right shape for decision history
+and the wrong shape for current truth, so the two are separated: DECISIONS
+records what was decided, and the dated appends record what is implemented now,
+each citing the other. Nothing is silently rewritten and nothing is silently
+stale.
+
+**Revisit trigger.** Any further behaviour change that would make an appended
+section wrong — it must be corrected by a NEW append, never an edit — and any
+attempt to relocate a section out of a bounded current-truth document follows
+the declared relocation mechanism instead.
+
+---
+
+## D-160 — ACCEPTED_RESIDUAL A-15: `dtoFramework` composition is the adopted end state; the hand-rolled validators stay (14.7 struck)
+
+Census: `openspec/changes/nightwatch-final-product-completion-v1/audit.md` §T3,
+row **A-15** — "dtoFramework adopted (D-131) but migration unfinished: the
+hand-rolled validators are wrapped, not removed (programme 14.7)" — class B,
+low severity / L effort, disposition ACCEPTED_RESIDUAL. Recorded by campaign
+task **11.2**.
+
+**What remains.** `src/core/dtoFramework/` is composed (wrapped) by the four
+already-registered kinds — semantic evaluation receipt, triage replay plan,
+campaign manifest, campaign checkpoint — and each kind's hand-rolled validator
+still exists and still runs. The D-131 migration (each kind's validation
+replaced by its dtoFramework constructor) has not landed and is not planned by
+this campaign.
+
+**D-131 composition is the end state.** D-131 (owner decision of 2026-09-12,
+programme group 14.6) adopted `dtoFramework` as the migration TARGET. This entry
+records, under OD-1, that the adopted END STATE is the composition as it now
+stands: the dtoFramework layer is composed over the existing validators, and
+those validators remain the operative admission logic. The migration itself is
+accepted residual work, not pending work of this campaign.
+
+**Disposition record for the struck lines (struck with disposition, not
+deleted).** Two ledger lines are struck here with an explicit disposition
+record rather than deleted:
+
+- `openspec/changes/nightwatch-private-payload-screening-structural-integrity-v1/tasks.md`
+  task **2.2** ("Replace generic unknown store inputs with family-specific safe
+  DTO constructors and independent write-time validation") — struck with
+  disposition **ACCEPTED_RESIDUAL**, citing this entry and R2-26 (D-167). Its
+  PARTIAL text is preserved verbatim: store write-time structural + text
+  admission landed (`assertPrivatePayload` → `containsPrivatePayload`) and
+  every reader family revalidates with its own validator; the branded per-family
+  DTO constructors with exact-key schemas remain deferred. Its mutation note
+  (permissive unknown keys ⇒ NOT APPLICABLE while 2.2's exact-key admission is
+  deferred) stays truthful under this disposition.
+- `openspec/changes/nightwatch-production-completion-programme-v1/tasks.md`
+  task **14.7** ("If adopting `dtoFramework`: migrate its four already-registered
+  kinds first — semantic evaluation receipt, triage replay plan, campaign
+  manifest, campaign checkpoint — removing each one's hand-rolled validation in
+  the same change") — struck with disposition **ACCEPTED_RESIDUAL**, citing this
+  entry. The line's condition ("if adopting") is satisfied by D-131; its action
+  (the migration) is the accepted residual recorded here.
+
+**Rationale.** The hand-rolled validators are exercised, tested and current;
+the migration is a large mechanical change with no operator-visible defect
+behind it. OD-1's tiering puts exactly this shape — real quality debt without
+operator impact — in T3/T4 territory: recorded, not embarked on.
+
+**Risk.** Two validation layers can drift: a schema change made in one kind's
+hand-rolled validator need not be mirrored in its dtoFramework composition, and
+a future reader may believe the dtoFramework layer is authoritative when the
+hand-rolled validator is what actually admits. Both are reviewable states, not
+silent ones, because both layers are in tracked source.
+
+**Revisit trigger.** Any change to one of the four kinds' schemas, or an owner
+decision to schedule the 14.7 migration as its own task (which would need a
+fresh DECISIONS entry superseding this one). The residual is reviewed with the
+owner's residual-list confirmation (campaign task 14.4).
+
+**Owner authority.** OD-1 (tiered terminal disposition) via D-153; D-131 for the
+adoption and the migration targets; the campaign's residual-list confirmation
+(programme 14.4). No new authorization is taken by this entry.
+
+---
+
+## D-161 — ACCEPTED_RESIDUAL NW-AUD-027: the retained C-10 production-local persistence lifecycle gaps
+
+Census: `audit.md` §T3, row **NW-AUD-027** —
+`production-persistence-lifecycle-integrity-v1`: "Three gaps in the retained
+C-10 production-local persistence modules" — class B, medium/medium,
+disposition ACCEPTED_RESIDUAL. Recorded by campaign task **11.2**.
+
+**What remains.** Three gaps in the retained production-local persistence
+modules: (1) browser-profile cleanup authorizes recursive deletion from an
+absolute path whose basename merely starts with `nightwatch-prod-profile-`, with
+no capability-bound generation/lease or verified owner-only base; (2) the
+findings store stages privately but `renameSync` can overwrite an existing
+finding, the file-count check races concurrent writers, and success is reported
+without parent-directory durability; (3) the persistence audit silently ignores
+missing roots, directory/stat failures and all files after its global 20,000-file
+budget, yet sets `clean` solely from recorded violations. These paths are
+local/synthetic and real production observation remains owner-gated and frozen
+(Phase 6 owner scope freeze, D-29a).
+
+**Rationale.** Under the permanent owner scope freeze no production observation
+can execute, so the defects are on a frozen path with no reachable caller. The
+change's own proposal says as much: the gaps "limit immediate reachability"
+while still encoding the claimed privacy prerequisite. OD-1's T3 tier accepts
+exactly this: latent on a frozen path, recorded with its trigger.
+
+**Risk.** If production observation were ever un-frozen by a future owner
+decision, these modules would admit destructive cleanup by name-prefix, a
+silent finding overwrite and an "incomplete audit read as clean". The freeze is
+the control that keeps the risk theoretical, and it is enforced, not assumed
+(`assertOwnerPolicyAllows` before any executor callback).
+
+**Revisit trigger.** Any owner decision to un-freeze any part of Phase 6 real
+production observation, which would require a fresh authorization and a fresh
+decision entry re-opening this residual; otherwise the residual stands for the
+life of the freeze. Reviewed with the owner's residual-list confirmation
+(task 14.4).
+
+**Owner authority.** OD-1 via D-153; the Phase 6 owner scope freeze
+(`FROZEN_BY_OWNER` / `INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE`) as the reason
+the path is unreachable. This entry takes no new authority.
+
+---
+
+## D-162 — ACCEPTED_RESIDUAL NW-AUD-030: the durable triage-evidence validators' gaps
+
+Census: `audit.md` §T3, row **NW-AUD-030** —
+`triage-evidence-contract-integrity-v1`: "The durable triage-evidence validators
+have gaps" — class B, medium/medium, disposition ACCEPTED_RESIDUAL. Recorded by
+campaign task **11.2**.
+
+**What remains.** The triage evidence contracts do not share one representable,
+closed schema: replay-plan v2 accepts unbounded occurrence ordinals although
+occurrence identity/envelope construction caps them at 999,999, so an admitted
+plan can execute and only then fail while producing its envelope; the
+minimality-evidence parser casts untrusted fields, accepts unknown evidence
+classes and truthy non-booleans, preserves any non-empty survivor digest without
+recomposition, and does not reject unknown fields; semantic replay receipt
+validation enforces the positive exact case but admits many contradictory
+outcome/currentness/binding/rejection combinations.
+
+**Rationale.** The affected evidence classes are only produced and consumed by
+the local triage pipeline, which this campaign's M6/M8 work made truthful about
+its own statuses (the derived protocol-dossier readiness, NW-AUD-029/C-08); the
+gaps admit incoherent evidence into a local store, not into a customer or
+production system. Rewriting the shared occurrence domain, making every parser
+exact-key and canonical, and binding minimality evidence to a recomposable body
+is a contained-DEV-scale redesign that OD-1 does not fund as a fix.
+
+**Risk.** Durable evidence could be accepted without proving the coherence that
+downstream confidence and dossier logic assume — an admitted plan that cannot
+produce its envelope, or a survivor digest that was never recomputed. The blast
+radius is owner-local evidence truth, which is exactly the surface this campaign
+hardened elsewhere (the strict run-evidence and proxy readers); the residual is
+recorded rather than claimed closed.
+
+**Revisit trigger.** Any new consumer of the replay-plan or minimality-evidence
+contracts, any contained-DEV acceptance work that would exercise them (which is
+itself behind the DEV-lane precondition registry, D-158), or a triage defect
+reproduced against current source. Reviewed with task 14.4.
+
+**Owner authority.** OD-1 via D-153; the T3 tier rule (latent on frozen /
+no-caller paths ⇒ ACCEPTED_RESIDUAL unless S).
+
+---
+
+## D-163 — ACCEPTED_RESIDUAL NW-AUD-031: the artifact facade's unbounded validation and verbatim error echo
+
+Census: `audit.md` §T3, row **NW-AUD-031** —
+`durable-artifact-validation-bounds-v1`: "The artifact facade `validateArtifact`
+returns any leaf `Error.message` verbatim and runs no preflight budget" —
+class B, medium/medium, disposition ACCEPTED_RESIDUAL. Recorded by campaign
+task **11.2**.
+
+**What remains.** The converged artifact facade calls strict structural
+validators, but several current validators traverse unbounded arrays and nested
+values before or without enforcing resource limits — minimization
+sequences/evaluations, cluster batches/run IDs, coverage lists, project-health
+collections, source provenance and recursive sentinel scans can consume
+attacker- or corruption-controlled CPU and memory — and the facade returns
+arbitrary thrown `Error.message` values from leaf validators instead of
+applying its DTO registry's stable privacy-safe error normalization. Batch
+validation also has no explicit truncation/incomplete status.
+
+**Rationale.** Owner-local storage reduces remote exposure, but it does not make
+corrupt, oversized or pathologically nested durable evidence safe to inspect;
+the proposal says so, and the honest position is that the bound is missing. The
+full fix — per-kind byte/depth/key/array/string/aggregate-work budgets enforced
+BEFORE deep validation, centralized safe error normalization, producer/parser
+bound identity through one registry — is a validation-architecture change
+across `src/core/artifactValidation/**` and every facade consumer. It is
+accepted residual under OD-1's T3 rule: the inputs are owner-local files this
+campaign already screens structurally and textually at the private-artifact
+boundary.
+
+**Risk.** A corrupt or adversarial durable artifact can consume unbounded
+resources when inspected, and a leaf validator's raw message can echo
+payload-derived text into a diagnostic. The private-artifact privacy screen
+(`assertPrivatePayload`, structural + text) is the control that keeps customer
+values out of these files in the first place; the residual is the missing
+defense-in-depth behind it.
+
+**Revisit trigger.** Any new artifact kind admitted to the facade, any incident
+where an artifact's inspection cost becomes measurable, or a review of the
+facade's consumers finding one that renders leaf messages. Reviewed with
+task 14.4.
+
+**Owner authority.** OD-1 via D-153; the T3 tier rule. No new authority.
+
+---
+
+## D-164 — ACCEPTED_RESIDUAL NW-AUD-034: the production qualification receipt validator's authority gaps
+
+Census: `audit.md` §T3, row **NW-AUD-034** —
+`production-observation-receipt-integrity-v1`: "`validatePqReceipt` accepts
+extra keys, checks `gateDefinitionDigest` by shape only (it never recomputes…)"
+— class B, medium/medium, disposition ACCEPTED_RESIDUAL. Recorded by campaign
+task **11.2**.
+
+**What remains.** Production qualification receipts are treated as integrity
+evidence, but their validator does not enforce an exact schema, all fixed
+types/enums, the current production-chain definition digest, or the relationship
+between a denial code and the gate that emitted it; the public sealing helper can
+authenticate any caller-assembled internally plausible value, because its
+digest is tamper detection, not producer authority. The P1 rehearsal boundary
+has the same shape: `configIdentity` omits `evidenceDestination` and
+`expectedImplementationSha`, and the safe receipt has a builder/sealer but no
+strict parser that recomputes every identity and coherence relationship.
+
+**Rationale.** These paths are local/mock and do not currently authorize
+production; the campaign's M4 work records the production track as
+`EXTERNAL_PREREQUISITE_UNMET` with C-13/C-14 terminal (D-134, A-20), so the
+receipts cannot influence a production decision today. The full fix —
+producer-minted evidence identity with digests retained only for tamper
+detection, exact coherence matrices, every authority-bearing P1 field in the
+canonical identity — is a redesign of an evidence kind whose consumer is
+blocked. OD-1's T3 rule accepts it.
+
+**Risk.** A forged or incoherent production-observation receipt could read as
+integrity evidence if it were ever consumed. The mitigation is structural: the
+production track cannot advance (`POSITIVE_DEPLOYMENT_FACTS` = 0; C-12/C-13/C-14
+external), and the owner-gated production run gate is the only writer. OD-5's
+tamper-evident-not-tamper-proof receipt model (D-150 §24) is stated wherever
+receipts are described, so the limit is published rather than implied.
+
+**Revisit trigger.** Any owner authorization of real production observation
+(which would re-open NW-AUD-027 and this item together), or a P1 rehearsal that
+moves from local/mock to a certifying lane. Reviewed with task 14.4.
+
+**Owner authority.** OD-1 via D-153; D-134/D-135 for the production track's
+terminal-external state that makes the path unreachable; OD-5/D-150 for the
+receipt threat model this entry does not relax.
+
+---
+
+## D-165 — ACCEPTED_RESIDUAL R2-15: fixed tools are resolved through PATH without exact identity
+
+Census: `audit.md` §T3, row **R2-15** — "NW-AUD-014 task 3.3: fixed tools
+(git/gh/etc.) resolved via PATH with no exact identity or digest" — class B,
+low/medium, disposition ACCEPTED_RESIDUAL. Recorded by campaign task **11.2**.
+
+**What remains.** Every child-process call site is assigned to a closed profile
+and routed through the shared bounded execution primitives, and the census
+totality work (R2-03, campaign task 9.11) fails closed on unresolved
+indirections. What is not implemented is task 3.3's exact-identity rule: fixed
+and repository tools (`git`, `gh` and the other OFFLINE_REPOSITORY_TOOL
+residents) are still resolved through PATH, with no digest or provenance
+recorded per tool, and no closed executable exception is documented.
+
+**Rationale.** The call-site census and the ambient-environment boundary are
+the safety-relevant part and they landed (R2-14/R2-16 are COMPLETED_LATER;
+R2-03's totality is fixed). Exact tool identity is a provenance improvement on
+an already-bounded path: the tools are host-installed, fixed-name executables
+whose behaviour is pinned by the shared child-environment allowlist, explicit
+argv and deadline/output bounds. Digitally pinning a host's `git` binary would
+also break every legitimate host whose version differs from the recorded
+digest, so the rule needs a designed exception list before it can enforce.
+
+**Risk.** A PATH-shadowed `git` or `gh` would execute with the caller's
+ambient authority minus the declared environment. The census's unknown-record
+refusal and the child-environment allowlist bound what such a binary could see;
+exact identity would make it attributable. R2-17 records the adjacent
+executing-child proof gap.
+
+**Revisit trigger.** Any new fixed tool entering a profile, any change to the
+closed profile vocabulary, or an owner decision to require tool digests in the
+campaign manifest's version fingerprints (which would subsume this residual).
+Reviewed with task 14.4.
+
+**Owner authority.** OD-1 via D-153; the T3 tier rule; NW-AUD-014's own
+handoff text, which already deferred this line.
+
+---
+
+## D-166 — ACCEPTED_RESIDUAL R2-17: no executing child-process adversarial proof
+
+Census: `audit.md` §T3, row **R2-17** — "NW-AUD-014 tasks 4.1 and 4.2: no
+executing child-process proof (ambient-secret inspection, fake PATH, hung or
+forked children)" — class B, medium/medium, disposition ACCEPTED_RESIDUAL.
+Recorded by campaign task **11.2**.
+
+**What remains.** The mutation-proof half of the child-process boundary work is
+registered and green (HC-090..HC-098 plus the M8 totality family), but the
+EXECUTING adversarial proofs were never built: no randomized ambient-secret
+inspection of a real child for every profile, no positive scoped-token proof for
+remote observers, and no fake-PATH / missing-local-install / registry-DNS-HTTP
+attempt / hung-or-noisy-child / forked-descendant / signal-and-error /
+output-redaction cases driven through actual spawned processes.
+
+**Rationale.** The structural guarantees are real — closed profiles, explicit
+environment allowlists, bounded argv/timeout/output, no shell, and a census that
+fails closed on unresolved indirection (campaign task 9.11) — and each is
+mutation-proven. What is missing is the behavioural half: proof against a
+REAL child rather than a source reading. Building it needs a synthetic-but-real
+process farm, which is the same contained-DEV-scale effort OD-1 declines to
+fund; R2-04's sibling rules (explicit-env allowlist enforcement and sync
+timeout/output bounds) were implemented, run and REVERTED under campaign task
+9.11 because dozens of existing call sites are not conformant, and that sweep is
+the honest prerequisite for an executing proof.
+
+**Risk.** A defect that only exists at process level — an ambient variable that
+reaches a child through a path the source census cannot see, a descendant that
+outlives its parent, an output redaction that fails on a real byte stream —
+would not be caught by the structural pins. The risk is bounded by the
+allowlist, the bounds and the census, all of which are enforced.
+
+**Revisit trigger.** The R2-04 conformance sweep (recorded open under campaign
+task 9.11), or any new child-process profile. The executing proof is scheduled
+behind that sweep, not independently of it. Reviewed with task 14.4.
+
+**Owner authority.** OD-1 via D-153; the T3 tier rule; the task 9.11 record
+that already published R2-04's revert as the reason.
+
+---
+
+## D-167 — ACCEPTED_RESIDUAL R2-26: family-specific safe DTO constructors are not implemented; the store still accepts unknown inputs
+
+Census: `audit.md` §T3, row **R2-26** — "NW-AUD-019 task 2.2: family-specific
+safe DTO constructors not implemented; store still accepts unknown" — class B,
+low/low, disposition ACCEPTED_RESIDUAL. Recorded by campaign task **11.2**.
+
+**What remains.** The private-artifact store's write path admits any
+JSON-serializable object after the structural and text privacy screens
+(`assertPrivatePayload` → `containsPrivatePayload`, plus the shape screen), and
+every READER family revalidates with its own validator. What is not implemented
+are the family-specific branded DTO constructors with exact-key schemas at the
+store boundary, so the store itself still accepts an unknown input shape and
+leaves exactness to the readers.
+
+**D-131 composition is the end state.** With D-160, this entry records that the
+D-131 composition (adopt `dtoFramework`; compose over the existing validators) is
+the adopted end state: the branded-DTO migration is not pending work of this
+campaign. NW-AUD-019 task 2.2 is struck with the explicit disposition record in
+D-160, citing this entry.
+
+**Rationale.** Every reader family already revalidates — reviewStore envelope
+validators, the selfDev `validate*` set, the run-evidence strict parsers and the
+findings `validateArtifact` — so an unknown shape is refused at the consumer
+that actually depends on its shape, and the store's structural + text screen is
+the privacy boundary. Per-family constructors would move exactness earlier; it
+is quality debt, not an operator-visible defect, and the per-key mutation this
+would enable is recorded as NOT APPLICABLE in NW-AUD-019's own probe list rather
+than faked.
+
+**Risk.** A writer could persist a well-formed but schema-unknown document that
+only a reader catches, so a defect surfaces later and further from its cause.
+The privacy guarantee does not depend on the missing constructors: the
+structural screen is key/shape-aware and fails closed regardless of the input's
+declared family.
+
+**Revisit trigger.** The 14.7 migration decision (D-160) being scheduled as its
+own task, or a reader family gaining a consumer that reads before validating.
+Reviewed with task 14.4.
+
+**Owner authority.** OD-1 via D-153; D-131 for the composition end state;
+D-160 for the strike record of NW-AUD-019 task 2.2.
+
+---
+
+## D-168 — the Vue review due 2026-10-09: an unused devDependency is not a leftover (D-09)
+
+**Context.** Census item **D-09** ("Root dependency posture: one accepted low
+advisory; the pin is intentional") tiered the root dependency posture
+`NON_GOAL — cite owner scope/decision`, but `config/dependency-currency.v1.json`
+carries the same fact as a *scheduled review*: `vueReview.reviewDate
+2026-09-09`, `reviewIntervalDays 30`, due **2026-10-09**. `npm ci` prints
+`vue@2.6.12: Vue 2 has reached EOL and is no longer actively maintained`, so the
+question this review had to answer honestly was not "is Vue 2 old" — it is — but
+whether `vue@2.6.12` is load-bearing for THIS repository, and if so what the EOL
+and the one accepted advisory actually cost.
+
+**Findings, all measured against tracked source at this checkpoint.**
+
+1. **Who imports it.** A whole-tree search for import/`from`/`require`/
+   `import()` specifiers resolving the `vue` package returns **zero** results.
+   `vue` is reached by exactly one tracked file,
+   `tests/unit/rippleReadiness.test.ts:109`, through
+   `require.resolve('vue/dist/vue.js')`, which it loads into a Playwright page
+   with `page.addScriptTag`. A second textual mention exists in
+   `tests/unit/nw14HostCapabilityMatrix.test.ts:102`, which searches for that
+   specifier, and a third in a comment in
+   `bin/lib/hardening/rules/validation-and-gates.mjs`. Neither is a consumer.
+2. **Is it load-bearing.** Yes. The test it serves asserts, against the real Vue
+   2.6.12 runtime, that mounting REPLACES the `#app` bootstrap element with a
+   `.q-layout-container.layout` shell (`vueVersion: '2.6.12'`,
+   `bootstrapMountTargetPresent: false`, `renderedShellPresent: true`). That is
+   the source-backed structural premise of the Ripple readiness contract.
+   `src/core/source/vueSfc.ts` deliberately is NOT `@vue/compiler-sfc`; it is a
+   bounded SFC `<script>` extractor for reading sibling `ripple-ui` source and
+   has no relationship to the installed `vue` package. `vue` is a
+   **devDependency test fixture**, never a runtime dependency.
+3. **What the EOL costs here.** Nothing new at this checkpoint. Vue 2's
+   upstream END OF LIFE means no patch will ever arrive, so retention rests
+   entirely on reachability — which D-133 recorded as
+   `UNREACHABLE_IN_NIGHTWATCH` from the executed 2026-09-12 bounded read-only
+   registry query (`GHSA-5j4c-8p2g-v4jx`, CWE-1333 template-compilation ReDoS,
+   range `>=2.0.0-alpha.1 <3.0.0-alpha.0`, fix only as the unauthorized
+   semver-major `vue@3.5.42`). One low advisory, dev-only, offline, parsing a
+   fixed local render function; no untrusted string reaches a template.
+
+**Decision — ACCEPT WITH TRIGGER (retain, exact pin).** All three candidate
+dispositions were tested against the evidence and two were rejected:
+
+- **REMOVE is wrong.** It was already tried once and reversed the same day as
+  D-118: the import-specifier scan did not see `require.resolve`, the removal
+  looked clean because the canonical checkout's stale `node_modules` still held
+  the package, and a fresh `npm ci` failed with `Cannot find module
+  'vue/dist/vue.js'` (DEF-FC-03). The current evidence still shows exactly one
+  call site reached through a specifier form ordinary scanners miss, so a second
+  removal attempt would reproduce the same class of error.
+  `checkDeclaredDependencyResolvability()` in `bin/hardening-check.mjs` now
+  fails closed when tracked source resolves an undeclared package, and the
+  mechanized Vue conditions in `src/core/dependencyCurrency/index.ts` keep the
+  call-site count, the literal-only template content and the declared
+  `require.resolve` resolvability under permanent mechanical watch. Removing the
+  dependency would therefore be a deliberate DEF-FC-03 regression.
+- **UPGRADE is not authorized and would destroy the fixture's purpose.** Vue 3
+  is a semver-major change; `2.6.12` is the version the Ripple product
+  bootstraps with, and the fixture's job is to model that product's
+  `render: h => h(App)` mount behaviour. No newer version provides equivalent
+  coverage, and D-133 records that no package update is authorized.
+
+**Rationale.** "Vue 2 is EOL" is a fact about upstream, not about this
+repository's exposure. The honest review output is a reachability verdict plus
+a named trigger, not a version bump that cannot be justified by any evidence
+held here.
+
+**Consequences.** `config/dependency-currency.v1.json` is re-dated
+(`vueReview.reviewDate` `2026-09-09` → `2026-10-09`, so the next mechanized
+review falls due 2026-11-08) and gains a `reviewRecord` string naming this
+entry. `evaluateDependencyCurrency`'s `DEPENDENCY_REVIEW_DUE` finding is cleared
+by that re-date and will re-arm mechanically. **Known documentation drift, not
+hidden:** `docs/HOST-CAPABILITY-MATRIX.md` §4 still prints "Review date.
+2026-09-09; revisit interval 30 days (due 2026-10-09 …)" because that file is
+owned by another process in this campaign and was not in this task's writable
+set; the machine-checked authority is the config record, which now reads
+2026-10-09. The next writer of that CURRENT_TRUTH document must update the
+sentence. The census line D-09 remains `NON_GOAL` and is now discharged with
+this citation.
+
+**Phase applicability.** Every scheduled dependency review; FC-1 and D-118
+remain the standing warnings about import-scanner blind spots.
+
+---
+
+## D-169 — the UI lockfile is now assessed, and GHSA-82fw is UNVERIFIABLE, not clean (D-08)
+
+**Context.** Census item **D-08** — "Dependency assessment excludes the
+ui/control-center lockfile, which has 2 unrecorded moderate advisories" — class
+B, medium/medium, disposition FIX. The root assessment judged `package.json`,
+the root `package-lock.json` and the tracked sources; `ui/control-center` had
+its own manifest and lockfile with a far larger closure (13 declared packages,
+217 resolved lockfile entries versus the root's eleven packages) and was never
+assessed at all. The census's own claim — two unrecorded moderate advisories —
+carried no identifier, no affected range, no severity and no scan record.
+
+**What the extension does.** `src/core/dependencyCurrency/uiLockfile.ts`
+(new, pure: no filesystem, process, network, Git or clock authority) applies the
+SAME three rules to `ui/control-center/package-lock.json`:
+
+1. **transitive closure** — the lockfile's own root declaration is compared with
+   its manifest (`UI_LOCKFILE_DECLARATION_DRIFT`,
+   `UI_LOCKFILE_IDENTITY_MISMATCH`), the resolved package count is re-derived
+   (`UI_LOCKFILE_PACKAGE_COUNT_DRIFT`), and every declared package's installed
+   version is READ out of the closure and compared with the recorded snapshot
+   (`UI_LOCKFILE_RESOLUTION_MISSING`, `UI_LOCKFILE_RESOLUTION_MISMATCH`,
+   `UI_LOCKFILE_SNAPSHOT_DRIFT`) rather than asserted;
+2. **version pin** — every UI specifier must be an exact `x.y.z` pin and its
+   resolved version must equal it (`UI_LOCKFILE_UNPINNED_SPECIFIER`);
+3. **reachability** — each declared package is classified by which tracked UI
+   sources import it, with the import/require/dynamic-import grammar and a
+   comment-blanking reader shared with the root half, so a `"vitest/globals"`
+   entry inside `ui/control-center/tsconfig.json` is a mention and never a reach
+   (`UI_LOCKFILE_DEPENDENCY_UNIMPORTED`,
+   `UI_LOCKFILE_DEV_DEPENDENCY_IN_APPLICATION_SOURCE`,
+   `UI_LOCKFILE_TOOLCHAIN_IMPORTER_DRIFT`).
+   Plus `UI_LOCKFILE_DIGEST_MISMATCH`, `UI_LOCKFILE_ASSESSMENT_STALE`,
+   `UI_LOCKFILE_SOURCE_SET_EMPTY` and the fail-closed `UI_RECORD_INVALID`.
+
+`src/core/dependencyCurrency/text.ts` holds the shared calendar and lexical
+primitives so the two halves cannot drift apart, and `evaluateDependencyCurrency`
+gains an OPTIONAL `uiLockfile` input, reporting `uiLockfileAssessed: false` when
+a caller predating this half supplies nothing — an absent input is never a pass.
+Twelve negative probes (`UID-001…UID-012`) are registered in the record's
+existing single probe array; `selectDependencyProbes` and `selectUiProbes` let
+each suite select the half it claims, and
+`tests/unit/uiLockfileDependencyAssessment.test.ts` (24 cases, registered in
+`config/validation-execution-classes.v1.json` and
+`config/validation-universe.v1.json` as `FULL_REGRESSION`) runs the live
+manifest and lockfile plus every probe.
+
+**GHSA-82fw — the disposition is UNVERIFIABLE, and this is the honest one.**
+The identifier appears in exactly three tracked places: the census line
+`audit.md:147`, the ledger line `tasks.md:125` that names it, and the new record
+that dispositions it. **No advisory metadata for GHSA-82fw exists anywhere in
+this repository** — no title, no CWE, no severity, no affected version range, no
+fixed version, no scan result. A whole-repository search for `82fw` returns
+nothing else. The task was additionally offline by hard rule: no `npm install`,
+no `npm audit`, no network, and the single owner-authorized bounded read-only
+registry advisory query is reserved for task 15.4 and owned by a different
+process.
+
+Both sanctioned options were therefore evaluated and both were refused:
+
+- **(a) ACCEPTED_RESIDUAL was NOT taken.** An accepted-residual disposition is a
+  *reachability* verdict, and a reachability verdict requires knowing what is
+  affected. Recording "unreachable" without an affected package or range would
+  be a fabricated reachability proof.
+- **(b) vitest upgrade was NOT taken.** It is not executable here: installing a
+  newer vitest requires an `npm install` against the registry, which the task's
+  no-network rule forbids, and no patched version is known to this task to
+  record.
+
+So `advisoryScan.result` is `UNVERIFIABLE` with `executed: false`, a recorded
+`unverifiableReason` and `deferredToTask: tasks.md 15.4`, and the advisory entry
+records `affectedPackage`/`affectedRange`/`severity`/`fixedIn` as `UNVERIFIED`
+with `metadataSource` naming the two ledger lines and an explicit statement that
+the affected-package hint (vitest, implied by the ledger line's "a vitest
+upgrade" alternative) is a hint, not metadata. The module then ENFORCES that
+shape: `UI_LOCKFILE_ADVISORY_CLEAN_CLAIM` refuses a clean result without an
+executed query, `UI_LOCKFILE_ADVISORY_RESULT_CONTRADICTION` refuses an
+UNVERIFIABLE result claimed alongside an executed one,
+`UI_LOCKFILE_ADVISORY_METADATA_UNSOURCED` refuses UNVERIFIED metadata with no
+provenance, and `UI_LOCKFILE_ADVISORY_REACHABILITY_UNEVIDENCED` refuses any
+POSITIVE reachability verdict while the affected package is UNVERIFIED.
+
+**The one reachability fact that IS proven, and its exact limit.** The UI's two
+declared dependencies (`react 19.1.0`, `react-dom 19.1.0`) are the only
+packages any application source imports, so they are the only packages that can
+enter the `vite build` production bundle; all eleven declared devDependencies —
+including `vitest 3.2.7` and its `@vitest/*` closure — are imported only by
+`*.test.*` sources, by the two recorded toolchain importers
+(`ui/control-center/vite.config.ts`, `ui/control-center/src/testSetup.ts`), or
+by nothing at all, so they are confined to the local `vitest run` and the
+typecheck. That is a **build-boundary** proof: it narrows where a vulnerable
+package could be reachable from, and it says nothing about whether the
+advisory's exploitable path executes. It is recorded as such rather than
+promoted to an advisory-level verdict.
+
+**Known gap, recorded rather than papered over.** `bin/project-state-check.mjs`
+feeds only the root manifest and the root lockfile into
+`evaluateDependencyCurrency`, and `bin/**` is owned by another process in this
+campaign, so the UI half is NOT yet wired into `project:check`'s release
+condition 8. Until a later session passes the UI manifest, lockfile, tracked
+UI sources and UI lockfile digest into `probeDependencyCurrency`, the UI half
+is enforced by its registered test lane and by the record, and the condition
+continues to cover the root closure only. This is a wiring gap, not a claim of
+coverage.
+
+**Consequences.** `config/dependency-currency.v1.json` gains the
+`uiLockfileAssessment` section (`nightwatch.ui-lockfile-assessment.v1`) with the
+assessed snapshot, the UI advisory scan record and the twelve probes; the
+assessment is dated 2026-10-09 with a 30-day interval, so it re-arms
+mechanically. Census D-08 is discharged as FIX-with-deferral: the assessment is
+extended and the disposition is recorded, and the one thing that cannot be done
+inside this task's authority — the registry query — is named, dated and owned
+by task 15.4. Any later reading of "2 unrecorded moderate advisories" as either
+confirmed or cleared before that query runs is unevidenced.
+
+**Phase applicability.** Every dependency audit from this checkpoint forward.
+

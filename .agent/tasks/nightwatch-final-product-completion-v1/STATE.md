@@ -8,7 +8,7 @@ Status: IN_PROGRESS
 TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1
 TASK_GROUPS_COMPLETE: 1,2,3,4,5,6,7,8,10
 TASK_GROUP_NEXT: 11
-TASK_NEXT_ID: 11.1
+TASK_NEXT_ID: 11.7
 TASK_GROUP_DEFERRED: 9.5b
 Starting SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
 Last validated implementation SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
@@ -16,13 +16,31 @@ Last substantive checkpoint SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-final-product-complet-bd061869
-Last checkpoint: 2026-10-03 — THE REVIEW-5 CHILD CAMPAIGN IS COMPLETE AND ARCHIVED
+Last checkpoint: 2026-10-09 — M10 (group 11) DOCUMENTATION OF RECORD WRITTEN; 11.1-11.6 COMPLETE
+(`b7afa9e9` for the S-fixes/ratchets; DECISIONS D-153..D-167, SAFETY_MODEL §25-§32 and the
+ARCHITECTURE M10 record for the documentation of record). The T3/T4 S-fixes and the wired shared
+authorities landed at `b7afa9e9`: `assertGatedReadAllowed` (NW-AUD-032), the budget-reservation
+release (NW-AUD-033), the single-flight canonical apply (NW-AUD-011), the crash-consistent
+retention journal (NW-AUD-005), `publishLocalReport` (NW-AUD-009) and
+`admitLocalTypeScriptCompiler` (NW-AUD-007); D-15/D-16/D-20, the D-17 unused-export ratchet (pin
+635), the X-11 private retention scopes and the A-16 CF-1 re-measurement (40 cases, floor 20).
+DECISIONS now records OD-1..OD-4 as D-153 (the planning documents' reserved "D-144" label was
+already issued to the `retries`→`failures` rename, so the entry took the next unused number under
+Erratum E-1's rule), the 228-item census and its disposition vocabulary (D-154), the seven
+successor behaviours (D-155), the demotion semantics (D-156), the HANDOFF_TRUTH
+`SESSION_DECLARED_ABSENT_EXPECTED` classification (D-157), the DEV-lane precondition registry
+(D-158), the M10 documentation alignment (D-159), and the eight owner-signed ACCEPTED_RESIDUAL
+entries D-160..D-167 (A-15, NW-AUD-027, NW-AUD-030, NW-AUD-031, NW-AUD-034, R2-15, R2-17, R2-26).
+The unconsumed `NIGHTWATCH_REASONER_PRINT` declaration is removed from
+`config/environment-surface.v1.json` (73 variables remain) and the print CLI is documented as a
+LIVE provider driver whose authentication lives in HOME. RESUME POINT: M10 task 11.7 (commit),
+then M11-M14 (the single
+paid run is 12.3, the npm query 15.4) and the 13-section final report.
+Previous: 2026-10-03 — THE REVIEW-5 CHILD CAMPAIGN IS COMPLETE AND ARCHIVED
 (`2026-10-03-nightwatch-final-completion-review5-v1`, D-152); its Track A and Track B tips carry
 exact-head CI GREEN (runs 37044532848 at `4f4d7bfd` and 37062959122 at `5b2ea0f7`). M9 10.2 is COMPLETE
 (76/76 declared at the time: 72 operator-CLI + 4 library-retained; the registry now counts 77 with
-`certify-evidence`) and 10.3 is COMPLETE. RESUME POINT: M9 task 10.4 (annotate bins to zero
-diagnostics; measured baseline 1402 diagnostics; not started), then 10.5-10.6, M10-M14 (the single paid
-run is 12.3, the npm query 15.4) and the 13-section final report. No session is live (`Branch: main`).
+`certify-evidence`) and 10.3 is COMPLETE.
 Previous: 2026-10-01 — the review-4 child campaign closed and the parent resumed in a fresh session through 10.2 resume batch 1 (60/76 at that point).
 Previous: 2026-09-28 — M9 10.2 IN PROGRESS
 (59/76 declared, 4 library-retained, 13 pending): the Phase 0 formatter
@@ -56,7 +74,8 @@ ledger, and end at `PROJECT_COMPLETE_AND_CI_CERTIFIED` under D-129 with a
 ## Current Milestone
 
 M10 residual dispositions, quality debt and behaviour documentation (group 11,
-tasks 11.1-11.7) is the next group. M9 D-129 CLI contract and bin type-check
+tasks 11.1-11.7) is the current group, and tasks 11.1-11.6 are COMPLETE
+(2026-10-09); task 11.7 (commit) is the remaining box. M9 D-129 CLI contract and bin type-check
 (group 10, tasks 10.1-10.6) is COMPLETE: 10.1 DONE, 10.2 COMPLETE (76/76
 declared: 72 operator-CLI + 4 library-retained, 0 pending), 10.3 COMPLETE, 10.4
 and 10.5 COMPLETE, 10.6 COMPLETE. **10.4 and 10.5 are COMPLETE (2026-10-09)**: the bin
@@ -185,9 +204,9 @@ multi-line `@returns` union that TypeScript's JSDoc parser silently reads as
 
 ## Work In Progress
 
-**Current (2026-10-01):** the parent resumed at M9 task 10.2: operator-CLI conformance is **61/76 declared** (4 library-retained, 11 pending; next bin `change-intelligence`). The log below is HISTORICAL and is not the current state.
-
-**Current (2026-10-01):** the review-4 child campaign is CLOSED and the parent resumed at M9 task 10.2; operator-CLI conformance is 76/76 declared (72 operator-CLI + 4 library-retained, 0 pending); 10.2 and 10.3 are COMPLETE (the shared-parser structural rule `checkSharedOperatorParserStructure` is registered and blocking with the HC-246..HC-250 probe family); 10.4 (annotate bins to zero diagnostics in safety-critical-first batches) is next. The log below is HISTORICAL (M7 onward, oldest first) and is not the current state.
+**Current (2026-10-09):** M10 (group 11) — tasks 11.1-11.6 are COMPLETE and
+recorded; the remaining M10 box is 11.7 (commit).
+The log below is HISTORICAL (M7-M9, oldest first) and is not the current state.
 
 - M7 (tasks 8.1-8.5) is in progress; 8.1 is implemented and committed: the
   `.env` layer is parsed FAIL CLOSED (a malformed line, an undeclared key and a
@@ -541,18 +560,20 @@ agent:check PASS (86 warnings).
 
 ## Exact Next Action
 
-M10 task 11.1. M9 (group 10) is COMPLETE: 76/76 CLI conformance (10.2), the
-shared-parser structural rule with HC-246..HC-250 (10.3), the bin type-check
-lane at **0 diagnostics / 77 of 77 conforming / 0 exemptions / 0 widening
-annotations / BLOCKING** across all 143 tracked implementations (10.4), and the
-lane flipped to BLOCKING with `perFileCeilings: []`, `totalCeiling: 0` and
-`anyAnnotationBudget: 0` (10.5). The two structural lane defects
-(`BIN_TYPECHECK_DECLARATION_SHADOWED` and `runTsc`'s empty-output
-misclassification) are closed with a permanent regression suite. Next: task
-10.6 — `npm run gate:milestone` PASS and commit — then M10-M14 (including the
-single paid run 12.3 and the 15.4 npm query) and the 13-section final report.
-The deferred `9.5b` (NW-AUD-020 tasks 3.2/4.2) continues to be carried by
-14.1/14.2. Sequencing constraint recorded in D-148: run the paid proof (12.3)
+M10 task **11.7** (commit). The deferred **9.5b** (NW-AUD-020 tasks
+3.2/4.2) continues to be carried by 14.1/14.2. What 11.1-11.6 produced, so the
+next session does not redo it: 11.1/11.3 are implemented and validated at
+`b7afa9e9` (run-shards 6129/0/33 declared skips; typecheck and typecheck:bin
+BLOCKING 0; `hardening:check` PASS; `hardening:rules` 96 rules; validation:universe
+and execution-classes PASS); 11.2's eight ACCEPTED_RESIDUAL entries are
+D-160..D-167 with the NW-AUD-019 2.2 / programme 14.7 strike records; 11.4's
+campaign-frame entries are D-153..D-159 plus the SAFETY_MODEL §25-§32 and
+ARCHITECTURE M10 appends; 11.5 removed the unconsumed `NIGHTWATCH_REASONER_PRINT`
+declaration (surface now 73 variables), corrected the `NIGHTWATCH_PRINT_CLI`
+purpose to the LIVE-provider wording, and pinned the census in
+`tests/unit/safety.test.ts` (37/37); 11.6 extended the dependency assessment to
+the UI lockfile (`nightwatch.ui-lockfile-assessment.v1`, GHSA-82fw disposition
+recorded). Sequencing constraint recorded in D-148: run the paid proof (12.3)
 after the last substantive fix so G12's receipt binds to S.
 
 Two LIVE-SOURCE items are carried forward into M12/M13, both pre-existing at
@@ -599,6 +620,36 @@ exactly as in M4/M5.
 | `openspec/changes/nightwatch-final-product-completion-v1/tasks.md` | stable IDs restored (VA-01), reopened-by-corrections annotations | corrected by the child campaign (task 5.1) |
 
 ## Validation Ledger
+
+- 2026-10-09 — M10 11.2/11.4/11.5 (this session). `docs/DECISIONS.md` appended
+  with D-153 (OD-1..OD-4; the reserved "D-144" label was already issued, so the
+  entry took the next unused number under Erratum E-1's rule), D-154 (the
+  228-item census, tiering and disposition vocabulary), D-155 (the seven
+  successor behaviours), D-156 (demotion semantics), D-157
+  (`SESSION_DECLARED_ABSENT_EXPECTED`), D-158 (DEV-lane registry), D-159 (the
+  documentation alignment and the M10 authorities), and D-160..D-167 (the eight
+  owner-signed ACCEPTED_RESIDUAL entries: A-15, NW-AUD-027, NW-AUD-030,
+  NW-AUD-031, NW-AUD-034, R2-15, R2-17, R2-26, with the NW-AUD-019 2.2 /
+  programme 14.7 strike records and D-131 composition as the end state).
+  `docs/SAFETY_MODEL.md` appended with §25-§32 and `docs/ARCHITECTURE.md` with
+  the "Terminal campaign M9/M10 behaviour record". Task 11.5 removed the
+  unconsumed `NIGHTWATCH_REASONER_PRINT` declaration from
+  `config/environment-surface.v1.json` (73 variables remain) and corrected the
+  `NIGHTWATCH_PRINT_CLI` purpose to the LIVE-provider wording. Commands and
+  results: `node bin/hardening-check.mjs --family documentation` PASS (and the
+  `--family environment-surface` lane PASS); `npm run agent:check` PASS (85
+  legacy warnings, unchanged); `tests/unit/safety.test.ts` 37/37 (the new
+  print-CLI environment census pins the three declared reads, the LIVE wording
+  and the removed legacy name); `tests/unit/dotEnvLayerStrictness.test.ts` +
+  `tests/unit/reasonerPrint.test.ts` 22/22; `tests/unit/projectState.test.ts`
+  147/147. A full `npm run hardening:check` at this HEAD reports ONE error that
+  is NOT this session's: `SCHEMA_UNDECLARED
+  nightwatch.ui-lockfile-assessment.v1 (src/core/dependencyCurrency/uiLockfile.ts)`
+  belongs to the concurrently-authored task 11.6 dependency work (untracked
+  files `src/core/dependencyCurrency/{text,uiLockfile}.ts` plus a modified
+  `config/dependency-currency.v1.json`), whose declaration is still being
+  written; the schema-lifecycle rule is the only failing rule and it fails on
+  that file, not on any of this session's.
 
 - 2026-10-03 — review-5 close-out complete. Exact-head CI GREEN at the integrated close-out tip `dce05da1`
   (run 37123923541). The close-out session `sess-7c6bca226ba5` was released and removed (`SESSION_BRANCH_DELETED`,
@@ -1170,6 +1221,21 @@ lanes, the gate pair at 5625/0 and exact-head CI green.
 
 ## Decisions Made During This Task
 
+- 2026-10-09 — The campaign's planning documents reserved the identifier "D-144"
+  for the OD-1..OD-4 owner-decision entry, but D-144 was already issued (the
+  `retries` → `failures` budget rename, cited by task 6.7). Under Erratum E-1's
+  forward rule ("a new decision takes the next number above the highest already
+  used, and never reuses one") the OD-1..OD-4 entry took the next unused number
+  and is cited as **D-153**; the reserved label never reaches the document, no
+  existing entry was touched, and the collision is recorded inside D-153 rather
+  than added to the erratum (an erratum row is for two ISSUED decisions sharing
+  a number, which this is not). DECISIONS D-154..D-167 followed in sequence.
+- 2026-10-09 — The eight T3 ACCEPTED_RESIDUAL entries each carry the owner
+  authority as OD-1..OD-4 via D-153 and the revisit trigger as either a named
+  successor condition or the owner's residual-list confirmation (task 14.4);
+  D-131 composition is recorded as the adopted END STATE for A-15 and R2-26, and
+  NW-AUD-019 task 2.2 / production-completion-programme task 14.7 are struck
+  with an explicit disposition record rather than deleted.
 - 2026-09-25 — Adopt the released canonical MAINTENANCE record for this task
   and release it inside P0, staging the continuity record transiently in
   canonical because `release` binds continuity against
@@ -1246,12 +1312,15 @@ named in the routing block; integration is fast-forward only.
 
 ## Completion Snapshot
 
-Not complete. M9 tasks 10.1-10.5 are COMPLETE: 72 operator-CLI + 4
-library-retained entry points on the shared CLI contract (76/76 declared, 0
-pending), the shared-parser structural rule with HC-246..HC-250, and the bin
-type-check lane BLOCKING at 0 diagnostics with 77 of 77 conforming entry
-points, 0 exemptions and 0 widening annotations across all 143 tracked
-implementations. Task 10.6 is next.
+Not complete. M10 tasks 11.1-11.6 are COMPLETE (2026-10-09): 11.1 and 11.3
+implemented and validated at `b7afa9e9`; 11.2 recorded as DECISIONS D-160..D-167
+with the strike records; 11.4 recorded as DECISIONS D-153..D-159 plus the
+SAFETY_MODEL §25-§32 and ARCHITECTURE M10 appends; 11.5 removed
+`NIGHTWATCH_REASONER_PRINT` and documented the print CLI as a LIVE provider;
+11.6 extended the dependency assessment to the UI lockfile with the GHSA-82fw
+disposition and the Vue review item. The bin type-check lane stays BLOCKING at
+0 diagnostics with 77 of 77 conforming entry points. Task 11.7 (commit) is the
+last M10 box.
 Terminal snapshot is written at M14: all 228 census items
 dispositioned (OD-1), `PROJECT_COMPLETE_AND_CI_CERTIFIED` under D-129 with CI
 `EXECUTED_PASS` at S (OD-2), operator proofs recorded, ledger closed, and a

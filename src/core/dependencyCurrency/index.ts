@@ -24,8 +24,42 @@
 // this module directly; `tests/unit/nw14HostCapabilityMatrix.test.ts` holds
 // the live-record and negative-probe cases.
 
+import { computeDueDate, daysSinceEpoch, lineOf, stripComments } from './text';
+import { assessUiLockfile } from './uiLockfile';
+import type { UiLockfileInput } from './uiLockfile';
+
+export {
+  assessUiLockfile,
+  isUiSourcePath,
+  parseUiLockfileAssessmentSection,
+  readUiLockfile,
+  readUiManifest,
+  selectUiProbes,
+  UI_LOCKFILE_ASSESSMENT_VERSION,
+  UI_PROBE_CODE_RE,
+} from './uiLockfile';
+export type {
+  UiAdvisoryReachability,
+  UiAdvisoryRecord,
+  UiAdvisoryScanRecord,
+  UiAdvisoryScanResult,
+  UiDeclaredPackage,
+  UiLockfileAssessmentRecord,
+  UiLockfileAssessmentSection,
+  UiLockfileInput,
+  UiLockfileProbe,
+  UiLockfileSnapshot,
+  UiPackageKind,
+  UiResolvedPackage,
+} from './uiLockfile';
+
 export const DEPENDENCY_CURRENCY_VERSION = 'nightwatch.dependency-currency.v1' as const;
 export const DEPENDENCY_CURRENCY_RECORD_PATH = 'config/dependency-currency.v1.json' as const;
+
+// The shared lexical and calendar primitives live in `./text` so the root and
+// UI halves of the assessment can never drift apart; `computeDueDate` and
+// `stripComments` stay part of this module's public surface.
+export { computeDueDate, stripComments };
 
 export interface DependencyCurrencyFinding {
   readonly code: string;
@@ -79,6 +113,27 @@ export interface DependencyCurrencyProbe {
   readonly expectedFinding: string;
 }
 
+/**
+ * The root half's negative probes, selected out of the record's ONE shared
+ * probe array. D-08 put the UI half's `UI_*` probes into the same array, so
+ * each suite selects the half it claims rather than inheriting the other's
+ * registered targets and reporting them as unexercised.
+ */
+export function selectDependencyProbes(probes: readonly unknown[]): readonly DependencyCurrencyProbe[] {
+  /** @type {DependencyCurrencyProbe[]} */
+  const selected: DependencyCurrencyProbe[] = [];
+  for (const entry of probes) {
+    if (!isRecord(entry)) continue;
+    const id = asString(entry.id);
+    const target = asString(entry.target);
+    const expectedFinding = asString(entry.expectedFinding);
+    if (id === null || target === null || expectedFinding === null) continue;
+    if (!/^DEPENDENCY_/.test(expectedFinding)) continue;
+    selected.push({ id, target, expectedFinding });
+  }
+  return selected;
+}
+
 export interface RuntimeObservation {
   readonly nodeVersion: string;
   readonly platform: string;
@@ -101,6 +156,19 @@ export interface DependencyReviewDue {
   readonly condition: string;
 }
 
+/**
+ * The UI lockfile half of the assessment (D-08).
+ *
+ * OPTIONAL, and deliberately so: `bin/project-state-check.mjs` reads only the
+ * root manifest and the root lockfile, so a caller built before this half
+ * existed supplies nothing and is judged on the root surface alone. The field
+ * is therefore never defaulted to a passing value here — an absent input yields
+ * no UI finding and reports `uiLockfileAssessed: false`, which is the honest
+ * statement that the UI closure was NOT judged, exactly as it was before.
+ * Supplying it (including an unusable snapshot) makes the UI rules apply.
+ */
+export interface UiLockfileAssessmentInput extends UiLockfileInput {}
+
 export interface DependencyCurrencyInput {
   readonly record: unknown;
   readonly today: string;
@@ -116,6 +184,7 @@ export interface DependencyCurrencyInput {
   readonly observedLockfileSha256: string | null;
   readonly advisoryLaneClass: string;
   readonly resolveSpecifier: (specifier: string) => boolean;
+  readonly uiLockfile?: UiLockfileInput;
 }
 
 export interface DependencyCurrencyResult {
@@ -125,9 +194,12 @@ export interface DependencyCurrencyResult {
   readonly vueReviewDue: boolean;
   readonly vueReviewDueDate: string | null;
   readonly lockfileVerificationDueDate: string | null;
+  /** False only when the caller supplied no UI lockfile input at all. */
+  readonly uiLockfileAssessed: boolean;
+  readonly uiLockfileReviewDueDate: string | null;
+  readonly uiLockfileAdvisoryResult: string | null;
 }
 
-const DATE_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
 const LITERAL_STRING_RE = /^(?:'(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*"|`[^`$]*`)$/;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -144,84 +216,6 @@ function asPositiveInt(value: unknown): number | null {
 
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-/** Days since the Unix epoch for a strict `YYYY-MM-DD` date, or null. */
-function daysSinceEpoch(date: string): number | null {
-  const match = DATE_RE.exec(date);
-  if (match === null) return null;
-  const year = Number(match[1]);
-  const month = Number(match[2]);
-  const day = Number(match[3]);
-  const milliseconds = Date.UTC(year, month - 1, day);
-  const check = new Date(milliseconds);
-  if (check.getUTCFullYear() !== year || check.getUTCMonth() !== month - 1 || check.getUTCDate() !== day) return null;
-  return Math.floor(milliseconds / 86_400_000);
-}
-
-/** `date + intervalDays` rendered as `YYYY-MM-DD`, or null on a bad date. */
-export function computeDueDate(date: string, intervalDays: number): string | null {
-  const base = daysSinceEpoch(date);
-  if (base === null || !Number.isInteger(intervalDays) || intervalDays <= 0) return null;
-  const result = new Date((base + intervalDays) * 86_400_000);
-  const year = result.getUTCFullYear();
-  const month = String(result.getUTCMonth() + 1).padStart(2, '0');
-  const day = String(result.getUTCDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
-
-function lineOf(text: string, index: number): number {
-  let line = 1;
-  for (let cursor = 0; cursor < index && cursor < text.length; cursor += 1) {
-    if (text[cursor] === '\n') line += 1;
-  }
-  return line;
-}
-
-/**
- * Blank out comments while preserving line structure. String literals are
- * kept intact, because the specifier under inspection is itself a string
- * literal; only comments can carry a look-alike that must not count.
- */
-export function stripComments(text: string): string {
-  let output = '';
-  let index = 0;
-  let quote: string | null = null;
-  while (index < text.length) {
-    const character = text[index] ?? '';
-    if (quote !== null) {
-      output += character;
-      if (character === '\\') {
-        output += text[index + 1] ?? '';
-        index += 2;
-        continue;
-      }
-      if (character === quote) quote = null;
-      index += 1;
-      continue;
-    }
-    if (character === "'" || character === '"' || character === '`') {
-      quote = character;
-      output += character;
-      index += 1;
-      continue;
-    }
-    if (character === '/' && text[index + 1] === '/') {
-      const end = text.indexOf('\n', index);
-      index = end === -1 ? text.length : end;
-      continue;
-    }
-    if (character === '/' && text[index + 1] === '*') {
-      const end = text.indexOf('*/', index + 2);
-      const stop = end === -1 ? text.length : end + 2;
-      output += text.slice(index, stop).replace(/[^\n]/g, ' ');
-      index = stop;
-      continue;
-    }
-    output += character;
-    index += 1;
-  }
-  return output;
 }
 
 /** Parse the versioned record, failing closed on any malformed field. */
@@ -620,7 +614,17 @@ export function collectDependencyReviewDueFromRecord(raw: unknown, today: string
 export function evaluateDependencyCurrency(input: DependencyCurrencyInput): DependencyCurrencyResult {
   const parsed = parseDependencyCurrencyRecord(input.record);
   if (!parsed.ok || parsed.record === null) {
-    return { ok: false, findings: parsed.findings, runtimeQualification: null, vueReviewDue: false, vueReviewDueDate: null, lockfileVerificationDueDate: null };
+    return {
+      ok: false,
+      findings: parsed.findings,
+      runtimeQualification: null,
+      vueReviewDue: false,
+      vueReviewDueDate: null,
+      lockfileVerificationDueDate: null,
+      uiLockfileAssessed: input.uiLockfile !== undefined,
+      uiLockfileReviewDueDate: null,
+      uiLockfileAdvisoryResult: null,
+    };
   }
   const record = parsed.record;
   const findings: DependencyCurrencyFinding[] = [];
@@ -673,6 +677,19 @@ export function evaluateDependencyCurrency(input: DependencyCurrencyInput): Depe
   const lockfile = evaluateLockfileVerification(record.lockfileVerification, input.today, input.observedLockfileSha256);
   findings.push(...lockfile.findings);
 
+  // D-08 — the UI lockfile half. Judged only when the caller supplies it, and
+  // reported as not-judged when it does not.
+  let uiLockfileAssessed = false;
+  let uiLockfileReviewDueDate: string | null = null;
+  let uiLockfileAdvisoryResult: string | null = null;
+  if (input.uiLockfile !== undefined) {
+    const ui = assessUiLockfile(input.uiLockfile);
+    findings.push(...ui.findings);
+    uiLockfileAssessed = true;
+    uiLockfileReviewDueDate = ui.reviewDueDate;
+    uiLockfileAdvisoryResult = ui.advisoryResult;
+  }
+
   return {
     ok: findings.length === 0,
     findings,
@@ -680,5 +697,8 @@ export function evaluateDependencyCurrency(input: DependencyCurrencyInput): Depe
     vueReviewDue: due.length > 0,
     vueReviewDueDate: computeDueDate(record.vueReview.reviewDate, record.vueReview.reviewIntervalDays),
     lockfileVerificationDueDate: lockfile.dueDate,
+    uiLockfileAssessed,
+    uiLockfileReviewDueDate,
+    uiLockfileAdvisoryResult,
   };
 }

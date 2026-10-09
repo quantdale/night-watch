@@ -7,24 +7,28 @@ Status: IN_PROGRESS
 TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1
 TASK_GROUPS_COMPLETE: 1,2,3,4,5,6,7,8,10
 TASK_GROUP_NEXT: 11
-TASK_NEXT_ID: 11.1
+TASK_NEXT_ID: 11.7
 TASK_GROUP_DEFERRED: 9.5b
 Task directory: .agent/tasks/nightwatch-final-product-completion-v1
 Starting SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
 Last validated implementation SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
-Last checkpoint: 2026-10-03 — THE REVIEW-5 CHILD CAMPAIGN IS COMPLETE AND ARCHIVED
-(`2026-10-03-nightwatch-final-completion-review5-v1`, spec published as
-`openspec/specs/review5-closure/`; owner decision D-152 in docs/DECISIONS.md). Track A is integrated
-and exact-head CI GREEN (run 37044532848 at `4f4d7bfd`); Track B is integrated and exact-head CI
-GREEN (run 37062959122 at `5b2ea0f7`): the integrity fixes, the Producer Matrix and the certification
-evidence mechanism (`npm run certify:evidence`, the tracked `evidence/certification/<S>/` directory),
-the yield authorization record (NOT_GRANTED until this campaign's 12.3), the verified topology verdict
-and the reachability proof. M9 tasks 10.2 (76/76 declared) through 10.5 are COMPLETE: the bin
-type-check lane is BLOCKING at 0 diagnostics across all 143 tracked bin implementations (77 of
-77 conforming, 0 exemptions, 0 widening annotations). RESUME POINT: M9 task 10.6
-(`gate:milestone` PASS; commit), then M10-M14 (including the single paid run 12.3 and the 15.4 npm query) and the 13-section
-final report. The final certification pass is also owed here: rebind the lanes and conditions at the
-final S with `certify:evidence` (see `docs/RELEASE-ADVANCE-CONDITIONS.md`).
+Last checkpoint: 2026-10-09 — M10 (group 11) DOCUMENTATION OF RECORD IS WRITTEN; 11.1-11.6
+COMPLETE. The T3/T4 S-fixes, ratchets and wired shared authorities landed at `b7afa9e9`
+(`assertGatedReadAllowed`, the retention journal, `publishLocalReport`,
+`admitLocalTypeScriptCompiler`, the 635 unused-export ratchet, the private retention
+scopes, the CF-1 40-case census). DECISIONS D-153..D-167 now record OD-1..OD-4, the
+228-item census and its disposition vocabulary, the seven successor behaviours, the
+demotion semantics, the HANDOFF_TRUTH classification, the DEV-lane registry, the
+M10 documentation alignment, and the eight owner-signed ACCEPTED_RESIDUAL entries
+(D-160 A-15, D-161 NW-AUD-027, D-162 NW-AUD-030, D-163 NW-AUD-031, D-164 NW-AUD-034,
+D-165 R2-15, D-166 R2-17, D-167 R2-26); SAFETY_MODEL §25-§32 and the ARCHITECTURE
+M10 record are appended; the unconsumed `NIGHTWATCH_REASONER_PRINT` declaration is
+removed and the print CLI is documented as a LIVE provider driver. RESUME POINT:
+M10 task 11.7 (commit),
+M11-M14 (including the single paid run 12.3 and the 15.4 npm query) and the
+13-section final report. The final certification pass is also owed here: rebind the
+lanes and conditions at the final S with `certify:evidence` (see
+`docs/RELEASE-ADVANCE-CONDITIONS.md`).
 Previous checkpoint: 2026-09-27 — M8 COMPLETE (9.1-9.13): DEV-lane
 preconditions + launcher guard, credential effect binding, bundle
 transactions, PREPARED/TERMINAL records, guard acquisitions, bounded
@@ -58,8 +62,16 @@ Current milestone: M10 — residual dispositions, quality debt and behaviour doc
 0 diagnostics across all 143 tracked implementations with 0 exemptions and 0 widening
 annotations; the recorded 1402 baseline was a FLOOR because `tsconfig.bin.json` used to include
 `bin/**/*.d.mts` and TypeScript dropped 53 shadowed implementations from the program.
-Next action: execute the canonical M10 tasks (T3/T4 S-fixes, DECISIONS entries, SAFETY_MODEL
-and behaviour documentation); then M11-M14.
+M10 tasks 11.1-11.6 are COMPLETE (2026-10-09): the S-fixes and ratchets at `b7afa9e9`, and the
+documentation of record (DECISIONS D-153..D-167, SAFETY_MODEL §25-§32, the ARCHITECTURE M10
+record, the `NIGHTWATCH_REASONER_PRINT` removal). Task 11.6 is COMPLETE (2026-10-09, the UI
+lockfile dependency assessment and the GHSA-82fw disposition), so task 11.7 (commit) is the last
+M10 box.
+Next action: execute M10 task 11.7 (commit the M10 documentation of record), then
+M11-M14 (including the single paid run 12.3 and the 15.4 npm query) and the 13-section final
+report. The deferred `9.5b` (NW-AUD-020 tasks 3.2/4.2) continues to be carried by 14.1/14.2.
+Sequencing constraint recorded in D-148: run the paid proof (12.3) after the last substantive fix
+so G12's receipt binds to S.
 Authorization class: FINAL_PRODUCT_COMPLETION_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
@@ -105,12 +117,12 @@ EXTERNAL CONTACT AUTHORIZED (OD-3 ONLY):
   provider proof run; one npm registry advisory query.
 
 CURRENT STATUS:
-  IN_PROGRESS — RESUME AT M9 TASK 10.6 (10.2-10.5 COMPLETE). The review-5 child
+  IN_PROGRESS — RESUME AT M10 TASK 11.7 (11.1-11.6 COMPLETE). The review-5 child
   campaign `nightwatch-final-completion-review5-v1` is COMPLETE and archived
   (`2026-10-03-nightwatch-final-completion-review5-v1`); exact-head CI is GREEN at each of its
-  integrated tips (runs 37044532848, 37062959122, 37120079300, 37123923541). No session is live; the
-  canonical checkout is clean at `origin/main`. The next session starts its own worktree and replaces
-  `SESSION WORKTREE: NONE` and the STATE `Branch` with its session branch.
+  integrated tips (runs 37044532848, 37062959122, 37120079300, 37123923541). This session works in
+  the declared worktree `session/nightwatch-final-product-complet-bd061869`; the deferred `9.5b`
+  stays carried by 14.1/14.2, and task 11.7 (commit) is the remaining M10 box before M11-M14.
 
 ALPHAUS DEV / NEXT / PRODUCTION CONTACT:   NOT AUTHORIZED
 AUTHENTICATED ALPHAUS RUNTIME:             NOT AUTHORIZED

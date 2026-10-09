@@ -721,7 +721,7 @@
     },
     {
       "name": "NIGHTWATCH_PRINT_ARGS",
-      "purpose": "JSON argv template consumed by the print reasoner.",
+      "purpose": "JSON argv template (a string array) passed to the configured print-mode provider CLI; the __PROMPT__, __PROMPT_FILE__, __SESSION_ID__ and __CWD__ placeholders are substituted by the adapter.",
       "requiredIn": [],
       "shape": {
         "kind": "json"
@@ -735,7 +735,7 @@
     },
     {
       "name": "NIGHTWATCH_PRINT_CLI",
-      "purpose": "Path to the deterministic print reasoner used by the synthetic campaign lane.",
+      "purpose": "Path to the LIVE print-mode provider CLI (for example opencode) that the reasoner print adapter spawns. Every call is a real provider call that can fail, cost money and be attributed. Provider authentication lives in HOME (~/.codex / ~/.opencode style), never in the repository.",
       "requiredIn": [],
       "shape": {
         "kind": "absolute-executable"
@@ -751,7 +751,7 @@
     },
     {
       "name": "NIGHTWATCH_PRINT_DEBUG",
-      "purpose": "Optional debug dump path for the print reasoner.",
+      "purpose": "Optional append-only debug dump path (confined to the operator's temporary roots) for the print adapter's provider-call diagnostics.",
       "requiredIn": [],
       "shape": {
         "kind": "path"
@@ -913,19 +913,6 @@
       "consumers": [
         "bin/nightwatch-agent.mjs",
         "bin/nightwatch.mjs"
-      ]
-    },
-    {
-      "name": "NIGHTWATCH_REASONER_PRINT",
-      "purpose": "Legacy print-reasoner selector forwarded to the agent surface.",
-      "requiredIn": [],
-      "shape": {
-        "kind": "string"
-      },
-      "default": null,
-      "secretBearing": false,
-      "consumers": [
-        "bin/nightwatch-agent.mjs"
       ]
     },
     {

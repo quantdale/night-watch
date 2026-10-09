@@ -39,7 +39,7 @@
     "version": "2.6.12",
     "fixturePath": "tests/unit/rippleReadiness.test.ts",
     "specifier": "vue/dist/vue.js",
-    "reviewDate": "2026-09-09",
+    "reviewDate": "2026-10-09",
     "reviewIntervalDays": 30,
     "conditions": [
       "the Ripple product moves off Vue 2",
@@ -51,7 +51,8 @@
       "call-site count: exactly one tracked source reaches the fixture through the declared specifier",
       "literal-only template content: every Vue template/compile input is a string literal",
       "require.resolve declared-dependency resolvability: every require.resolve specifier is a declared, on-disk-resolvable dependency"
-    ]
+    ],
+    "reviewRecord": "the 2026-10-09 review (due 2026-09-09 + 30d) is recorded in docs/DECISIONS.md D-153: the fixture is still the single call site, its template content is still literal-only, vue@2.6.12 is still exactly what the Ripple product bootstraps with, and Vue 2's upstream END OF LIFE was confirmed by npm ci on 2026-10-01. Disposition ACCEPT_WITH_TRIGGER (retain, exact pin). None of the four recorded conditions fired."
   },
   "lockfileVerification": {
     "command": "npm ci --offline --no-audit --no-fund in a disposable directory containing only package.json and package-lock.json (npm cache only; no network)",
@@ -59,6 +60,63 @@
     "intervalDays": 30,
     "result": "PASS — added 11 packages (the closure grew with the formatter-policy tools @biomejs/biome@2.5.14 and, for review-4 task 4.4, prettier@3.6.2 so the formatter-policy behavioural controls run on every host); package-lock.json byte-identical before and after (sha256 compared); one expected warning: vue@2.6.12 END OF LIFE. Re-verified offline in a disposable directory after the review-4 dependency addition; the previous 2026-09-28 verification covered the 10-package closure.",
     "lockfileSha256": "sha256:a09126434daf81a978f261a53a742893b47fe322aa0e1161e5f55f69ae30c94a"
+  },
+  "uiLockfileAssessment": {
+    "schemaVersion": "nightwatch.ui-lockfile-assessment.v1",
+    "note": "D-08 — the UI half of the dependency assessment. Until 2026-10-09 the assessment covered only the root package.json, package-lock.json and their closure, so ui/control-center (13 declared packages resolving to 218 lockfile entries) was never assessed at all and the census line '2 unrecorded moderate advisories' had no identifier, range or scan record behind it. The same three rules now apply: a transitive closure read out of the lockfile, an exact version pin, and reachability classified from the tracked UI sources. The ONLINE advisory half is UNVERIFIABLE, not clean: no registry query is authorized in this task's scope, so the identifier GHSA-82fw is recorded with its UNVERIFIED metadata fields and its provenance named. Evaluated by src/core/dependencyCurrency/uiLockfile.ts through assessUiLockfile, and by tests/unit/uiLockfileDependencyAssessment.test.ts against the live manifest and lockfile.",
+    "advisoryLaneId": "dependency-advisory",
+    "versionPinPolicy": "every specifier ui/control-center/package.json declares must be an exact x.y.z pin; the resolved version read from ui/control-center/package-lock.json must equal it. A range operator would let an unrequested release arrive without a deliberate change, which is what the root @playwright/test and vue pins already refuse.",
+    "record": {
+      "assessmentDate": "2026-10-09",
+      "intervalDays": 30,
+      "lockfileSha256": "sha256:b847e911e661cd31b6a17ac591d7a3affa4349c88d8a8cd0a8e5037b7680805c",
+      "snapshot": {
+        "manifestPath": "ui/control-center/package.json",
+        "lockfilePath": "ui/control-center/package-lock.json",
+        "packageName": "nightwatch-control-center-ui",
+        "packageVersion": "0.1.0",
+        "lockfileVersion": 3,
+        "packageCount": 217,
+        "toolchainImporters": [
+          "ui/control-center/vite.config.ts",
+          "ui/control-center/src/testSetup.ts"
+        ],
+        "declared": [
+          { "name": "react", "specifier": "19.1.0", "kind": "dependency", "resolvedVersion": "19.1.0" },
+          { "name": "react-dom", "specifier": "19.1.0", "kind": "dependency", "resolvedVersion": "19.1.0" },
+          { "name": "@testing-library/jest-dom", "specifier": "6.6.3", "kind": "devDependency", "resolvedVersion": "6.6.3" },
+          { "name": "@testing-library/react", "specifier": "16.3.0", "kind": "devDependency", "resolvedVersion": "16.3.0" },
+          { "name": "@testing-library/user-event", "specifier": "14.6.1", "kind": "devDependency", "resolvedVersion": "14.6.1" },
+          { "name": "@types/react", "specifier": "19.1.2", "kind": "devDependency", "resolvedVersion": "19.1.2" },
+          { "name": "@types/react-dom", "specifier": "19.1.2", "kind": "devDependency", "resolvedVersion": "19.1.2" },
+          { "name": "@vitejs/plugin-react", "specifier": "4.3.4", "kind": "devDependency", "resolvedVersion": "4.3.4" },
+          { "name": "jsdom", "specifier": "26.1.0", "kind": "devDependency", "resolvedVersion": "26.1.0" },
+          { "name": "typescript", "specifier": "5.7.3", "kind": "devDependency", "resolvedVersion": "5.7.3" },
+          { "name": "vite", "specifier": "6.4.3", "kind": "devDependency", "resolvedVersion": "6.4.3" },
+          { "name": "vitest", "specifier": "3.2.7", "kind": "devDependency", "resolvedVersion": "3.2.7" }
+        ]
+      },
+      "advisoryScan": {
+        "result": "UNVERIFIABLE",
+        "executed": false,
+        "queryDate": null,
+        "registry": null,
+        "unverifiableReason": "No registry advisory query for the UI closure is authorized in task 11.6's scope, and the task is offline by rule (no npm install, no npm audit, no network). The single owner-authorized bounded read-only npm registry advisory query is reserved for task 15.4 and a different process owns it. No advisory metadata for GHSA-82fw — no title, CWE, severity, affected range or fixed version — is tracked anywhere in the repository: a whole-repository search for '82fw' returns only the census line (which records '2 unrecorded moderate advisories' with no identifier at all), the ledger line that cites the identifier, and this record; every other hit would be a metadata claim this task has no evidence for. Recording the disposition therefore requires a version, a range and a patched version that this task has no evidence for, which would be fabrication, so it is recorded as UNVERIFIABLE.",
+        "deferredToTask": "openspec/changes/nightwatch-final-product-completion-v1/tasks.md 15.4 — the one authorized npm registry advisory query, which must cover the full root and UI closure and bind its record",
+        "advisories": [
+          {
+            "advisoryId": "GHSA-82fw",
+            "metadataSource": "cited only by the tracked ledger line openspec/changes/nightwatch-final-product-completion-v1/tasks.md:125 (\"a GHSA-82fw disposition or vitest upgrade\") together with the census line openspec/changes/nightwatch-final-product-completion-v1/audit.md:147 (\"2 unrecorded moderate advisories\"); both are repository evidence of the identifier's EXISTENCE and of the affected-package hint (vitest), and neither is evidence of its metadata",
+            "affectedPackage": "UNVERIFIED",
+            "affectedRange": "UNVERIFIED",
+            "severity": "UNVERIFIED",
+            "fixedIn": "UNVERIFIED",
+            "reachability": "UNVERIFIABLE",
+            "reachabilityEvidence": "UNVERIFIABLE because the affected package and vulnerable range are UNVERIFIED, so it cannot be established whether the advisory's package lies inside the UI test/toolchain closure or outside it. What IS mechanically established, and recorded here because it is the part that does not need the registry: the UI's two declared dependencies (react 19.1.0, react-dom 19.1.0) are the only packages any application source imports, so they are the only packages that can enter the vite build production bundle; all eleven declared devDependencies — including vitest 3.2.7 and its @vitest/* closure — are imported only by *.test.* sources, by the recorded toolchain importers ui/control-center/vite.config.ts and ui/control-center/src/testSetup.ts, or by nothing at all, so they are confined to the local vitest run and the typecheck. That is a BUILD-BOUNDARY reachability proof, not an advisory-level reachability verdict: it narrows where a vulnerable package could be reachable from but cannot say whether the advisory's exploitable path executes. The upgrade option (b) was also not exercised: it requires an npm install against the registry, which is a prohibited network operation in this task, and no patched version is known to record."
+          }
+        ]
+      }
+    }
   },
   "probes": [
     {
@@ -108,6 +166,78 @@
       "target": "lockfile-drift",
       "description": "change package-lock.json after the recorded verification digest",
       "expectedFinding": "DEPENDENCY_LOCKFILE_DRIFT"
+    },
+    {
+      "id": "UID-001",
+      "target": "ui-advisory-clean-claim",
+      "description": "declare advisoryScan.result NO_ADVISORIES_FOUND while no registry query was executed",
+      "expectedFinding": "UI_LOCKFILE_ADVISORY_CLEAN_CLAIM"
+    },
+    {
+      "id": "UID-002",
+      "target": "ui-advisory-result-contradiction",
+      "description": "declare advisoryScan.result UNVERIFIABLE while executed is true",
+      "expectedFinding": "UI_LOCKFILE_ADVISORY_RESULT_CONTRADICTION"
+    },
+    {
+      "id": "UID-003",
+      "target": "ui-advisory-reachability-unevidenced",
+      "description": "claim a positive reachability disposition for an advisory whose affected package is UNVERIFIED",
+      "expectedFinding": "UI_LOCKFILE_ADVISORY_REACHABILITY_UNEVIDENCED"
+    },
+    {
+      "id": "UID-004",
+      "target": "ui-advisory-metadata-unsourced",
+      "description": "record an advisory with UNVERIFIED metadata and no metadataSource naming where the identifier came from",
+      "expectedFinding": "UI_LOCKFILE_ADVISORY_METADATA_UNSOURCED"
+    },
+    {
+      "id": "UID-005",
+      "target": "ui-version-pin",
+      "description": "declare a caret range in ui/control-center/package.json",
+      "expectedFinding": "UI_LOCKFILE_UNPINNED_SPECIFIER"
+    },
+    {
+      "id": "UID-006",
+      "target": "ui-declaration-drift",
+      "description": "declare a package in the UI manifest that the UI lockfile root package does not declare",
+      "expectedFinding": "UI_LOCKFILE_DECLARATION_DRIFT"
+    },
+    {
+      "id": "UID-007",
+      "target": "ui-resolution-missing",
+      "description": "remove a declared package's node_modules entry from the UI lockfile",
+      "expectedFinding": "UI_LOCKFILE_RESOLUTION_MISSING"
+    },
+    {
+      "id": "UID-008",
+      "target": "ui-dev-dependency-in-application-source",
+      "description": "import a declared devDependency from a UI source that is neither a test nor a recorded toolchain importer",
+      "expectedFinding": "UI_LOCKFILE_DEV_DEPENDENCY_IN_APPLICATION_SOURCE"
+    },
+    {
+      "id": "UID-009",
+      "target": "ui-lockfile-digest",
+      "description": "measure a different sha256 for ui/control-center/package-lock.json than the assessment recorded",
+      "expectedFinding": "UI_LOCKFILE_DIGEST_MISMATCH"
+    },
+    {
+      "id": "UID-010",
+      "target": "ui-assessment-staleness",
+      "description": "advance the clock beyond record.assessmentDate + intervalDays",
+      "expectedFinding": "UI_LOCKFILE_ASSESSMENT_STALE"
+    },
+    {
+      "id": "UID-011",
+      "target": "ui-record-invalid",
+      "description": "replace the uiLockfileAssessment section with a value that is not a versioned object",
+      "expectedFinding": "UI_RECORD_INVALID"
+    },
+    {
+      "id": "UID-012",
+      "target": "ui-source-set-empty",
+      "description": "supply no tracked UI source to the reachability scan",
+      "expectedFinding": "UI_LOCKFILE_SOURCE_SET_EMPTY"
     }
   ]
 }
