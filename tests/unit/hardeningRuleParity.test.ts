@@ -143,6 +143,8 @@ test.describe('hardening rule parity', () => {
       'checkDocumentRoleCurrency',
       'checkAppendOnlyArchives',
       'checkGovernedStatusWords',
+      // M10 11.3: the D-17 whole-src unused-export ratchet.
+      'checkUnusedExportBudget',
     ]) {
       expect(registered.has(rule), `${rule} must be registered`).toBe(true);
     }

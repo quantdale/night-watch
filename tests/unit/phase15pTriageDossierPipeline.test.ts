@@ -15,6 +15,7 @@
 // Pure local/synthetic — no network, no browser, no filesystem.
 // ---------------------------------------------------------------------------
 
+import { stableCampaignJson } from '../../src/core/campaign/identity';
 import { expect, test } from '@playwright/test';
 import {
   clusterSemanticObservations,
@@ -39,7 +40,6 @@ import { DOSSIER_VERSION, FAILURE_MINIMIZATION_VERSION, type MinimizationResult 
 import {
   buildSemanticAwarePromotionResult,
   semanticPromotionEligible,
-  stablePromotionResultJson,
 } from '../../src/core/triage/promotionResult';
 
 // --- Shared synthetic identities (fake values only) -------------------------
@@ -522,7 +522,7 @@ test.describe('Phase 15P A08 — end-to-end determinism and convergence', () => 
         level: confidence.level,
         blockers: confidence.blockers,
         dossier,
-        promotion: stablePromotionResultJson(promotion),
+        promotion: stableCampaignJson(promotion),
       });
       if (reference === null) reference = snapshot;
       expect(snapshot).toBe(reference);

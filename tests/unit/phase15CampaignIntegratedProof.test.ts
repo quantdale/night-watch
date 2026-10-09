@@ -33,6 +33,7 @@
 // no network, no browser, no raw product values.
 // ---------------------------------------------------------------------------
 
+import { stableCampaignJson } from '../../src/core/campaign/identity';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -78,7 +79,7 @@ import { TRIAGE_REPLAY_PLAN_V2_VERSION, createTriageReplayPlanV2 } from '../../s
 import { executeReplayPlanV2, validateReplayPlanV2 } from '../../src/core/triage/replayBinding';
 import { DOSSIER_VERSION_V2, parseBugDossierV2 } from '../../src/core/triage/dossierV2';
 import type { BugDossierV2 } from '../../src/core/triage/dossierV2';
-import { stablePromotionResultJson, type SemanticAwarePromotionResult } from '../../src/core/triage/promotionResult';
+import type { SemanticAwarePromotionResult } from '../../src/core/triage/promotionResult';
 import { SEMANTIC_TRIAGE_EVIDENCE_VERSION } from '../../src/core/triage/semanticTriageEvidence';
 import { SEMANTIC_CLUSTER_VERSION } from '../../src/oracles/semantic/cluster';
 import { SEMANTIC_CAMPAIGN_BUNDLE_VERSION, createSemanticCampaignBundle, type SemanticCampaignBundle } from '../../src/core/source/semanticCampaignBundle';
@@ -978,7 +979,7 @@ test.describe('Phase 15 Session 2 Workstream G — integrated synthetic campaign
         const roots = scenario.legs.map((leg) => leg.root);
         normalized.push({
           checkpoints: JSON.stringify(scenario.legs.map((leg) => normalizeWith(roots, JSON.stringify(leg.result.checkpoint)))),
-          promotions: stablePromotionResultJson(scenario.promotions),
+          promotions: stableCampaignJson(scenario.promotions),
           briefs: JSON.stringify(scenario.legs.map((leg) => normalizeWith(roots, JSON.stringify(leg.result.morningBrief)))),
           resultJson: JSON.stringify(scenario.legs.map((leg) => normalizeWith(roots, JSON.stringify({
             campaignId: leg.result.campaignId,
@@ -993,7 +994,7 @@ test.describe('Phase 15 Session 2 Workstream G — integrated synthetic campaign
         });
         sweepValue(scenario.legs.map((leg) => leg.result.checkpoint), `repeat ${repeat} checkpoints`);
         sweepValue(scenario.promotions, `repeat ${repeat} promotionResults`);
-        sweepText(stablePromotionResultJson(scenario.promotions), `repeat ${repeat} promotionResults stable JSON`);
+        sweepText(stableCampaignJson(scenario.promotions), `repeat ${repeat} promotionResults stable JSON`);
         sweepText(normalized[normalized.length - 1]!.briefs, `repeat ${repeat} morning briefs`);
         sweepText(normalized[normalized.length - 1]!.files, `repeat ${repeat} persisted artifacts`);
       } finally {

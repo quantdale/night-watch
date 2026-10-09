@@ -112,7 +112,14 @@ export interface ProductionAdmissionInput {
 }
 
 export interface ProductionAdmissionOutcome extends AdmissionDecision {
-  /** Present only when every gate passed. Proof that budget was reserved first. */
+  /**
+   * The reservation made at `G_BUDGET_RESERVATION`. Non-null whenever the
+   * budget gate ran and succeeded, which is proof that budget was reserved
+   * before any dispatch. It is `null` on every earlier denial. On a LATER
+   * denial (`G_BREAKER_STATE`, `G_KILL_SWITCH_PREDISPATCH`, or a lost grant
+   * consumption) the reservation has already been released (NW-AUD-033), so a
+   * caller must never dispatch — and must never settle — on it.
+   */
   readonly reservation: BudgetReservation | null;
 }
 
@@ -346,11 +353,26 @@ export function evaluateProductionAdmission(
   }
 
   const allowed = denialCode === null;
+
+  // NW-AUD-033 — release the reservation on EVERY denial path.
+  //
+  // The budget gate runs before the breaker and pre-dispatch kill-switch gates,
+  // so a denial at either of them — or a grant consumption that loses its race
+  // after the whole chain passed — would otherwise leave the in-flight
+  // concurrency slot permanently held by a run that never dispatched.
+  if (!allowed && reservation !== null) {
+    input.budget.releaseReservation(reservation);
+  }
+
   if (allowed) {
     // Consumption happens only on a full ALLOW, and only once. A denied
     // qualification must not burn the grant.
     const consumed = consumeProdObserveGrant(input.grant);
     if (!consumed.ok) {
+      // The grant consumption lost its race. This is a denial too, and the
+      // reservation is released exactly as for any other post-reservation
+      // denial, so a lost race cannot consume the concurrency slot either.
+      if (reservation !== null) input.budget.releaseReservation(reservation);
       outcomes[1] = { gate: 'G_OWNER_AUTHORIZATION', result: 'DENY', denialCode: consumed.denialCode ?? 'ALREADY_CONSUMED' };
       return {
         chainVersion: PRODUCTION_ADMISSION_CHAIN_VERSION,

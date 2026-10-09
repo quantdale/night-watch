@@ -548,3 +548,189 @@ export function checkSiblingRootResolution() {
     );
   }
 }
+
+// ---------------------------------------------------------------------------
+// D-17 (M10 11.3): exported VALUE symbols with no reachable consumer.
+//
+// `checkSourceReachability` stops at the module. This ratchet goes one level
+// finer and measures the whole of `src/` at once: every exported value symbol
+// whose identifier is named by no tracked file outside its own definer. The
+// JUDGEMENT is `src/core/source/unusedExports.ts`; the AST scan lives here, in
+// the rule engine, beside the reference-graph scanner it reuses.
+//
+// The pinned ceiling is recorded in `config/reference-graph.v1.json` under
+// `unusedExportBudget`. It is a MEASURED number that may only ever go down:
+// lowering it is a deliberate owner action with a reason, and a count that
+// GROWS — one new unreferenced export is enough — fails the rule.
+// ---------------------------------------------------------------------------
+
+/** @typedef {'FUNCTION' | 'CLASS' | 'ENUM' | 'VARIABLE'} ScannedExportedValueKind */
+/** @typedef {{ file: string, line: number, kind: ScannedExportedValueKind, name: string }} ScannedExportedValueSymbol */
+
+const UNUSED_EXPORT_SOURCE_RE = /^src\/.*\.(?:ts|tsx)$/;
+const UNUSED_EXPORT_ANY_SOURCE_RE = /\.(?:ts|tsx|mjs|js|jsx|mts|cts)$/;
+const UNUSED_EXPORT_MAX_FILES = 20_000;
+
+/** @param {readonly string[]} files @returns {Map<string, Set<string>>} identifier -> defining-or-using files */
+function buildIdentifierIndex(files) {
+  /** @type {Map<string, Set<string>>} */
+  const index = new Map();
+  for (const file of files) {
+    const source = readIncludingComments(file);
+    if (source.length === 0) continue;
+    const scriptKind = file.endsWith('.tsx') || file.endsWith('.jsx')
+      ? typescript.ScriptKind.TSX
+      : file.endsWith('.ts') || file.endsWith('.mts') || file.endsWith('.cts')
+        ? typescript.ScriptKind.TS
+        : typescript.ScriptKind.JS;
+    const sourceFile = typescript.createSourceFile(file, source, typescript.ScriptTarget.Latest, true, scriptKind);
+    // Every Identifier token in the AST. The parser has already discarded
+    // comments and string literals, so a name mentioned in prose or embedded in
+    // a path never registers here. Over-inclusion is deliberate: a spurious
+    // reference can only understate the debt, never trip the ratchet.
+    /** @param {typescript.Node} node */
+    const visit = (node) => {
+      if (typescript.isIdentifier(node)) {
+        let users = index.get(node.text);
+        if (users === undefined) {
+          users = new Set();
+          index.set(node.text, users);
+        }
+        users.add(file);
+      }
+      typescript.forEachChild(node, visit);
+    };
+    visit(sourceFile);
+  }
+  return index;
+}
+
+/**
+ * Exported VALUE symbols of every tracked `src/**` module: functions, classes,
+ * enums and variable declarations. `default` and re-export names are excluded —
+ * a re-exported name is not the module's own declaration, and the ratchet is
+ * about what a module chooses to make public.
+ * @param {readonly string[]} srcFiles
+ * @returns {readonly ScannedExportedValueSymbol[]}
+ */
+function scanExportedValueSymbols(srcFiles) {
+  /** @type {ScannedExportedValueSymbol[]} */
+  const symbols = [];
+  for (const file of srcFiles) {
+    const source = readIncludingComments(file);
+    if (source.length === 0) continue;
+    const scriptKind = file.endsWith('.tsx') ? typescript.ScriptKind.TSX : typescript.ScriptKind.TS;
+    const sourceFile = typescript.createSourceFile(file, source, typescript.ScriptTarget.Latest, true, scriptKind);
+    /** @param {typescript.Node} node */
+    const lineOf = (node) => sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile)).line + 1;
+    for (const statement of sourceFile.statements) {
+      const modifiers = typescript.canHaveModifiers(statement)
+        ? typescript.getModifiers(statement) ?? []
+        : [];
+      const exported = modifiers.some((modifier) => modifier.kind === typescript.SyntaxKind.ExportKeyword);
+      const isDefault = modifiers.some((modifier) => modifier.kind === typescript.SyntaxKind.DefaultKeyword);
+      if (!exported || isDefault) continue;
+      if ((typescript.isFunctionDeclaration(statement) || typescript.isClassDeclaration(statement)) && statement.name !== undefined) {
+        symbols.push({
+          file,
+          line: lineOf(statement.name),
+          kind: typescript.isClassDeclaration(statement) ? 'CLASS' : 'FUNCTION',
+          name: statement.name.text,
+        });
+        // `kind` is the closed judgement vocabulary; the literal above is the
+        // only place a scanned symbol is born.
+      } else if (typescript.isEnumDeclaration(statement) && statement.name !== undefined) {
+        symbols.push({ file, line: lineOf(statement.name), kind: 'ENUM', name: statement.name.text });
+      } else if (typescript.isVariableStatement(statement)) {
+        for (const declaration of statement.declarationList.declarations) {
+          if (typescript.isIdentifier(declaration.name)) {
+            symbols.push({ file, line: lineOf(declaration.name), kind: 'VARIABLE', name: declaration.name.text });
+          }
+        }
+      }
+    }
+  }
+  return symbols.sort((left, right) => left.file.localeCompare(right.file) || left.line - right.line || left.name.localeCompare(right.name));
+}
+
+/**
+ * The recorded pin. `config/reference-graph.v1.json` is the single authority
+ * for the dead-architecture family, so the unused-export ceiling lives beside
+ * the retention list and the enforced barriers that already govern it.
+ * @param {Record<string, unknown>} config
+ * @returns {{ count: number, reason: string }}
+ */
+function unusedExportBudget(config) {
+  const raw = config.unusedExportBudget;
+  const entry = raw !== null && typeof raw === 'object' && !Array.isArray(raw) ? /** @type {Record<string, unknown>} */ (raw) : {};
+  return {
+    count: typeof entry.count === 'number' ? entry.count : Number.NaN,
+    reason: typeof entry.reason === 'string' ? entry.reason : '',
+  };
+}
+
+/**
+ * D-17 (M10 11.3): the MEASURED unused-export count, reported rather than
+ * failed. `--report-reachability` is the reporting mode of the very evaluation
+ * `checkUnusedExportBudget` runs blocking, so a burn-down can be tracked from
+ * the same numbers the ratchet enforces and the two can never drift.
+ * @param {Record<string, unknown> | null} config
+ * @returns {{ lines: string[], unreferencedCount: number, exportedValueSymbols: number, budgetCount: number }}
+ */
+export function reportUnusedExportMeasurement(config) {
+  const files = gitFiles().filter((file) => UNUSED_EXPORT_ANY_SOURCE_RE.test(file) && !/\.d\.(?:ts|mts|cts)$/.test(file));
+  const srcFiles = files.filter((file) => UNUSED_EXPORT_SOURCE_RE.test(file));
+  const empty = { lines: [], unreferencedCount: 0, exportedValueSymbols: 0, budgetCount: Number.NaN };
+  if (files.length === 0 || srcFiles.length === 0 || config === null) return empty;
+  const index = buildIdentifierIndex(files);
+  const symbols = scanExportedValueSymbols(srcFiles).map((symbol) => ({
+    ...symbol,
+    referencingFiles: [...(index.get(symbol.name) ?? new Set())].sort((left, right) => left.localeCompare(right)),
+  }));
+  const budget = unusedExportBudget(config);
+  const { judgeUnusedExports } = loadTypeScriptModule('src/core/source/unusedExports.ts', { root });
+  const judgement = judgeUnusedExports({ symbols, budget });
+  return {
+    lines: [
+      `[unused-export] exportedValueSymbols=${judgement.exportedValueSymbols} unreferenced=${judgement.unreferencedCount} budget=${judgement.budgetCount}`,
+    ],
+    unreferencedCount: judgement.unreferencedCount,
+    exportedValueSymbols: judgement.exportedValueSymbols,
+    budgetCount: judgement.budgetCount,
+  };
+}
+
+export function checkUnusedExportBudget() {
+  const config = readReferenceGraphConfig('UNUSED_EXPORT_BUDGET');
+  if (config === null) return;
+  if (config.unusedExportBudget === undefined || config.unusedExportBudget === null) {
+    fail('UNUSED_EXPORT_BUDGET_UNDECLARED config/reference-graph.v1.json declares no unusedExportBudget; an unpinned ratchet cannot detect growth');
+    return;
+  }
+  const files = gitFiles().filter((file) => UNUSED_EXPORT_ANY_SOURCE_RE.test(file) && !/\.d\.(?:ts|mts|cts)$/.test(file));
+  if (files.length === 0 || files.length > UNUSED_EXPORT_MAX_FILES) {
+    fail(`UNUSED_EXPORT_SCAN_UNUSABLE ${files.length} tracked source files were discovered; the identifier index cannot be built`);
+    return;
+  }
+  const srcFiles = files.filter((file) => UNUSED_EXPORT_SOURCE_RE.test(file));
+  if (srcFiles.length === 0) {
+    fail('UNUSED_EXPORT_SCAN_UNUSABLE no tracked src/** module was discovered; the identifier index cannot be built');
+    return;
+  }
+  const index = buildIdentifierIndex(files);
+  const symbols = scanExportedValueSymbols(srcFiles).map((symbol) => ({
+    ...symbol,
+    referencingFiles: [...(index.get(symbol.name) ?? new Set())].sort((left, right) => left.localeCompare(right)),
+  }));
+  let judgement;
+  try {
+    const { judgeUnusedExports } = loadTypeScriptModule('src/core/source/unusedExports.ts', { root });
+    judgement = judgeUnusedExports({ symbols, budget: unusedExportBudget(config) });
+  } catch (error) {
+    fail(`UNUSED_EXPORT_JUDGEMENT_LOAD_FAILED src/core/source/unusedExports.ts could not be loaded: ${error instanceof Error ? error.message : String(error)}`);
+    return;
+  }
+  for (const finding of judgement.findings ?? []) {
+    fail(`${finding.code} ${finding.detail}`);
+  }
+}

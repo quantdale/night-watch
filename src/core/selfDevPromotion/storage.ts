@@ -87,6 +87,16 @@ export class SelfDevCanonicalPromotionIntentStore {
 export class SelfDevCanonicalPromotionApprovalStore {
   readonly store: PrivateArtifactStore;
   private readonly consumptionStore: PrivateArtifactStore;
+  /**
+   * NW-AUD-011 — the durable apply-transaction authority. The one-shot
+   * consumption gate is keyed by APPROVAL ID, which means two distinct
+   * approvals prepared from the same clean preimage could each pass preflight,
+   * each consume their own approval, and each write the one canonical catalog.
+   * This store is keyed by the TRANSACTION identity instead, so exactly one
+   * canonical write may ever be attempted against one repository/checkout/
+   * target preimage — whichever approval ID is presented.
+   */
+  private readonly transactionStore: PrivateArtifactStore;
 
   constructor(options: SelfDevCanonicalPromotionStoreOptions = {}) {
     const namespaceRoot = options.root ?? path.join(privateArtifactRoot(), SELFDEV_CANONICAL_PROMOTION_NAMESPACE);
@@ -96,6 +106,10 @@ export class SelfDevCanonicalPromotionApprovalStore {
     });
     this.consumptionStore = new PrivateArtifactStore({
       root: path.join(namespaceRoot, 'approval-consumption'),
+      createIfMissing: options.readOnly !== true,
+    });
+    this.transactionStore = new PrivateArtifactStore({
+      root: path.join(namespaceRoot, 'apply-transactions'),
       createIfMissing: options.readOnly !== true,
     });
   }
@@ -148,6 +162,53 @@ export class SelfDevCanonicalPromotionApprovalStore {
 
   isApprovalConsumed(approvalId: string): boolean {
     return this.consumptionStore.readJson(safeFileName(approvalId, 'consumed')) !== null;
+  }
+
+  /**
+   * NW-AUD-011 — claim the exclusive apply transaction for one canonical
+   * repository/checkout/target preimage.
+   *
+   * Atomic no-replace: exactly one caller may ever claim a transaction
+   * identity, cross-process and cross-approval-ID. A second claim — concurrent
+   * or sequential, with the same or with a DIFFERENT approval — fails with
+   * `SELFDEV_CANONICAL_PROMOTION_TRANSACTION_ALREADY_CLAIMED` and performs no
+   * approval consumption and no canonical source write. There is no
+   * reset/delete path.
+   */
+  claimApplyTransaction(transactionId: string, claim: { readonly approvalId: string; readonly promotionId: string }): void {
+    const fileName = safeFileName(transactionId, 'transaction');
+    try {
+      this.transactionStore.writeImmutableJson(fileName, {
+        transactionId,
+        approvalId: claim.approvalId,
+        promotionId: claim.promotionId,
+        claimed: true,
+      });
+    } catch (error) {
+      if (error instanceof Error && error.message === 'PRIVATE_ARTIFACT_IMMUTABLE') {
+        throw new Error('SELFDEV_CANONICAL_PROMOTION_TRANSACTION_ALREADY_CLAIMED');
+      }
+      throw error;
+    }
+  }
+
+  /** Exact transaction ID only. No list, latest, or enumeration. */
+  readApplyTransaction(transactionId: string): { readonly transactionId: string; readonly approvalId: string; readonly promotionId: string } {
+    const fileName = safeFileName(transactionId, 'transaction');
+    const raw = this.transactionStore.readJson(fileName);
+    if (raw === null) throw new Error('SELFDEV_CANONICAL_PROMOTION_TRANSACTION_NOT_FOUND');
+    const record = raw as { transactionId?: unknown; approvalId?: unknown; promotionId?: unknown };
+    if (typeof record.transactionId !== 'string'
+      || typeof record.approvalId !== 'string'
+      || typeof record.promotionId !== 'string'
+      || record.transactionId !== transactionId) {
+      throw new Error('SELFDEV_CANONICAL_PROMOTION_TRANSACTION_MISMATCH');
+    }
+    return { transactionId: record.transactionId, approvalId: record.approvalId, promotionId: record.promotionId };
+  }
+
+  isApplyTransactionClaimed(transactionId: string): boolean {
+    return this.transactionStore.readJson(safeFileName(transactionId, 'transaction')) !== null;
   }
 }
 

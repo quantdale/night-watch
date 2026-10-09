@@ -17,6 +17,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
 import { loadTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
@@ -25,6 +26,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DEFAULT_CONFIG = 'config/cache-key-contracts.v1.json';
 const DEFAULT_OUTPUT = 'artifacts/cache-key-contract/current.json';
 const MAX_CONFIG_BYTES = 64 * 1024;
+const MAX_REPORT_BYTES = 8 * 1024 * 1024;
 
 /** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
 const CLI_METADATA = {
@@ -50,6 +52,54 @@ const CLI_METADATA = {
 function fail(code, detail) {
   process.stderr.write(detail === undefined ? `[cache-key-contract] ERROR: ${code}\n` : `[cache-key-contract] ERROR: ${code}: ${detail}\n`);
   process.exitCode = 2;
+}
+
+/**
+ * NW-AUD-009: the caller's exact schema validator for the cache-key report.
+ * The publication boundary admits nothing this shape does not carry, before
+ * any filesystem change.
+ *
+ * @param {unknown} payload
+ */
+function validateCacheKeyReport(payload) {
+  if (payload === null || typeof payload !== 'object' || Array.isArray(payload)) throw new Error('REPORT_NOT_AN_OBJECT');
+  const report = /** @type {Record<string, unknown>} */ (payload);
+  if (report.schemaVersion !== 'nightwatch.cache-key-report.v1') throw new Error('REPORT_SCHEMA_INVALID');
+  if (typeof report.verdict !== 'string') throw new Error('REPORT_VERDICT_INVALID');
+  if (!Array.isArray(report.contracts)) throw new Error('REPORT_CONTRACTS_INVALID');
+  for (const contract of report.contracts) {
+    if (contract === null || typeof contract !== 'object' || Array.isArray(contract)) throw new Error('REPORT_CONTRACT_INVALID');
+    const value = /** @type {Record<string, unknown>} */ (contract);
+    if (typeof value.contractId !== 'string') throw new Error('REPORT_CONTRACT_ID_INVALID');
+    if (typeof value.verdict !== 'string') throw new Error('REPORT_CONTRACT_VERDICT_INVALID');
+    if (!Array.isArray(value.rows)) throw new Error('REPORT_CONTRACT_ROWS_INVALID');
+  }
+  if (typeof report.note !== 'string') throw new Error('REPORT_NOTE_INVALID');
+  if (typeof report.reportDigest !== 'string' || !/^[a-z]{3}:sha256:[0-9a-f]{24}$/.test(report.reportDigest)) throw new Error('REPORT_DIGEST_INVALID');
+}
+
+/**
+ * NW-AUD-009: publish the sanitized cache-key report through the ONE governed
+ * local-report boundary — complete admission in memory, then same-directory
+ * exclusive staging and an atomic replace. A symlinked or non-regular
+ * destination is refused rather than followed, and no observer ever sees a
+ * truncated intermediate.
+ *
+ * @param {import('../src/core/source/cacheKeyContract').CacheKeyReport} report
+ * @param {string} destination
+ * @returns {string | null} the categorical publication failure, or null on success
+ */
+function publishReport(report, destination) {
+  const { publishLocalReport } = loadTypeScriptModule('src/core/policy/localReportPublication.ts', { root });
+  const published = publishLocalReport({
+    profile: 'CURRENT_REPLACE',
+    payload: report,
+    validate: validateCacheKeyReport,
+    maxBytes: MAX_REPORT_BYTES,
+    destination,
+    digest: (canonical) => `sha256:${crypto.createHash('sha256').update(canonical, 'utf8').digest('hex').slice(0, 24)}`,
+  });
+  return published.ok ? null : published.failure;
 }
 
 function main() {
@@ -95,11 +145,11 @@ function main() {
   const access = source.createSiblingSourceAccess(repositoriesRoot, { admittedRepositoryIds: universe.ownerApprovedRepositoryIds() });
   const report = core.runCacheKeyContract({ config, reader: access.reader, currentness: access.currentness });
 
-  try {
-    fs.mkdirSync(path.dirname(outPath), { recursive: true });
-    fs.writeFileSync(outPath, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
-  } catch (error) {
-    fail('REPORT_WRITE_FAILED', error instanceof Error ? error.message : 'unknown write failure');
+  // NW-AUD-009: publication goes through the governed boundary; a refusal is
+  // the same categorical REPORT_WRITE_FAILED the direct write reported.
+  const publicationFailure = publishReport(report, path.resolve(outPath));
+  if (publicationFailure !== null) {
+    fail('REPORT_WRITE_FAILED', publicationFailure);
     return;
   }
 

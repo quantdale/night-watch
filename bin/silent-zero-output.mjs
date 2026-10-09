@@ -15,6 +15,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
 import { loadTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
@@ -23,6 +24,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DEFAULT_CONFIG = 'config/silent-zero-output-contracts.v1.json';
 const DEFAULT_OUTPUT = 'artifacts/silent-zero-output/current.json';
 const MAX_CONFIG_BYTES = 64 * 1024;
+const MAX_REPORT_BYTES = 8 * 1024 * 1024;
 
 /** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
 const CLI_METADATA = {
@@ -48,6 +50,53 @@ const CLI_METADATA = {
 function fail(code, detail) {
   process.stderr.write(detail === undefined ? `[silent-zero-output] ERROR: ${code}\n` : `[silent-zero-output] ERROR: ${code}: ${detail}\n`);
   process.exitCode = 2;
+}
+
+/**
+ * NW-AUD-009: the caller's exact schema validator for the silent-zero-output
+ * report. The report carries runtimeFailureClaim NONE, and the publication
+ * boundary admits nothing this shape does not carry, before any filesystem
+ * change.
+ *
+ * @param {unknown} payload
+ */
+function validateSilentZeroReport(payload) {
+  if (payload === null || typeof payload !== 'object' || Array.isArray(payload)) throw new Error('REPORT_NOT_AN_OBJECT');
+  const report = /** @type {Record<string, unknown>} */ (payload);
+  if (report.schemaVersion !== 'nightwatch.silent-zero-output-report.v1') throw new Error('REPORT_SCHEMA_INVALID');
+  if (report.runtimeFailureClaim !== 'NONE') throw new Error('REPORT_RUNTIME_FAILURE_CLAIM_INVALID');
+  if (!Array.isArray(report.handlers)) throw new Error('REPORT_HANDLERS_INVALID');
+  for (const handler of report.handlers) {
+    if (handler === null || typeof handler !== 'object' || Array.isArray(handler)) throw new Error('REPORT_HANDLER_INVALID');
+    const value = /** @type {Record<string, unknown>} */ (handler);
+    if (typeof value.handlerId !== 'string') throw new Error('REPORT_HANDLER_ID_INVALID');
+    if (typeof value.verdict !== 'string') throw new Error('REPORT_HANDLER_VERDICT_INVALID');
+    if (!Array.isArray(value.reasonCodes)) throw new Error('REPORT_HANDLER_REASON_CODES_INVALID');
+  }
+  if (typeof report.reportDigest !== 'string' || !/^[a-z]{3}:sha256:[0-9a-f]{24}$/.test(report.reportDigest)) throw new Error('REPORT_DIGEST_INVALID');
+}
+
+/**
+ * NW-AUD-009: publish the sanitized silent-zero-output report through the ONE
+ * governed local-report boundary — complete admission in memory, then
+ * same-directory exclusive staging and an atomic replace. A symlinked or
+ * non-regular destination is refused rather than followed.
+ *
+ * @param {import('../src/core/source/silentZeroOutput').SilentZeroReport} report
+ * @param {string} destination
+ * @returns {string | null} the categorical publication failure, or null on success
+ */
+function publishReport(report, destination) {
+  const { publishLocalReport } = loadTypeScriptModule('src/core/policy/localReportPublication.ts', { root });
+  const published = publishLocalReport({
+    profile: 'CURRENT_REPLACE',
+    payload: report,
+    validate: validateSilentZeroReport,
+    maxBytes: MAX_REPORT_BYTES,
+    destination,
+    digest: (canonical) => `sha256:${crypto.createHash('sha256').update(canonical, 'utf8').digest('hex').slice(0, 24)}`,
+  });
+  return published.ok ? null : published.failure;
 }
 
 function main() {
@@ -85,12 +134,11 @@ function main() {
   const access = createSiblingSourceAccess(siblingRoot);
   const report = core.runSilentZeroOutput({ config, reader: access.reader, currentness: access.currentness });
 
-  try {
-    fs.mkdirSync(path.dirname(outPath), { recursive: true });
-    fs.writeFileSync(outPath, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
-  } catch (error) {
-    const writeFailure = /** @type {{ code: string | undefined }} */ (error);
-    return fail('REPORT_WRITE_FAILED', String(writeFailure?.code ?? 'UNKNOWN'));
+  // NW-AUD-009: publication goes through the governed boundary; a refusal is
+  // the same categorical REPORT_WRITE_FAILED the direct write reported.
+  const publicationFailure = publishReport(report, path.resolve(outPath));
+  if (publicationFailure !== null) {
+    return fail('REPORT_WRITE_FAILED', publicationFailure);
   }
 
   if (cli.flags['--json'] === true) {

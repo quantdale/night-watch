@@ -1,8 +1,12 @@
 {
   "schemaVersion": "nightwatch.reference-graph.v1",
   "definitionName": "Nightwatch source reference graph, reasoned retention and enforced module barriers (F-13/F-14)",
-  "note": "The reference graph over src/tests/bin/ui/scenarios resolves static imports, the bin loader string-literal paths and require.resolve. A tracked src module with no reference to any export outside its own directory fails hardening:check unless it appears in retention. The list fails in both directions: an unlisted dead module fails, and a listed module that gains a consumer is stale and fails. enforcedBarriers names modules whose public surface is their index.ts: a consumer outside the module must import the barrel, and a deep import fails. A retention entry is temporary owner-pending state, never an adoption or a removal.",
+  "note": "The reference graph over src/tests/bin/ui/scenarios resolves static imports, the bin loader string-literal paths and require.resolve. A tracked src module with no reference to any export outside its own directory fails hardening:check unless it appears in retention. The list fails in both directions: an unlisted dead module fails, and a listed module that gains a consumer is stale and fails. enforcedBarriers names modules whose public surface is their index.ts: a consumer outside the module must import the barrel, and a deep import fails. A retention entry is temporary owner-pending state, never an adoption or a removal. unusedExportBudget is the D-17 (M10 11.3) whole-src ratchet: the measured count of exported VALUE symbols under src/ whose identifier no tracked file outside their own definer names, which the registered rule checkUnusedExportBudget re-measures on every run and fails when it grows; the same measurement is reported (never failed) by bin/hardening-check.mjs --report-reachability.",
   "retention": [],
+  "unusedExportBudget": {
+    "count": 635,
+    "reason": "D-17 (M10 11.3): the MEASURED count of exported value symbols under src/ whose identifier is named by no tracked file outside their own defining module, recorded on the measurement date 2026-10-09 through bin/hardening-check.mjs --report-reachability (3196 exported value symbols observed, 635 unreferenced). The R1 Lane D audit's stale 122 was never re-measured, so the number could only drift upward; this pin makes it a ratchet. One new unreferenced export fails checkUnusedExportBudget, and lowering the pin is a deliberate owner action recorded here."
+  },
   "enforcedBarriers": [
     {
       "module": "src/core/provenance",

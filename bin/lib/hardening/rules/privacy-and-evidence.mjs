@@ -689,6 +689,47 @@ export function checkReviewStoreBoundary() {
   if (!/PRIVATE_ARTIFACT_DIRECTORIES = \['agent-findings', 'campaign-state'\]/.test(policy)) fail('the private nested-directory vocabulary is no longer a closed two-member union');
   if (!/assertKnownDirectory\(options\.directory\)/.test(policy)) fail('the nested-directory vocabulary is not enforced at runtime');
 
+  // --- X-11: every private directory carries a DOCUMENTED retention scope ---
+  // The campaign-state subtree (the orchestrator's manifests and checkpoints)
+  // had no retention scope at all: only the repository's `artifacts/` tree had
+  // a retention capability, so nothing could say whether a checkpoint was
+  // load-bearing evidence or a removable by-product. An undocumented directory
+  // is not a directory without a policy; it is one where a future sweep must
+  // guess. Occurrence-complete: every key of the scope table is read and
+  // compared against the directory vocabulary in BOTH directions, so a directory
+  // that loses its scope fails, and a scope for a directory that does not exist
+  // fails too.
+  if (!/PRIVATE_RETENTION_SCOPES: Readonly<Record<PrivateArtifactDirectory, PrivateRetentionScope>> = Object\.freeze\(\{/.test(policy)) {
+    fail('the private retention scope table is no longer keyed by the CLOSED directory vocabulary (X-11)');
+  }
+  if (!/export function privateRetentionScopeFor\(/.test(policy)) fail('a private retention scope cannot be resolved by name (X-11)');
+  if (!/PRIVATE_RETENTION_SCOPE_UNDECLARED/.test(policy)) fail('an undocumented private directory is not refused (X-11)');
+  if (!/directoryScopes: PRIVATE_RETENTION_SCOPES/.test(policy)) fail('the private retention policy record no longer publishes the per-directory retention scopes (X-11)');
+  {
+    const scopeKeys = [...policy.matchAll(/^\s{2}'([a-z-]+)': \{$/gm)].map((match) => match[1]).filter((key) => key !== undefined);
+    const scopeSet = new Set(scopeKeys);
+    for (const directory of ['agent-findings', 'campaign-state']) {
+      if (!scopeSet.has(directory)) fail(`the private retention scope table no longer covers the ${directory} directory (X-11)`);
+    }
+    if (scopeKeys.length !== scopeSet.size) fail('the private retention scope table declares a directory more than once (X-11)');
+    if (scopeSet.size !== 2) fail(`the private retention scope table covers ${scopeSet.size} directories, not the closed two-member directory vocabulary (X-11)`);
+  }
+  // No scope may become a silent removal. Every `autoDelete` assignment in the
+  // module — the type declaration and each directory's scope — must be the
+  // literal `false`, so flipping one directory to `true` cannot pass by looking
+  // complete.
+  for (const match of policy.matchAll(/autoDelete:\s*([A-Za-z]+)/g)) {
+    if (match[1] !== 'false') {
+      fail(`a private retention scope declares autoDelete: ${String(match[1])}; X-11 requires owner-explicit apply only`);
+    }
+  }
+  for (const required of ["removalAuthority: 'OWNER_EXPLICIT_APPLY'", 'removalGranularity: ', 'unmeasurableRefused: true']) {
+    const occurrences = policy.split(required).length - 1;
+    if (occurrences < 2) fail(`the private retention scope declares ${required} for only ${occurrences} of the two directories (X-11 occurrence-completeness)`);
+  }
+  if (!/PRIVATE_RETENTION_REFUSAL_ORDER = \[/.test(policy)) fail('the private retention scope declares no refusal order (X-11)');
+  if (!/refusalOrder: PRIVATE_RETENTION_REFUSAL_ORDER/.test(policy)) fail('the private retention scope does not apply the refusal-first order (X-11)');
+
   // --- recovery can never touch an unknown file ---
   if (!/TEMPORARY_FILE_RE\.test\(name\)/.test(policy)) fail('temporary removal does not require the pinned temporary name shape');
   if (!/PRIVATE_ARTIFACT_NOT_A_TEMPORARY/.test(policy)) fail('temporary removal lacks a refusal for a non-temporary name');

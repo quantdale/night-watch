@@ -16,11 +16,14 @@
 //      declared-missing-evidence blocker map is bound to the canonical
 //      MISSING_EVIDENCE_VOCABULARY; candidate lifecycle terminality stays
 //      derived from its frozen state table.
-//   4. MARKED COMPATIBILITY-ONLY SURFACES — stableLifecycleJson and
-//      stablePromotionResultJson are @deprecated byte-identical aliases of the
-//      one canonical serializer stableCampaignJson; a lint-style scan proves
-//      no new-code module (src/** outside their defining files) imports them,
-//      while existing callers keep byte-identical output (compat round-trip).
+//   4. MARKED READ-COMPATIBLE LEGACY SURFACES (D-20) — stableLifecycleJson and
+//      stablePromotionResultJson are read-compatible legacy bytes: byte-identical
+//      aliases of the one canonical serializer stableCampaignJson, retained ONLY
+//      so bytes an older build produced with those names stay verifiable. A
+//      lint-style scan proves NO live caller exists anywhere outside the single
+//      dedicated compatibility-verification site in this file (src/** and
+//      tests/** both), while this site pins the byte identity that keeps
+//      persisted legacy bytes readable.
 //   5. DELETED DEAD PATHS STAY UNREACHABLE — safetyVectorIsZero and
 //      parseSemanticTriageEvidence (proven zero-caller exports removed by A15)
 //      remain absent from their module surfaces while the surviving neighbors
@@ -93,6 +96,7 @@ function collectTsFiles(rootDir: string): string[] {
 }
 
 const REPO_SRC = path.join(process.cwd(), 'src');
+const REPO_TESTS = path.join(process.cwd(), 'tests');
 
 interface VersionDeclaration {
   readonly name: string;
@@ -267,10 +271,11 @@ test.describe('Phase 15P A15 — canonical reason-code tables referenced', () =>
 });
 
 // ---------------------------------------------------------------------------
-// 4. Marked compatibility-only aliases: round-trip + no new-code imports.
+// 4. Marked read-compatible legacy aliases (D-20): byte identity + a closed
+//    census of live callers.
 // ---------------------------------------------------------------------------
 
-test.describe('Phase 15P A15 — compatibility-only serializer aliases', () => {
+test.describe('Phase 15P A15 — read-compatible legacy serializer aliases (D-20)', () => {
   const representativeValues: readonly unknown[] = [
     null,
     'text',
@@ -282,7 +287,7 @@ test.describe('Phase 15P A15 — compatibility-only serializer aliases', () => {
     { unicode: 'ok', num: Number.POSITIVE_INFINITY },
   ];
 
-  test('aliases stay byte-identical to the canonical stableCampaignJson (compat round-trip)', () => {
+  test('aliases stay byte-identical to the canonical stableCampaignJson (read-compatible legacy bytes)', () => {
     for (const value of representativeValues) {
       const canonical = stableCampaignJson(value);
       expect(stableLifecycleJson(value)).toBe(canonical);
@@ -290,24 +295,60 @@ test.describe('Phase 15P A15 — compatibility-only serializer aliases', () => {
     }
   });
 
-  test('no new-code module imports the deprecated aliases', () => {
+  test('the legacy bytes survive a persisted round-trip, which is why they are retained', () => {
+    // The whole justification for keeping the names: a document an older build
+    // serialized through the alias is still READ and still verifies byte for
+    // byte after the rename to stableCampaignJson.
+    const value = { promotionResult: { verdict: 'READY', confidence: 'HIGH' }, nested: { a: [3, 1, 2], b: null } };
+    const legacyBytes = stableLifecycleJson(value);
+    const otherLegacyBytes = stablePromotionResultJson(value);
+    const currentBytes = stableCampaignJson(value);
+    // The rename bought nothing and lost nothing: the identity is unchanged.
+    expect(currentBytes).toBe(legacyBytes);
+    expect(currentBytes).toBe(otherLegacyBytes);
+    // A document persisted under EITHER legacy name still re-reads under the
+    // current serializer to the same bytes, so an already-written artifact
+    // keeps verifying.
+    const persisted = stablePromotionResultJson(value);
+    expect(stableCampaignJson(JSON.parse(persisted))).toBe(persisted);
+    expect(stableLifecycleJson(JSON.parse(stableCampaignJson(value)))).toBe(legacyBytes);
+    // And the two names can never disagree about the same value.
+    expect(stableLifecycleJson(value)).toBe(stablePromotionResultJson(JSON.parse(persisted)));
+  });
+
+  test('no live caller exists outside this compatibility-verification site', () => {
     const definingFiles = new Set([
       'src/core/campaign/candidateLifecycle.ts',
       'src/core/triage/promotionResult.ts',
     ]);
+    const censusSite = 'tests/unit/phase15pCompatConvergence.test.ts';
     const offenders: string[] = [];
-    for (const file of collectTsFiles(REPO_SRC)) {
-      const rel = path.relative(process.cwd(), file);
-      if (definingFiles.has(rel)) continue;
-      const text = fs.readFileSync(file, 'utf8');
-      if (/\bstableLifecycleJson\b/.test(text) || /\bstablePromotionResultJson\b/.test(text)) {
-        offenders.push(rel);
+    for (const directory of [REPO_SRC, REPO_TESTS]) {
+      for (const file of collectTsFiles(directory)) {
+        const rel = path.relative(process.cwd(), file);
+        if (definingFiles.has(rel) || rel === censusSite) continue;
+        const text = fs.readFileSync(file, 'utf8');
+        if (/\bstableLifecycleJson\b/.test(text) || /\bstablePromotionResultJson\b/.test(text)) {
+          offenders.push(rel);
+        }
       }
     }
     expect(offenders, offenders.join(', ')).toEqual([]);
   });
 
-  test('the aliases remain exported for existing callers and tests', () => {
+  test('each defining module records the alias as read-compatible legacy bytes', () => {
+    for (const [file, name] of [['src/core/campaign/candidateLifecycle.ts', 'stableLifecycleJson'], ['src/core/triage/promotionResult.ts', 'stablePromotionResultJson']] as const) {
+      const text = fs.readFileSync(path.join(process.cwd(), file), 'utf8');
+      expect(text, `${file} must mark ${name} as read-compatible legacy bytes`).toContain('READ-COMPATIBLE LEGACY BYTES');
+      expect(text).toContain(`@deprecated Read-compatible legacy bytes`);
+      // The legacy status is recorded on the ALIAS itself, adjacent to it.
+      const declaration = text.indexOf(`export function ${name}(`);
+      const marking = text.lastIndexOf('READ-COMPATIBLE LEGACY BYTES', declaration);
+      expect(marking, `${file} records the legacy status after the declaration`).toBeGreaterThanOrEqual(0);
+    }
+  });
+
+  test('the aliases remain exported so already-persisted legacy bytes keep verifying', () => {
     expect(typeof stableLifecycleJson).toBe('function');
     expect(typeof stablePromotionResultJson).toBe('function');
   });

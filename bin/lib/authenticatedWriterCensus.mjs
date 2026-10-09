@@ -73,6 +73,18 @@ const WRITE_VOCABULARY = Object.freeze([
   'unlinkSync', 'rmdirSync', 'rmSync',
 ]);
 
+/**
+ * The governed local-report publication boundary (NW-AUD-009): every
+ * repository-local report and receipt is published through
+ * `publishLocalReport`, which owns the exclusive staging and the atomic
+ * commit itself. A call site is therefore discovered exactly like a raw
+ * write's — by the run-root target its request names — so moving a writer
+ * onto the ONE boundary can never silently drop it out of the census. The
+ * authority's own definition site names only its parameter and is never a
+ * publication.
+ */
+const PUBLICATION_VOCABULARY = Object.freeze(['publishLocalReport']);
+
 /** Strip strings and comments so call-location search is not fooled by literals. */
 /** @param {string} source */
 export function maskSource(source) {
@@ -235,7 +247,7 @@ export function discoverRunRootWrites(file, source) {
   const declaresArtifactsRoot = /=\s*'artifacts'/.test(source);
   const writes = [];
   let rawWriteCount = 0;
-  for (const op of WRITE_VOCABULARY) {
+  for (const op of [...WRITE_VOCABULARY, ...PUBLICATION_VOCABULARY]) {
     let search = 0;
     for (;;) {
       const call = argumentTextForCall(masked, source, op, search);
@@ -271,7 +283,20 @@ export function discoverRunRootWrites(file, source) {
         const init = resolveLocalConst(source, ident);
         if (init !== null) resolvedParts.push(init);
       }
-      const targets = runRootTargetsFor(args, resolvedParts.join('\\n'));
+      let targets;
+      if (PUBLICATION_VOCABULARY.includes(op)) {
+        // The governed boundary names its destination inside a request
+        // OBJECT, so every identifier in the call is resolved, not only the
+        // bounded prefix the raw-write shape needs.
+        const resolved = [];
+        for (const match of args.matchAll(/[A-Za-z_$][\w$]*/g)) {
+          const init = resolveLocalConst(source, match[0]);
+          if (init !== null) resolved.push(init);
+        }
+        targets = runRootTargetsFor(args, resolved.join('\\n'));
+      } else {
+        targets = runRootTargetsFor(args, resolvedParts.join('\\n'));
+      }
       if (file === 'src/proxy/events.ts' && firstArgument(args) === 'logPath') targets.push('proxy-event-log');
       const isRemoval = op === 'unlinkSync' || op === 'rmdirSync' || op === 'rmSync';
       if (targets.length === 0 && isRemoval && declaresArtifactsRoot) {

@@ -20,6 +20,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
+import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { buildChildEnvironment } from './child-environment.mjs';
 import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
@@ -29,6 +30,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DEFAULT_INVENTORY = 'config/release-refs.v1.json';
 const DEFAULT_OUTPUT = 'artifacts/release-freshness/current.json';
 const MAX_INVENTORY_BYTES = 64 * 1024;
+const MAX_REPORT_BYTES = 8 * 1024 * 1024;
 const GIT_TIMEOUT_MS = 10_000;
 const GIT_MAX_BUFFER = 512 * 1024;
 
@@ -56,6 +58,54 @@ const CLI_METADATA = {
 function fail(code, detail) {
   process.stderr.write(detail === undefined ? `[release-freshness] ERROR: ${code}\n` : `[release-freshness] ERROR: ${code}: ${detail}\n`);
   process.exitCode = 2;
+}
+
+/**
+ * NW-AUD-009: the caller's exact schema validator for the freshness report.
+ * The publication boundary admits nothing this shape does not carry, before
+ * any filesystem change.
+ *
+ * @param {unknown} payload
+ */
+function validateFreshnessReport(payload) {
+  if (payload === null || typeof payload !== 'object' || Array.isArray(payload)) throw new Error('REPORT_NOT_AN_OBJECT');
+  const report = /** @type {Record<string, unknown>} */ (payload);
+  if (report.schemaVersion !== 'nightwatch.release-freshness-report.v1') throw new Error('REPORT_SCHEMA_INVALID');
+  if (report.freshness !== 'LOCAL_TRACKING_REF_ONLY') throw new Error('REPORT_FRESHNESS_INVALID');
+  if (report.deploymentClaim !== 'NONE') throw new Error('REPORT_DEPLOYMENT_CLAIM_INVALID');
+  if (report.inventoryDigest !== null && typeof report.inventoryDigest !== 'string') throw new Error('REPORT_INVENTORY_DIGEST_INVALID');
+  if (!Array.isArray(report.rows)) throw new Error('REPORT_ROWS_INVALID');
+  for (const row of report.rows) {
+    if (row === null || typeof row !== 'object' || Array.isArray(row)) throw new Error('REPORT_ROW_INVALID');
+    const value = /** @type {Record<string, unknown>} */ (row);
+    if (typeof value.verdict !== 'string') throw new Error('REPORT_ROW_VERDICT_INVALID');
+    if (!Array.isArray(value.reasonCodes)) throw new Error('REPORT_ROW_REASON_CODES_INVALID');
+  }
+  if (typeof report.reportDigest !== 'string' || !/^[a-z]{3}:sha256:[0-9a-f]{24}$/.test(report.reportDigest)) throw new Error('REPORT_DIGEST_INVALID');
+}
+
+/**
+ * NW-AUD-009: publish the sanitized freshness report through the ONE governed
+ * local-report boundary. Same-directory exclusive staging and an atomic
+ * replace, so an observer sees the previous complete report or the new
+ * complete report, never a truncated intermediate, and a symlinked or
+ * non-regular destination is refused rather than followed.
+ *
+ * @param {import('../src/core/changeIntelligence/releaseFreshness').ReleaseFreshnessReport} report
+ * @param {string} destination
+ * @returns {string | null} the categorical publication failure, or null on success
+ */
+function publishReport(report, destination) {
+  const { publishLocalReport } = loadTypeScriptModule('src/core/policy/localReportPublication.ts', { root });
+  const published = publishLocalReport({
+    profile: 'CURRENT_REPLACE',
+    payload: report,
+    validate: validateFreshnessReport,
+    maxBytes: MAX_REPORT_BYTES,
+    destination,
+    digest: (canonical) => `sha256:${crypto.createHash('sha256').update(canonical, 'utf8').digest('hex').slice(0, 24)}`,
+  });
+  return published.ok ? null : published.failure;
 }
 
 /**
@@ -198,11 +248,11 @@ function main() {
   const repositoriesRoot = path.resolve(topology.resolveSiblingRoot());
   const report = core.releaseFreshnessReport(inventory, createOracle(repositoriesRoot));
 
-  try {
-    fs.mkdirSync(path.dirname(outPath), { recursive: true });
-    fs.writeFileSync(outPath, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
-  } catch (error) {
-    fail('REPORT_WRITE_FAILED', error instanceof Error ? error.message : 'unknown write failure');
+  // NW-AUD-009: publication goes through the governed boundary; a refusal is
+  // the same categorical REPORT_WRITE_FAILED the direct write reported.
+  const publicationFailure = publishReport(report, path.resolve(outPath));
+  if (publicationFailure !== null) {
+    fail('REPORT_WRITE_FAILED', publicationFailure);
     return;
   }
 

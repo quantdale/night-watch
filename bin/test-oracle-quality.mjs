@@ -17,6 +17,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
 import { loadTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
@@ -25,6 +26,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DEFAULT_CONFIG = 'config/test-oracle-quality.v1.json';
 const DEFAULT_OUTPUT = 'artifacts/test-oracle-quality/current.json';
 const MAX_CONFIG_BYTES = 64 * 1024;
+const MAX_REPORT_BYTES = 8 * 1024 * 1024;
 
 const CONCERN_VERDICTS = new Set([
   'MIRROR_ONLY',
@@ -59,6 +61,53 @@ const CLI_METADATA = {
 function fail(code, detail) {
   process.stderr.write(detail === undefined ? `[test-oracle-quality] ERROR: ${code}\n` : `[test-oracle-quality] ERROR: ${code}: ${detail}\n`);
   process.exitCode = 2;
+}
+
+/**
+ * NW-AUD-009: the caller's exact schema validator for the assurance-gap
+ * report. The report is an assurance-gap artifact, never a finding, and the
+ * publication boundary admits nothing this shape does not carry, before any
+ * filesystem change.
+ *
+ * @param {unknown} payload
+ */
+function validateTestOracleReport(payload) {
+  if (payload === null || typeof payload !== 'object' || Array.isArray(payload)) throw new Error('REPORT_NOT_AN_OBJECT');
+  const report = /** @type {Record<string, unknown>} */ (payload);
+  if (report.schemaVersion !== 'nightwatch.test-assurance-report.v1') throw new Error('REPORT_SCHEMA_INVALID');
+  if (report.finding !== 'NONE') throw new Error('REPORT_FINDING_CLAIM_INVALID');
+  if (report.assuranceGapOnly !== true) throw new Error('REPORT_ASSURANCE_GAP_CLAIM_INVALID');
+  if (!Array.isArray(report.targets)) throw new Error('REPORT_TARGETS_INVALID');
+  for (const target of report.targets) {
+    if (target === null || typeof target !== 'object' || Array.isArray(target)) throw new Error('REPORT_TARGET_INVALID');
+    const value = /** @type {Record<string, unknown>} */ (target);
+    if (typeof value.path !== 'string') throw new Error('REPORT_TARGET_PATH_INVALID');
+    if (typeof value.verdict !== 'string') throw new Error('REPORT_TARGET_VERDICT_INVALID');
+  }
+  if (typeof report.reportDigest !== 'string' || !/^[a-z]{3}:sha256:[0-9a-f]{24}$/.test(report.reportDigest)) throw new Error('REPORT_DIGEST_INVALID');
+}
+
+/**
+ * NW-AUD-009: publish the sanitized assurance-gap report through the ONE
+ * governed local-report boundary — complete admission in memory, then
+ * same-directory exclusive staging and an atomic replace. A symlinked or
+ * non-regular destination is refused rather than followed.
+ *
+ * @param {import('../src/core/source/testOracleQuality').TestAssuranceReport} report
+ * @param {string} destination
+ * @returns {string | null} the categorical publication failure, or null on success
+ */
+function publishReport(report, destination) {
+  const { publishLocalReport } = loadTypeScriptModule('src/core/policy/localReportPublication.ts', { root });
+  const published = publishLocalReport({
+    profile: 'CURRENT_REPLACE',
+    payload: report,
+    validate: validateTestOracleReport,
+    maxBytes: MAX_REPORT_BYTES,
+    destination,
+    digest: (canonical) => `sha256:${crypto.createHash('sha256').update(canonical, 'utf8').digest('hex').slice(0, 24)}`,
+  });
+  return published.ok ? null : published.failure;
 }
 
 function main() {
@@ -96,12 +145,11 @@ function main() {
   const access = createSiblingSourceAccess(siblingRoot);
   const report = core.runTestOracleQuality({ config, reader: access.reader, currentness: access.currentness });
 
-  try {
-    fs.mkdirSync(path.dirname(outPath), { recursive: true });
-    fs.writeFileSync(outPath, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
-  } catch (error) {
-    const writeFailure = /** @type {{ code: string | undefined }} */ (error);
-    return fail('REPORT_WRITE_FAILED', String(writeFailure?.code ?? 'UNKNOWN'));
+  // NW-AUD-009: publication goes through the governed boundary; a refusal is
+  // the same categorical REPORT_WRITE_FAILED the direct write reported.
+  const publicationFailure = publishReport(report, path.resolve(outPath));
+  if (publicationFailure !== null) {
+    return fail('REPORT_WRITE_FAILED', publicationFailure);
   }
 
   if (cli.flags['--json'] === true) {

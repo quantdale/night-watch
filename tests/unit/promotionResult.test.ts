@@ -1,10 +1,10 @@
+import { stableCampaignJson } from '../../src/core/campaign/identity';
 import { test, expect } from '@playwright/test';
 import {
   PROMOTION_RESULT_VERSION,
   buildSemanticAwarePromotionResult,
   validateSemanticAwarePromotionResult,
   semanticPromotionEligible,
-  stablePromotionResultJson,
   promotionReplayEvidenceFromOutcome,
   dossierTargetForClusterKind,
   currentnessFromSemanticTriage,
@@ -250,9 +250,9 @@ test.describe('Phase 15 Session 2 Workstream E — semantic-aware promotion resu
         readinessReasonCodes: ['EXACT_REPLAY_REQUIRED'],
         safeReasonCodes: ['KNOWN_FALSE_POSITIVE_PRESENT'],
       });
-      const first = stablePromotionResultJson(buildSemanticAwarePromotionResult(input));
-      const second = stablePromotionResultJson(buildSemanticAwarePromotionResult(input));
-      const third = stablePromotionResultJson(buildSemanticAwarePromotionResult(input));
+      const first = stableCampaignJson(buildSemanticAwarePromotionResult(input));
+      const second = stableCampaignJson(buildSemanticAwarePromotionResult(input));
+      const third = stableCampaignJson(buildSemanticAwarePromotionResult(input));
       expect(first).toBe(second);
       expect(second).toBe(third);
     });
@@ -260,7 +260,7 @@ test.describe('Phase 15 Session 2 Workstream E — semantic-aware promotion resu
     test('stable JSON is independent of key insertion order', () => {
       const result = baseResult();
       const reordered = Object.fromEntries(Object.entries(result).reverse());
-      expect(stablePromotionResultJson(reordered)).toBe(stablePromotionResultJson(result));
+      expect(stableCampaignJson(reordered)).toBe(stableCampaignJson(result));
     });
   });
 });

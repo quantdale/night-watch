@@ -9,8 +9,12 @@
  * prove unreferenced is refused.
  *
  * It never touches a filesystem. The caller supplies an already-enumerated
- * observation, applies the plan, and owns every mutation.
+ * observation, applies the plan, and owns every mutation. The recording of a
+ * mutation lives in the sibling crash-consistent journal
+ * (`retentionJournal.ts`), which is the only authority for a deletion receipt.
  */
+
+export * from './retentionJournal';
 
 export const RETENTION_DISPOSITIONS = [
   'REFUSED_REFERENCED',

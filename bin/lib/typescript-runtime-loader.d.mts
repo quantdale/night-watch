@@ -54,6 +54,8 @@ export interface TypeScriptRuntimeLoaderModuleMap {
   "src/core/phase22/index.ts": typeof import("../../src/core/phase22/index");
   "src/core/phase23/manifest.ts": typeof import("../../src/core/phase23/manifest");
   "src/core/policy/devLanePreconditions.ts": typeof import("../../src/core/policy/devLanePreconditions");
+  "src/core/policy/localReportPublication.ts": typeof import("../../src/core/policy/localReportPublication");
+  "src/core/policy/localToolchain.ts": typeof import("../../src/core/policy/localToolchain");
   "src/core/policy/privateArtifacts.ts": typeof import("../../src/core/policy/privateArtifacts");
   "src/core/policy/sourceTopology.ts": typeof import("../../src/core/policy/sourceTopology");
   "src/core/portfolio/types.ts": typeof import("../../src/core/portfolio/types");
@@ -90,6 +92,7 @@ export interface TypeScriptRuntimeLoaderModuleMap {
   "src/core/source/surfaces.ts": typeof import("../../src/core/source/surfaces");
   "src/core/source/testOracleQuality.ts": typeof import("../../src/core/source/testOracleQuality");
   "src/core/source/universe.ts": typeof import("../../src/core/source/universe");
+  "src/core/source/unusedExports.ts": typeof import("../../src/core/source/unusedExports");
   "src/core/validation/affectedTests.ts": typeof import("../../src/core/validation/affectedTests");
   "src/core/validation/executionClasses.ts": typeof import("../../src/core/validation/executionClasses");
   "src/core/validation/shardExecutionReceipt.ts": typeof import("../../src/core/validation/shardExecutionReceipt");

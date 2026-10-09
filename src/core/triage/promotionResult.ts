@@ -306,13 +306,29 @@ export function validateSemanticAwarePromotionResult(value: unknown): void {
 // --- Deterministic canonical JSON -------------------------------------------
 
 /**
- * Compatibility alias (Phase 15P A15 convergence): byte-identical delegation
- * to the ONE canonical key-sorted serializer `stableCampaignJson` in
- * ../campaign/identity, which owns this idiom. New code must call
- * `stableCampaignJson` directly; this name is retained only for existing
- * callers and tests.
+ * D-20 (M10 11.3) — READ-COMPATIBLE LEGACY BYTES.
  *
- * @deprecated Compatibility-only alias of src/core/campaign/identity.ts#stableCampaignJson.
+ * This name is a compatibility serializer, not a live API. It is a
+ * byte-identical delegation to the ONE canonical key-sorted serializer
+ * `stableCampaignJson` in `../campaign/identity`, and it is retained for
+ * exactly one reason: bytes an older build produced WITH THIS NAME stay
+ * verifiable. A persisted promotion result, digest or round-trip check
+ * computed through `stablePromotionResultJson` must still compare equal to the
+ * same value computed through `stableCampaignJson` today, so the alias may
+ * never be changed to differ, no matter what happens to `stableCampaignJson`'
+ * own shape.
+ *
+ * There are NO live callers. Every incidental call site (three test suites)
+ * was migrated to `stableCampaignJson` under D-20; the only remaining
+ * reference is the dedicated compatibility-verification site in
+ * `tests/unit/phase15pCompatConvergence.test.ts`, which pins the byte identity
+ * this paragraph relies on. A new caller fails the census.
+ *
+ * The D-144 `retries` → `failures` rename is the precedent: a tolerant READ
+ * of already-persisted bytes, a closed census of live callers, and no
+ * behaviour change for anything already on disk.
+ *
+ * @deprecated Read-compatible legacy bytes. Call `stableCampaignJson` (src/core/campaign/identity.ts).
  */
 export function stablePromotionResultJson(value: unknown): string {
   return stableCampaignJson(value);

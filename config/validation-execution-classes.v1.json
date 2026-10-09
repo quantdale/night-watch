@@ -381,6 +381,10 @@
         "isolated-scratch"
       ]
     },
+    "tests/unit/campaignClusterFallbackReporting.test.ts": {
+      "class": "PARALLEL_SAFE",
+      "signals": []
+    },
     "tests/unit/campaignEndurance.test.ts": {
       "class": "PARALLEL_SAFE",
       "signals": [
@@ -429,6 +433,10 @@
         "artifacts-write",
         "isolated-scratch"
       ]
+    },
+    "tests/unit/cf1FuzzPropertyCensus.test.ts": {
+      "class": "PARALLEL_SAFE",
+      "signals": []
     },
     "tests/unit/changeIntelligence.test.ts": {
       "class": "PARALLEL_SAFE",
@@ -934,6 +942,45 @@
       "class": "MUTATION_CAMPAIGN_EXCLUSIVE",
       "signals": [
         "real-tree-hardening-check"
+      ]
+    },
+    "tests/unit/nwAud005RetentionCrashConsistentReceipts.test.ts": {
+      "class": "PROCESS_ISOLATED_ONLY",
+      "signals": [
+        "artifacts-write",
+        "isolated-scratch"
+      ]
+    },
+    "tests/unit/nwAud007ChangeShadowOfflineRuntime.test.ts": {
+      "class": "PROCESS_ISOLATED_ONLY",
+      "signals": [
+        "artifacts-write",
+        "isolated-scratch"
+      ]
+    },
+    "tests/unit/nwAud009LocalReportPublication.test.ts": {
+      "class": "PROCESS_ISOLATED_ONLY",
+      "signals": [
+        "artifacts-write",
+        "isolated-scratch"
+      ]
+    },
+    "tests/unit/nwAud011CanonicalApplySerialization.test.ts": {
+      "class": "PARALLEL_SAFE",
+      "signals": [
+        "isolated-scratch"
+      ]
+    },
+    "tests/unit/nwAud032OwnerScopeTotality.test.ts": {
+      "class": "PARALLEL_SAFE",
+      "signals": [
+        "isolated-scratch"
+      ]
+    },
+    "tests/unit/nwAud033BudgetReservationRelease.test.ts": {
+      "class": "PARALLEL_SAFE",
+      "signals": [
+        "isolated-scratch"
       ]
     },
     "tests/unit/observationSettlement.test.ts": {
@@ -1873,6 +1920,12 @@
         "isolated-scratch"
       ]
     },
+    "tests/unit/retentionScopeCampaignState.test.ts": {
+      "class": "PARALLEL_SAFE",
+      "signals": [
+        "isolated-scratch"
+      ]
+    },
     "tests/unit/reviewStore.test.ts": {
       "class": "PARALLEL_SAFE",
       "signals": [
@@ -2091,6 +2144,10 @@
         "isolated-scratch"
       ]
     },
+    "tests/unit/settlementWaitDiagnostics.test.ts": {
+      "class": "PARALLEL_SAFE",
+      "signals": []
+    },
     "tests/unit/siblingRootResolution.test.ts": {
       "class": "PARALLEL_SAFE",
       "signals": [
@@ -2197,6 +2254,12 @@
       "class": "PARALLEL_SAFE",
       "signals": [
         "isolated-scratch"
+      ]
+    },
+    "tests/unit/unusedExportBudget.test.ts": {
+      "class": "MUTATION_CAMPAIGN_EXCLUSIVE",
+      "signals": [
+        "real-tree-hardening-check"
       ]
     },
     "tests/unit/validationAffectedTests.test.ts": {

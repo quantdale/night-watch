@@ -12,6 +12,13 @@
 // a failed production request has still touched production, so refunding it
 // would let a failing route be retried without limit.
 //
+// A reservation that was NEVER dispatched is the one bounded exception
+// (NW-AUD-033): the chain's later gates and grant consumption can refuse a run
+// after the reservation was taken, and a refused run must give its in-flight
+// concurrency slot back rather than leaving the ledger permanently full. Only
+// the slot is returned, no failure is charged, and a token can be released at
+// most once.
+//
 // Values come from `design.md §5.4` and are reconciled as-is. C-11 broadens
 // nothing.
 // ---------------------------------------------------------------------------
@@ -73,6 +80,13 @@ export class ProductionBudgetLedger {
   private nextReservationId = 1;
   private readonly serviceUsed = new Map<string, number>();
   private readonly routeUsed = new Map<string, number>();
+  /**
+   * Reservations that are currently occupying a concurrency slot. One-way:
+   * a reservation leaves this set exactly once, on `settle` or on
+   * `releaseReservation`, so a copied, foreign, fabricated or repeated token
+   * can no longer decrement generic in-flight state (NW-AUD-033).
+   */
+  private readonly outstanding = new Set<number>();
 
   constructor(options: { readonly limits?: ProductionBudgetLimits; readonly startedAtMs: number }) {
     this.limits = options.limits ?? PRODUCTION_BUDGET_DEFAULTS;
@@ -106,6 +120,7 @@ export class ProductionBudgetLedger {
 
     this.campaignUsed += 1;
     this.inFlight += 1;
+    this.outstanding.add(this.nextReservationId);
     this.serviceUsed.set(request.serviceKey, this.serviceRequestsUsed(request.serviceKey) + 1);
     this.routeUsed.set(request.routeKey, this.routeRequestsUsed(request.routeKey) + 1);
     return {
@@ -119,12 +134,39 @@ export class ProductionBudgetLedger {
   }
 
   /**
+   * NW-AUD-033 — release a reservation that was made but never dispatched.
+   *
+   * The reservation site (`G_BUDGET_RESERVATION`) runs BEFORE the breaker and
+   * pre-dispatch kill-switch gates, and before grant consumption. Until now a
+   * denial at any of those later points returned without giving the in-flight
+   * concurrency slot back, so with the designed concurrency limit of one a
+   * single pre-dispatch denial left the ledger permanently full and every
+   * subsequent run was refused with `BUDGET_EXHAUSTED`.
+   *
+   * Only the CONCURRENCY occupancy is returned. The campaign, service and route
+   * counters stay spent, because the reservation itself already happened and
+   * refunding them would let a repeatedly-refused route be retried without
+   * limit. No failure is charged: the request was refused BEFORE dispatch, so
+   * nothing ever touched production.
+   */
+  releaseReservation(reservation: BudgetReservation): void {
+    // A token this ledger never issued, or one already settled, is a no-op:
+    // releasing twice must never hand back a slot that is not held.
+    if (!this.outstanding.delete(reservation.reservationId)) return;
+    if (this.inFlight > 0) this.inFlight -= 1;
+  }
+
+  /**
    * Settle an in-flight request. This releases only the CONCURRENCY slot; the
    * campaign, service and route counters stay spent, because the request
    * happened. `outcome: 'FAILURE'` additionally charges the failure budget.
+   *
+   * Exactly-once: the reservation must still be outstanding, so a copied,
+   * foreign, fabricated or repeated token settles nothing and charges nothing.
    */
   settle(reservation: BudgetReservation, outcome: 'SUCCESS' | 'FAILURE'): void {
     void reservation;
+    if (!this.outstanding.delete(reservation.reservationId)) return;
     if (this.inFlight > 0) this.inFlight -= 1;
     if (outcome === 'FAILURE') this.failuresRecorded += 1;
   }

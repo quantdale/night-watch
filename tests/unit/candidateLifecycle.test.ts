@@ -1,9 +1,9 @@
+import { stableCampaignJson } from '../../src/core/campaign/identity';
 import { test, expect } from '@playwright/test';
 import {
   CANDIDATE_LIFECYCLE_VERSION,
   initialLifecycleRecord,
   isTerminalCandidateLifecycleState,
-  stableLifecycleJson,
   transitionCandidateLifecycle,
   validateCandidateLifecycleRecord,
   type CandidateLifecycleEvent,
@@ -271,7 +271,7 @@ test.describe('Phase 15 Session 2 WORKSTREAM_A — candidate lifecycle state mac
       const s = sem[index] as CandidateLifecycleRecord;
       expect(s.state).toBe(p.state);
       expect(s.transitionCount).toBe(p.transitionCount);
-      expect(stableLifecycleJson(stripVariant(s))).toBe(stableLifecycleJson(stripVariant(p)));
+      expect(stableCampaignJson(stripVariant(s))).toBe(stableCampaignJson(stripVariant(p)));
     }
     const finalProto = proto[proto.length - 1] as CandidateLifecycleRecord;
     expect(finalProto.state).toBe('DOSSIER_READY');
@@ -284,23 +284,23 @@ test.describe('Phase 15 Session 2 WORKSTREAM_A — candidate lifecycle state mac
 
   test('transitions never mutate the input record and outputs are independent objects', () => {
     const input = initialLifecycleRecord('SEMANTIC');
-    const before = stableLifecycleJson(input);
+    const before = stableCampaignJson(input);
     const next = transitionCandidateLifecycle(input, 'ADMIT', 'X');
-    expect(stableLifecycleJson(input)).toBe(before);
+    expect(stableCampaignJson(input)).toBe(before);
     expect(input.state).toBe('OBSERVED');
     expect(input.transitionCount).toBe(0);
     expect(next.state).toBe('ADMITTED');
     const a = initialLifecycleRecord('PROTOCOL_ONLY');
     const b = initialLifecycleRecord('PROTOCOL_ONLY');
     expect(a).not.toBe(b);
-    expect(stableLifecycleJson(a)).toBe(stableLifecycleJson(b));
+    expect(stableCampaignJson(a)).toBe(stableCampaignJson(b));
   });
 
-  test('stableLifecycleJson is byte-identical across repeated calls and key-order independent', () => {
+  test('stableCampaignJson is byte-identical across repeated calls and key-order independent', () => {
     const record = driveTo('SEMANTIC', 'TRIAGED');
-    const json1 = stableLifecycleJson(record);
-    expect(stableLifecycleJson(record)).toBe(json1);
-    expect(stableLifecycleJson(record)).toBe(json1);
+    const json1 = stableCampaignJson(record);
+    expect(stableCampaignJson(record)).toBe(json1);
+    expect(stableCampaignJson(record)).toBe(json1);
     const reordered: Record<string, unknown> = {
       state: record.state,
       lastReasonCode: record.lastReasonCode,
@@ -308,7 +308,7 @@ test.describe('Phase 15 Session 2 WORKSTREAM_A — candidate lifecycle state mac
       variant: record.variant,
       transitionCount: record.transitionCount,
     };
-    expect(stableLifecycleJson(reordered)).toBe(json1);
+    expect(stableCampaignJson(reordered)).toBe(json1);
     const parsed = JSON.parse(json1) as unknown;
     expect(() => validateCandidateLifecycleRecord(parsed)).not.toThrow();
     expect(parsed).toEqual(record);
@@ -319,7 +319,7 @@ test.describe('Phase 15 Session 2 WORKSTREAM_A — candidate lifecycle state mac
     const b = transitionCandidateLifecycle(initialLifecycleRecord('PROTOCOL_ONLY'), 'ADMIT', 'CODE_A');
     expect(a).toEqual(b);
     expect(a).not.toBe(b);
-    expect(stableLifecycleJson(a)).toBe(stableLifecycleJson(b));
+    expect(stableCampaignJson(a)).toBe(stableCampaignJson(b));
   });
 
   test('every reachable record in every state passes strict validation', () => {

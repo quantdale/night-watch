@@ -47,7 +47,7 @@ export type { PreparePromotionInput } from './prepare';
 export { promotionIdFor } from './validation';
 export { approvePromotion, SelfDevCanonicalPromotionApproveError } from './approve';
 export type { ApprovePromotionInput } from './approve';
-export { applyPromotion, SelfDevCanonicalPromotionApplyError } from './apply';
+export { applyPromotion, canonicalApplyTransactionIdFor, SelfDevCanonicalPromotionApplyError } from './apply';
 export type { ApplyPromotionInput } from './apply';
 export { verifyCanonicalPromotion, SelfDevCanonicalPromotionVerifyError } from './verify';
 export type { VerifyPromotionInput } from './verify';

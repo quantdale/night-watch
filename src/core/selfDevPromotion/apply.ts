@@ -111,6 +111,31 @@ function atomicWriteTarget(absoluteTarget: string, bytes: string, mode: number):
 }
 
 /**
+ * NW-AUD-011 — the durable apply-transaction identity.
+ *
+ * The one-shot gate keyed by APPROVAL ID cannot serialize the apply
+ * transaction: two distinct approvals prepared from the same clean preimage
+ * each consume their own approval and each write the one canonical catalog.
+ * The identity here is therefore the TRANSACTION — one canonical repository,
+ * one checkout, one target, one preimage — and deliberately contains neither
+ * the approval ID nor the postimage, so a second approval for the same
+ * transaction collides with the first instead of racing it.
+ */
+export function canonicalApplyTransactionIdFor(input: {
+  readonly repositoryRoot: string;
+  readonly headSha: string;
+  readonly targetPath: string;
+  readonly targetPreimageDigest: string;
+}): string {
+  return `canonical-apply-transaction:${sha256Hex(JSON.stringify({
+    repositoryRoot: input.repositoryRoot,
+    headSha: input.headSha,
+    targetPath: input.targetPath,
+    targetPreimageDigest: input.targetPreimageDigest,
+  }))}`;
+}
+
+/**
  * Applies exactly one owner-approved canonical promotion. Throws a typed
  * `SelfDevCanonicalPromotionApplyError` for every precondition failure before
  * any write; `error.canonicalSourceWrites` is `1` only for the narrow
@@ -161,6 +186,25 @@ export function applyPromotion(input: ApplyPromotionInput): SelfDevCanonicalAppl
   const recomputedPostimageDigest = `sha256:${sha256Hex(postimageBytes)}`;
   if (recomputedPostimageDigest !== promotion.targetPostimageDigest) fail('POSTIMAGE_DIGEST_MISMATCH');
   if (plan.targetPath !== SELFDEV_ADOPTED_CATALOG_TARGET_PATH || promotion.targetPath !== SELFDEV_ADOPTED_CATALOG_TARGET_PATH) fail('TARGET_PATH_INVALID');
+
+  // One-shot transaction authority: claimed BEFORE the approval is consumed
+  // and before the write. Two concurrent applies for the same canonical
+  // transaction — even with two DISTINCT approvals — are serialized by an
+  // atomic no-replace claim, and exactly one of them proceeds.
+  const applyTransactionId = canonicalApplyTransactionIdFor({
+    repositoryRoot: fs.realpathSync(input.repositoryRoot),
+    headSha: current.currentHeadSha,
+    targetPath: promotion.targetPath,
+    targetPreimageDigest: promotion.targetPreimageDigest,
+  });
+  try {
+    approvalStore.claimApplyTransaction(applyTransactionId, { approvalId: input.approvalId, promotionId: input.promotionId });
+  } catch (error) {
+    if (error instanceof Error && error.message === 'SELFDEV_CANONICAL_PROMOTION_TRANSACTION_ALREADY_CLAIMED') {
+      fail('TRANSACTION_ALREADY_CLAIMED');
+    }
+    throw error;
+  }
 
   // One-shot consumption: claimed BEFORE the write. A second claim for the
   // same approval — even from a concurrent process — fails here with zero

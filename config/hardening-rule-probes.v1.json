@@ -1693,6 +1693,17 @@
         ]
       }
     ],
+    "checkUnusedExportBudget": [
+      {
+        "id": "HC-283",
+        "ops": [
+          {
+            "file": "src/core/source/unusedExports.ts",
+            "append": "\n// D-17 mutation probe target: an exported value symbol nobody names.\nexport function unusedExportProbeSentinel(): number {\n  return 1;\n}\n"
+          }
+        ]
+      }
+    ],
     "checkModuleBarrierEnforcement": [
       {
         "id": "HC-080",

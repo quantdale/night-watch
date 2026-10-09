@@ -60,6 +60,19 @@ function assertKnownDirectory(directory: PrivateArtifactDirectory): PrivateArtif
   return directory;
 }
 
+/**
+ * The documented retention scope of one named private directory. Refuses an
+ * unknown directory (the union stays the whole path-safety argument) AND a
+ * directory that carries no scope, because an undocumented directory is the
+ * X-11 defect: a future sweep would have to guess.
+ */
+export function privateRetentionScopeFor(directory: PrivateArtifactDirectory): PrivateRetentionScope {
+  assertKnownDirectory(directory);
+  const scope = PRIVATE_RETENTION_SCOPES[directory];
+  if (scope === undefined) throw new Error('PRIVATE_RETENTION_SCOPE_UNDECLARED');
+  return scope;
+}
+
 const SUBTREE_RELATIVE_ROOT: Readonly<Record<PrivateArtifactSubtree, string>> = Object.freeze({
   findings: PRIVATE_ARTIFACT_DEFAULT_RELATIVE_ROOT,
   reviews: path.join('.nightwatch', 'reviews'),
@@ -67,11 +80,97 @@ const SUBTREE_RELATIVE_ROOT: Readonly<Record<PrivateArtifactSubtree, string>> = 
 
 export type PrivateArtifactStatus = 'INCOMPLETE' | 'READY';
 
+/**
+ * X-11 (M10 11.3): the documented retention scope of an owner-local private
+ * directory.
+ *
+ * The repository's `artifacts/` tree had a retention capability
+ * (`bin/evidence-retention.mjs`, refusal-first, owner-applied). The owner-local
+ * `campaign-state/` subtree — the orchestrator's manifests and checkpoints,
+ * measured in the audit at 43.6 MB across 57 run directories a clean clone does
+ * not have — had NO documented scope at all, so nothing could say whether a
+ * checkpoint was load-bearing evidence or a removable by-product. An undocumented
+ * directory is not a directory with no retention policy; it is one where any
+ * future sweep would have to guess.
+ *
+ * A scope is therefore a RECORD, and every named directory must carry one.
+ * `checkReviewStoreBoundary` refuses a directory that loses its scope, and the
+ * ratchet test refuses a scope that becomes silent removal.
+ */
+export interface PrivateRetentionScope {
+  /** Nothing in this directory is ever removed automatically, by any sweep. */
+  readonly autoDelete: false;
+  /** The ONLY authority that may remove a document here. */
+  readonly removalAuthority: 'OWNER_EXPLICIT_APPLY';
+  /**
+   * The refusal-first order a removal decision must apply, in this order,
+   * before a single byte may be considered for removal. `REFUSED_REFERENCED`
+   * comes first because a document that tracked state still names is
+   * load-bearing evidence regardless of age.
+   */
+  readonly refusalOrder: readonly ['REFUSED_REFERENCED', 'REFUSED_RECENT', 'REFUSED_UNPROVABLE', 'REFUSED_UNSAFE'];
+  /** A removal candidate in this directory may only be a whole document. */
+  readonly removalGranularity: 'WHOLE_DOCUMENT';
+  /** An unreadable or unmeasurable document is refused, never assumed stale. */
+  readonly unmeasurableRefused: true;
+}
+
+/** The closed refusal vocabulary a private retention scope must apply. */
+export const PRIVATE_RETENTION_REFUSAL_ORDER = [
+  'REFUSED_REFERENCED',
+  'REFUSED_RECENT',
+  'REFUSED_UNPROVABLE',
+  'REFUSED_UNSAFE',
+] as const;
+
+/**
+ * The documented retention scope of EVERY named private directory. Keyed by the
+ * closed `PRIVATE_ARTIFACT_DIRECTORIES` vocabulary, so a new directory cannot
+ * exist without a scope: adding it to the vocabulary without a scope here fails
+ * both this table's exhaustiveness and the hardening rule.
+ */
+export const PRIVATE_RETENTION_SCOPES: Readonly<Record<PrivateArtifactDirectory, PrivateRetentionScope>> = Object.freeze({
+  /**
+   * `agent-findings/` — the durable agent finding record (M5 6.2). An admitted,
+   * unreproduced finding is unresolved and stays owner-controlled, which is the
+   * same rule the findings-root retention policy already records.
+   */
+  'agent-findings': {
+    autoDelete: false,
+    removalAuthority: 'OWNER_EXPLICIT_APPLY',
+    refusalOrder: PRIVATE_RETENTION_REFUSAL_ORDER,
+    removalGranularity: 'WHOLE_DOCUMENT',
+    unmeasurableRefused: true,
+  },
+  /**
+   * `campaign-state/` — the campaign orchestrator's own state (M6 7.4):
+   * manifests, checkpoints, retry and replay ledgers, morning briefs. A
+   * checkpoint is what a resumed campaign continues from, so an old one is not
+   * thereby evidence-free: it is the record of a run that happened and of the
+   * work that run proved. Only an owner apply may remove one, and only after
+   * the reference scan has proven nothing cites it.
+   */
+  'campaign-state': {
+    autoDelete: false,
+    removalAuthority: 'OWNER_EXPLICIT_APPLY',
+    refusalOrder: PRIVATE_RETENTION_REFUSAL_ORDER,
+    removalGranularity: 'WHOLE_DOCUMENT',
+    unmeasurableRefused: true,
+  },
+} as const);
+
 export interface PrivateRetentionPolicy {
   readonly maxOccurrenceRecords: number;
   readonly unresolvedFindingsOwnerControlled: true;
   readonly syntheticFixturesRetained: true;
   readonly autoDeleteActiveFindings: false;
+  /**
+   * X-11 (M10 11.3): the documented retention scope of every owner-local
+   * private DIRECTORY. Recorded on the policy record so the scope is published
+   * on the same surface that already publishes the findings-root rules, rather
+   * than living only in a comment beside the directory vocabulary.
+   */
+  readonly directoryScopes: Readonly<Record<PrivateArtifactDirectory, PrivateRetentionScope>>;
 }
 
 export const PRIVATE_RETENTION_POLICY: PrivateRetentionPolicy = {
@@ -79,6 +178,7 @@ export const PRIVATE_RETENTION_POLICY: PrivateRetentionPolicy = {
   unresolvedFindingsOwnerControlled: true,
   syntheticFixturesRetained: true,
   autoDeleteActiveFindings: false,
+  directoryScopes: PRIVATE_RETENTION_SCOPES,
 };
 
 export interface PrivateArtifactPolicyRecord {

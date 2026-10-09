@@ -27,6 +27,7 @@
 // every builder is pure.
 // ---------------------------------------------------------------------------
 
+import { stableCampaignJson } from '../../src/core/campaign/identity';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -186,7 +187,6 @@ import {
   gateBlockCandidateLifecycle,
   initialLifecycleRecord,
   isTerminalCandidateLifecycleState,
-  stableLifecycleJson,
   transitionCandidateLifecycle,
   validateCandidateLifecycleRecord,
 } from '../../src/core/campaign/candidateLifecycle';
@@ -1495,7 +1495,7 @@ const PROBES: Readonly<Record<string, Probe>> = {
 
   'SC-58': async () => {
     const record = lifecycleRecordFixture();
-    const json = stableLifecycleJson(record);
+    const json = stableCampaignJson(record);
     const reordered: Record<string, unknown> = {};
     for (const key of Object.keys(record).sort().reverse()) {
       reordered[key] = (record as unknown as Record<string, unknown>)[key];
@@ -1509,8 +1509,8 @@ const PROBES: Readonly<Record<string, Probe>> = {
     }
     return {
       json,
-      repeatStable: stableLifecycleJson(record) === json,
-      reorderStable: stableLifecycleJson(reordered) === json,
+      repeatStable: stableCampaignJson(record) === json,
+      reorderStable: stableCampaignJson(reordered) === json,
       parsedValidates,
     };
   },

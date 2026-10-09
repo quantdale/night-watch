@@ -8,13 +8,16 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import crypto from 'node:crypto';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { buildChildEnvironment } from './child-environment.mjs';
 import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
+import { loadTypeScriptModule } from './lib/typescript-runtime-loader.mjs';
 
 const nightwatchRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const outputPath = path.join(nightwatchRoot, 'artifacts', 'change-intelligence-shadow', 'current.json');
+const MAX_REPORT_BYTES = 8 * 1024 * 1024;
 // The repositories root is NEVER derived from this checkout's own location. A
 // writing agent's worktree lives outside the workspace tree (C-00), so
 // `resolve(nightwatchRoot, '../..')` resolved to `$HOME/.nightwatch` there and
@@ -40,39 +43,106 @@ function run(command, args, cwd = nightwatchRoot) {
   return (result.stdout || '').trim();
 }
 
+/**
+ * The exact TypeScript entries the shadow run compiles into `compileRoot`.
+ *
+ * `src/core/policy/sourceTopology.ts` is one of them because `main()` imports
+ * the compiled `core/policy/sourceTopology.js` for the ONE sibling-root
+ * resolution: an entry that is imported but never compiled is a hard
+ * module-resolution failure at runtime, which is exactly what this list makes
+ * impossible.
+ */
+const COMPILED_ENTRIES = Object.freeze([
+  'src/core/changeIntelligence/index.ts',
+  'src/core/source/siblingSource.ts',
+  'src/core/policy/sourceTopology.ts',
+]);
+
 function compileCore() {
+  // NW-AUD-007: the offline shadow compile runs the repository's OWN pinned
+  // compiler, admitted by the local-toolchain authority BEFORE anything is
+  // created or compiled. A missing install, a linked or non-regular compiler
+  // entry, or a version that disagrees with the lockfile pin is a refusal,
+  // never a package-runner or fetch fallback.
+  const { admitLocalTypeScriptCompiler } = loadTypeScriptModule('src/core/policy/localToolchain.ts', { root: nightwatchRoot });
+  const admitted = admitLocalTypeScriptCompiler({ repositoryRoot: nightwatchRoot });
+  if (!admitted.ok) {
+    throw new Error(`LOCAL_TOOLCHAIN_ADMISSION_FAILED:${admitted.failure}`);
+  }
   fs.rmSync(compileRoot, { recursive: true, force: true });
   fs.mkdirSync(compileRoot, { recursive: true });
-  run(path.join(nightwatchRoot, 'node_modules', '.bin', 'tsc'), [
-    'src/core/changeIntelligence/index.ts',
-    '--target', 'ES2022',
-    '--module', 'commonjs',
-    '--moduleResolution', 'node',
-    '--esModuleInterop',
-    '--skipLibCheck',
-    // rootDir is PINNED rather than inferred. tsc derives its own root from the
-    // common ancestor of every file it actually pulls in, so the emitted entry
-    // point MOVES whenever the entry module gains a transitive import outside
-    // its own directory. That is what silently broke this script: `baseline.ts`,
-    // `git.ts` and `selection.ts` import from `../campaign`, `../process` and
-    // `../identity`, which moved the inferred root to `src/core` and the entry
-    // to `<out>/changeIntelligence/index.js` while this file still imported
-    // `<out>/index.js`. Pinning the root to `src` makes the emitted layout a
-    // function of the source path alone, and an import from outside `src` now
-    // fails loudly instead of relocating the entry point.
-    '--rootDir', 'src',
-    '--outDir', compileRoot,
-  ]);
-  run(path.join(nightwatchRoot, 'node_modules', '.bin', 'tsc'), [
-    'src/core/source/siblingSource.ts',
-    '--target', 'ES2022',
-    '--module', 'commonjs',
-    '--moduleResolution', 'node',
-    '--esModuleInterop',
-    '--skipLibCheck',
-    '--rootDir', 'src',
-    '--outDir', compileRoot,
-  ]);
+  for (const entry of COMPILED_ENTRIES) {
+    // The exact same Node runtime drives the exact repository-pinned
+    // compiler; there is no PATH lookup and no shim.
+    run(process.execPath, [
+      ...admitted.toolchain.argv,
+      entry,
+      '--target', 'ES2022',
+      '--module', 'commonjs',
+      '--moduleResolution', 'node',
+      '--esModuleInterop',
+      '--skipLibCheck',
+      // rootDir is PINNED rather than inferred. tsc derives its own root from the
+      // common ancestor of every file it actually pulls in, so the emitted entry
+      // point MOVES whenever the entry module gains a transitive import outside
+      // its own directory. That is what silently broke this script: `baseline.ts`,
+      // `git.ts` and `selection.ts` import from `../campaign`, `../process` and
+      // `../identity`, which moved the inferred root to `src/core` and the entry
+      // to `<out>/changeIntelligence/index.js` while this file still imported
+      // `<out>/index.js`. Pinning the root to `src` makes the emitted layout a
+      // function of the source path alone, and an import from outside `src` now
+      // fails loudly instead of relocating the entry point.
+      '--rootDir', 'src',
+      '--outDir', compileRoot,
+    ]);
+  }
+}
+
+/**
+ * NW-AUD-009: the caller's exact schema validator for the shadow selection
+ * report. The publication boundary admits nothing this shape does not carry,
+ * before any filesystem change.
+ *
+ * @param {unknown} payload
+ */
+function validateShadowReport(payload) {
+  if (payload === null || typeof payload !== 'object' || Array.isArray(payload)) throw new Error('REPORT_NOT_AN_OBJECT');
+  const report = /** @type {Record<string, unknown>} */ (payload);
+  if (report.mode !== 'SHADOW') throw new Error('REPORT_MODE_INVALID');
+  if (report.freshness !== 'LOCAL_TRACKING_REF_ONLY') throw new Error('REPORT_FRESHNESS_INVALID');
+  if (typeof report.generatedAt !== 'string') throw new Error('REPORT_GENERATED_AT_INVALID');
+  if (typeof report.deploymentStatus !== 'string') throw new Error('REPORT_DEPLOYMENT_STATUS_INVALID');
+  if (report.changeset === null || typeof report.changeset !== 'object' || Array.isArray(report.changeset)) throw new Error('REPORT_CHANGESET_INVALID');
+  if (report.selection === null || typeof report.selection !== 'object' || Array.isArray(report.selection)) throw new Error('REPORT_SELECTION_INVALID');
+  if (!Array.isArray(report.reviewedRepositories)) throw new Error('REPORT_REPOSITORIES_INVALID');
+  if (report.execution === null || typeof report.execution !== 'object' || Array.isArray(report.execution)) throw new Error('REPORT_EXECUTION_INVALID');
+  const execution = /** @type {Record<string, unknown>} */ (report.execution);
+  // Shadow mode never invokes DEV; a report that claims otherwise is refused.
+  if (execution.invoked !== false) throw new Error('REPORT_EXECUTION_INVOKED_INVALID');
+}
+
+/**
+ * NW-AUD-009: publish the sanitized shadow report through the ONE governed
+ * local-report boundary — complete admission in memory, then same-directory
+ * exclusive staging and an atomic replace, so an observer sees the previous
+ * complete report or the new complete report, never a truncated intermediate,
+ * and a symlinked or non-regular destination is refused rather than followed.
+ *
+ * @param {Record<string, unknown>} report
+ * @returns {string} the published absolute path
+ */
+function publishReport(report) {
+  const { publishLocalReport } = loadTypeScriptModule('src/core/policy/localReportPublication.ts', { root: nightwatchRoot });
+  const published = publishLocalReport({
+    profile: 'CURRENT_REPLACE',
+    payload: report,
+    validate: validateShadowReport,
+    maxBytes: MAX_REPORT_BYTES,
+    destination: outputPath,
+    digest: (canonical) => `sha256:${crypto.createHash('sha256').update(canonical, 'utf8').digest('hex').slice(0, 24)}`,
+  });
+  if (!published.ok) throw new Error(`LOCAL_REPORT_PUBLICATION_FAILED:${published.failure}`);
+  return published.path;
 }
 
 /**
@@ -213,8 +283,7 @@ async function main() {
     })),
     execution: { invoked: false, reason: 'Shadow mode does not invoke DEV.' },
   };
-  fs.mkdirSync(path.dirname(outputPath), { recursive: true });
-  fs.writeFileSync(outputPath, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
+  publishReport(report);
   process.stdout.write(`${JSON.stringify({ outputPath, changesetId: changeset.changesetId, selectedJourneys: selection.selectedJourneys.map(/** @param {{ journeyId: string }} journey */ (journey) => journey.journeyId), priorityOrder: selection.priorityOrder, fallbackTriggered: selection.fallbackTriggered, dirtyFiles: changeset.dirtyFiles.length }, null, 2)}\n`);
 }
 

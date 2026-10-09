@@ -951,14 +951,16 @@ export class CampaignOrchestrator {
     const semanticCandidateRunIds = new Set(semanticCandidates.map((c) => c.observation.runId));
     const protocolObservations: TriageAnomalyObservation[] = this.observations.filter((o) => !semanticCandidateRunIds.has(o.runId));
     const semanticObservationsRaw = this.observations.filter((o) => semanticCandidateRunIds.has(o.runId));
-
-    const protocolClusters =
-      protocolObservations.length === 0
-        ? []
-        : suppressDuplicateClusters(clusterAnomalies(protocolObservations), 100).map((cluster) => {
-            const alias = this.clusterIdAliases.get(cluster.clusterId);
-            return alias === undefined ? cluster : { ...cluster, clusterId: alias };
-          });
+    // D-15 (M10 11.3): a failed semantic observation was SILENTLY DROPPED. The
+    // old guard wrapped only the object literal pushed below — a plain property
+    // spread that cannot throw — so the "fall back to the protocol bucket"
+    // comment described a branch no input could reach, and even if it had been
+    // reached the push happened AFTER `protocolClusters` was computed, so the
+    // observation left both paths and vanished from the campaign entirely. The
+    // derivation that can actually fail now runs INSIDE the guard, the fallback
+    // bucket is built after it, and every fallback is REPORTED as a Nightwatch
+    // internal defect on the morning brief instead of disappearing.
+    const semanticIdentityFailures: string[] = [];
 
     // Build semantic observations for Phase-12 identity
     const semanticObservations: import('../../oracles/semantic/cluster').SemanticObservation[] = [];
@@ -967,6 +969,20 @@ export class CampaignOrchestrator {
       if (cand === undefined || !hasValidSemanticEvidence(cand)) continue;
       const ev = cand.campaignSemanticEvidence!;
       try {
+        // The fallible step is the contract-identity derivation, not the
+        // literal: it is the same fail-closed validation
+        // clusterSemanticObservations performs, moved inside the guard so the
+        // fallback below is reachable at all.
+        semanticContractIdentityFromInvariantId({
+          expectationId: ev.expectationId,
+          targetId: ev.targetId,
+          invariantDefinitionId: ev.invariantDefinitionId,
+          sourceProvenance: {
+            repoId: ev.sourceRepoId,
+            derivationVersion: ev.sourceDerivationVersion,
+            evidenceDigest: ev.sourceEvidenceDigest,
+          },
+        });
         semanticObservations.push({
           runId: obs.runId,
           observedAt: obs.observedAt,
@@ -988,10 +1004,29 @@ export class CampaignOrchestrator {
           fingerprint: obs.fingerprint,
           reproduced: obs.reproduced,
         });
-      } catch {
-        // Fall back to protocol bucket for this observation if semantic identity cannot be established
+      } catch (error) {
+        // REPORT, then keep: the observation moves to the protocol bucket, so
+        // it is still clustered and still owned by the campaign rather than
+        // dropped, and the reason reaches
+        // CampaignMorningBrief.nightwatchInternalIssues.
+        const message = error instanceof Error ? error.message : String(error);
+        const code = message.split(':', 1)[0] ?? message;
+        semanticIdentityFailures.push(`NIGHTWATCH_INTERNAL_DEFECT:SEMANTIC_CLUSTER_IDENTITY_FALLBACK:${obs.runId}:${code}`);
         protocolObservations.push(obs);
       }
+    }
+    // The protocol bucket is clustered AFTER the fallback pushes, so an
+    // observation that lost its semantic identity is genuinely clustered through
+    // the historical protocol path instead of falling out of both.
+    const protocolClusters =
+      protocolObservations.length === 0
+        ? []
+        : suppressDuplicateClusters(clusterAnomalies(protocolObservations), 100).map((cluster) => {
+            const alias = this.clusterIdAliases.get(cluster.clusterId);
+            return alias === undefined ? cluster : { ...cluster, clusterId: alias };
+          });
+    for (const failure of semanticIdentityFailures) {
+      if (!this.nightwatchIssues.includes(failure)) this.nightwatchIssues.push(failure);
     }
     let semanticAnomalyClusters: AnomalyCluster[] = [];
     if (semanticObservations.length > 0) {
@@ -1039,8 +1074,9 @@ export class CampaignOrchestrator {
       });
     }
 
-    // Re-cluster any semantic observations that failed identity derivation via protocol fallback already handled above by not pushing;
-    // protocolClusters already computed from initial split, so merge.
+    // Semantic and protocol clusters are merged here. An observation that fell
+    // back to the protocol path (D-15) is already inside `protocolClusters`,
+    // which is why that bucket is built after the fallback loop.
     const clusters = [...protocolClusters, ...semanticAnomalyClusters].sort((a, b) => a.clusterId.localeCompare(b.clusterId));
     // Apply duplicate suppression cap globally (semantic runIds already bounded by clusterSemanticObservations, but keep limit)
     const capped = suppressDuplicateClusters(clusters as unknown as AnomalyCluster[], 100) as unknown as AnomalyCluster[];

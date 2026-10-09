@@ -25,6 +25,7 @@
 // No credentials, no customer data, no network.
 // ---------------------------------------------------------------------------
 
+import { stableCampaignJson } from '../../src/core/campaign/identity';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -35,7 +36,6 @@ import {
   gateBlockCandidateLifecycle,
   initialLifecycleRecord,
   isTerminalCandidateLifecycleState,
-  stableLifecycleJson,
   transitionCandidateLifecycle,
   validateCandidateLifecycleRecord,
   type CandidateLifecycleEvent,
@@ -264,7 +264,7 @@ test.describe('Phase 15P A05 — gate-failure routing proofs (G2)', () => {
       // Closing again changes nothing at all (same record, byte-identical).
       const reclosed = gateBlockCandidateLifecycle(closed, 'SAFETY_EVENT');
       expect(reclosed).toBe(closed);
-      expect(stableLifecycleJson(reclosed)).toBe(stableLifecycleJson(closed));
+      expect(stableCampaignJson(reclosed)).toBe(stableCampaignJson(closed));
     }
     for (const terminal of TERMINAL_STATES) {
       const record = driveTo('PROTOCOL_ONLY', terminal);
@@ -356,7 +356,7 @@ test.describe('Phase 15P A05 — serializer round-trips (G4)', () => {
     }
     expect(shapes.length).toBeGreaterThan(0);
     for (const record of shapes) {
-      const json = stableLifecycleJson(record);
+      const json = stableCampaignJson(record);
       const parsed = JSON.parse(json) as unknown;
       expect(() => validateCandidateLifecycleRecord(parsed), json).not.toThrow();
       expect(parsed).toEqual(record);
@@ -365,14 +365,14 @@ test.describe('Phase 15P A05 — serializer round-trips (G4)', () => {
       for (const key of [...Object.keys(record)].sort((a, b) => b.localeCompare(a))) {
         reordered[key] = (record as unknown as Record<string, unknown>)[key];
       }
-      expect(stableLifecycleJson(reordered)).toBe(json);
-      expect(stableLifecycleJson(record)).toBe(json);
+      expect(stableCampaignJson(reordered)).toBe(json);
+      expect(stableCampaignJson(record)).toBe(json);
     }
   });
 
   test('gate-blocked records serialize with their reason code and validate strictly', () => {
     const blocked = gateBlockCandidateLifecycle(driveTo('SEMANTIC', 'REPRODUCED'), 'CAMPAIGN_VERSION_DRIFT');
-    const parsed = JSON.parse(stableLifecycleJson(blocked)) as Record<string, unknown>;
+    const parsed = JSON.parse(stableCampaignJson(blocked)) as Record<string, unknown>;
     expect(parsed['lastReasonCode']).toBe('CAMPAIGN_VERSION_DRIFT');
     expect(parsed['state']).toBe('UNRESOLVED');
     expect(() => validateCandidateLifecycleRecord(parsed)).not.toThrow();
@@ -394,12 +394,12 @@ test.describe('Phase 15P A05 — determinism (G5)', () => {
         const run: string[] = [];
         for (const variant of VARIANTS) {
           let record = initialLifecycleRecord(variant);
-          run.push(stableLifecycleJson(record));
+          run.push(stableCampaignJson(record));
           for (const event of path) {
             record = event === 'GATE_BLOCK'
               ? gateBlockCandidateLifecycle(record, 'PRIVACY_BLOCKED')
               : transitionCandidateLifecycle(record, event);
-            run.push(stableLifecycleJson(record));
+            run.push(stableCampaignJson(record));
           }
         }
         baseline.push(run);
@@ -411,7 +411,7 @@ test.describe('Phase 15P A05 — determinism (G5)', () => {
   });
 
   test('variants behave identically mechanically (variant-stripped serialization equal)', () => {
-    const stripVariant = (record: CandidateLifecycleRecord): string => stableLifecycleJson({
+    const stripVariant = (record: CandidateLifecycleRecord): string => stableCampaignJson({
       lifecycleVersion: record.lifecycleVersion,
       state: record.state,
       transitionCount: record.transitionCount,

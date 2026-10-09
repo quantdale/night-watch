@@ -57,12 +57,15 @@ export async function waitForNetworkObservationSettle(opts: {
       return true;
     }
     if (now() >= deadline) {
-      // Debug: log settlement failure details for real DEV diagnosis
-      try {
-        // eslint-disable-next-line no-console
-        const pendingUrlCount = opts.network.pendingUrlCount?.() ?? null;
-        console.log(`[settlement-timeout] pendingHandlers=${opts.network.pendingResponseHandlers()} active=${opts.network.activeRequests()} activeJourney=${activeJourneyRequests} pendingUrlCount=${pendingUrlCount ?? 'unknown'} lastActivityDelta=${now() - opts.network.lastActivityAt()} quietMs=${quietMs}`);
-      } catch {}
+      // D-16 (M10 11.3): a leftover debug console.log used to write the
+      // settlement counters to stdout on every timeout. It was the only
+      // console output left in the observer cone — it wrote to the operator's
+      // terminal instead of the run's evidence, and it could not be turned
+      // off, asserted, or read back. The wait still reports the SAME facts
+      // through its return value (`false`), and the caller records the
+      // timeout as a run event; the count-only diagnostic stays available to
+      // the caller through the injected `pendingUrlCount` seam rather than
+      // being printed here.
       return false;
     }
     await sleep(POLL_MS);

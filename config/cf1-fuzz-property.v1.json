@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "nightwatch.cf1-fuzz-property.v1",
+  "definitionName": "CF-1 fuzz/property census (A-16): the closed subject set, the per-suite floors and the recorded case total",
+  "note": "The ledger entry carried forward from nightwatch-continuous-deep-hardening-v1 task 3.2 reads 'Fuzz/property >=20 cases PASS'. It was recorded once at 12/12 fuzz cases in fuzzProperty.test.ts — below its own threshold — and never re-measured, so the campaign had no honest answer to 'is CF-1 met?'. This declaration is the re-measurement: the closed subject set, what each suite owes, and the total measured on the recorded date. The ratchet only turns one way — REMOVING a case fails the census, adding one does not — and the judgement is pure in src/core/validation/cf1FuzzProperty.ts, driven by tests/unit/cf1FuzzPropertyCensus.test.ts which recounts the declared suites.",
+  "minimumCases": 20,
+  "recordedTotalCases": 40,
+  "recordedOn": "2026-10-09",
+  "subjects": [
+    {
+      "file": "tests/unit/fuzzProperty.test.ts",
+      "kind": "FUZZ",
+      "subject": "Canonical serializer and prefixed-digest property suite: permutation stability at every nesting depth, idempotence, array order and multiplicity, digest shape, malformed/circular rejection without value echo, unicode and look-alike keys, numeric edge values, prefix-injection resistance, and a deterministic generated corpus.",
+      "minimumCases": 20,
+      "recordedCases": 22,
+      "cf1EntrySubject": true,
+      "recordedNote": "Recorded at 12 cases under nightwatch-continuous-deep-hardening-v1; seven real property cases were added under A-16 (M10 11.3) so the suite alone meets the CF-1 entry threshold."
+    },
+    {
+      "file": "tests/unit/frontierContractFuzz.test.ts",
+      "kind": "FUZZ",
+      "subject": "Frontier contract fuzz: review binding and lifecycle refusal paths, relationship and recurrence classification, provenance confidence caps and the C-12 rehearsal boundary, each asserting a sanitized failure code with no input value echoed.",
+      "minimumCases": 10,
+      "recordedCases": 11
+    },
+    {
+      "file": "tests/unit/alphausHandoffProperties.test.ts",
+      "kind": "PROPERTY",
+      "subject": "AH-1 seeded property tests (deterministic mulberry32 streams, recorded seeds) over the Alphaus handoff projection and the C-12 readiness evaluator, 64 generated cases per seed.",
+      "minimumCases": 5,
+      "recordedCases": 7,
+      "recordedGeneratedCasesPerSeed": 64
+    }
+  ]
+}

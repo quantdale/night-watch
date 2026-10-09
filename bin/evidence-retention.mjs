@@ -10,6 +10,15 @@
 //
 // It reads only inside the repository, never contacts a network, never touches
 // $HOME/.nightwatch private stores, and never inspects a sibling repository.
+//
+// NW-AUD-005: an APPLY is bracketed by the crash-consistent retention journal
+// (`src/core/evidenceRetention/retentionJournal.ts`), which is the ONLY
+// authority for a deletion receipt. A durable PREPARED intent is published
+// BEFORE the first removal, a TERMINAL record is published and RE-VERIFIED
+// afterwards, and only a verified terminal record may be read as a receipt.
+// A journal failure is a categorical non-success with a non-zero exit, never a
+// best-effort write: an interrupted apply can no longer leave a receipt whose
+// last word is `STARTED` with an empty deleted set.
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -375,11 +384,16 @@ function readGitHead(root) {
 }
 
 /**
- * Write the apply receipt under the ignored `.nightwatch/retention/` root, so
+ * Write the operator receipt under the ignored `.nightwatch/retention/` root, so
  * a deletion is recorded outside the evidence store and cannot itself become a
  * future retention candidate. Returns the repository-relative path, or null
- * when the receipt could not be written — in which case the caller refuses to
- * delete anything.
+ * when the receipt could not be written.
+ *
+ * NW-AUD-005: this is the operator-facing rendering of an operation the
+ * crash-consistent journal has already made durable. It runs only after a
+ * verified TERMINAL record exists, so the file this writes can never be the
+ * last word about a half-finished deletion, and a failure here is a
+ * categorical non-success for the caller rather than a best-effort write.
  *
  * @param {string} root
  * @param {{ readonly appliedAt: string } & Record<string, unknown>} receipt
@@ -469,6 +483,8 @@ function execute(options) {
 
   const appliedAt = new Date().toISOString();
   const gitHead = readGitHead(root);
+  /** @type {Map<string, number | null>} */
+  const candidateBytes = new Map(base.candidates.map((name) => [name, plan.entries.find((candidate) => candidate.name === name)?.bytes ?? null]));
   const receiptBase = {
     schemaVersion: RECEIPT_SCHEMA_VERSION,
     retentionSchemaVersion: SCHEMA_VERSION,
@@ -485,23 +501,91 @@ function execute(options) {
     refusalSetDigest: computeRefusalSetDigest(plan),
     confirmationToken,
   };
-  // The receipt is written BEFORE the first deletion. If it cannot be written,
-  // nothing is removed: an unrecorded deletion is refused, not performed.
-  const recordPath = writeReceipt(root, { ...receiptBase, status: 'STARTED', deletedSet: [], deletedBytes: 0 });
-  if (recordPath === null) {
-    return { ...base, mode: 'APPLY', result: 'BLOCKED', code: 'RECEIPT_WRITE_FAILED', deletedSet: [], deletedBytes: 0, removedCount: 0 };
+  if (base.candidates.length === 0) {
+    // No candidate means no deletion can occur, so no journal operation is
+    // opened (the journal refuses an operation with no candidates). The
+    // receipt records the honest PRESERVED outcome, and a receipt that cannot
+    // be written is still a categorical refusal rather than a silent success.
+    const recordPath = writeReceipt(root, { ...receiptBase, status: 'PRESERVED', removedCount: 0, deletedSet: [], deletedBytes: 0 });
+    if (recordPath === null) {
+      return { ...base, mode: 'APPLY', result: 'BLOCKED', code: 'RECEIPT_WRITE_FAILED', deletedSet: [], deletedBytes: 0, removedCount: 0 };
+    }
+    return {
+      ...base,
+      mode: 'APPLY',
+      removalResults: [],
+      removedCount: 0,
+      deletedSet: [],
+      deletedBytes: 0,
+      appliedAt,
+      gitHead,
+      recordPath,
+      receiptFinalized: true,
+      result: 'PRESERVED',
+    };
+  }
+
+  // NW-AUD-005: the journal, not this file, owns the deletion record. The
+  // PREPARED intent is durable BEFORE the first removal; if it cannot be
+  // written, nothing is removed — an unrecorded deletion is refused, not
+  // performed.
+  const journal = retention.retentionJournalStore(path.resolve(root, RECEIPT_DIRECTORY));
+  const operationId = `retention-${crypto.randomBytes(12).toString('hex')}`;
+  const prepared = retention.prepareRetentionOperation(journal, {
+    operationId,
+    appliedAt,
+    gitHead,
+    keepRecent: options.keepRecent,
+    // The durable record binds a DIGEST of the reviewed plan's confirmation
+    // token, never the operator-facing token itself.
+    planConfirmationDigest: `sha256:${crypto.createHash('sha256').update(confirmationToken, 'utf8').digest('hex').slice(0, 24)}`,
+    refusalSetDigest: computeRefusalSetDigest(plan),
+    entryCount: plan.entries.length,
+    refusedCount: plan.refusedCount,
+    candidateCount: plan.candidateCount,
+    reclaimableBytes: plan.reclaimableBytes,
+    referenceScanComplete: plan.referenceScanComplete,
+    candidates: base.candidates.map((name) => ({ name, bytes: candidateBytes.get(name) ?? null })),
+  });
+  if (!prepared.ok) {
+    return { ...base, mode: 'APPLY', result: 'BLOCKED', code: 'RETENTION_JOURNAL_PREPARE_FAILED', deletedSet: [], deletedBytes: 0, removedCount: 0 };
   }
 
   const removalResults = base.candidates.map((name) => removeCandidate(artifactRoot, name));
   const deletedSet = removalResults
     .filter((entry) => entry.result === 'REMOVED')
-    .map((entry) => ({ name: entry.name, bytes: plan.entries.find((candidate) => candidate.name === entry.name)?.bytes ?? null }));
+    .map((entry) => ({ name: entry.name, bytes: candidateBytes.get(entry.name) ?? null }));
   const removed = deletedSet.length;
   const deletedBytes = deletedSet.every((entry) => entry.bytes !== null)
     ? deletedSet.reduce((total, entry) => total + (entry.bytes ?? 0), 0)
     : null;
   const result = removed === 0 ? 'PRESERVED' : removed === removalResults.length ? 'APPLIED' : 'PARTIAL';
-  const receiptFinalized = writeReceipt(root, { ...receiptBase, status: result, removedCount: removed, deletedSet, deletedBytes }) !== null;
+  const targets = removalResults.map((entry) => ({
+    name: entry.name,
+    result: entry.result,
+    reasonCode: entry.reasonCode,
+    bytes: candidateBytes.get(entry.name) ?? null,
+  }));
+  // The terminal record is published no-replace and then RE-READ and compared
+  // byte-for-byte. A deletion that happened without a verified terminal record
+  // is a categorical non-success, never an APPLIED claim over an unproven
+  // receipt.
+  const finalized = retention.finalizeRetentionOperation(journal, operationId, targets);
+  if (!finalized.ok) {
+    return { ...base, mode: 'APPLY', result: 'BLOCKED', code: 'RETENTION_JOURNAL_FINALIZE_FAILED', removalResults, removedCount: removed, deletedSet, deletedBytes, appliedAt, gitHead, recordPath: null, receiptFinalized: false };
+  }
+  // Only a verified TERMINAL record may be read as a deletion receipt; a
+  // non-terminal record is refused with RETENTION_JOURNAL_OPERATION_INCOMPLETE.
+  let terminal;
+  try {
+    terminal = retention.assertTerminalRetentionRecord(retention.readRetentionOperation(journal, operationId));
+  } catch {
+    return { ...base, mode: 'APPLY', result: 'BLOCKED', code: 'RETENTION_JOURNAL_OPERATION_INCOMPLETE', removalResults, removedCount: removed, deletedSet, deletedBytes, appliedAt, gitHead, recordPath: null, receiptFinalized: false };
+  }
+  const recordPath = writeReceipt(root, { ...receiptBase, status: terminal.status, removedCount: terminal.removedCount, deletedSet: terminal.deletedSet, deletedBytes: terminal.deletedBytes });
+  if (recordPath === null) {
+    return { ...base, mode: 'APPLY', result: 'BLOCKED', code: 'RECEIPT_WRITE_FAILED', removalResults, removedCount: removed, deletedSet, deletedBytes, appliedAt, gitHead, receiptFinalized: false };
+  }
   return {
     ...base,
     mode: 'APPLY',
@@ -512,7 +596,7 @@ function execute(options) {
     appliedAt,
     gitHead,
     recordPath,
-    receiptFinalized,
+    receiptFinalized: true,
     // Reclaiming nothing is a valid, honest outcome, not a failure.
     result,
   };

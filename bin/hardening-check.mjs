@@ -28,6 +28,7 @@ import {
   evaluateReferenceGraph,
   readReferenceGraphConfig,
   referenceGraph,
+  reportUnusedExportMeasurement,
 } from './lib/hardening/rules/source-integrity.mjs';
 import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
 
@@ -50,7 +51,7 @@ const CLI_METADATA = {
     { name: '--probe-campaign', shape: 'boolean', summary: 'run the rule mutation campaign (every probe must be DETECTED)' },
     { name: '--mutation-harness', shape: 'boolean', summary: 'run the behavioural mutation harness on a scratch copy (every registered mutant must be DETECTED)' },
     { name: '--mutant', shape: 'string', summary: 'with --mutation-harness: run one mutant id only' },
-    { name: '--report-reachability', shape: 'boolean', summary: 'report source reachability findings without failing' },
+    { name: '--report-reachability', shape: 'boolean', summary: 'report source reachability and unused-export findings without failing' },
     { name: '--report-documentation-currency', shape: 'boolean', summary: 'report documentation-currency findings without failing' },
   ],
   json: false,
@@ -103,6 +104,10 @@ if (cli.flags['--list-rules'] === true) {
   console.log(`[reachability] files=${graph.files.length} parsed=${graph.parsed} edges=${graph.edges.length}`);
   for (const finding of findings) console.log(`[reachability] ${finding.code} ${finding.detail}`);
   console.log(`[reachability] findings=${findings.length} (reporting mode; nothing failed)`);
+  // D-17: the unused-export ratchet is reported under its own prefix so the
+  // `[reachability] findings=` count the project-state checker parses is
+  // unchanged, while the burn-down still has its measurement.
+  for (const line of reportUnusedExportMeasurement(config).lines) console.log(line);
   process.exit(0);
 } else if (cli.flags['--report-documentation-currency'] === true) {
   // Reporting mode: the same three rules that run blocking in the gate, with

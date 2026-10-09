@@ -241,6 +241,26 @@ const MUTATIONS: readonly Mutation[] = [
     to: "import type { ControlCenterReviewAuthority } from '../authorities/reviewWriteAuthority';\nimport { reviewBindingFor } from '../authorities/reviewBinding';\nconst secondBinding = (dossier: never) => reviewBindingFor(dossier, { campaignId: null });",
     expect: /collector derives a review binding of its own/,
   },
+  {
+    // X-11 (M10 11.3): the campaign-state subtree gains a documented retention
+    // scope. The mutation removes it, so an owner-local directory can exist with
+    // no recorded scope — the defect the ratchet closes.
+    name: 'M-21 remove the documented retention scope of the campaign-state directory',
+    file: 'src/core/policy/privateArtifacts.ts',
+    from: "  /**\n   * `campaign-state/` — the campaign orchestrator's own state (M6 7.4):\n   * manifests, checkpoints, retry and replay ledgers, morning briefs. A\n   * checkpoint is what a resumed campaign continues from, so an old one is not\n   * thereby evidence-free: it is the record of a run that happened and of the\n   * work that run proved. Only an owner apply may remove one, and only after\n   * the reference scan has proven nothing cites it.\n   */\n  'campaign-state': {\n    autoDelete: false,\n    removalAuthority: 'OWNER_EXPLICIT_APPLY',\n    refusalOrder: PRIVATE_RETENTION_REFUSAL_ORDER,\n    removalGranularity: 'WHOLE_DOCUMENT',\n    unmeasurableRefused: true,\n  },\n",
+    to: "",
+    expect: /retention scope table no longer covers the campaign-state directory/,
+  },
+  {
+    // The other direction of the same invariant: a scope that exists but
+    // permits automatic removal is the failure mode a future sweep would
+    // exploit, and occurrence-completeness must catch it.
+    name: 'M-21b let a retention scope permit automatic removal',
+    file: 'src/core/policy/privateArtifacts.ts',
+    from: "  'campaign-state': {\n    autoDelete: false,",
+    to: "  'campaign-state': {\n    autoDelete: true,",
+    expect: /a private retention scope declares autoDelete: true/,
+  },
 ];
 
 /** Bytes of every mutated file, captured before the first mutation runs. */
