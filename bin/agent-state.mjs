@@ -106,8 +106,18 @@ const REQUIRED_STATE_HEADINGS = [
 // absence. A declared session worktree resolves only against the live set;
 // `NONE` is legal and means canonical-only work, which requires STATE.md
 // `Branch: main`.
+/**
+ * @param {string} activeText the full ACTIVE_TASK.md text
+ * @param {string} taskId the active task's own identity
+ * @param {string | undefined} stateBranch STATE.md's recorded `Branch`, when present
+ * @param {string[] | null} [liveWorktreeBranches] live `git worktree list` branches, or null when the list is unreadable
+ * @param {string | null} [gateEnvironment] the gate environment this checker runs under
+ * @returns {{ errors: string[], warnings: string[], declaredCampaign: string | undefined, declaredWorktree: string | undefined }}
+ */
 export function inspectActiveTaskRouting(activeText, taskId, stateBranch, liveWorktreeBranches = null, gateEnvironment = process.env['NIGHTWATCH_GATE_ENVIRONMENT'] ?? null) {
+  /** @type {string[]} */
   const errors = [];
+  /** @type {string[]} */
   const warnings = [];
   // Deliberately not parseMarkdownSections: that helper drops fenced lines,
   // and the routing directives belong inside the authority fence they govern.
@@ -208,6 +218,11 @@ export function inspectActiveTaskRouting(activeText, taskId, stateBranch, liveWo
   return { errors, warnings, declaredCampaign, declaredWorktree };
 }
 
+/**
+ * @param {string} text
+ * @param {string} heading
+ * @returns {string | null} the raw section body, or null when the heading is absent
+ */
 function extractSectionRaw(text, heading) {
   const lines = String(text ?? '').split(/\r?\n/);
   const start = lines.findIndex((line) => line.trim() === heading);
@@ -217,6 +232,12 @@ function extractSectionRaw(text, heading) {
   return (end === -1 ? rest : rest.slice(0, end)).join('\n');
 }
 
+/**
+ * @param {string} body the routing-block text to scan
+ * @param {string} name the directive name, e.g. `CAMPAIGN`
+ * @param {string[]} errors collector for a duplicate-directive diagnostic
+ * @returns {string | undefined} the single declared value, or undefined when absent
+ */
 function matchSingleDirective(body, name, errors) {
   const pattern = new RegExp(`^[ \\t]*${name}:[ \\t]*(\\S.*?)[ \\t]*$`, 'gm');
   const values = [...body.matchAll(pattern)].map((match) => match[1]);
@@ -227,6 +248,10 @@ function matchSingleDirective(body, name, errors) {
   return values[0];
 }
 
+/**
+ * @param {readonly string[]} argv
+ * @returns {string} the repository root to inspect
+ */
 function parseArgs(argv) {
   const rootIndex = argv.indexOf('--root');
   if (rootIndex !== -1) {
@@ -239,12 +264,22 @@ function parseArgs(argv) {
   return process.cwd();
 }
 
+/**
+ * @param {{ code: string, path: string | null, line: number | null, detail: string }} diagnostic
+ * @returns {string} the one-line rendering of one protocol diagnostic
+ */
 function formatProtocolDiagnostic(diagnostic) {
   const location = diagnostic.path === null || diagnostic.path === undefined ? '' : diagnostic.path;
   const line = diagnostic.line === null || diagnostic.line === undefined ? '' : `:${diagnostic.line}`;
   return `${diagnostic.code}${location ? `: ${location}${line}` : ''}${diagnostic.detail ? ` — ${diagnostic.detail}` : ''}`;
 }
 
+/**
+ * @param {string} root
+ * @param {string} relativePath
+ * @param {string[]} errors collector for the unreadable-file diagnostic
+ * @returns {string | null} the file's text, or null when it cannot be read
+ */
 function readFile(root, relativePath, errors) {
   const file = path.join(root, relativePath);
   try {
@@ -255,6 +290,11 @@ function readFile(root, relativePath, errors) {
   }
 }
 
+/**
+ * @param {string} text
+ * @param {string} [scope] `identity`, `preamble`, or the whole document
+ * @returns {Map<string, string>} the first value of each canonical key in scope
+ */
 function parseKeyValueFile(text, scope = 'all') {
   const parsed = parseKeyValuesWithLocations(text);
   let minExclusive = 0;
@@ -271,6 +311,7 @@ function parseKeyValueFile(text, scope = 'all') {
     const starts = [...parseMarkdownSections(text).sections.values()].map((section) => section.start);
     maxInclusive = starts.length > 0 ? Math.min(...starts) - 1 : Number.POSITIVE_INFINITY;
   }
+  /** @type {Map<string, string>} */
   const fields = new Map();
   for (const record of parsed.records) {
     if (record.line <= minExclusive || record.line > maxInclusive) continue;
@@ -279,6 +320,12 @@ function parseKeyValueFile(text, scope = 'all') {
   return fields;
 }
 
+/**
+ * @param {string} text
+ * @param {readonly string[]} headings the required heading lines (or the H1 marker `# `)
+ * @param {string} label the document label used in diagnostics
+ * @param {string[]} errors collector for missing headings
+ */
 function requireHeadings(text, headings, label, errors) {
   for (const heading of headings) {
     if (heading === '# ') {
@@ -289,6 +336,11 @@ function requireHeadings(text, headings, label, errors) {
   }
 }
 
+/**
+ * @param {string | undefined} value
+ * @param {string} label
+ * @param {string[]} errors collector for the SHA-shape diagnostic
+ */
 function checkSha(value, label, errors) {
   if (!/^[0-9a-f]{40}$/i.test(value ?? '')) {
     errors.push(`${label} must be a 40-character git SHA`);
@@ -310,13 +362,31 @@ function checkSha(value, label, errors) {
 // only cost time, never change a verdict.
 // ---------------------------------------------------------------------------
 
-let cachedGitGraph; // undefined = not yet attempted; null = unusable
-let cachedGitGraphRoot; // the cache is valid only for this repository root
+/**
+ * The in-memory commit graph: every object's type, every commit's parents and
+ * every tag's target, all keyed by lowercase SHA.
+ * @typedef {{ types: Map<string, string>, parents: Map<string, string[]>, tagTargets: Map<string, string> }} GitGraph
+ */
 
+/** @type {GitGraph | null | undefined} undefined = not yet attempted; null = unusable */
+let cachedGitGraph;
+/** @type {string | undefined} the cache is valid only for this repository root */
+let cachedGitGraphRoot;
+
+/**
+ * @param {unknown} value
+ * @returns {string} the lowercase SHA, or '' when the value is not a string
+ */
 function normalizeSha(value) {
   return typeof value === 'string' ? value.toLowerCase() : '';
 }
 
+/**
+ * @param {string} root
+ * @param {string[]} args
+ * @param {Partial<{ input: string }>} [extraOptions]
+ * @returns {import('node:child_process').SpawnSyncReturns<string>}
+ */
 function gitSpawn(root, args, extraOptions = {}) {
   return spawnSync('git', args, {
     cwd: root,
@@ -328,7 +398,11 @@ function gitSpawn(root, args, extraOptions = {}) {
   });
 }
 
-/** Peel `<sha>^{commit}` in memory: follow tag objects until a commit. */
+/**
+ * @param {GitGraph} graph
+ * @param {unknown} value
+ * @returns {string | null} the peeled commit SHA, or null when it resolves to none
+ */
 function graphResolveCommit(graph, value) {
   let current = normalizeSha(value);
   for (let hops = 0; hops <= 16; hops += 1) {
@@ -351,26 +425,35 @@ function graphResolveCommit(graph, value) {
  * (a request for `0abc…` is answered as `abc…`). Throws on malformed streams
  * so the caller falls back to spawned queries. Returns maps of commit
  * parents and tag targets keyed by the requested (lowercase) SHAs.
+ * @param {string} output the raw `git cat-file --batch` stream
+ * @param {readonly string[]} requested the SHAs requested, in order
+ * @returns {{ parents: Map<string, string[]>, tagTargets: Map<string, string> }}
  */
 function parseCatFileBatch(output, requested) {
+  /** @type {Map<string, string[]>} */
   const parents = new Map();
+  /** @type {Map<string, string>} */
   const tagTargets = new Map();
   let position = 0;
   for (let index = 0; index < requested.length; index += 1) {
     const requestedSha = requested[index];
+    if (requestedSha === undefined) continue;
     const headerEnd = output.indexOf('\n', position);
     if (headerEnd === -1) throw new Error('CAT_FILE_BATCH_TRUNCATED');
     const header = output.slice(position, headerEnd);
     const fields = header.split(' ');
+    const objectType = fields[1];
+    const objectSize = fields[2];
     if (fields.length === 2 && fields[1] === 'missing') {
       position = headerEnd + 1;
       continue;
     }
-    if (fields.length !== 3 || !CAT_FILE_TYPES.has(fields[1]) || !Number.isInteger(Number(fields[2])) || Number(fields[2]) < 0) {
+    if (fields.length !== 3 || objectType === undefined || objectSize === undefined
+      || !CAT_FILE_TYPES.has(objectType) || !Number.isInteger(Number(objectSize)) || Number(objectSize) < 0) {
       throw new Error('CAT_FILE_BATCH_MALFORMED_HEADER');
     }
-    const type = fields[1];
-    const size = Number(fields[2]);
+    const type = objectType;
+    const size = Number(objectSize);
     const contentStart = headerEnd + 1;
     const contentEnd = contentStart + size;
     if (output.length < contentEnd + 1) throw new Error('CAT_FILE_BATCH_TRUNCATED');
@@ -379,6 +462,7 @@ function parseCatFileBatch(output, requested) {
     if (type === 'commit') {
       const headerBlockEnd = content.indexOf('\n\n');
       const headerBlock = content.slice(0, headerBlockEnd === -1 ? content.length : headerBlockEnd);
+      /** @type {string[]} */
       const commitParents = [];
       for (const line of headerBlock.split('\n')) {
         if (line.startsWith('parent ')) {
@@ -398,12 +482,18 @@ function parseCatFileBatch(output, requested) {
 
 const CAT_FILE_TYPES = new Set(['commit', 'tag', 'tree', 'blob']);
 
+/**
+ * @param {string} root
+ * @returns {GitGraph | null} the loaded graph, or null when it cannot be built
+ */
 function loadGitGraph(root) {
   if (cachedGitGraph !== undefined && cachedGitGraphRoot === root) return cachedGitGraph;
   try {
     const census = gitSpawn(root, ['cat-file', '--batch-all-objects', '--batch-check=%(objectname) %(objecttype)']);
     if (census.status !== 0 || typeof census.stdout !== 'string') throw new Error('GIT_OBJECT_CENSUS_UNAVAILABLE');
+    /** @type {Map<string, string>} */
     const types = new Map();
+    /** @type {string[]} */
     const wanted = [];
     for (const line of census.stdout.split('\n')) {
       const separator = line.indexOf(' ');
@@ -426,10 +516,17 @@ function loadGitGraph(root) {
   return cachedGitGraph;
 }
 
+/** @param {string} root @param {string} sha @returns {boolean} */
 function isCommitSpawned(root, sha) {
   return commandOutput(root, ['cat-file', '-e', `${sha}^{commit}`]) !== null;
 }
 
+/**
+ * @param {string} root
+ * @param {string} ancestor
+ * @param {string} descendant
+ * @returns {boolean}
+ */
 function isAncestorSpawned(root, ancestor, descendant) {
   const result = spawnSync('git', ['merge-base', '--is-ancestor', ancestor, descendant], {
     cwd: root,
@@ -441,7 +538,12 @@ function isAncestorSpawned(root, ancestor, descendant) {
   return result.status === 0;
 }
 
-/** True iff `graph` contains a path from `descendant` back to `ancestor`. */
+/**
+ * @param {GitGraph} graph
+ * @param {string} ancestor
+ * @param {string} descendant
+ * @returns {boolean} true iff `graph` contains a path from `descendant` back to `ancestor`
+ */
 function graphIsAncestor(graph, ancestor, descendant) {
   const start = graphResolveCommit(graph, descendant);
   const target = graphResolveCommit(graph, ancestor);
@@ -451,6 +553,7 @@ function graphIsAncestor(graph, ancestor, descendant) {
   const visited = new Set(queue);
   while (queue.length > 0) {
     const commit = queue.pop();
+    if (commit === undefined) break;
     for (const parent of graph.parents.get(commit) ?? []) {
       if (parent === target) return true;
       if (!visited.has(parent)) {
@@ -462,18 +565,31 @@ function graphIsAncestor(graph, ancestor, descendant) {
   return false;
 }
 
+/** @param {string} root @param {string} sha @returns {boolean} */
 function isCommit(root, sha) {
   const graph = loadGitGraph(root);
   if (graph === null) return isCommitSpawned(root, sha);
   return graphResolveCommit(graph, sha) !== null;
 }
 
+/**
+ * @param {string} root
+ * @param {string} ancestor
+ * @param {string} descendant
+ * @returns {boolean}
+ */
 function isAncestor(root, ancestor, descendant) {
   const graph = loadGitGraph(root);
   if (graph === null) return isAncestorSpawned(root, ancestor, descendant);
   return graphIsAncestor(graph, ancestor, descendant);
 }
 
+/**
+ * @param {string} root
+ * @param {string} from
+ * @param {string} to
+ * @returns {string[] | null} the sorted changed paths, or null when the diff is unreadable
+ */
 function committedChangedPaths(root, from, to) {
   const output = commandOutput(root, ['diff', '--name-only', '--no-renames', `${from}..${to}`]);
   if (output === null) return null;
@@ -488,6 +604,11 @@ function committedChangedPaths(root, from, to) {
  * attribute a path to the claimed checkpoint without choosing a parent.
  */
 /** Spawned `rev-list --parents -n 1` parent inspection (fallback path). */
+/**
+ * @param {string} root
+ * @param {string} commit
+ * @returns {{ status: 'UNKNOWN', paths: null, reason: string } | { status: 'PARENTS_KNOWN', parents: string[] }}
+ */
 function commitParentsSpawned(root, commit) {
   const parentLine = commandOutput(root, ['rev-list', '--parents', '-n', '1', commit]);
   if (parentLine === null) return { status: 'UNKNOWN', paths: null, reason: 'unable to inspect commit parents' };
@@ -496,6 +617,17 @@ function commitParentsSpawned(root, commit) {
   return { status: 'PARENTS_KNOWN', parents: parentFields.slice(1) };
 }
 
+/**
+ * One commit's directly-changed paths. `paths` is null whenever the commit's
+ * role cannot be proven, and the status then names why.
+ * @typedef {{ status: 'UNKNOWN' | 'AMBIGUOUS', paths: null, reason: string } | { status: 'KNOWN', paths: string[], parents: string[], reason: string }} CommitPathsInspection
+ */
+
+/**
+ * @param {string} root
+ * @param {string} commit
+ * @returns {CommitPathsInspection}
+ */
 function committedPathsForCommit(root, commit) {
   if (!isCommit(root, commit)) return { status: 'UNKNOWN', paths: null, reason: 'commit does not identify a repository commit' };
   // Parent identity comes from the loaded graph when available; `rev-list
@@ -504,12 +636,15 @@ function committedPathsForCommit(root, commit) {
   // exactly equivalent for any commit that passed the isCommit gate above.
   const graph = loadGitGraph(root);
   const graphParents = graph?.parents.get(normalizeSha(commit));
+  /** @type {string[]} */
   let parents;
   if (graphParents !== undefined) {
     parents = [...graphParents];
   } else {
     const inspected = commitParentsSpawned(root, commit);
-    if (inspected.status !== 'PARENTS_KNOWN') return inspected;
+    // The only other answer is the UNKNOWN form, which is what the caller's
+    // declared union describes.
+    if (inspected.status !== 'PARENTS_KNOWN') return /** @type {{ status: 'UNKNOWN', paths: null, reason: string }} */ (inspected);
     parents = inspected.parents;
   }
   if (parents.length > 1) return { status: 'AMBIGUOUS', paths: null, reason: 'merge commit role attribution is ambiguous' };
@@ -523,6 +658,10 @@ function committedPathsForCommit(root, commit) {
   };
 }
 
+/**
+ * @param {string} root
+ * @param {string} commit
+ */
 function classifyCommitRole(root, commit) {
   const inspected = committedPathsForCommit(root, commit);
   if (inspected.status !== 'KNOWN') return { ...inspected, role: 'AMBIGUOUS' };
@@ -541,10 +680,24 @@ function classifyCommitRole(root, commit) {
   };
 }
 
+/**
+ * @param {Map<string, string>} stateFields
+ * @param {string} upperName
+ * @param {string} legacyName
+ * @returns {string | undefined} the first value recorded under either key
+ */
 function continuityValue(stateFields, upperName, legacyName) {
   return stateFields.get(upperName) ?? stateFields.get(legacyName);
 }
 
+/**
+ * @param {string} root
+ * @param {string | undefined} value
+ * @param {string} label
+ * @param {string | null} head
+ * @param {string[]} errors
+ * @returns {boolean}
+ */
 function validateAnchor(root, value, label, head, errors) {
   if (!value) {
     errors.push(`${label} is required`);
@@ -565,6 +718,13 @@ function validateAnchor(root, value, label, head, errors) {
   return true;
 }
 
+/**
+ * @param {Map<string, string>} stateFields
+ * @param {string} root
+ * @param {string | null} head
+ * @param {string[]} errors
+ * @param {string[]} warnings
+ */
 function checkContinuity(stateFields, root, head, errors, warnings) {
   const validated = continuityValue(stateFields, 'LAST_VALIDATED_IMPLEMENTATION_SHA', 'Last validated implementation SHA');
   const substantive = continuityValue(stateFields, 'LAST_SUBSTANTIVE_CHECKPOINT_SHA', 'Last substantive checkpoint SHA') ?? validated;
@@ -578,12 +738,16 @@ function checkContinuity(stateFields, root, head, errors, warnings) {
     warnings.push('LEGACY_CONTINUITY: LAST_SUBSTANTIVE_CHECKPOINT_SHA inferred from the validated implementation anchor');
   }
 
-  const validSha = (value) => /^[0-9a-f]{40}$/i.test(value ?? '') && isCommit(root, value);
+  /**
+   * @param {string | undefined} value
+   * @returns {value is string}
+   */
+  const validSha = (value) => typeof value === 'string' && /^[0-9a-f]{40}$/i.test(value ?? '') && isCommit(root, value);
   if (validSha(validated) && validSha(starting) && !isAncestor(root, validated, starting) && !isAncestor(root, starting, validated)) {
     errors.push(`INVALID_IMPLEMENTATION_LINEAGE: validated implementation ${validated} and STARTING_SHA ${starting} are unrelated commits`);
   }
 
-  if (validatedOk && substantiveOk && validated !== substantive) {
+  if (validatedOk && substantiveOk && validated !== undefined && substantive !== undefined && validated !== substantive) {
     const rolePaths = isAncestor(root, substantive, validated) ? committedChangedPaths(root, substantive, validated) : null;
     const roleViolations = rolePaths === null ? null : checkpointRoleViolations(root, rolePaths, { kind: 'range', from: substantive, to: validated, verifyBindingReceipt: bindingReceiptVerifier(root) });
     const docsOnly = roleViolations !== null && roleViolations.length === 0;
@@ -594,7 +758,7 @@ function checkContinuity(stateFields, root, head, errors, warnings) {
     );
   }
 
-  if (validatedOk && substantiveOk && startingOk && validated === substantive) {
+  if (validatedOk && substantiveOk && startingOk && validated !== undefined && starting !== undefined && validated === substantive) {
     // An anchor carried from before this task is historical implementation
     // truth. Only a different descendant of STARTING_SHA is a new claim whose
     // own commit role must be proven.
@@ -614,7 +778,7 @@ function checkContinuity(stateFields, root, head, errors, warnings) {
 
   if (documentation) {
     const documentationOk = validateAnchor(root, documentation, 'INVALID_DOCUMENTATION_CHECKPOINT: STATE LAST_DOCUMENTATION_CHECKPOINT_SHA', head, errors);
-    if (documentationOk && substantiveOk) {
+    if (documentationOk && substantiveOk && substantive !== undefined) {
       if (!isAncestor(root, substantive, documentation)) {
         errors.push(`INVALID_DOCUMENTATION_CHECKPOINT: ${documentation} is before or unrelated to substantive checkpoint ${substantive}`);
       } else {
@@ -676,6 +840,7 @@ const TASK_GROUP_TASK_RE = /^- \[( |x|X)\]\s+([A-C]\d*|\d+)\.(\d+[a-z]?)\s/;
  * @returns {number}
  */
 export function compareTaskGroupKeys(left, right) {
+  /** @param {string} key */
   const parse = (key) => {
     const match = /^([A-Z]*)(\d*)$/.exec(key);
     return { letters: match?.[1] ?? key, digits: match?.[2] === '' || match === null ? -1 : Number(match[2]) };
@@ -700,11 +865,12 @@ export function deriveTaskGroups(tasksText) {
   for (const line of String(tasksText ?? '').split(/\r?\n/)) {
     const task = TASK_GROUP_TASK_RE.exec(line);
     if (task === null) continue;
-    const group = task[2];
+    const group = /** @type {string} */ (task[2]);
     if (!groups.has(group)) groups.set(group, { total: 0, ticked: 0, open: 0, openIds: [] });
-    const record = groups.get(group);
+    // The map entry was just created or already exists, so the lookup cannot miss.
+    const record = /** @type {{ total: number, ticked: number, open: number, openIds: string[] }} */ (groups.get(group));
     record.total += 1;
-    if (task[1].toLowerCase() === 'x') record.ticked += 1;
+    if (/** @type {string} */ (task[1]).toLowerCase() === 'x') record.ticked += 1;
     else {
       record.open += 1;
       record.openIds.push(`${task[2]}.${task[3]}`);
@@ -714,7 +880,7 @@ export function deriveTaskGroups(tasksText) {
 }
 
 /**
- * @param {string} value
+ * @param {string | undefined} value
  * @returns {string[]}
  */
 function parseGroupList(value) {
@@ -728,6 +894,7 @@ function parseGroupList(value) {
  * @param {string} stateText
  * @param {string[]} errors
  * @param {string[]} warnings
+ * @param {string | null} [activeTextForLedger]
  * @returns {void}
  */
 export function checkTaskGroupLedger(root, taskId, stateText, errors, warnings, activeTextForLedger = null) {
@@ -840,9 +1007,14 @@ export function checkTaskGroupLedger(root, taskId, stateText, errors, warnings, 
   // R5-17 / review-5 task A9.4: every statement form counts ("N/M declared",
   // "N of M conforming", "conformance is now N/M"), in any letter case and
   // inside parentheticals, and the PLAN is compared as well as ACTIVE_TASK.
+  /**
+   * @param {string | null | undefined} text
+   * @returns {string[]} every `N/M` progress figure the text states, in order
+   */
   const progressIn = (text) => [...String(text ?? '').matchAll(/(\d{1,3})\s*(?:\/|\s+of\s+)\s*(\d{1,3})\s+(?:declared|conforming|conformance)\b|\bconformance\s+(?:is\s+)?(?:now\s+)?(?:at\s+)?(\d{1,3})\/(\d{1,3})/gi)]
     .map((match) => `${match[1] ?? match[3]}/${match[2] ?? match[4]}`);
   const planPath = path.join(root, '.agent', 'tasks', taskId, 'PLAN.md');
+  /** @type {Array<[string, string[]]>} */
   const documents = [
     ['ACTIVE_TASK', progressIn(activeTextForLedger)],
     ['PLAN', progressIn(fs.existsSync(planPath) ? fs.readFileSync(planPath, 'utf8') : '')],
@@ -861,7 +1033,9 @@ export function checkTaskGroupLedger(root, taskId, stateText, errors, warnings, 
 // checkContinuity runs once per task record; the remote head cannot change
 // within a single read-only checker process, so the first answer per root is
 // cached.
+/** @type {Map<string, string | null>} */
 const cachedOriginMainHeads = new Map();
+/** @param {string} root @returns {string | null} */
 function liveOriginMainHead(root) {
   if (!cachedOriginMainHeads.has(root)) {
     cachedOriginMainHeads.set(root, commandOutput(root, ['rev-parse', 'origin/main'])?.trim() ?? null);
@@ -882,9 +1056,15 @@ const SECRET_PATTERNS = [
   },
 ];
 
+/**
+ * @param {string} root
+ * @param {readonly string[]} relativePaths
+ * @param {string[]} errors
+ */
 function scanForSecrets(root, relativePaths, errors) {
   for (const relativePath of relativePaths) {
     const file = path.join(root, relativePath);
+    /** @type {string} */
     let text;
     try {
       text = fs.readFileSync(file, 'utf8');
@@ -900,6 +1080,7 @@ function scanForSecrets(root, relativePaths, errors) {
   }
 }
 
+/** @param {string} root @param {string[]} errors @returns {string | null} */
 function gitHead(root, errors) {
   const result = spawnSync('git', ['rev-parse', 'HEAD'], {
     cwd: root,
@@ -921,6 +1102,11 @@ function gitHead(root, errors) {
 export { APPROVED_CHECKPOINT_PATHS, isApprovedCheckpointPath };
 
 
+/**
+ * @param {string} root
+ * @param {string[]} args
+ * @returns {string | null} the command's stdout, or null when it failed
+ */
 function commandOutput(root, args) {
   const result = spawnSync('git', args, {
     cwd: root,
@@ -933,6 +1119,12 @@ function commandOutput(root, args) {
   return result.stdout ?? '';
 }
 
+/**
+ * @param {string} root
+ * @param {string} recordedSha
+ * @param {string} head
+ * @returns {string[]} every path changed since `recordedSha`, committed or not
+ */
 function changedPaths(root, recordedSha, head) {
   const paths = new Set();
   const committed = commandOutput(root, ['diff', '--name-only', '--no-renames', `${recordedSha}..${head}`]);
@@ -948,7 +1140,7 @@ function changedPaths(root, recordedSha, head) {
   if (status !== null) {
     const records = status.split('\0').filter(Boolean);
     for (let index = 0; index < records.length; index += 1) {
-      const record = records[index];
+      const record = /** @type {string} */ (records[index]);
       const code = record.slice(0, 2);
       const file = record.slice(3);
       if (file) paths.add(file);
@@ -965,8 +1157,18 @@ function changedPaths(root, recordedSha, head) {
 }
 
 /**
+ * One recorded-baseline classification. `disallowed` is present only for a
+ * STALE_IMPLEMENTATION_BASELINE result, where it names the offending paths.
+ * @typedef {{ status: 'STALE' | 'SYNCED' | 'CHECKPOINT_ADVANCE', classification: string, head: string | null, paths: string[], reason: string } & Partial<{ disallowed: string[] }>} BaselineClassification
+ */
+
+/**
  * Classify the recorded implementation baseline against committed and
  * uncommitted repository changes. This function never rewrites task state.
+ * @param {string} root
+ * @param {string} recordedSha
+ * @param {string | null} [suppliedHead]
+ * @returns {BaselineClassification}
  */
 export function classifySha(root, recordedSha, suppliedHead = null) {
   const head = suppliedHead ?? commandOutput(root, ['rev-parse', 'HEAD'])?.trim() ?? null;
@@ -1013,6 +1215,15 @@ export function classifySha(root, recordedSha, suppliedHead = null) {
  *   `.agent/tasks`).
  * Read-only: never writes, never follows symlinks.
  */
+/**
+ * @param {string} root
+ * @param {string | null} head
+ * @param {boolean} auditMode
+ * @param {string[]} errors
+ * @param {string[]} warnings
+ * @param {string | null} skipDirectory
+ * @returns {{ total: number, strictV2: number, legacyV1: number, legacyDeclared: number, legacyUndeclared: number, strictErrors: number, legacyWarnings: number }}
+ */
 function auditTaskHistory(root, head, auditMode, errors, warnings, skipDirectory) {
   const stats = { total: 0, strictV2: 0, legacyV1: 0, legacyDeclared: 0, legacyUndeclared: 0, strictErrors: 0, legacyWarnings: 0 };
   const tasksRoot = path.join(root, '.agent', 'tasks');
@@ -1039,7 +1250,7 @@ function auditTaskHistory(root, head, auditMode, errors, warnings, skipDirectory
     }
     if (!lstat.isDirectory()) continue;
     stats.total += 1;
-    const readTaskFile = (file) => {
+    const readTaskFile = (/** @type {string} */ file) => {
       try {
         return fs.readFileSync(path.join(dirPath, file), 'utf8');
       } catch {
@@ -1078,7 +1289,9 @@ function auditTaskHistory(root, head, auditMode, errors, warnings, skipDirectory
       );
       taskErrors.push(...result.errors.map(formatProtocolDiagnostic));
       if (head) {
+        /** @type {string[]} */
         const continuityErrors = [];
+        /** @type {string[]} */
         const continuityWarnings = [];
         checkContinuity(stateFields, root, head, continuityErrors, continuityWarnings);
         taskErrors.push(...continuityErrors);
@@ -1166,8 +1379,15 @@ function auditTaskHistory(root, head, auditMode, errors, warnings, skipDirectory
   return stats;
 }
 
+/**
+ * @param {string} root
+ * @param {boolean} [auditMode]
+ * @returns {{ errors: string[], warnings: string[] }}
+ */
 export function validate(root, auditMode = false) {
+  /** @type {string[]} */
   const errors = [];
+  /** @type {string[]} */
   const warnings = [];
   const activeText = readFile(root, '.agent/ACTIVE_TASK.md', errors);
   readFile(root, 'AGENTS.md', errors);
@@ -1179,6 +1399,7 @@ export function validate(root, auditMode = false) {
   {
     const recordPath = path.join(root, 'config', 'ci-block-record.v1.json');
     let recordExists = false;
+    /** @type {unknown} */
     let blockRecord = null;
     try {
       recordExists = fs.existsSync(recordPath);
@@ -1349,7 +1570,7 @@ export function validate(root, auditMode = false) {
 
   // F-01 completion-ledger truth: a terminal task must not leave unchecked
   // non-declared boxes, and change/task orphans are named rather than skipped.
-  const ledger = inspectLedgerAgreement(root, (sha, relativePath) => {
+  const ledger = inspectLedgerAgreement(root, (/** @param {string} sha */ sha, /** @param {string} relativePath */ relativePath) => {
     const shown = gitSpawn(root, ['show', `${sha}:${relativePath}`]);
     return shown.status === 0 && typeof shown.stdout === 'string' ? shown.stdout : null;
   });
@@ -1359,7 +1580,7 @@ export function validate(root, auditMode = false) {
 
   // VA-01 / corrections task 5.2: stable task IDs against each change's
   // bootstrap commit — an ID present at bootstrap may never vanish.
-  const idLedger = inspectTaskIdLedger(root, (sha, relativePath) => {
+  const idLedger = inspectTaskIdLedger(root, (/** @param {string} sha */ sha, /** @param {string} relativePath */ relativePath) => {
     const shown = gitSpawn(root, ['show', `${sha}:${relativePath}`]);
     return shown.status === 0 && typeof shown.stdout === 'string' ? shown.stdout : null;
   });
@@ -1370,14 +1591,14 @@ export function validate(root, auditMode = false) {
   // R5-11 / review-5 A9.1: every commit on main from the claim era onward lies in a recorded
   // claim window (a SESSION or a canonical MAINTENANCE claim) in the append-only journal.
   const claimJournal = inspectClaimJournal({
-    readText: (relative) => {
+    readText: (/** @param {string} relative */ relative) => {
       try {
         return fs.readFileSync(path.join(root, relative), 'utf8');
       } catch {
         return null;
       }
     },
-    git: (args) => {
+    git: (/** @param {string[]} args */ args) => {
       const result = gitSpawn(root, args);
       return { status: result.status, stdout: typeof result.stdout === 'string' ? result.stdout : '' };
     },
@@ -1413,9 +1634,15 @@ export function validate(root, auditMode = false) {
   try {
     const record = JSON.parse(fs.readFileSync(path.join(root, 'config', 'dependency-currency.v1.json'), 'utf8'));
     const today = new Date().toISOString().slice(0, 10);
+    /**
+     * @param {string} id
+     * @param {string | undefined} reviewDate
+     * @param {number | undefined} intervalDays
+     * @param {string} condition
+     */
     const reportDue = (id, reviewDate, intervalDays, condition) => {
-      if (typeof reviewDate !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(reviewDate) || !Number.isInteger(intervalDays)) return;
-      const due = new Date(Date.UTC(...reviewDate.split('-').map((part) => Number(part))));
+      if (typeof reviewDate !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(reviewDate) || intervalDays === undefined || !Number.isInteger(intervalDays)) return;
+      const due = new Date(Date.UTC(.../** @type {[number, number, number]} */ (reviewDate.split('-').map((part) => Number(part)))));
       due.setUTCDate(due.getUTCDate() + intervalDays);
       const dueIso = due.toISOString().slice(0, 10);
       if (dueIso < today) {
@@ -1450,6 +1677,7 @@ export function validate(root, auditMode = false) {
   return { errors: [...new Set(errors)], warnings };
 }
 
+/** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
 const CLI_METADATA = {
   schemaVersion: OPERATOR_CLI_SCHEMA,
   name: 'agent-state',

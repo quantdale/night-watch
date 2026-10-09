@@ -73,10 +73,12 @@ export const SESSION_COMMAND_STATUS_COMPATIBILITY = Object.freeze({
   remove: Object.freeze(['IN_PROGRESS', 'BLOCKED', 'COMPLETE']),
 });
 
+/** @param {unknown} value */
 export function isSessionId(value) {
   return typeof value === 'string' && SESSION_ID_PATTERN.test(value);
 }
 
+/** @param {unknown} value */
 export function isFullSha(value) {
   return typeof value === 'string' && FULL_SHA_PATTERN.test(value);
 }
@@ -100,11 +102,16 @@ export function parseExpectation(value, kind) {
   return { ok: true, value };
 }
 
+/**
+ * @param {unknown} value
+ * @returns {string}
+ */
 function stableStringify(value) {
   if (Array.isArray(value)) return `[${value.map((entry) => stableStringify(entry)).join(',')}]`;
   if (value !== null && typeof value === 'object') {
-    const keys = Object.keys(value).sort();
-    return `{${keys.map((key) => `${JSON.stringify(key)}:${stableStringify(value[key])}`).join(',')}}`;
+    const record = /** @type {Record<string, unknown>} */ (value);
+    const keys = Object.keys(record).sort();
+    return `{${keys.map((key) => `${JSON.stringify(key)}:${stableStringify(record[key])}`).join(',')}}`;
   }
   return JSON.stringify(value);
 }
@@ -121,7 +128,7 @@ export function recordRevision(record) {
 
 /**
  * Admit the explicit expectations against the current record and HEAD.
- * @param {{ authority: { expectSession: string, expectHead: boolean }, record: Record<string, any> | null, head: string | null, expectSession: string | null, expectHead: string | null, adopting: boolean }} input
+ * @param {{ authority: { expectSession: string, expectHead: boolean }, record: { sessionId: string, taskId: string, role: string } | null, head: string | null, expectSession: string | null, expectHead: string | null, adopting: boolean }} input
  */
 export function admitExpectations(input) {
   const { authority, record, head, expectSession, expectHead, adopting } = input;
@@ -153,6 +160,7 @@ export function admitExpectations(input) {
 }
 
 /** Parse the ACTIVE_TASK routing block's declared session worktree. */
+/** @param {string | null} activeTaskText */
 export function parseActiveTaskSessionWorktree(activeTaskText) {
   if (typeof activeTaskText !== 'string' || activeTaskText === '') return null;
   const lines = activeTaskText.split(/\r?\n/);
@@ -163,13 +171,16 @@ export function parseActiveTaskSessionWorktree(activeTaskText) {
   const body = (end === -1 ? rest : rest.slice(0, end)).join('\n');
   const matches = [...body.matchAll(/^[ \t]*SESSION WORKTREE:[ \t]*(\S.*?)[ \t]*$/gm)];
   if (matches.length !== 1) return null;
-  return matches[0][1];
+  const match = matches[0];
+  if (match === undefined) return null;
+  return match[1] ?? null;
 }
 
 /**
  * Parse the ACTIVE_TASK identity preamble. Deliberately narrow: only
  * Task ID / Status / Task directory before the first section are authority.
  */
+/** @param {string | null} activeTaskText */
 export function parseActiveTaskIdentity(activeTaskText) {
   if (typeof activeTaskText !== 'string' || activeTaskText === '') return null;
   const preamble = activeTaskText.split(/\r?\n/).reduce((accumulator, line) => {
@@ -177,7 +188,8 @@ export function parseActiveTaskIdentity(activeTaskText) {
     if (/^##\s+/.test(line)) return { lines: accumulator.lines, done: true };
     accumulator.lines.push(line);
     return accumulator;
-  }, { lines: [], done: false }).lines.join('\n');
+  }, /** @type {{ lines: string[], done: boolean }} */ ({ lines: [], done: false })).lines.join('\n');
+  /** @param {string} key */
   const value = (key) => {
     const match = new RegExp(`^[ \\t]*${key}:[ \\t]*(.+?)[ \\t]*$`, 'm').exec(preamble);
     return match === null ? null : match[1];
@@ -186,6 +198,7 @@ export function parseActiveTaskIdentity(activeTaskText) {
 }
 
 /** Parse the STATE.md Identity fields the session branch binds to. */
+/** @param {string | null} stateText */
 export function parseStateIdentity(stateText) {
   if (typeof stateText !== 'string' || stateText === '') return null;
   const sectionMatch = /^## Identity[ \t]*$/m.exec(stateText);
@@ -193,6 +206,7 @@ export function parseStateIdentity(stateText) {
   const rest = stateText.slice(sectionMatch.index + sectionMatch[0].length);
   const end = rest.search(/^##\s+/m);
   const body = end === -1 ? rest : rest.slice(0, end);
+  /** @param {string} key */
   const value = (key) => {
     const match = new RegExp(`^[ \\t]*${key}:[ \\t]*(.+?)[ \\t]*$`, 'm').exec(body);
     return match === null ? null : match[1];
@@ -206,7 +220,7 @@ export function parseStateIdentity(stateText) {
  * STATE branch/status must all agree with the current worktree.
  * `canonicalBranch` is the policy's canonical branch (default `main`): the
  * terminal-closeout relaxation is bound to it (X-08).
- * @param {{ command: string, record: Record<string, any>, worktreeName: string, currentBranch: string, activeTaskText: string | null, stateText: string | null, normalizeStatus: (value: unknown) => string | null, canonicalBranch?: string }} input
+ * @param {{ command: string, record: { sessionId: string, taskId: string, role: string }, worktreeName: string, currentBranch: string, activeTaskText: string | null, stateText: string | null, normalizeStatus: (value: unknown) => string | null, canonicalBranch: string | undefined }} input
  */
 export function admitContinuity(input) {
   const { command, record, worktreeName, currentBranch, activeTaskText, stateText, normalizeStatus, canonicalBranch } = input;
@@ -240,7 +254,11 @@ export function admitContinuity(input) {
   if (status === null) {
     return { ok: false, code: 'SESSION_CONTINUITY_MISMATCH', detail: 'the task status is absent or unrecognized' };
   }
-  const compatible = SESSION_COMMAND_STATUS_COMPATIBILITY[command] ?? null;
+  // The status-compatibility set is declared for the four lifecycle commands
+  // that bind a task status; every other command constrains no status.
+  const compatible = command === 'release' || command === 'reconcile' || command === 'integrate' || command === 'remove'
+    ? SESSION_COMMAND_STATUS_COMPATIBILITY[command]
+    : null;
   if (compatible !== null && !compatible.includes(status)) {
     return { ok: false, code: 'SESSION_CONTINUITY_MISMATCH', detail: `task status ${status} is not compatible with ${command}` };
   }
@@ -263,7 +281,7 @@ export function admitContinuity(input) {
 
 /**
  * Admit the invoking checkout class for a command.
- * @param {{ authority: { checkout: string }, isLinked: boolean, worktreeCount: number }} input
+ * @param {{ authority: { checkout: string }, isLinked: boolean, worktreeCount: number, role: string }} input
  */
 export function admitCheckoutRole(input) {
   const { authority, isLinked, worktreeCount, role } = input;
@@ -286,6 +304,7 @@ export function admitCheckoutRole(input) {
 /**
  * Admit the script/current-checkout relationship. `scriptRealPath` must
  * resolve inside the exact non-symlink authority worktree.
+ * @param {{ currentTopRealPath: string, scriptRealPath: string, cwdRealPath: string }} input
  */
 export function admitInvocationBinding(input) {
   const { currentTopRealPath, scriptRealPath, cwdRealPath } = input;
@@ -298,6 +317,7 @@ export function admitInvocationBinding(input) {
   if (typeof cwdRealPath !== 'string' || cwdRealPath === '') {
     return { ok: false, code: 'SESSION_INVOCATION_UNRESOLVED', detail: 'the process current directory could not be resolved' };
   }
+  /** @param {string} candidate */
   const inside = (candidate) => candidate === currentTopRealPath || candidate.startsWith(`${currentTopRealPath}/`);
   if (!inside(scriptRealPath)) {
     return { ok: false, code: 'SESSION_SCRIPT_CHECKOUT_MISMATCH', detail: 'the executing session CLI belongs to a different checkout' };
@@ -313,12 +333,12 @@ export function admitInvocationBinding(input) {
  * provably stale only when its boot identity differs from the current boot or
  * its recorded process is not alive. The exact lock identity must be supplied
  * by the operator and must still match what was inspected.
- * @param {{ lock: Record<string, any> | null, lockState: string, currentBootDigest: string, processAlive: (pid: number) => boolean, expectedSessionId: string | null, expectedOperationId: string | null }} input
+ * @param {{ lock: { sessionId: string, operationId: string, bootDigest: string, pid: number | undefined } | null, lockState: string, currentBootDigest: string, processAlive: (pid: number) => boolean, expectedSessionId: string | null, expectedOperationId: string | null }} input
  */
 export function admitLockRecovery(input) {
   const { lock, lockState, currentBootDigest, processAlive, expectedSessionId, expectedOperationId } = input;
   if (lockState === 'ABSENT') return { ok: true, stale: false, reason: 'NO_LOCK' };
-  if (lockState !== 'PRESENT') {
+  if (lockState !== 'PRESENT' || lock === null) {
     return { ok: false, code: 'SESSION_RECOVER_REFUSED', detail: `the transition lock is ${lockState}; owner inspection is required` };
   }
   if (isSessionId(expectedSessionId) === false || lock.sessionId !== expectedSessionId) {

@@ -27,6 +27,7 @@ import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const MAX_EXPORT_RECORDS = 10_000;
 
+/** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
 const CLI_METADATA = {
   schemaVersion: OPERATOR_CLI_SCHEMA,
   name: 'schema-lifecycle',
@@ -53,10 +54,31 @@ const CLI_METADATA = {
   artifacts: ['owner-chosen export path outside the repository (export command only)'],
 };
 
+/**
+ * Load one runtime TypeScript module. The literal module path is kept as a type
+ * parameter constrained to the loader's module map, so that map remains the
+ * type authority for what each path exports, exactly as at a direct call site.
+ *
+ * @template {keyof import('./lib/typescript-runtime-loader.mjs').TypeScriptRuntimeLoaderModuleMap} File
+ * @param {File} file
+ * @returns {import('./lib/typescript-runtime-loader.mjs').TypeScriptRuntimeLoaderModuleMap[File]}
+ */
 function loadTypeScriptModule(file) {
-  return loadRuntimeTypeScriptModule(file, { root: ROOT });
+  return /** @type {import('./lib/typescript-runtime-loader.mjs').TypeScriptRuntimeLoaderModuleMap[File]} */ (loadRuntimeTypeScriptModule(file, { root: ROOT }));
 }
 
+/**
+ * @param {unknown} value
+ * @returns {value is Record<string, unknown>}
+ */
+function isRecord(value) {
+  return value !== null && typeof value === 'object';
+}
+
+/**
+ * @param {readonly string[]} argv
+ * @returns {{ command: string, json: boolean, store: string, out: string | null, root: string | null, schema: string | null, from: number | null, to: number | null }}
+ */
 function parseArgs(argv) {
   let command = 'check';
   let json = false;
@@ -110,10 +132,16 @@ function parseArgs(argv) {
   return { command, json, store, out, root, schema, from, to };
 }
 
+/**
+ * @param {string} message
+ */
 function status(message) {
   process.stdout.write(`${message}\n`);
 }
 
+/**
+ * @param {boolean} json
+ */
 function runCheck(json) {
   const lifecycle = loadTypeScriptModule('src/core/schemaLifecycle/index.ts');
   const result = lifecycle.runSchemaLifecycleCheck({ root: ROOT });
@@ -129,16 +157,25 @@ function runCheck(json) {
   if (!result.judgement.ok) process.exitCode = 1;
 }
 
+/**
+ * @param {typeof import('../src/core/policy/privateArtifacts')} policy
+ * @param {string | null} override
+ * @returns {string}
+ */
 function reviewStoreRoot(policy, override) {
   return override ?? policy.privateArtifactRoot(undefined, 'reviews');
 }
 
+/**
+ * @param {{ out: string | null, root: string | null, json: boolean }} args
+ */
 function runExport(args) {
   if (args.out === null) throw new Error('USAGE_OUT_REQUIRED');
   const lifecycle = loadTypeScriptModule('src/core/schemaLifecycle/index.ts');
   const policy = loadTypeScriptModule('src/core/policy/privateArtifacts.ts');
   const redactionModule = loadTypeScriptModule('src/core/safety/redaction.ts');
   const root = reviewStoreRoot(policy, args.root);
+  /** @type {import('node:fs').Dirent[]} */
   let names;
   try {
     names = fs.readdirSync(root, { withFileTypes: true });
@@ -168,12 +205,16 @@ function runExport(args) {
   if (args.json) process.stdout.write(`${JSON.stringify({ schemaVersion: exported.schemaVersion, recordCount: exported.recordCount, truncated: exported.truncated, destination: path.basename(written) }, null, 2)}\n`);
 }
 
+/**
+ * @param {{ schema: string | null, from: number | null, to: number | null, root: string | null, json: boolean }} args
+ */
 function runBumpReport(args) {
   if (args.schema === null || args.from === null || args.to === null) throw new Error('USAGE_BUMP_REPORT_REQUIRES_SCHEMA_FROM_TO');
   const lifecycle = loadTypeScriptModule('src/core/schemaLifecycle/index.ts');
   const policy = loadTypeScriptModule('src/core/policy/privateArtifacts.ts');
   const declaration = lifecycle.SCHEMA_FAMILIES.find((family) => family.family === args.schema);
   if (declaration === undefined) throw new Error('USAGE_SCHEMA_UNKNOWN');
+  /** @type {import('../src/core/schemaLifecycle/check').StoreCountProbe[]} */
   const probes = [];
   if (declaration.store === 'REVIEW_STORE') {
     const reviewsRoot = reviewStoreRoot(policy, args.root);
@@ -183,7 +224,7 @@ function runBumpReport(args) {
         location: '<owner-local review store>',
         root: reviewsRoot,
         fileNamePrefix: 'review.',
-        selectSchemaVersion: (value) => (value !== null && typeof value === 'object' && typeof value.schemaVersion === 'string' ? value.schemaVersion : null),
+        selectSchemaVersion: /** @param {unknown} value */ (value) => (isRecord(value) && typeof value.schemaVersion === 'string' ? value.schemaVersion : null),
       });
     }
   } else if (declaration.store === 'AGENT_RECORDS') {
@@ -194,15 +235,15 @@ function runBumpReport(args) {
         location: '<owner-local agent campaign store>',
         root: campaignsRoot,
         fileNameSuffix: '.checkpoint.json',
-        selectSchemaVersion: (value) => {
-          if (value === null || typeof value !== 'object') return null;
+        selectSchemaVersion: /** @param {unknown} value */ (value) => {
+          if (!isRecord(value)) return null;
           // Some versioned contracts live inside the checkpoint document
           // rather than at its top level; count the version the family uses.
           if (declaration.family === 'nightwatch.agent-budget') {
             const state = value.state;
-            const budget = state !== null && typeof state === 'object' ? state.budget : null;
-            const budgetPolicy = budget !== null && typeof budget === 'object' ? budget.policy : null;
-            return budgetPolicy !== null && typeof budgetPolicy === 'object' && typeof budgetPolicy.schemaVersion === 'string' ? budgetPolicy.schemaVersion : null;
+            const budget = isRecord(state) ? state.budget : null;
+            const budgetPolicy = isRecord(budget) ? budget.policy : null;
+            return isRecord(budgetPolicy) && typeof budgetPolicy.schemaVersion === 'string' ? budgetPolicy.schemaVersion : null;
           }
           return typeof value.schemaVersion === 'string' ? value.schemaVersion : null;
         },
@@ -216,10 +257,10 @@ function runBumpReport(args) {
         location: '<owner-local campaign store>',
         root: findingsRoot,
         fileNameSuffix: '.checkpoint.json',
-        selectSchemaVersion: (value) => {
-          if (value === null || typeof value !== 'object') return null;
+        selectSchemaVersion: /** @param {unknown} value */ (value) => {
+          if (!isRecord(value)) return null;
           const checkpoint = value.checkpoint;
-          return checkpoint !== null && typeof checkpoint === 'object' && typeof checkpoint.schemaVersion === 'string' ? checkpoint.schemaVersion : null;
+          return isRecord(checkpoint) && typeof checkpoint.schemaVersion === 'string' ? checkpoint.schemaVersion : null;
         },
       });
     }

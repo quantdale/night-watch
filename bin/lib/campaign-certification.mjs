@@ -16,6 +16,7 @@
  */
 
 /** Lane manifest path → the REQUIRED gate group whose command executes it. */
+/** @type {Readonly<Record<string, string>>} */
 export const LANE_GATE_COMMANDS = Object.freeze({
   'config/synthetic-campaign.v1.json': 'SYNTHETIC_CAMPAIGN',
   'config/semantic-compatibility.v1.json': 'SEMANTIC_COMPATIBILITY',
@@ -29,25 +30,27 @@ const DEFAULT_CAMPAIGN_TASK_PATTERN = '-(c|r)[0-9]+[a-z]*-v[0-9]+$';
  * Collect every suite path a lane manifest causes a gate group to execute.
  * The two authoritative manifests carry different shapes, so both are read.
  *
- * @param {any} manifest
+ * @param {unknown} manifest
  * @returns {string[]}
  */
 export function laneSuites(manifest) {
   if (manifest === null || typeof manifest !== 'object') return [];
+  const raw = /** @type {Record<string, unknown>} */ (manifest);
+  /** @type {string[]} */
   const suites = [];
-  for (const entry of Array.isArray(manifest.phaseSuites) ? manifest.phaseSuites : []) {
+  for (const entry of Array.isArray(raw.phaseSuites) ? raw.phaseSuites : []) {
     for (const file of Array.isArray(entry?.files) ? entry.files : []) suites.push(file);
   }
-  for (const file of Array.isArray(manifest.supportFiles) ? manifest.supportFiles : []) suites.push(file);
-  for (const file of Array.isArray(manifest.files) ? manifest.files : []) suites.push(file);
+  for (const file of Array.isArray(raw.supportFiles) ? raw.supportFiles : []) suites.push(file);
+  for (const file of Array.isArray(raw.files) ? raw.files : []) suites.push(file);
   return suites;
 }
 
 /**
  * @typedef {object} CampaignCertificationInput
- * @property {any} registry            parsed `config/campaign-certification.v1.json`
- * @property {any} gate                parsed `config/quality-gate.v1.json`
- * @property {Map<string, any>} lanes  lane manifest path → parsed manifest (absent key = unreadable)
+ * @property {unknown} registry            parsed `config/campaign-certification.v1.json`
+ * @property {unknown} gate                parsed `config/quality-gate.v1.json`
+ * @property {ReadonlyMap<string, unknown>} lanes  lane manifest path → parsed manifest (absent key = unreadable)
  * @property {string[]} campaignTasks  campaign task directory names discovered in the ledger
  * @property {(suite: string) => boolean} suiteExists
  */
@@ -60,6 +63,7 @@ export function laneSuites(manifest) {
  * @returns {string[]}
  */
 export function validateCampaignCertification(input) {
+  /** @type {string[]} */
   const errors = [];
   const fail = (/** @type {string} */ message) => { errors.push(message); };
   const { registry, gate, lanes, campaignTasks, suiteExists } = input;
@@ -68,15 +72,16 @@ export function validateCampaignCertification(input) {
     fail('the campaign certification registry must be a JSON object');
     return errors;
   }
-  if (registry.schemaVersion !== CAMPAIGN_CERTIFICATION_SCHEMA_VERSION) {
+  const registryRecord = /** @type {Record<string, unknown>} */ (registry);
+  if (registryRecord.schemaVersion !== CAMPAIGN_CERTIFICATION_SCHEMA_VERSION) {
     fail(`the campaign certification registry must declare schemaVersion ${CAMPAIGN_CERTIFICATION_SCHEMA_VERSION}`);
     return errors;
   }
-  if (!Array.isArray(registry.lanes) || registry.lanes.length === 0) {
+  if (!Array.isArray(registryRecord.lanes) || registryRecord.lanes.length === 0) {
     fail('the campaign certification registry must declare a non-empty lanes array');
     return errors;
   }
-  if (!Array.isArray(registry.campaigns) || registry.campaigns.length === 0) {
+  if (!Array.isArray(registryRecord.campaigns) || registryRecord.campaigns.length === 0) {
     fail('the campaign certification registry must declare a non-empty campaigns array');
     return errors;
   }
@@ -84,13 +89,14 @@ export function validateCampaignCertification(input) {
   // A lane counts only if a REQUIRED gate group executes it. This is read from
   // the gate definition rather than taken on the registry's word, so the
   // registry cannot authorise its own lanes.
+  const gateRecord = /** @type {Record<string, unknown>} */ (gate ?? {});
   const requiredCommands = new Set(
-    (Array.isArray(gate?.groups) ? gate.groups : [])
+    (Array.isArray(gateRecord.groups) ? gateRecord.groups : [])
       .filter((group) => group?.required === true)
       .map((group) => group?.commandKey),
   );
   const registered = new Set();
-  for (const lane of registry.lanes) {
+  for (const lane of registryRecord.lanes) {
     const command = LANE_GATE_COMMANDS[lane];
     if (!command) {
       fail(`campaign certification lane ${lane} is not an authoritative gate manifest`);
@@ -110,7 +116,7 @@ export function validateCampaignCertification(input) {
   let pattern;
   try {
     pattern = new RegExp(
-      typeof registry.campaignTaskPattern === 'string' ? registry.campaignTaskPattern : DEFAULT_CAMPAIGN_TASK_PATTERN,
+      typeof registryRecord.campaignTaskPattern === 'string' ? registryRecord.campaignTaskPattern : DEFAULT_CAMPAIGN_TASK_PATTERN,
     );
   } catch {
     fail('the campaign certification registry campaignTaskPattern must be a valid regular expression');
@@ -126,7 +132,7 @@ export function validateCampaignCertification(input) {
   const declaredIds = new Set();
   const declaredTasks = new Set();
   const declaredSuites = new Set();
-  for (const campaign of registry.campaigns) {
+  for (const campaign of registryRecord.campaigns) {
     const id = campaign?.id;
     if (typeof id !== 'string' || id === '' || typeof campaign?.task !== 'string' || campaign.task === '' || !Array.isArray(campaign?.suites)) {
       fail(`campaign certification entry ${JSON.stringify(id ?? null)} must carry a non-empty string id, a non-empty string task and a suites array`);

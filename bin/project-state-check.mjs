@@ -155,6 +155,10 @@ const CI_STATUSES = new Set(['NOT_OBSERVED', 'NO_STEPS_EXTERNAL_NON_EVIDENCE', '
 const SHA_OR_DISCOVER = /^(?:DISCOVER_FROM_GIT|[0-9a-f]{40})$/i;
 const SHA_OR_NONE = /^(?:NONE|[0-9a-f]{40})$/i;
 
+/**
+ * @param {string[]} argv
+ * @returns {string}
+ */
 function parseArgs(argv) {
   const rootIndex = argv.indexOf('--root');
   if (rootIndex !== -1) {
@@ -165,14 +169,33 @@ function parseArgs(argv) {
   return process.cwd();
 }
 
+/**
+ * @param {string[]} errors
+ * @param {string} code
+ */
 function fail(errors, code) {
   errors.push(code);
 }
 
+/**
+ * Load a repository-owned TypeScript module through the shared runtime loader.
+ * The literal module path is kept as a type parameter constrained to the
+ * loader's module map, so that map remains the type authority for what each
+ * path exports, exactly as it is for every direct call site.
+ *
+ * @template {keyof import('./lib/typescript-runtime-loader.mjs').TypeScriptRuntimeLoaderModuleMap} File
+ * @param {string} root
+ * @param {File} file
+ * @returns {import('./lib/typescript-runtime-loader.mjs').TypeScriptRuntimeLoaderModuleMap[File]}
+ */
 function loadTypeScriptModule(root, file) {
-  return loadRuntimeTypeScriptModule(file, { root });
+  return /** @type {import('./lib/typescript-runtime-loader.mjs').TypeScriptRuntimeLoaderModuleMap[File]} */ (loadRuntimeTypeScriptModule(file, { root }));
 }
 
+/**
+ * @param {string} root
+ * @param {string} relative
+ */
 function readJsonAt(root, relative) {
   try {
     return JSON.parse(fs.readFileSync(path.join(root, relative), 'utf8'));
@@ -181,10 +204,20 @@ function readJsonAt(root, relative) {
   }
 }
 
+/**
+ * @param {string} text
+ * @param {string} [heading]
+ * @param {ReadonlySet<string>} [ownedFields]
+ * @returns {{ malformed: false, oversized: boolean, fields: Map<string, string>, lines: string[], duplicates: string[], unknown: string[] } | { malformed: true, oversized: boolean, fields: null, lines: string[], duplicates: string[], unknown: string[] } | { malformed: true, fields: null, lines: string[] } | null}
+ */
 function parseKeyValueBlock(text, heading = BLOCK_SECTION_HEADING, ownedFields = OWNED_PROJECT_STATE_FIELDS) {
+  /** @type {Map<string, string>} */
   const fields = new Map();
+  /** @type {string[]} */
   const lines = [];
+  /** @type {string[]} */
   const duplicates = [];
+  /** @type {string[]} */
   const unknown = [];
   if (text.length > MAX_CURRENT_STATE_BYTES) return { malformed: true, oversized: true, fields: null, lines, duplicates, unknown };
   const start = text.indexOf(heading);
@@ -200,29 +233,76 @@ function parseKeyValueBlock(text, heading = BLOCK_SECTION_HEADING, ownedFields =
     if (line.length > MAX_BLOCK_LINE_CHARS) return { malformed: true, oversized: true, fields: null, lines, duplicates, unknown };
     const match = /^(?<key>[^:#][^:]*):\s*(?<value>.*)$/.exec(line);
     if (!match?.groups) return { malformed: true, fields: null, lines };
-    const key = match.groups.key.trim();
+    // The pattern's two named groups always participate, so an absent group
+    // value is unreachable; the local bindings keep that invariant visible to
+    // the checker without changing what the parser accepts.
+    const key = match.groups.key;
+    const value = match.groups.value;
+    if (key === undefined || value === undefined) return { malformed: true, fields: null, lines };
     if (fields.has(key)) duplicates.push(key);
     if (!ownedFields.has(key)) unknown.push(key);
-    if (key.length > MAX_BLOCK_LINE_CHARS || match.groups.value.length > MAX_BLOCK_LINE_CHARS) {
+    if (key.length > MAX_BLOCK_LINE_CHARS || value.length > MAX_BLOCK_LINE_CHARS) {
       return { malformed: true, oversized: true, fields: null, lines, duplicates, unknown };
     }
     if (fields.has(key)) continue;
-    fields.set(key, match.groups.value.trim());
+    fields.set(key, value.trim());
     lines.push(key);
   }
   return { malformed: false, oversized: false, fields, lines, duplicates, unknown };
 }
 
+/**
+ * The exact 40-hex form of a declared anchor, or null when it is absent or
+ * malformed. A pattern test is not a type guard, so the shape is re-checked on
+ * the narrowed value itself: the returned anchor is the TESTED string.
+ * @param {string | undefined} value
+ * @returns {string | null}
+ */
+function hex40OrNull(value) {
+  return typeof value === 'string' && HEX40.test(value) ? value : null;
+}
+
+/**
+ * Read the block's `oversized` flag.
+ *
+ * The malformed-block union carries `oversized` on the byte and line-length
+ * refusals and omits it on the unparsable-line refusal, so the flag is read
+ * through a presence test rather than assumed present. An absent flag is an
+ * ordinary malformed block, exactly as the parser's explicit `false` is.
+ * @param {{ malformed: true } | { malformed: true, oversized: boolean }} parsed
+ * @returns {boolean}
+ */
+function blockWasOversized(parsed) {
+  return 'oversized' in parsed && parsed.oversized === true;
+}
+
+/**
+ * Read one declared field. An absent field is the empty string: every consumer
+ * compares it against a non-empty literal, an anchored pattern or a closed
+ * Set's membership, where absent and empty are indistinguishable.
+ * @param {Map<string, string>} fields
+ * @param {string} key
+ * @returns {string}
+ */
+function declaredFieldValue(fields, key) {
+  return fields.get(key) ?? '';
+}
+
+/**
+ * @param {string} root
+ * @returns {{ parsed: ReturnType<typeof parseKeyValuesWithLocations> | null, status: string | null, effect: string | undefined, taskId: string | undefined, phase: string | undefined, nextAction: string | undefined, validatedImplementationSha: string | undefined, substantiveCheckpointSha: string | undefined }}
+ */
 function readActiveContinuity(root) {
   try {
     const active = fs.readFileSync(path.join(root, '.agent/ACTIVE_TASK.md'), 'utf8');
     const parsed = parseKeyValuesWithLocations(active);
     const starts = [...parseMarkdownSections(active).sections.values()].map((section) => section.start);
     const preambleEnd = starts.length > 0 ? Math.min(...starts) - 1 : Number.POSITIVE_INFINITY;
+    /** @param {string} key @returns {string | undefined} */
     const metadataValue = (key) => fieldValueInLineRange(parsed, key, 0, preambleEnd);
     return {
       parsed,
-      status: normalizeTaskStatus(metadataValue('Status')),
+      status: normalizeTaskStatus(metadataValue('Status') ?? ''),
       effect: metadataValue('PROJECT_VERDICT_EFFECT'),
       taskId: metadataValue('Task ID'),
       phase: metadataValue('Phase'),
@@ -260,6 +340,12 @@ const ZERO_LANE_COUNTS = Object.freeze({ proven: 0, externallyBlocked: 0, neverA
 const HEX40 = /^[0-9a-f]{40}$/i;
 
 
+/**
+ * @param {string} root
+ * @param {string | null} substantiveSha
+ * @param {(ancestor: string, descendant: string) => boolean} isAncestor
+ * @param {string} today
+ */
 function probeLaneState(root, substantiveSha, isAncestor, today) {
   const loaded = loadLaneState(root);
   if (!loaded.ok) {
@@ -326,6 +412,11 @@ function readTopologyReceipts(root) {
   return receipts;
 }
 
+/**
+ * @param {string} root
+ * @param {Map<string, string>} blockFields
+ * @returns {{ state: string, detail: string }}
+ */
 function probeCiBlockRecord(root, blockFields) {
   // A-14: one CI authority. The block record is validated and its revisit
   // staleness judged HERE, from the same module gate:topology uses, so the two
@@ -339,7 +430,10 @@ function probeCiBlockRecord(root, blockFields) {
   const today = new Date().toISOString().slice(0, 10);
   const stale = collectCiBlockStale(record, today);
   if (stale.length > 0) {
-    return { state: 'UNMET', detail: `CI_BLOCK_RECORD_STALE: ${stale[0].detail}; owner action: ${stale[0].ownerAction ?? 'UNSPECIFIED'}` };
+    const firstStale = stale[0];
+    if (firstStale !== undefined) {
+      return { state: 'UNMET', detail: `CI_BLOCK_RECORD_STALE: ${firstStale.detail}; owner action: ${firstStale.ownerAction ?? 'UNSPECIFIED'}` };
+    }
   }
   const status = blockFields.get('CI_STATUS');
   const observed = blockFields.get('CI_OBSERVED_SHA') ?? 'NONE';
@@ -357,7 +451,7 @@ function probeCiBlockRecord(root, blockFields) {
     // attributes a topology class to the CI run (the runner has no bwrap).
     return topologyCertificationVerdict(
       topologyCertificationForCheckpoint(readTopologyReceipts(root), executed),
-      { ciStatus: status, executedSha: executed, checkpointSha: checkpoint, runId: record.runId, blockClass: record.blockClass },
+      { ciStatus: status ?? null, executedSha: executed, checkpointSha: checkpoint, runId: record.runId, blockClass: record.blockClass },
     );
   }
   return {
@@ -366,6 +460,7 @@ function probeCiBlockRecord(root, blockFields) {
   };
 }
 
+/** @param {string} agentText */
 function probeLedgerAgreement(agentText) {
   const audit = /\[agent-audit\]\s+tasks=(\d+)\s+strict_v2=(\d+)\s+legacy_v1=(\d+)\s+legacy_declared=(\d+)\s+legacy_undeclared=(\d+)\s+strict_errors=(\d+)/.exec(agentText);
   if (audit === null) return { state: 'UNAVAILABLE_CAPABILITY', detail: 'agent-state ledger audit line not found' };
@@ -381,6 +476,7 @@ function probeLedgerAgreement(agentText) {
   };
 }
 
+/** @param {string} root */
 function probeOperatorCli(root) {
   let listing;
   try {
@@ -399,6 +495,10 @@ function probeOperatorCli(root) {
   return { state: 'UNMET', detail: `discovered=${bins} conforming=${conforming} undeclared=${undeclared} declaredBroken=${declaredBroken}` };
 }
 
+/**
+ * @param {string} root
+ * @param {readonly string[] | null} ruleNames
+ */
 function probeDocumentationCurrency(root, ruleNames) {
   const required = ['checkDocumentRoleCurrency', 'checkAppendOnlyArchives', 'checkGovernedStatusWords'];
   if (ruleNames !== null && !required.every((name) => ruleNames.includes(name))) {
@@ -423,6 +523,7 @@ function probeDocumentationCurrency(root, ruleNames) {
     : { state: 'UNMET', detail: `documentation-currency: ${count} findings` };
 }
 
+/** @param {string} agentText */
 function probeWorkspaceClaims(agentText) {
   const audit = /legacy_undeclared=(\d+)/.exec(agentText);
   const claims = [...agentText.matchAll(/\[agent-check\]\s+WARNING:\s+(CLAIM_TASK_[A-Z0-9_]+)/g)].map((match) => match[1]);
@@ -441,9 +542,14 @@ function probeWorkspaceClaims(agentText) {
 const DEPENDENCY_CURRENCY_RECORD_PATH = 'config/dependency-currency.v1.json';
 const DEPENDENCY_SOURCE_RE = /\.(?:ts|mjs)$/;
 
+/**
+ * @param {string} root
+ * @returns {{ path: string, text: string }[]}
+ */
 function readTrackedSources(root) {
   const listed = gitReadOnly(root, ['ls-files']);
   if (listed === null) return [];
+  /** @type {{ path: string, text: string }[]} */
   const sources = [];
   for (const line of listed.split('\n')) {
     const file = line.trim();
@@ -459,6 +565,10 @@ function readTrackedSources(root) {
   return sources;
 }
 
+/**
+ * @param {string} root
+ * @returns {{ path: string, text: string }[]}
+ */
 function readGovernedDocuments(root) {
   // The clean-claim guard judges CURRENT-TRUTH surfaces: README.md and every
   // document whose declared role is CURRENT_TRUTH. APPEND_ONLY_ARCHIVE
@@ -471,6 +581,7 @@ function readGovernedDocuments(root) {
       if (entry !== null && typeof entry === 'object' && entry.role === 'CURRENT_TRUTH' && typeof entry.path === 'string') paths.push(entry.path);
     }
   }
+  /** @type {{ path: string, text: string }[]} */
   const documents = [];
   for (const file of paths) {
     try {
@@ -483,11 +594,20 @@ function readGovernedDocuments(root) {
   return documents;
 }
 
+/**
+ * @param {unknown} error
+ * @returns {string}
+ */
 function safeErrorLabel(error) {
   const message = error instanceof Error ? error.message : '';
   return /^[A-Z][A-Z0-9_]*$/.test(message) ? message : 'DEPENDENCY_CURRENCY_EVALUATION_FAILED';
 }
 
+/**
+ * @param {string} root
+ * @param {import('./lib/validation-lane-state.mjs').LaneStateEntry} lane
+ * @param {string} today
+ */
 function probeDependencyCurrency(root, lane, today) {
   const { evaluateDependencyCurrency } = loadTypeScriptModule(root, 'src/core/dependencyCurrency/index.ts');
   const record = readJsonAt(root, DEPENDENCY_CURRENCY_RECORD_PATH);
@@ -523,7 +643,7 @@ function probeDependencyCurrency(root, lane, today) {
     },
     observedLockfileSha256,
     advisoryLaneClass: lane.class,
-    resolveSpecifier: (specifier) => {
+    resolveSpecifier: /** @param {string} specifier */ (specifier) => {
       try {
         rootRequire.resolve(specifier);
         return true;
@@ -534,6 +654,11 @@ function probeDependencyCurrency(root, lane, today) {
   });
 }
 
+/**
+ * @param {string} root
+ * @param {string} today
+ * @returns {{ state: string, detail: string }}
+ */
 function probeDependencyAdvisory(root, today) {
   const loaded = loadLaneState(root);
   if (!loaded.ok) return { state: 'UNAVAILABLE_CAPABILITY', detail: 'lane state unreadable' };
@@ -546,15 +671,20 @@ function probeDependencyAdvisory(root, today) {
   } catch (error) {
     return { state: 'UNAVAILABLE_CAPABILITY', detail: `dependency-currency evaluation unavailable: ${safeErrorLabel(error)}` };
   }
-  if (!currency.ok) {
-    const findings = currency.findings.slice(0, 6).map((finding) => `${finding.code}: ${finding.detail}`);
-    const remaining = currency.findings.length - findings.length;
+  // `probeDependencyCurrency` reports an unreadable record or package.json as
+  // a plain probe output instead of an evaluation, so the evaluation view is
+  // taken explicitly here; a missing evaluation has no findings to name and
+  // the `!ok` gate fails it exactly as it always has.
+  const evaluation = /** @type {Exclude<ReturnType<typeof probeDependencyCurrency>, { state: string }>} */ (currency);
+  if (!evaluation.ok) {
+    const findings = evaluation.findings.slice(0, 6).map((finding) => `${finding.code}: ${finding.detail}`);
+    const remaining = evaluation.findings.length - findings.length;
     if (remaining > 0) findings.push(`${remaining} further finding(s)`);
     return { state: 'UNMET', detail: findings.join('; ') };
   }
 
-  const runtime = currency.runtimeQualification === null ? 'runtime unresolved' : `runtime ${currency.runtimeQualification.state}`;
-  const due = `vueReviewDue=${currency.vueReviewDueDate ?? 'NONE'} lockfileVerificationDue=${currency.lockfileVerificationDueDate ?? 'NONE'}`;
+  const runtime = evaluation.runtimeQualification === null ? 'runtime unresolved' : `runtime ${evaluation.runtimeQualification.state}`;
+  const due = `vueReviewDue=${evaluation.vueReviewDueDate ?? 'NONE'} lockfileVerificationDue=${evaluation.lockfileVerificationDueDate ?? 'NONE'}`;
   if (lane.class === 'PROVEN') return { state: 'MET', detail: `dependency advisory executed; ${runtime}; ${due}` };
   const condition = typeof lane.unblockCondition === 'string' && lane.unblockCondition.trim() !== '';
   const current = typeof lane.revisitDate === 'string' && lane.revisitDate >= today;
@@ -564,6 +694,7 @@ function probeDependencyAdvisory(root, today) {
   return { state: 'UNMET', detail: `class=${lane.class} condition=${condition} revisit=${lane.revisitDate ?? 'NONE'}` };
 }
 
+/** @param {string} root */
 function probeCliContract(root) {
   const config = readJsonAt(root, 'config/bin-typecheck.v1.json');
   if (config === null) return { state: 'UNAVAILABLE_CAPABILITY', detail: 'config/bin-typecheck.v1.json unreadable' };
@@ -575,6 +706,10 @@ function probeCliContract(root) {
   return { state: 'UNMET', detail: `bin type-check lane mode=${mode ?? 'ABSENT'}; exemptions=${exemptions.length}; full conformance is required before blocking` };
 }
 
+/**
+ * @param {string} root
+ * @returns {{ output: { state: string, detail: string }, names: string[] | null }}
+ */
 function probeRuleRegistry(root) {
   const result = spawnSync(process.execPath, [path.join('bin', 'hardening-check.mjs'), '--list-rules'], {
     cwd: root,
@@ -587,6 +722,9 @@ function probeRuleRegistry(root) {
   if (result.status !== 0 || typeof result.stdout !== 'string' || result.stdout.trim() === '') {
     return { output: { state: 'UNAVAILABLE_CAPABILITY', detail: 'hardening-check --list-rules unavailable' }, names: null };
   }
+  // The `--list-rules` document is the rule registry's own projection, so each
+  // rule always carries its name, quantifier and recorded probe count.
+  /** @type {{ rules: readonly { name: string; quantifier: string; probeCount: number }[] }} */
   let registry;
   try {
     registry = JSON.parse(result.stdout);
@@ -816,6 +954,12 @@ function certificationDemotionFor(root, advanceClaimed, certifiedCheckpointSha, 
  * exit-1 ancestry queries establish DIVERGENT; operational failure is always
  * GIT_INDETERMINATE — never a proven negative relation.
  */
+/**
+ * @param {string} root
+ * @param {string} evidenceSha
+ * @param {string} checkpointSha
+ * @returns {'EXACT' | 'STALE_ANCESTOR' | 'FUTURE_DESCENDANT' | 'DIVERGENT' | 'GIT_INDETERMINATE' | 'OBJECT_MISSING'}
+ */
 function resolveEvidenceLineage(root, evidenceSha, checkpointSha) {
   if (typeof evidenceSha !== 'string' || typeof checkpointSha !== 'string') return 'GIT_INDETERMINATE';
   if (!/^[0-9a-f]{40}$/i.test(evidenceSha) || !/^[0-9a-f]{40}$/i.test(checkpointSha)) return 'GIT_INDETERMINATE';
@@ -823,6 +967,7 @@ function resolveEvidenceLineage(root, evidenceSha, checkpointSha) {
   const checkpoint = checkpointSha.toLowerCase();
   if (evidence === checkpoint) return 'EXACT';
 
+  /** @param {string[]} args */
   const runGit = (args) => {
     try {
       const result = spawnSync('git', args, {
@@ -859,6 +1004,13 @@ function resolveEvidenceLineage(root, evidenceSha, checkpointSha) {
   return 'DIVERGENT';
 }
 
+/**
+ * @param {string} root
+ * @param {Map<string, string>} blockFields
+ * @param {string} agentText
+ * @param {string | null} substantiveSha
+ * @param {string} today
+ */
 function collectReleaseCheckOutputs(root, blockFields, agentText, substantiveSha, today) {
   // R5-05 / review-5 task A4.1: the HEAD / clean-tree / range-class / binding
   // facts are collected by ONE importable module (tested against real Git
@@ -892,6 +1044,7 @@ function collectReleaseCheckOutputs(root, blockFields, agentText, substantiveSha
   };
 }
 
+/** @param {string} root */
 function collectExternalTrack(root) {
   try {
     const module = loadTypeScriptModule(root, 'src/core/productionTrack/index.ts');
@@ -908,6 +1061,7 @@ function collectExternalTrack(root) {
   }
 }
 
+/** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
 const CLI_METADATA = {
   schemaVersion: OPERATOR_CLI_SCHEMA,
   name: 'project-state-check',
@@ -957,7 +1111,7 @@ function main() {
   if (parsed === null) {
     fail(errors, 'PROJECT_STATE_BLOCK_MISSING');
   } else if (parsed.malformed) {
-    fail(errors, parsed.oversized ? 'PROJECT_STATE_BLOCK_OVERSIZED' : 'PROJECT_STATE_BLOCK_MALFORMED');
+    fail(errors, blockWasOversized(parsed) ? 'PROJECT_STATE_BLOCK_OVERSIZED' : 'PROJECT_STATE_BLOCK_MALFORMED');
   } else {
     const fields = parsed.fields;
     blockFields = fields;
@@ -983,7 +1137,8 @@ function main() {
 
     const declaredCount = parsed !== null && !parsed.malformed ? fieldsGet(parsed, 'CANONICAL_CATALOG_ENTRY_COUNT') : undefined;
     if (declaredCount !== undefined && !/^(?:0|[1-9][0-9]{0,8})$/.test(declaredCount)) fail(errors, 'PROJECT_STATE_CATALOG_COUNT_MISMATCH');
-    if (fields.get('CANONICAL_CATALOG_SHA256') !== undefined && !/^sha256:[0-9a-f]{64}$/.test(fields.get('CANONICAL_CATALOG_SHA256'))) fail(errors, 'PROJECT_STATE_CATALOG_DIGEST_MISMATCH');
+    const catalogDigest = fields.get('CANONICAL_CATALOG_SHA256');
+    if (catalogDigest !== undefined && !/^sha256:[0-9a-f]{64}$/.test(catalogDigest)) fail(errors, 'PROJECT_STATE_CATALOG_DIGEST_MISMATCH');
 
     if (fields.get('PROMOTION_AUTHORIZATION_LIFECYCLE') !== 'NONE' && fields.get('PROMOTION_AUTHORIZATION_LIFECYCLE') !== 'SPENT') fail(errors, 'PROJECT_STATE_PROMOTION_LIFECYCLE_INVALID');
     if (fields.get('EFFECTIVE_NEXT_PROMOTION_AUTHORITY') !== 'NONE') fail(errors, 'PROJECT_STATE_EFFECTIVE_PROMOTION_AUTHORITY_INVALID');
@@ -991,7 +1146,7 @@ function main() {
     if (fields.get('PHASE_8B_1_STATUS') !== 'COMPLETE_VIA_SUCCESSFUL_RETRY_R1') fail(errors, 'PROJECT_STATE_PHASE_8B_1_STATUS_MISMATCH');
 
     if (fields.get('RELEASE_CERTIFICATION_PROTOCOL_VERSION') !== RELEASE_CERTIFICATION_PROTOCOL) fail(errors, 'PROJECT_STATE_RELEASE_PROTOCOL_UNSUPPORTED');
-    if (!PROJECT_COMPLETION_STATUSES.has(fields.get('PROJECT_COMPLETION_STATUS'))) fail(errors, 'PROJECT_STATE_COMPLETION_STATUS_INVALID');
+    if (!PROJECT_COMPLETION_STATUSES.has(fields.get('PROJECT_COMPLETION_STATUS') ?? '')) fail(errors, 'PROJECT_STATE_COMPLETION_STATUS_INVALID');
     if (fields.get('LIVE_HEAD_SHA') !== 'DISCOVER_FROM_GIT') fail(errors, 'PROJECT_STATE_LIVE_HEAD_SHA_NOT_GIT_DISCOVERED');
     for (const key of ['RELEASE_CHECKPOINT_SHA', 'LAST_SUBSTANTIVE_IMPLEMENTATION_SHA', 'LAST_LOCALLY_VALIDATED_SHA', 'LAST_CLEAN_VALIDATED_SHA', 'FINAL_DOCUMENTATION_SHA']) {
       if (!SHA_OR_DISCOVER.test(fields.get(key) ?? '')) fail(errors, `PROJECT_STATE_${key}_INVALID`);
@@ -1000,11 +1155,15 @@ function main() {
       if (!SHA_OR_NONE.test(fields.get(key) ?? '')) fail(errors, `PROJECT_STATE_${key}_INVALID`);
     }
     const liveHeadForRelease = gitReadOnly(root, ['rev-parse', 'HEAD'])?.trim() ?? null;
+    /** @param {string | undefined} value @param {boolean} [allowNone] @returns {boolean} */
     const validReleaseAnchor = (value, allowNone = false) => {
       if (value === 'DISCOVER_FROM_GIT' || (allowNone && value === 'NONE')) return true;
-      if (!/^[0-9a-f]{40}$/i.test(value ?? '') || liveHeadForRelease === null) return false;
-      return gitReadOnly(root, ['cat-file', '-e', `${value}^{commit}`]) !== null
-        && gitReadOnly(root, ['merge-base', '--is-ancestor', value, liveHeadForRelease]) !== null;
+      // An absent anchor normalises to the empty string, which the 40-hex
+      // shape rejects, so the tested value is the anchor itself.
+      const anchor = value ?? '';
+      if (!/^[0-9a-f]{40}$/i.test(anchor) || liveHeadForRelease === null) return false;
+      return gitReadOnly(root, ['cat-file', '-e', `${anchor}^{commit}`]) !== null
+        && gitReadOnly(root, ['merge-base', '--is-ancestor', anchor, liveHeadForRelease]) !== null;
     };
     for (const key of ['RELEASE_CHECKPOINT_SHA', 'LAST_SUBSTANTIVE_IMPLEMENTATION_SHA', 'LAST_LOCALLY_VALIDATED_SHA', 'LAST_CLEAN_VALIDATED_SHA', 'FINAL_DOCUMENTATION_SHA']) {
       if (!validReleaseAnchor(fields.get(key))) fail(errors, `PROJECT_STATE_${key}_NOT_IN_HISTORY`);
@@ -1012,7 +1171,7 @@ function main() {
     for (const key of ['CI_OBSERVED_SHA', 'CI_EXECUTED_SHA']) {
       if (!validReleaseAnchor(fields.get(key), true)) fail(errors, `PROJECT_STATE_${key}_NOT_IN_HISTORY`);
     }
-    if (!CI_STATUSES.has(fields.get('CI_STATUS'))) fail(errors, 'PROJECT_STATE_CI_STATUS_INVALID');
+    if (!CI_STATUSES.has(fields.get('CI_STATUS') ?? '')) fail(errors, 'PROJECT_STATE_CI_STATUS_INVALID');
     if (fields.get('FINAL_CI_AUTHORITY') !== 'GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT') fail(errors, 'PROJECT_STATE_FINAL_CI_AUTHORITY_INVALID');
     const activeStatus = activeContinuity.status;
     const activeEffect = activeContinuity.effect === undefined
@@ -1028,8 +1187,10 @@ function main() {
     if (activeContinuity.parsed !== null && findDuplicateFields(activeContinuity.parsed).some(({ key }) => key === 'PROJECT_VERDICT_EFFECT')) {
       fail(errors, 'PROJECT_STATE_VERDICT_EFFECT_DUPLICATE');
     }
-    const allowedCompletion = COMPLETION_BY_ACTIVE_STATUS.get(activeStatus);
-    let isMismatch = allowedCompletion === undefined || !allowedCompletion.has(fields.get('PROJECT_COMPLETION_STATUS'));
+    // An absent or unset active status has no completion set; the lookup then
+    // resolves undefined exactly as a missing key would.
+    const allowedCompletion = COMPLETION_BY_ACTIVE_STATUS.get(activeStatus ?? '');
+    let isMismatch = allowedCompletion === undefined || !allowedCompletion.has(fields.get('PROJECT_COMPLETION_STATUS') ?? '');
     // Explicit preservation is the only authority that lets an active task
     // retain the already-earned operational verdict. Task names are labels,
     // not authorization. Requalification/supersession tasks may instead
@@ -1069,11 +1230,16 @@ function main() {
     // detectable without contacting GitHub.
     const substantiveSha = fields.get('LAST_SUBSTANTIVE_IMPLEMENTATION_SHA');
     const ciEvidenceSha = ciStatus === 'NOT_OBSERVED' ? 'NONE' : observedSha;
+    // Both anchors are gated on their exact 40-hex shape below, so the values
+    // handed to the ancestry probe are the TESTED ones rather than the raw
+    // `Map.get` result; an absent or malformed anchor satisfies no branch.
+    const ciEvidenceShaHex = hex40OrNull(ciEvidenceSha);
+    const substantiveShaHex = hex40OrNull(substantiveSha);
     if (
-      /^[0-9a-f]{40}$/i.test(ciEvidenceSha ?? '')
-      && /^[0-9a-f]{40}$/i.test(substantiveSha ?? '')
-      && ciEvidenceSha !== substantiveSha
-      && gitReadOnly(root, ['merge-base', '--is-ancestor', ciEvidenceSha, substantiveSha]) !== null
+      ciEvidenceShaHex !== null
+      && substantiveShaHex !== null
+      && ciEvidenceShaHex !== substantiveShaHex
+      && gitReadOnly(root, ['merge-base', '--is-ancestor', ciEvidenceShaHex, substantiveShaHex]) !== null
     ) {
       fail(errors, 'PROJECT_STATE_CI_EVIDENCE_STALE');
     }
@@ -1105,22 +1271,27 @@ function main() {
     // Everything here is local: `merge-base` and `diff --name-only` against the
     // object database, no network.
     const taskValidatedSha = activeContinuity.validatedImplementationSha;
+    // An absent anchor normalises to the empty string, which the 40-hex shape
+    // rejects, so a tested anchor is exactly the SHa the block declared.
+    const taskAnchorSha = taskValidatedSha ?? '';
+    const substantiveAnchorSha = substantiveSha ?? '';
+    const executedAnchorSha = executedSha ?? '';
     if (
-      /^[0-9a-f]{40}$/i.test(substantiveSha ?? '')
-      && /^[0-9a-f]{40}$/i.test(taskValidatedSha ?? '')
-      && substantiveSha !== taskValidatedSha
+      /^[0-9a-f]{40}$/i.test(substantiveAnchorSha)
+      && /^[0-9a-f]{40}$/i.test(taskAnchorSha)
+      && substantiveAnchorSha !== taskAnchorSha
       // Strict-ancestor only: a baseline AHEAD of the task anchor is a
       // different condition and is not this check's business.
-      && gitReadOnly(root, ['merge-base', '--is-ancestor', substantiveSha, taskValidatedSha]) !== null
+      && gitReadOnly(root, ['merge-base', '--is-ancestor', substantiveAnchorSha, taskAnchorSha]) !== null
     ) {
-      const changed = gitReadOnly(root, ['diff', '--name-only', '--no-renames', substantiveSha, taskValidatedSha]);
+      const changed = gitReadOnly(root, ['diff', '--name-only', '--no-renames', substantiveAnchorSha, taskAnchorSha]);
       if (changed === null) {
         // Ancestry held but the range could not be classified. Fail closed:
         // an unclassifiable range must not be assumed documentation-only.
         fail(errors, 'PROJECT_STATE_SUBSTANTIVE_BASELINE_UNVERIFIABLE');
       } else {
         const files = changed.split('\n').map((line) => line.trim()).filter(Boolean);
-        const substantive = checkpointRoleViolations(root, files, { kind: 'range', from: substantiveSha, to: taskValidatedSha, verifyBindingReceipt: bindingReceiptVerifier(root) });
+        const substantive = checkpointRoleViolations(root, files, { kind: 'range', from: substantiveAnchorSha, to: taskAnchorSha, verifyBindingReceipt: bindingReceiptVerifier(root) });
         if (substantive.length > 0) {
           // The active task validated an implementation strictly newer than the
           // project baseline. The baseline is stale even if every field in the
@@ -1131,10 +1302,10 @@ function main() {
           // be back-dated to the baseline (VA-03: the cross-guard resolution);
           // it is now an ATTENTION that names both commits. A non-ancestor
           // anchor, or any non-IN_PROGRESS task, still fails.
-          const taskAnchorIsAncestorOfHead = gitReadOnly(root, ['merge-base', '--is-ancestor', taskValidatedSha, 'HEAD']) !== null;
+          const taskAnchorIsAncestorOfHead = gitReadOnly(root, ['merge-base', '--is-ancestor', taskAnchorSha, 'HEAD']) !== null;
           if (activeStatus === 'IN_PROGRESS' && taskAnchorIsAncestorOfHead) {
             projectAttention.push('TASK_AHEAD_OF_PROJECT_BASELINE');
-            console.error(`[project-state-check] ATTENTION: TASK_AHEAD_OF_PROJECT_BASELINE: the IN_PROGRESS task validated ${String(taskValidatedSha).slice(0, 8)}, ahead of the project baseline ${substantiveSha.slice(0, 8)} (${substantive.length} substantive path${substantive.length === 1 ? '' : 's'}); the baseline advances when the task closes`);
+            console.error(`[project-state-check] ATTENTION: TASK_AHEAD_OF_PROJECT_BASELINE: the IN_PROGRESS task validated ${taskAnchorSha.slice(0, 8)}, ahead of the project baseline ${substantiveAnchorSha.slice(0, 8)} (${substantive.length} substantive path${substantive.length === 1 ? '' : 's'}); the baseline advances when the task closes`);
           } else {
             fail(errors, 'PROJECT_STATE_SUBSTANTIVE_BASELINE_STALE');
           }
@@ -1147,15 +1318,15 @@ function main() {
     // documentation descendant, but it must never certify a commit older than
     // the validated implementation it claims to cover.
     if (
-      /^[0-9a-f]{40}$/i.test(executedSha ?? '')
-      && /^[0-9a-f]{40}$/i.test(taskValidatedSha ?? '')
-      && executedSha !== taskValidatedSha
-      && gitReadOnly(root, ['merge-base', '--is-ancestor', executedSha, taskValidatedSha]) !== null
+      /^[0-9a-f]{40}$/i.test(executedAnchorSha)
+      && /^[0-9a-f]{40}$/i.test(taskAnchorSha)
+      && executedAnchorSha !== taskAnchorSha
+      && gitReadOnly(root, ['merge-base', '--is-ancestor', executedAnchorSha, taskAnchorSha]) !== null
     ) {
-      const changed = gitReadOnly(root, ['diff', '--name-only', '--no-renames', executedSha, taskValidatedSha]);
+      const changed = gitReadOnly(root, ['diff', '--name-only', '--no-renames', executedAnchorSha, taskAnchorSha]);
       if (changed !== null) {
         const files = changed.split('\n').map((line) => line.trim()).filter(Boolean);
-        if (checkpointRoleViolations(root, files, { kind: 'range', from: executedSha, to: taskValidatedSha, verifyBindingReceipt: bindingReceiptVerifier(root) }).length > 0) {
+        if (checkpointRoleViolations(root, files, { kind: 'range', from: executedAnchorSha, to: taskAnchorSha, verifyBindingReceipt: bindingReceiptVerifier(root) }).length > 0) {
           fail(errors, 'PROJECT_STATE_CI_BASELINE_STALE');
         }
       }
@@ -1170,7 +1341,7 @@ function main() {
     if (liveParsed === null) {
       fail(errors, 'PROJECT_STATE_LIVE_STATE_BLOCK_MISSING');
     } else if (liveParsed.malformed) {
-      fail(errors, liveParsed.oversized ? 'PROJECT_STATE_LIVE_STATE_BLOCK_OVERSIZED' : 'PROJECT_STATE_LIVE_STATE_BLOCK_MALFORMED');
+      fail(errors, blockWasOversized(liveParsed) ? 'PROJECT_STATE_LIVE_STATE_BLOCK_OVERSIZED' : 'PROJECT_STATE_LIVE_STATE_BLOCK_MALFORMED');
     } else {
       const liveFields = liveParsed.fields;
       for (const key of liveParsed.duplicates ?? []) fail(errors, 'PROJECT_STATE_LIVE_STATE_DUPLICATE_FIELD');
@@ -1189,14 +1360,14 @@ function main() {
         const expectedCompletionClaim = activeStatus === 'COMPLETE' ? 'COMPLETE' : 'NONE';
         if (liveFields.get('LIVE_TASK_ID') !== actualTaskId) fail(errors, 'PROJECT_STATE_LIVE_TASK_ID_MISMATCH');
         if (liveFields.get('LIVE_PHASE') !== actualPhase) fail(errors, 'PROJECT_STATE_LIVE_PHASE_MISMATCH');
-        if (normalizeTaskStatus(liveFields.get('LIVE_TASK_STATUS')) !== activeStatus) fail(errors, 'PROJECT_STATE_LIVE_STATUS_MISMATCH');
+        if (normalizeTaskStatus(liveFields.get('LIVE_TASK_STATUS') ?? '') !== activeStatus) fail(errors, 'PROJECT_STATE_LIVE_STATUS_MISMATCH');
         if (liveFields.get('LIVE_PROJECT_COMPLETION_STATUS') !== fields.get('PROJECT_COMPLETION_STATUS')) fail(errors, 'PROJECT_STATE_LIVE_COMPLETION_STATUS_MISMATCH');
-        const liveEffect = normalizeProjectVerdictEffect(liveFields.get('LIVE_PROJECT_VERDICT_EFFECT'));
+        const liveEffect = normalizeProjectVerdictEffect(liveFields.get('LIVE_PROJECT_VERDICT_EFFECT') ?? '');
         if (liveEffect === null) fail(errors, 'PROJECT_STATE_LIVE_VERDICT_EFFECT_INVALID');
         if (activeEffect !== null && liveEffect !== activeEffect) fail(errors, 'PROJECT_STATE_LIVE_VERDICT_EFFECT_MISMATCH');
-        if (!new Set(['STOP', 'CONTINUE']).has(liveFields.get('LIVE_NEXT_ACTION_STATE'))) fail(errors, 'PROJECT_STATE_LIVE_NEXT_ACTION_INVALID');
+        if (!new Set(['STOP', 'CONTINUE']).has(liveFields.get('LIVE_NEXT_ACTION_STATE') ?? '')) fail(errors, 'PROJECT_STATE_LIVE_NEXT_ACTION_INVALID');
         else if (liveFields.get('LIVE_NEXT_ACTION_STATE') !== expectedNextActionState) fail(errors, 'PROJECT_STATE_LIVE_NEXT_ACTION_MISMATCH');
-        if (!new Set(['NONE', 'COMPLETE']).has(liveFields.get('LIVE_COMPLETION_CLAIM'))) fail(errors, 'PROJECT_STATE_LIVE_COMPLETION_CLAIM_INVALID');
+        if (!new Set(['NONE', 'COMPLETE']).has(liveFields.get('LIVE_COMPLETION_CLAIM') ?? '')) fail(errors, 'PROJECT_STATE_LIVE_COMPLETION_CLAIM_INVALID');
         else if (liveFields.get('LIVE_COMPLETION_CLAIM') !== expectedCompletionClaim) fail(errors, 'PROJECT_STATE_LIVE_COMPLETION_CLAIM_MISMATCH');
       }
     }
@@ -1251,7 +1422,8 @@ function main() {
       r1State = '';
     }
     const r1StatusMatch = /^Status:\s*(?<value>[^\r\n]+)$/m.exec(r1State);
-    if (!r1StatusMatch || r1StatusMatch.groups.value.trim() !== 'COMPLETE') fail(errors, 'PROJECT_STATE_R1_TASK_STATUS_MISMATCH');
+    const r1StatusValue = r1StatusMatch?.groups?.value;
+    if (r1StatusValue === undefined || r1StatusValue.trim() !== 'COMPLETE') fail(errors, 'PROJECT_STATE_R1_TASK_STATUS_MISMATCH');
   }
 
   // 3. Active task authority + continuity v2 (read-only subprocess).
@@ -1362,14 +1534,18 @@ function main() {
           // 13.7 — a documentation-only commit is a checkpoint advance, never
           // the implementation anchor.
           const substantiveSha = blockFields.get('LAST_SUBSTANTIVE_IMPLEMENTATION_SHA');
+          // The anchor is gated on its exact 40-hex shape below, so the value
+          // handed to the role probe is the TESTED one; an absent or malformed
+          // anchor satisfies no branch.
+          const substantiveShaHex = hex40OrNull(substantiveSha);
           const liveHeadSha = gitReadOnly(root, ['rev-parse', 'HEAD'])?.trim() ?? null;
-          if (HEX40.test(substantiveSha ?? '')) {
-            const changed = gitReadOnly(root, ['diff-tree', '--root', '--no-commit-id', '--name-only', '--no-renames', '-r', substantiveSha]);
+          if (substantiveShaHex !== null) {
+            const changed = gitReadOnly(root, ['diff-tree', '--root', '--no-commit-id', '--name-only', '--no-renames', '-r', substantiveShaHex]);
             if (changed === null) {
               fail(errors, 'PROJECT_STATE_IMPLEMENTATION_ANCHOR_UNVERIFIABLE');
             } else {
               const files = changed.split('\n').map((line) => line.trim()).filter(Boolean);
-              if (files.length > 0 && checkpointRoleViolations(root, files, { kind: 'commit', commit: substantiveSha, verifyBindingReceipt: bindingReceiptVerifier(root) }).length === 0) {
+              if (files.length > 0 && checkpointRoleViolations(root, files, { kind: 'commit', commit: substantiveShaHex, verifyBindingReceipt: bindingReceiptVerifier(root) }).length === 0) {
                 fail(errors, 'PROJECT_STATE_IMPLEMENTATION_ANCHOR_DOCUMENTATION_ONLY');
               }
             }
@@ -1397,7 +1573,7 @@ function main() {
           // happened to be; it is now an error and the checkpoint resolves null.
           /** @type {string | null} */
           let certifiedCheckpointSha = null;
-          if (HEX40.test(substantiveSha ?? '')) certifiedCheckpointSha = substantiveSha;
+          if (substantiveShaHex !== null) certifiedCheckpointSha = substantiveShaHex;
           else if (substantiveSha === 'DISCOVER_FROM_GIT') {
             // R3-04 / corrections task 8.3: DISCOVER_FROM_GIT is authority for
             // the SNAPSHOT (LIVE_HEAD_SHA), never for the certification
@@ -1405,7 +1581,7 @@ function main() {
             // document certify whatever commit happened to contain it. It
             // resolves to no checkpoint here, and a claimed advance that rests
             // on it fails closed.
-            if (definition.advanceStatuses.includes(blockFields.get('PROJECT_COMPLETION_STATUS') ?? '')) {
+            if (definition.advanceStatuses.includes(declaredFieldValue(blockFields, 'PROJECT_COMPLETION_STATUS'))) {
               fail(errors, 'PROJECT_STATE_LAST_SUBSTANTIVE_DISCOVER_INVALID');
             }
           } else fail(errors, 'PROJECT_STATE_CERTIFIED_CHECKPOINT_UNRESOLVED');
@@ -1423,7 +1599,7 @@ function main() {
           const headBefore = gitReadOnly(root, ['rev-parse', 'HEAD'])?.trim() ?? null;
           releaseVerdict = certification.evaluateReleaseCertification({
             definition: boundDefinition,
-            checkOutputs: collected.outputs,
+            checkOutputs: /** @type {Readonly<Record<string, { readonly state: 'MET' | 'UNMET' | 'UNAVAILABLE_CAPABILITY' | 'NOT_AT_CHECKPOINT' | 'BLOCKED_EXTERNAL', readonly detail: string }>>} */ (collected.outputs),
             certifiedCheckpointSha,
             liveHeadSha,
             projectCompletionStatus: blockFields.get('PROJECT_COMPLETION_STATUS') ?? 'NONE',
@@ -1434,7 +1610,9 @@ function main() {
               state: external.state,
               detail: external.detail,
             },
-            definitionDigest,
+            // An absent definition digest is indistinguishable from an omitted
+            // one to the evaluator, which normalises both to null.
+            definitionDigest: definitionDigest ?? undefined,
             resolveEvidenceArtifactAtSha: evidenceInputs.resolveEvidenceArtifactAtSha,
             evidenceArtifactPaths: evidenceInputs.evidenceArtifactPaths,
             evidenceReceiptDigests: evidenceInputs.evidenceReceiptDigests,
@@ -1568,6 +1746,11 @@ function main() {
     return;
   }
 
+  // Every failure above recorded an error and returned at the error gate, so
+  // the receipt is reached only with the catalog module, the target bytes and
+  // a well-formed truth block already in hand.
+  if (adoptedCases === null || catalogBytes === null || parsed === null || parsed.malformed) return;
+
   const validated = adoptedCases.validateAdoptedCatalog(adoptedCases.SELFDEV_ADOPTED_CASES);
   const digest = `sha256:${createHash('sha256').update(catalogBytes, 'utf8').digest('hex')}`;
   const portfolio = loadTypeScriptModule(root, 'src/core/selfDev/portfolio.ts');
@@ -1617,6 +1800,11 @@ function main() {
   }
 }
 
+/**
+ * @param {{ fields: Map<string, string> }} parsed
+ * @param {string} key
+ * @returns {string | undefined}
+ */
 function fieldsGet(parsed, key) {
   return parsed.fields.get(key);
 }

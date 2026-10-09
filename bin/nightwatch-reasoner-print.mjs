@@ -23,6 +23,13 @@ const MAX_UNTRUSTED_ENVELOPES = 6;
 const MAX_UNTRUSTED_BYTES = 24_000;
 const MAX_PROMPT_CHARS = 48_000;
 
+/**
+ * Bound copy of one untrusted `ReasonerTurnRequest` for the prompt. The input
+ * is arbitrary JSON, so it is narrowed only by the structural checks below.
+ *
+ * @param {unknown} request
+ * @returns {unknown}
+ */
 function boundRequestForPrompt(request) {
   if (request === null || typeof request !== 'object') return request;
   const clone = JSON.parse(JSON.stringify(request));
@@ -81,32 +88,56 @@ const HYPOTHESIS_PROGRESS_RANK = Object.freeze({
   DISPROVED: 4,
 });
 
+/**
+ * @param {unknown} value
+ * @returns {value is Record<string, unknown>}
+ */
 function isPlainObject(value) {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
+/**
+ * @param {unknown} value
+ * @param {number} maxChars
+ * @returns {string}
+ */
 function quoted(value, maxChars) {
   const raw = typeof value === 'string' ? value : String(value ?? '');
   const clipped = raw.length > maxChars ? raw.slice(0, maxChars) : raw;
   return JSON.stringify(clipped);
 }
 
+/**
+ * @param {unknown} value
+ * @param {number} limit
+ * @returns {{ total: number, shown: string[] }}
+ */
 function stringItems(value, limit) {
   if (!Array.isArray(value)) return { total: 0, shown: [] };
+  /** @type {string[]} */
   const items = value.filter((item) => typeof item === 'string' && item.length > 0);
   return { total: items.length, shown: items.slice(0, limit) };
 }
 
+/**
+ * @param {unknown} value
+ * @param {number} limit
+ * @returns {{ total: number, shown: Record<string, unknown>[] }}
+ */
 function objectItems(value, limit) {
   if (!Array.isArray(value)) return { total: 0, shown: [] };
   const items = value.filter(isPlainObject);
   return { total: value.length, shown: items.slice(0, limit) };
 }
 
+/**
+ * @param {unknown} progress
+ * @returns {string}
+ */
 function memoryProgressLine(progress) {
   if (!isPlainObject(progress)) return 'progress: unavailable';
-  const num = (name) => (typeof progress[name] === 'number' && Number.isFinite(progress[name]) ? progress[name] : 0);
-  const str = (name) => (typeof progress[name] === 'string' && progress[name].length > 0 ? progress[name] : 'UNKNOWN');
+  const num = (/** @type {string} */ name) => (typeof progress[name] === 'number' && Number.isFinite(progress[name]) ? progress[name] : 0);
+  const str = (/** @type {string} */ name) => (typeof progress[name] === 'string' && progress[name].length > 0 ? progress[name] : 'UNKNOWN');
   return (
     `progress: turn=${num('turnOrdinal')} toolActions=${num('toolActions')} ` +
     `evidence=${num('evidenceCount')} hypotheses=${num('hypothesisCount')} ` +
@@ -118,6 +149,10 @@ function memoryProgressLine(progress) {
   );
 }
 
+/**
+ * @param {unknown} inspected
+ * @returns {string[]}
+ */
 function memoryInspectedLines(inspected) {
   const { total, shown } = objectItems(inspected, MAX_MEMORY_ROWS.inspected);
   const lines = [`inspected targets (${shown.length} shown of ${total}):`];
@@ -125,6 +160,7 @@ function memoryInspectedLines(inspected) {
   for (const entry of shown) {
     const target = typeof entry.target === 'string' && entry.target.length > 0 ? entry.target : '(unknown target)';
     const ref = typeof entry.evidenceRef === 'string' && entry.evidenceRef.length > 0 ? entry.evidenceRef : null;
+    /** @type {string[]} */
     const salient = Array.isArray(entry.salient)
       ? entry.salient.filter((s) => typeof s === 'string' && s.length > 0).slice(0, 4)
       : [];
@@ -138,12 +174,16 @@ function memoryInspectedLines(inspected) {
   return lines;
 }
 
+/**
+ * @param {unknown} hypotheses
+ * @returns {string[]}
+ */
 function memoryHypothesisLines(hypotheses) {
   const { total, shown } = objectItems(hypotheses, MAX_MEMORY_ROWS.hypotheses * 2);
   const ranked = [...shown].sort((a, b) => {
-    const rank = (h) =>
+    const rank = (/** @type {Record<string, unknown>} */ h) =>
       typeof h.progress === 'string' && h.progress in HYPOTHESIS_PROGRESS_RANK
-        ? HYPOTHESIS_PROGRESS_RANK[h.progress]
+        ? HYPOTHESIS_PROGRESS_RANK[/** @type {keyof typeof HYPOTHESIS_PROGRESS_RANK} */ (h.progress)]
         : 99;
     return rank(a) - rank(b);
   });
@@ -154,7 +194,9 @@ function memoryHypothesisLines(hypotheses) {
     const id = typeof entry.hypothesisId === 'string' && entry.hypothesisId.length > 0 ? entry.hypothesisId : '(unknown id)';
     const progress = typeof entry.progress === 'string' ? entry.progress : 'UNKNOWN';
     const status = typeof entry.status === 'string' ? entry.status : 'UNKNOWN';
+    /** @type {string[]} */
     const refs = Array.isArray(entry.evidenceRefs) ? entry.evidenceRefs.filter((r) => typeof r === 'string') : [];
+    /** @type {string[]} */
     const groundedOn = Array.isArray(entry.groundedOnTargets)
       ? entry.groundedOnTargets.filter((t) => typeof t === 'string')
       : [];
@@ -167,6 +209,10 @@ function memoryHypothesisLines(hypotheses) {
   return lines;
 }
 
+/**
+ * @param {unknown} campaign
+ * @returns {string[]}
+ */
 function memoryCampaignLines(campaign) {
   if (campaign === null || campaign === undefined) return ['campaign strategy: none yet (first investigation)'];
   if (!isPlainObject(campaign)) return ['campaign strategy: unavailable (malformed — proceed with this investigation only)'];
@@ -174,11 +220,11 @@ function memoryCampaignLines(campaign) {
   const completed = typeof campaign.investigationsCompleted === 'number' ? campaign.investigationsCompleted : 0;
   const stagnant = typeof campaign.stagnantInvestigations === 'number' ? campaign.stagnantInvestigations : 0;
   lines.push(`campaign strategy: id=${quoted(campaign.campaignId ?? '(unknown)', 128)} investigationsCompleted=${completed} stagnantInvestigations=${stagnant}`);
-  for (const [label, key] of [
+  for (const [label, key] of /** @type {[string, string][]} */ ([
     ['inspected', 'inspectedTargets'],
     ['unproductive', 'unproductiveTargets'],
     ['reproduced', 'reproducedTargets'],
-  ]) {
+  ])) {
     const { total, shown } = stringItems(campaign[key], MAX_MEMORY_ROWS.campaignTargets);
     lines.push(
       `  ${label} (${shown.length} shown of ${total}): ${shown.length === 0 ? '(none)' : shown.map((t) => quoted(t, MAX_MEMORY_TARGET_CHARS)).join(', ')}`,
@@ -220,14 +266,26 @@ const READINESS_INSTRUCTIONS = Object.freeze({
   RAN_WITHOUT_REPRODUCING: 'readiness: a prior execution ran without reproducing — do not re-run the same reproduction; inspect a new target or refine the hypothesis.',
 });
 
+/**
+ * @param {unknown} readiness
+ * @returns {string[]}
+ */
 function memoryReadinessLines(readiness) {
   const lines = [];
-  const instruction = typeof readiness === 'string' ? READINESS_INSTRUCTIONS[readiness] : undefined;
+  // The enum keys are fixed host templates; an unmapped readiness yields no
+  // instruction line rather than an `undefined` one.
+  const instruction = typeof readiness === 'string'
+    ? /** @type {Record<string, string | undefined>} */ (READINESS_INSTRUCTIONS)[readiness]
+    : undefined;
   if (typeof instruction === 'string') lines.push(instruction);
   lines.push('retry authority is host-owned: a failed reproduction may be retried only when readiness says TRANSIENT_RETRY_REMAINING; never self-declare a failure retryable or re-run a refused reproduction.');
   return lines;
 }
 
+/**
+ * @param {unknown} memory
+ * @returns {string}
+ */
 function renderMemoryBlock(memory) {
   if (!isPlainObject(memory)) {
     return 'Investigation working memory: unavailable (absent or malformed). Proceed from the tool index and the untrusted observation below; inspect one approved target first.';
@@ -291,22 +349,30 @@ function renderMemoryBlock(memory) {
  * process.exit skips the `finally` block that removes the prompt file and the
  * isolated working directory — every failure path used to leak both. The exit
  * status is set once, after cleanup has run.
+ *
+ * @param {string} message
+ * @returns {never}
  */
 function fail(message) {
   throw new Error(message);
 }
 
+/** @returns {string} */
 function readStdin() {
   return fs.readFileSync(0, 'utf8');
 }
 
+/**
+ * @param {string} raw
+ */
 function parseJsonObject(raw) {
   const trimmed = raw.trim();
   try {
     return JSON.parse(trimmed);
   } catch {
     const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/);
-    if (fenced) return JSON.parse(fenced[1]);
+    // The pattern captures exactly one group, so a match always defines it.
+    if (fenced) return JSON.parse(/** @type {string} */ (fenced[1]));
     const start = trimmed.indexOf('{');
     const end = trimmed.lastIndexOf('}');
     if (start < 0 || end <= start) throw new Error('stdout is not JSON');
@@ -317,6 +383,11 @@ function parseJsonObject(raw) {
 const SAFE_ID_RE = /^[A-Za-z0-9._:-]{1,128}$/;
 const MAX_INTENTS = 8;
 
+/**
+ * @param {unknown} value
+ * @param {string} fallback
+ * @returns {string}
+ */
 function safeId(value, fallback) {
   if (typeof value === 'string' && SAFE_ID_RE.test(value)) return value;
   if (typeof value === 'string') {
@@ -333,12 +404,24 @@ function safeId(value, fallback) {
  * grounded to the admission gate — fabricated grounding is worse than a
  * refused proposal, so an empty list is passed through and the protocol
  * refuses it (PROPOSE_CANDIDATE requires at least one ref).
+ *
+ * @param {unknown} value
+ * @returns {string[]}
  */
 function evidenceRefsFrom(value) {
   if (!Array.isArray(value)) return [];
   return value.filter((item) => typeof item === 'string' && item.length > 0 && item.length <= 512).slice(0, 16);
 }
 
+/**
+ * One model-supplied intent, reduced to the protocol's canonical shape.
+ * `request` is accepted for signature symmetry with the caller; the
+ * canonicalization deliberately reads nothing from it.
+ *
+ * @param {Record<string, unknown> | null} intent
+ * @param {unknown} request
+ * @param {number} index
+ */
 function canonicalizeIntent(intent, request, index) {
   if (intent === null || typeof intent !== 'object' || typeof intent.kind !== 'string') return null;
   const kind = intent.kind;
@@ -381,6 +464,10 @@ function canonicalizeIntent(intent, request, index) {
   return null;
 }
 
+/**
+ * @param {Record<string, unknown>} response
+ * @param {unknown} request
+ */
 function canonicalizeResponse(response, request) {
   if (response === null || typeof response !== 'object') return response;
   const rawIntents = Array.isArray(response.intents) ? response.intents : [];
@@ -406,6 +493,10 @@ function canonicalizeResponse(response, request) {
   };
 }
 
+/**
+ * @param {string} stdout
+ * @param {unknown} request
+ */
 function extractResponse(stdout, request) {
   const parsed = parseJsonObject(stdout);
   if (parsed && typeof parsed === 'object' && parsed.schemaVersion === RESPONSE_VERSION) {
@@ -422,6 +513,7 @@ const executable = process.env.NIGHTWATCH_PRINT_CLI;
 if (typeof executable !== 'string' || executable.length === 0 || !path.isAbsolute(executable)) {
   fail('set NIGHTWATCH_PRINT_CLI to an absolute print-mode executable');
 }
+/** @type {string[]} */
 let argvTemplate;
 try {
   argvTemplate = JSON.parse(process.env.NIGHTWATCH_PRINT_ARGS ?? 'null');
@@ -477,15 +569,17 @@ const boundedPrompt = prompt.length > MAX_PROMPT_CHARS ? `${prompt.slice(0, MAX_
 const promptFile = path.join(os.tmpdir(), `nw-reasoner-prompt-${process.pid}.txt`);
 fs.writeFileSync(promptFile, boundedPrompt, { mode: 0o600 });
 
+/** @type {string | null} */
 let isolatedCwd = null;
 try {
   const sessionId = randomUUID();
-  isolatedCwd = fs.mkdtempSync(path.join(os.tmpdir(), 'nw-print-cwd-'));
+  const isolatedDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'nw-print-cwd-'));
+  isolatedCwd = isolatedDirectory;
   const argv = argvTemplate.map((item) => {
     if (item === '__PROMPT__') return boundedPrompt;
     if (item === '__PROMPT_FILE__') return promptFile;
     if (item === '__SESSION_ID__') return sessionId;
-    if (item === '__CWD__') return isolatedCwd;
+    if (item === '__CWD__') return isolatedDirectory;
     return item;
   });
   const child = spawnSync(executable, argv, {

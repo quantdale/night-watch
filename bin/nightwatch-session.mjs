@@ -61,6 +61,109 @@ const GIT_MAX_BUFFER = 8 * 1024 * 1024;
 const CONTINUITY_MAX_BYTES = 512 * 1024;
 const TRANSITION_LOCK_MAX_BYTES = 4096;
 
+/**
+ * One authority-core admission decision. The core's inferred return type
+ * widens the `ok` discriminant to `boolean`, so the literal discriminant the
+ * core actually returns is re-asserted here; a `!x.ok` check then narrows to
+ * the refusal member and its `code`/`detail`.
+ *
+ * @typedef {{ ok: true } | { ok: false, code: string, detail: string }} SessionAdmissionResult
+ */
+
+/** The recovery admission, whose success member carries the staleness proof. */
+/** @typedef {{ ok: true, stale: boolean, reason: string } | { ok: false, code: string, detail: string }} SessionRecoveryAdmission */
+
+/**
+ * One `git` invocation. `code` is the exit status, or `null` when the child
+ * could not be spawned at all — which is exactly the case `stderr` reports.
+ *
+ * @typedef {{ ok: boolean, stdout: string, stderr: string, code: number | null }} GitResult
+ */
+
+/**
+ * The invoking-checkout context every mutating command operates on. It is
+ * derived from the Git top-level that contains the process current directory
+ * and never from a caller-supplied root.
+ *
+ * `policy` is the loaded workspace-integrity policy, or `null` when the
+ * repository carries no supported policy file. Every consumer of a policy
+ * field supplies its own default, so the field is deliberately modelled as
+ * possibly-absent rather than asserted complete.
+ *
+ * @typedef {{ root: string, commonDir: string, gitDir: string, isLinked: boolean, worktreeName: string | null, policy: import('./workspace-integrity.mjs').WorkspacePolicy | null }} SessionContext
+ */
+
+/**
+ * The parsed command line, exactly as `parseArgs` builds it. Every field is
+ * present because the parser always initializes it; a flag that was not
+ * supplied keeps its documented default.
+ *
+ * @typedef {{ command: SessionCommandName, root: string | null, rootExplicit: boolean, json: boolean, taskId: string | null, campaignId: string | null, role: string, baseSha: string | null, anchorPid: number | null, directory: string | null, name: string | null, adopt: boolean, dryRun: boolean, offline: boolean, allowDrift: boolean, deleteBranch: boolean, abandonUnmerged: boolean, expectSession: string | null, expectHead: string | null, expectOperation: string | null }} SessionCommandOptions
+ */
+
+/** The one command-name vocabulary this CLI dispatches. */
+/** @typedef {'status' | 'check' | 'start' | 'claim' | 'release' | 'reconcile' | 'integrate' | 'remove' | 'recover'} SessionCommandName */
+
+/**
+ * One ownership-record holder: the boot identity, the ISO instant the claim
+ * started, and an OPTIONAL pid anchor. A conversational agent session has no
+ * single long-lived process, so ownership without an anchor ends at explicit
+ * release or at reboot.
+ *
+ * @typedef {{ bootDigest: string, startedAtIso: string, pid: number | undefined }} SessionHolder
+ */
+
+/**
+ * One C-00 session ownership record, exactly as this CLI writes and reads it.
+ * The field set is `WORKSPACE_SESSION_SCHEMA`; `holder` is null for a record
+ * that was created released or explicitly released.
+ *
+ * @typedef {{ schemaVersion: string, sessionId: string, taskId: string, campaignId: string, role: string, branch: string, baseSha: string, createdAtIso: string, ownershipState: string, integrationState: string, holder: SessionHolder | null }} SessionRecord
+ */
+
+/** One serialized ownership-record transition lock. */
+/** @typedef {{ schemaVersion: string, command: string, sessionId: string, bootDigest: string, pid: number, startedAtIso: string, operationId: string }} TransitionLock */
+
+/**
+ * The bounded read of one transition lock. Every non-`PRESENT` state names why
+ * the lock could not be admitted; `PRESENT` carries the parsed lock and the
+ * exact bytes that were read, which the TOCTOU closure re-compares. Each
+ * discriminator is a single literal so a `state ===` comparison narrows.
+ */
+/** @typedef {{ state: 'ABSENT', file: string } | { state: 'UNREADABLE', file: string } | { state: 'IRREGULAR', file: string } | { state: 'OVERSIZED', file: string } | { state: 'MALFORMED', file: string, bytes: string }} IncompleteTransitionLockDocument */
+
+/** @typedef {{ state: 'PRESENT', file: string, lock: TransitionLock, bytes: string }} PresentTransitionLockDocument */
+
+/** @typedef {IncompleteTransitionLockDocument | PresentTransitionLockDocument} TransitionLockDocument */
+
+/**
+ * The bounded read of one ownership record. `PRESENT` carries the parsed
+ * record and its canonical content revision; each discriminator is a single
+ * literal so a `state ===` comparison narrows.
+ *
+ * @typedef {{ state: 'PRESENT', parsed: SessionRecord, revision: string } | { state: 'MALFORMED', bytes: string } | { state: 'ABSENT' } | { state: 'UNREADABLE' } | { state: 'IRREGULAR' } | { state: 'OVERSIZED' } | { state: 'SYMLINK' }} SessionRecordDocument
+ */
+
+/**
+ * One mutating command's outcome. Success carries whichever of the result
+ * fields the command reports; a refusal always names the code and may or may
+ * not carry a detail.
+ *
+ * The optional groups are expressed with the built-in mapped type rather than
+ * with the `?` optional-property form, which the lane's annotation budget
+ * counts as a widening form.
+ *
+ * @typedef {{ ok: true } & Partial<{ record: SessionRecord, merged: boolean, pushed: boolean, head: string | null, removed: boolean }> | { ok: false, code: string } & Partial<{ detail: string }>} TransitionOutcome
+ */
+
+/** The one `git` argument list shape used throughout this CLI. */
+/** @typedef {string[]} GitArgs */
+
+/**
+ * @param {string} cwd
+ * @param {GitArgs} args
+ * @returns {GitResult}
+ */
 function git(cwd, args, { network = false } = {}) {
   const result = spawnSync('git', args, {
     cwd,
@@ -69,10 +172,18 @@ function git(cwd, args, { network = false } = {}) {
     maxBuffer: GIT_MAX_BUFFER,
     stdio: ['ignore', 'pipe', 'pipe'],
   });
-  if (result.error) return { ok: false, stdout: '', stderr: String(result.error.code ?? 'SPAWN_ERROR'), code: null };
+  if (result.error) {
+    const spawned = /** @type {NodeJS.ErrnoException} */ (result.error);
+    return { ok: false, stdout: '', stderr: String(spawned.code ?? 'SPAWN_ERROR'), code: null };
+  }
   return { ok: result.status === 0, stdout: result.stdout ?? '', stderr: result.stderr ?? '', code: result.status };
 }
 
+/**
+ * @param {string} cwd
+ * @param {GitArgs} args
+ * @returns {string | null}
+ */
 function gitValue(cwd, args) {
   const result = git(cwd, args);
   if (!result.ok) return null;
@@ -80,12 +191,20 @@ function gitValue(cwd, args) {
   return value === '' ? null : value;
 }
 
+/**
+ * @param {string} code
+ * @param {string} [detail]
+ */
 function fail(code, detail) {
   console.error(detail === undefined ? `[session] ERROR: ${code}` : `[session] ERROR: ${code}: ${detail}`);
   process.exitCode = 1;
   return null;
 }
 
+/**
+ * @param {string} code
+ * @param {string} [detail]
+ */
 function emit(code, detail) {
   console.log(detail === undefined ? `[session] ${code}` : `[session] ${code}: ${detail}`);
 }
@@ -98,20 +217,35 @@ function emit(code, detail) {
  * `SESSION_WORKTREE_CREATED`. Every dry run ends with exactly one
  * `SESSION_DRY_RUN_NO_MUTATION` line naming the command, which is the
  * machine-checkable claim that nothing was written.
+ *
+ * @param {string} code
+ * @param {string} [detail]
  */
 function plan(code, detail) {
   console.log(detail === undefined ? `[session] PLAN ${code}` : `[session] PLAN ${code}: ${detail}`);
 }
 
+/**
+ * @param {string} command
+ * @param {string} [nextCommand]
+ */
 function dryRunComplete(command, nextCommand) {
   if (nextCommand !== undefined) plan('SESSION_NEXT_COMMAND', nextCommand);
   emit('SESSION_DRY_RUN_NO_MUTATION', command);
 }
 
+/**
+ * @param {unknown} value
+ * @returns {string}
+ */
 function slug(value) {
   return String(value).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 32);
 }
 
+/**
+ * @param {string} root
+ * @returns {SessionContext | null}
+ */
 function resolveContext(root) {
   const toplevel = gitValue(root, ['rev-parse', '--show-toplevel']);
   if (toplevel === null) return null;
@@ -123,8 +257,12 @@ function resolveContext(root) {
   return { root: resolved, commonDir, gitDir, isLinked, worktreeName, policy: loadPolicy(resolved).policy };
 }
 
+/**
+ * @param {{ taskId: string, campaignId: string | null, role: string, branch: string, baseSha: string } & Partial<{ anchorPid: number | null }>} options
+ * @returns {SessionRecord}
+ */
 function buildRecord({ taskId, campaignId, role, branch, baseSha, anchorPid = null }) {
-  const holder = { bootDigest: bootDigest(), startedAtIso: new Date().toISOString() };
+  const holder = /** @type {SessionHolder} */ ({ bootDigest: bootDigest(), startedAtIso: new Date().toISOString() });
   // A pid anchor is optional. A conversational agent session has no single
   // long-lived process, so ownership without an anchor ends at explicit
   // release or at reboot. A long-running process may anchor with --pid.
@@ -144,11 +282,19 @@ function buildRecord({ taskId, campaignId, role, branch, baseSha, anchorPid = nu
   };
 }
 
+/**
+ * @param {string} file
+ * @param {SessionRecord} record
+ */
 function writeRecordExclusive(file, record) {
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, `${JSON.stringify(record, null, 2)}\n`, { encoding: 'utf8', flag: 'wx' });
 }
 
+/**
+ * @param {string} file
+ * @returns {unknown}
+ */
 function readRecordRaw(file) {
   try {
     return JSON.parse(fs.readFileSync(file, 'utf8'));
@@ -157,6 +303,10 @@ function readRecordRaw(file) {
   }
 }
 
+/**
+ * @param {SessionRecord} record
+ * @returns {boolean}
+ */
 function holderIsLive(record) {
   const holder = record?.holder ?? null;
   if (holder === null || record.ownershipState !== 'OWNED') return false;
@@ -167,7 +317,7 @@ function holderIsLive(record) {
     process.kill(holder.pid, 0);
     return true;
   } catch (error) {
-    return error?.code === 'EPERM';
+    return /** @type {NodeJS.ErrnoException | null | undefined} */ (error)?.code === 'EPERM';
   }
 }
 
@@ -186,27 +336,40 @@ function resolveInvocationContext() {
   const toplevel = gitValue(process.cwd(), ['rev-parse', '--show-toplevel']);
   if (toplevel === null) return { error: 'SESSION_NOT_A_GIT_WORKTREE' };
   const root = path.resolve(toplevel);
+  // `process.argv[1]` is absent when this module is imported rather than
+  // executed as the process entry. `realpathSync('')` then throws exactly as
+  // `realpathSync(undefined)` did, so the same refusal is reported.
+  const scriptEntry = process.argv[1] ?? '';
   let topReal;
   let cwdReal;
   let scriptReal;
   try {
     topReal = fs.realpathSync(root);
     cwdReal = fs.realpathSync(process.cwd());
-    scriptReal = fs.realpathSync(process.argv[1]);
+    scriptReal = fs.realpathSync(scriptEntry);
   } catch {
     return { error: 'SESSION_INVOCATION_UNRESOLVED', detail: 'the checkout, current directory or CLI path could not be resolved' };
   }
-  const binding = admitInvocationBinding({ currentTopRealPath: topReal, scriptRealPath: scriptReal, cwdRealPath: cwdReal });
+  const binding = /** @type {SessionAdmissionResult} */ (admitInvocationBinding({ currentTopRealPath: topReal, scriptRealPath: scriptReal, cwdRealPath: cwdReal }));
   if (!binding.ok) return { error: binding.code, detail: binding.detail };
   const context = resolveContext(root);
   if (context === null) return { error: 'SESSION_NOT_A_GIT_WORKTREE' };
   return { context };
 }
 
+/**
+ * @param {SessionContext} context
+ * @returns {string}
+ */
 function currentRecordFile(context) {
   return sessionRecordPath(context.commonDir, context.worktreeName, context.policy);
 }
 
+/**
+ * @param {string} file
+ * @param {number} maxBytes
+ * @returns {string | null}
+ */
 function readBoundedText(file, maxBytes) {
   try {
     const stat = fs.lstatSync(file);
@@ -218,6 +381,10 @@ function readBoundedText(file, maxBytes) {
   }
 }
 
+/**
+ * @param {SessionContext} context
+ * @returns {string | null}
+ */
 function currentBranchOf(context) {
   const branch = gitValue(context.root, ['rev-parse', '--abbrev-ref', 'HEAD']);
   return branch === 'HEAD' ? null : branch;
@@ -226,6 +393,11 @@ function currentBranchOf(context) {
 /**
  * Admit active-task/STATE continuity for commands that bind the live campaign.
  * `worktreeName` is the registered linked worktree name, or `canonical`.
+ *
+ * @param {SessionContext} context
+ * @param {SessionRecord} record
+ * @param {string} command
+ * @returns {SessionAdmissionResult}
  */
 function admitCommandContinuity(context, record, command) {
   const taskId = typeof record?.taskId === 'string' ? record.taskId : null;
@@ -234,7 +406,7 @@ function admitCommandContinuity(context, record, command) {
     ? null
     : readBoundedText(path.join(context.root, '.agent', 'tasks', taskId, 'STATE.md'), CONTINUITY_MAX_BYTES);
   const branch = currentBranchOf(context) ?? '';
-  return admitContinuity({
+  const admission = /** @type {SessionAdmissionResult} */ (admitContinuity({
     command,
     record,
     // The routing directive names the session BRANCH; the registered worktree
@@ -244,14 +416,34 @@ function admitCommandContinuity(context, record, command) {
     canonicalBranch: context.policy?.canonical?.branch ?? 'main',
     activeTaskText,
     stateText,
-    normalizeStatus: normalizeTaskStatus,
-  });
+    // `admitContinuity` admits an untyped status value; the protocol normalizer
+    // takes a string, so the adapter performs the same coercion it performs
+    // when it is called directly.
+    normalizeStatus: /** @param {unknown} value */ (value) => normalizeTaskStatus(String(value ?? '')),
+  }));
+  return admission;
+}
+
+/**
+ * The `code` of a thrown value when it is an errno-coded error. Filesystem
+ * races and spawn failures surface as `NodeJS.ErrnoException`; anything else
+ * carries no code, which is the "no code" answer rather than a crash.
+ *
+ * @param {unknown} error
+ * @returns {unknown}
+ */
+function errnoCodeOf(error) {
+  return error !== null && typeof error === 'object' && 'code' in error ? error.code : undefined;
 }
 
 // ---------------------------------------------------------------------------
 // ownership-record transition primitives (NW-AUD-006)
 // ---------------------------------------------------------------------------
 
+/**
+ * @param {string} recordFile
+ * @returns {string}
+ */
 function transitionLockPath(recordFile) {
   return `${recordFile}.lock`;
 }
@@ -259,6 +451,9 @@ function transitionLockPath(recordFile) {
 /**
  * Inspect a transition lock without ever following a symlink. Returns
  * `{ state: 'ABSENT' | 'PRESENT' | 'MALFORMED' | 'IRREGULAR' | 'UNREADABLE' | 'OVERSIZED', lock?, bytes? }`.
+ *
+ * @param {string} recordFile
+ * @returns {TransitionLockDocument}
  */
 function readTransitionLock(recordFile) {
   const file = transitionLockPath(recordFile);
@@ -266,7 +461,8 @@ function readTransitionLock(recordFile) {
   try {
     stat = fs.lstatSync(file);
   } catch (error) {
-    return { state: error?.code === 'ENOENT' ? 'ABSENT' : 'UNREADABLE', file };
+    const code = errnoCodeOf(error);
+    return { state: code === 'ENOENT' ? 'ABSENT' : 'UNREADABLE', file };
   }
   if (stat.isSymbolicLink() || !stat.isFile()) return { state: 'IRREGULAR', file };
   if (stat.size > TRANSITION_LOCK_MAX_BYTES) return { state: 'OVERSIZED', file };
@@ -288,6 +484,11 @@ function readTransitionLock(recordFile) {
   return { state: 'PRESENT', file, lock: parsed, bytes: text };
 }
 
+/**
+ * @param {string} recordFile
+ * @param {{ command: string, sessionId: string | null }} options
+ * @returns {{ ok: true, file: string, lock: TransitionLock } | { ok: false, code: string, detail: string }}
+ */
 function acquireTransitionLock(recordFile, { command, sessionId }) {
   const observed = readTransitionLock(recordFile);
   if (observed.state !== 'ABSENT') {
@@ -306,12 +507,16 @@ function acquireTransitionLock(recordFile, { command, sessionId }) {
   try {
     fs.writeFileSync(transitionLockPath(recordFile), `${JSON.stringify(lock, null, 2)}\n`, { encoding: 'utf8', flag: 'wx', mode: 0o600 });
   } catch (error) {
-    if (error?.code === 'EEXIST') return { ok: false, code: 'SESSION_TRANSITION_LOCKED', detail: 'a competing transition lock exists' };
-    return { ok: false, code: 'SESSION_TRANSITION_LOCK_FAILED', detail: String(error?.code ?? 'UNKNOWN') };
+    const code = errnoCodeOf(error);
+    if (code === 'EEXIST') return { ok: false, code: 'SESSION_TRANSITION_LOCKED', detail: 'a competing transition lock exists' };
+    return { ok: false, code: 'SESSION_TRANSITION_LOCK_FAILED', detail: String(code ?? 'UNKNOWN') };
   }
   return { ok: true, file: transitionLockPath(recordFile), lock };
 }
 
+/**
+ * @param {{ file: string, lock: TransitionLock } | null | undefined} handle
+ */
 function releaseTransitionLock(handle) {
   if (handle === null || handle === undefined) return;
   try {
@@ -323,13 +528,18 @@ function releaseTransitionLock(handle) {
 }
 
 /** Read the ownership record with bounded, symlink-refusing semantics. */
+/**
+ * @param {string} file
+ * @param {import('./workspace-integrity.mjs').WorkspacePolicy | null} policy
+ * @returns {SessionRecordDocument}
+ */
 function readRecordDocument(file, policy) {
   const maxBytes = policy?.worktreePolicy?.maxRecordBytes ?? 4096;
   let stat;
   try {
     stat = fs.lstatSync(file);
   } catch (error) {
-    return { state: error?.code === 'ENOENT' ? 'ABSENT' : 'UNREADABLE' };
+    return { state: errnoCodeOf(error) === 'ENOENT' ? 'ABSENT' : 'UNREADABLE' };
   }
   if (stat.isSymbolicLink()) return { state: 'SYMLINK' };
   if (!stat.isFile()) return { state: 'IRREGULAR' };
@@ -353,6 +563,11 @@ function readRecordDocument(file, policy) {
  * Publish a replacement ownership record durably: same-directory temporary
  * file, fsync, rename, directory fsync, reread verification. Any failure past
  * the rename is reported as UNCERTAIN rather than as a silent success.
+ *
+ * @param {string} recordFile
+ * @param {SessionRecord} record
+ * @param {import('./workspace-integrity.mjs').WorkspacePolicy | null} policy
+ * @returns {{ ok: true } | { ok: false, code: string, detail: string }}
  */
 function publishRecordDurable(recordFile, record, policy) {
   const payload = `${JSON.stringify(record, null, 2)}\n`;
@@ -372,11 +587,12 @@ function publishRecordDurable(recordFile, record, policy) {
       fs.closeSync(directory);
     }
   } catch (error) {
+    const code = errnoCodeOf(error);
     if (handle !== undefined) {
       try { fs.closeSync(handle); } catch { /* best effort */ }
     }
     try { fs.rmSync(temporary, { force: true }); } catch { /* best effort */ }
-    return { ok: false, code: 'SESSION_RECORD_WRITE_UNCERTAIN', detail: String(error?.code ?? 'UNKNOWN') };
+    return { ok: false, code: 'SESSION_RECORD_WRITE_UNCERTAIN', detail: String(code ?? 'UNKNOWN') };
   }
   const reread = readRecordDocument(recordFile, policy);
   if (reread.state !== 'PRESENT') {
@@ -392,6 +608,11 @@ function publishRecordDurable(recordFile, record, policy) {
  * Run `body` while holding the transition lock for one ownership record. The
  * lock is released in a finally; a lock conflict or invalid lock refuses
  * before any effect.
+ *
+ * @param {string} recordFile
+ * @param {{ command: string, sessionId: string | null }} options
+ * @param {(acquired: { ok: true, file: string, lock: TransitionLock }) => TransitionOutcome} body
+ * @returns {TransitionOutcome}
  */
 function withTransitionLock(recordFile, options, body) {
   const acquired = acquireTransitionLock(recordFile, options);
@@ -416,6 +637,10 @@ function withTransitionLock(recordFile, options, body) {
 // grants no authority and reaches no other command.
 const SESSION_FAULT_INJECTION_POINTS = new Set(['AFTER_WORKTREE_ADD', 'AFTER_RECORD_WRITE', 'AFTER_INTEGRATION_VERIFY']);
 
+/**
+ * @param {Record<string, string | undefined>} [environment]
+ * @returns {{ point: string | null, invalid: string | null }}
+ */
 function resolveFaultInjection(environment = process.env) {
   const raw = environment.NIGHTWATCH_SESSION_FAULT_INJECTION;
   if (raw === undefined || raw === '') return { point: null, invalid: null };
@@ -431,8 +656,13 @@ function resolveFaultInjection(environment = process.env) {
  * moved. Any mismatch leaves everything untouched and reports a bounded
  * owner-action state, because a rollback that could delete an owner's work
  * would be worse than the partial state it repairs.
+ *
+ * @param {SessionContext} context
+ * @param {{ target: string, branch: string, baseSha: string }} options
+ * @returns {{ complete: boolean, reason: string, steps: string[] }}
  */
 function rollbackCreatedSession(context, { target, branch, baseSha }) {
+  /** @type {string[]} */
   const steps = [];
   const observedTop = gitValue(target, ['rev-parse', '--show-toplevel']);
   if (observedTop === null || path.resolve(observedTop) !== path.resolve(target)) {
@@ -464,6 +694,10 @@ function rollbackCreatedSession(context, { target, branch, baseSha }) {
   return { complete: true, reason: 'ROLLBACK_COMPLETE', steps };
 }
 
+/**
+ * @param {SessionContext} context
+ * @param {SessionCommandOptions} options
+ */
 function commandStatus(context, options) {
   const report = inspectWorkspace({ root: context.root });
   if (options.json) {
@@ -485,14 +719,18 @@ function commandStatus(context, options) {
   return report;
 }
 
+/**
+ * @param {SessionContext} context
+ * @param {SessionCommandOptions} options
+ */
 function commandClaim(context, options) {
   if (options.taskId === null) return fail('SESSION_TASK_ID_REQUIRED', 'pass --task <task-id>');
-  const roleAdmission = admitCheckoutRole({
+  const roleAdmission = /** @type {SessionAdmissionResult} */ (admitCheckoutRole({
     authority: SESSION_COMMAND_AUTHORITY.claim,
     isLinked: context.isLinked,
     worktreeCount: 1,
     role: options.role,
-  });
+  }));
   if (!roleAdmission.ok) return fail(roleAdmission.code, roleAdmission.detail);
   const branch = currentBranchOf(context);
   if (branch === null) return fail('SESSION_DETACHED_HEAD', 'a session requires a named branch');
@@ -531,14 +769,14 @@ function commandClaim(context, options) {
     }
   }
   const record = buildRecord({ taskId: options.taskId, campaignId: options.campaignId, role: options.role, branch, baseSha, anchorPid: options.anchorPid });
-  const admission = admitExpectations({
+  const admission = /** @type {SessionAdmissionResult} */ (admitExpectations({
     authority: SESSION_COMMAND_AUTHORITY.claim,
     record: existing.state === 'PRESENT' ? existing.parsed : null,
     head: null,
     expectSession: options.expectSession,
     expectHead: null,
     adopting: options.adopt === true && existing.state === 'PRESENT',
-  });
+  }));
   if (!admission.ok) return fail(admission.code, admission.detail);
   if (options.dryRun) {
     plan('SESSION_CLAIM_PLAN', `task=${record.taskId} role=${record.role} branch=${branch} base=${baseSha}`);
@@ -555,12 +793,17 @@ function commandClaim(context, options) {
       try {
         writeRecordExclusive(file, record);
       } catch (error) {
-        if (error?.code === 'EEXIST') return { ok: false, code: 'SESSION_ALREADY_OWNED', detail: 'a concurrent claim won the exclusive create' };
-        return { ok: false, code: 'SESSION_RECORD_WRITE_FAILED', detail: String(error?.code ?? 'UNKNOWN') };
+        const code = errnoCodeOf(error);
+        if (code === 'EEXIST') return { ok: false, code: 'SESSION_ALREADY_OWNED', detail: 'a concurrent claim won the exclusive create' };
+        return { ok: false, code: 'SESSION_RECORD_WRITE_FAILED', detail: String(code ?? 'UNKNOWN') };
       }
       return { ok: true, record };
     }
-    if (current.state !== 'PRESENT' || current.revision !== existing.revision) {
+    // A pre-lock record that is no longer present carries no revision; reading
+    // it as `undefined` makes the comparison below refuse, which is exactly
+    // the outcome the untyped property access produced.
+    const observedRevision = existing.state === 'PRESENT' ? existing.revision : undefined;
+    if (current.state !== 'PRESENT' || current.revision !== observedRevision) {
       return { ok: false, code: 'SESSION_RECORD_REVISION_CHANGED', detail: 'the ownership record changed while this command held the transition lock' };
     }
     const published = publishRecordDurable(file, record, context.policy);
@@ -573,14 +816,18 @@ function commandClaim(context, options) {
   return record;
 }
 
+/**
+ * @param {SessionContext} context
+ * @param {SessionCommandOptions} options
+ */
 function commandStart(context, options) {
   if (options.taskId === null) return fail('SESSION_TASK_ID_REQUIRED', 'pass --task <task-id>');
-  const roleAdmission = admitCheckoutRole({
+  const roleAdmission = /** @type {SessionAdmissionResult} */ (admitCheckoutRole({
     authority: SESSION_COMMAND_AUTHORITY.start,
     isLinked: context.isLinked,
     worktreeCount: 1,
     role: options.role,
-  });
+  }));
   if (!roleAdmission.ok) return fail(roleAdmission.code, roleAdmission.detail);
   const fault = resolveFaultInjection();
   if (fault.invalid !== null) {
@@ -651,7 +898,7 @@ function commandStart(context, options) {
 
   // Past this point the workspace holds a partial creation, so every failure
   // path rolls it back rather than returning and leaving it registered.
-  const abort = (code, detail) => {
+  const abort = (/** @type {string} */ code, /** @type {string} */ detail) => {
     const rollback = rollbackCreatedSession(context, { target, branch, baseSha });
     if (rollback.complete) {
       emit('SESSION_START_ROLLED_BACK', `${rollback.reason} steps=${rollback.steps.join(',') || 'NONE'}`);
@@ -672,7 +919,7 @@ function commandStart(context, options) {
   try {
     writeRecordExclusive(sessionRecordPath(created.commonDir, created.worktreeName, created.policy), record);
   } catch (error) {
-    return abort('SESSION_RECORD_WRITE_FAILED', String(error?.code ?? 'UNKNOWN'));
+    return abort('SESSION_RECORD_WRITE_FAILED', String(errnoCodeOf(error) ?? 'UNKNOWN'));
   }
   if (fault.point === 'AFTER_RECORD_WRITE') return abort('SESSION_FAULT_INJECTED', 'AFTER_RECORD_WRITE');
 
@@ -701,6 +948,10 @@ function commandStart(context, options) {
   return record;
 }
 
+/**
+ * @param {SessionContext} context
+ * @param {SessionCommandOptions} options
+ */
 function commandRelease(context, options) {
   const authority = SESSION_COMMAND_AUTHORITY.release;
   const file = currentRecordFile(context);
@@ -708,7 +959,7 @@ function commandRelease(context, options) {
   if (observed.state !== 'PRESENT') {
     return fail(observed.state === 'ABSENT' ? 'SESSION_RECORD_ABSENT' : 'SESSION_RECORD_UNREADABLE', `the ownership record is ${observed.state}`);
   }
-  const admission = admitExpectations({ authority, record: observed.parsed, head: null, expectSession: options.expectSession, expectHead: null, adopting: false });
+  const admission = /** @type {SessionAdmissionResult} */ (admitExpectations({ authority, record: observed.parsed, head: null, expectSession: options.expectSession, expectHead: null, adopting: false }));
   if (!admission.ok) return fail(admission.code, admission.detail);
   const continuity = admitCommandContinuity(context, observed.parsed, 'release');
   if (!continuity.ok) return fail(continuity.code, continuity.detail);
@@ -737,6 +988,10 @@ function commandRelease(context, options) {
   return transition.record;
 }
 
+/**
+ * @param {SessionContext} context
+ * @param {SessionCommandOptions} options
+ */
 function commandReconcile(context, options) {
   const authority = SESSION_COMMAND_AUTHORITY.reconcile;
   const file = currentRecordFile(context);
@@ -744,7 +999,7 @@ function commandReconcile(context, options) {
   if (observed.state !== 'PRESENT') {
     return fail(observed.state === 'ABSENT' ? 'SESSION_RECORD_ABSENT' : 'SESSION_RECORD_UNREADABLE', `the ownership record is ${observed.state}`);
   }
-  const admission = admitExpectations({ authority, record: observed.parsed, head: null, expectSession: options.expectSession, expectHead: null, adopting: false });
+  const admission = /** @type {SessionAdmissionResult} */ (admitExpectations({ authority, record: observed.parsed, head: null, expectSession: options.expectSession, expectHead: null, adopting: false }));
   if (!admission.ok) return fail(admission.code, admission.detail);
   const continuity = admitCommandContinuity(context, observed.parsed, 'reconcile');
   if (!continuity.ok) return fail(continuity.code, continuity.detail);
@@ -813,13 +1068,17 @@ function commandReconcile(context, options) {
   return transition;
 }
 
+/**
+ * @param {SessionContext} context
+ * @param {SessionCommandOptions} options
+ */
 function commandIntegrate(context, options) {
   const authority = SESSION_COMMAND_AUTHORITY.integrate;
   const fault = resolveFaultInjection();
   if (fault.invalid !== null) {
     return fail('SESSION_FAULT_INJECTION_INVALID', `NIGHTWATCH_SESSION_FAULT_INJECTION must be one of ${[...SESSION_FAULT_INJECTION_POINTS].join(', ')}`);
   }
-  const roleAdmission = admitCheckoutRole({ authority, isLinked: context.isLinked, worktreeCount: 1, role: 'IMPLEMENTATION' });
+  const roleAdmission = /** @type {SessionAdmissionResult} */ (admitCheckoutRole({ authority, isLinked: context.isLinked, worktreeCount: 1, role: 'IMPLEMENTATION' }));
   if (!roleAdmission.ok) return fail(roleAdmission.code, roleAdmission.detail);
   const file = currentRecordFile(context);
   const observed = readRecordDocument(file, context.policy);
@@ -828,7 +1087,7 @@ function commandIntegrate(context, options) {
   }
   const head = gitValue(context.root, ['rev-parse', 'HEAD']);
   const admission = admitExpectations({ authority, record: observed.parsed, head, expectSession: options.expectSession, expectHead: options.expectHead, adopting: false });
-  if (!admission.ok) return fail(admission.code, admission.detail);
+  if (!admission.ok) return fail(/** @type {string} */ (admission.code), /** @type {string | undefined} */ (admission.detail));
   const continuity = admitCommandContinuity(context, observed.parsed, 'integrate');
   if (!continuity.ok) return fail(continuity.code, continuity.detail);
   const currentBranch = currentBranchOf(context);
@@ -884,6 +1143,7 @@ function commandIntegrate(context, options) {
     }
     const remoteMain = gitValue(context.root, ['rev-parse', '--verify', '--quiet', `refs/remotes/${remote}/${canonicalBranch}`]);
     if (remoteMain === null) return { ok: false, code: 'SESSION_REMOTE_MAIN_UNKNOWN' };
+    /** @returns {{ ok: true } | { ok: false, code: string, detail: string }} */
     const finalizeRecord = () => {
       const published = publishRecordDurable(file, { ...current.parsed, integrationState: 'INTEGRATED' }, context.policy);
       if (!published.ok) {
@@ -925,9 +1185,13 @@ function commandIntegrate(context, options) {
   return transition;
 }
 
+/**
+ * @param {SessionContext} context
+ * @param {SessionCommandOptions} options
+ */
 function commandRemove(context, options) {
   const authority = SESSION_COMMAND_AUTHORITY.remove;
-  const roleAdmission = admitCheckoutRole({ authority, isLinked: context.isLinked, worktreeCount: 1, role: options.role });
+  const roleAdmission = /** @type {SessionAdmissionResult} */ (admitCheckoutRole({ authority, isLinked: context.isLinked, worktreeCount: 1, role: options.role }));
   if (!roleAdmission.ok) return fail(roleAdmission.code, roleAdmission.detail);
   if (options.name === null) return fail('SESSION_NAME_REQUIRED', 'pass --name <session-worktree-name>');
   const file = sessionRecordPath(context.commonDir, options.name, context.policy);
@@ -938,7 +1202,7 @@ function commandRemove(context, options) {
   if (holderIsLive(observed.parsed)) {
     return fail('SESSION_REMOVE_REFUSED_LIVE_HOLDER', `session ${observed.parsed.sessionId} is live; never delete another session's work`);
   }
-  const admission = admitExpectations({ authority, record: observed.parsed, head: null, expectSession: options.expectSession, expectHead: null, adopting: false });
+  const admission = /** @type {SessionAdmissionResult} */ (admitExpectations({ authority, record: observed.parsed, head: null, expectSession: options.expectSession, expectHead: null, adopting: false }));
   if (!admission.ok) return fail(admission.code, admission.detail);
   const gitdirFile = path.join(context.commonDir, 'worktrees', options.name, 'gitdir');
   let target = null;
@@ -992,10 +1256,13 @@ function commandRemove(context, options) {
  * alone: the boot identity must differ or the recorded process must be dead,
  * the exact lock operation identity must be echoed by the operator, and the
  * ownership record is never changed by recovery.
+ *
+ * @param {SessionContext} context
+ * @param {SessionCommandOptions} options
  */
 function commandRecover(context, options) {
   const authority = SESSION_COMMAND_AUTHORITY.recover;
-  const roleAdmission = admitCheckoutRole({ authority, isLinked: context.isLinked, worktreeCount: 1, role: options.role });
+  const roleAdmission = /** @type {SessionAdmissionResult} */ (admitCheckoutRole({ authority, isLinked: context.isLinked, worktreeCount: 1, role: options.role }));
   if (!roleAdmission.ok) return fail(roleAdmission.code, roleAdmission.detail);
   const file = currentRecordFile(context);
   const observed = readTransitionLock(file);
@@ -1004,7 +1271,7 @@ function commandRecover(context, options) {
     return { recovered: false, reason: 'NO_LOCK' };
   }
   const currentBoot = bootDigest();
-  const staleness = (lock) => {
+  const staleness = (/** @type {TransitionLock} */ lock) => {
     const sameBoot = typeof lock.bootDigest === 'string' && lock.bootDigest !== '' && lock.bootDigest === currentBoot;
     if (sameBoot && lock.pid !== undefined && lock.pid !== null && processAlive(lock.pid)) return 'PROCESS_ALIVE';
     if (sameBoot) return 'PROCESS_NOT_ALIVE';
@@ -1016,38 +1283,42 @@ function commandRecover(context, options) {
     dryRunComplete('recover', observed.state === 'PRESENT' ? `node bin/nightwatch-session.mjs recover --expect-session ${observed.lock.sessionId} --expect-operation ${observed.lock.operationId}` : undefined);
     return { recovered: false, dryRun: true, lockState: observed.state };
   }
-  const recovery = admitLockRecovery({
+  const recovery = /** @type {SessionRecoveryAdmission} */ (admitLockRecovery({
     lock: observed.state === 'PRESENT' ? observed.lock : null,
     lockState: observed.state,
     currentBootDigest: currentBoot,
     processAlive,
     expectedSessionId: options.expectSession,
     expectedOperationId: options.expectOperation,
-  });
+  }));
   if (!recovery.ok) return fail(recovery.code, recovery.detail);
   if (recovery.stale !== true) return fail('SESSION_RECOVER_REFUSED', `the transition lock is ${recovery.reason}`);
   const record = readRecordDocument(file, context.policy);
-  if (record.state !== 'PRESENT' || record.parsed.sessionId !== observed.lock.sessionId) {
+  if (record.state !== 'PRESENT' || record.parsed.sessionId !== /** @type {PresentTransitionLockDocument} */ (observed).lock.sessionId) {
     return fail('SESSION_RECOVER_REFUSED', 'the current ownership record does not match the locked session; owner inspection is required');
   }
   // TOCTOU closure: re-read immediately before removal and require the exact
   // bytes that were inspected. A swapped lock is never removed.
   const confirm = readTransitionLock(file);
-  if (confirm.state !== 'PRESENT' || confirm.bytes !== observed.bytes) {
+  if (confirm.state !== 'PRESENT' || confirm.bytes !== /** @type {PresentTransitionLockDocument} */ (observed).bytes) {
     return fail('SESSION_RECOVER_REFUSED', 'the transition lock changed after inspection; re-inspect before recovery');
   }
   fs.unlinkSync(confirm.file);
-  emit('SESSION_RECOVERED_LOCK', `operation=${observed.lock.operationId} session=${observed.lock.sessionId} proof=${recovery.reason}`);
+  emit('SESSION_RECOVERED_LOCK', `operation=${/** @type {PresentTransitionLockDocument} */ (observed).lock.operationId} session=${/** @type {PresentTransitionLockDocument} */ (observed).lock.sessionId} proof=${recovery.reason}`);
   return { recovered: true };
 }
 
+/**
+ * @param {number} pid
+ * @returns {boolean}
+ */
 function processAlive(pid) {
   if (!Number.isInteger(pid) || pid <= 0) return false;
   try {
     process.kill(pid, 0);
     return true;
   } catch (error) {
-    return error?.code === 'EPERM';
+    return errnoCodeOf(error) === 'EPERM';
   }
 }
 
@@ -1086,6 +1357,7 @@ const DRY_RUN_SUPPORT = Object.freeze({
   recover: 'SUPPORTED',
 });
 
+/** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
 const CLI_METADATA = {
   schemaVersion: OPERATOR_CLI_SCHEMA,
   name: 'nightwatch-session',
@@ -1129,10 +1401,13 @@ const CLI_METADATA = {
   artifacts: ['$HOME/.nightwatch/worktrees/<name> session worktrees'],
 };
 
+/**
+ * @param {readonly string[]} argv
+ */
 function parseArgs(argv) {
   const args = argv.slice(2);
-  const options = {
-    command: args[0] ?? 'status',
+  const options = /** @type {SessionCommandOptions} */ ({
+    command: /** @type {SessionCommandName} */ (args[0] ?? 'status'),
     root: null,
     rootExplicit: false,
     json: false,
@@ -1152,7 +1427,7 @@ function parseArgs(argv) {
     expectSession: null,
     expectHead: null,
     expectOperation: null,
-  };
+  });
   if (!COMMANDS.has(options.command)) return { error: `UNKNOWN_COMMAND:${options.command}` };
   for (let index = 1; index < args.length; index += 1) {
     const value = args[index];
@@ -1187,12 +1462,12 @@ function parseArgs(argv) {
     else if (value === '--expect-session') {
       const parsed = parseExpectation(next(), 'session');
       if (!parsed.ok) return { error: 'EXPECT_SESSION_INVALID' };
-      options.expectSession = parsed.value;
+      options.expectSession = /** @type {string | null} */ (parsed.value);
     }
     else if (value === '--expect-head') {
       const parsed = parseExpectation(next(), 'head');
       if (!parsed.ok) return { error: 'EXPECT_HEAD_INVALID' };
-      options.expectHead = parsed.value;
+      options.expectHead = /** @type {string | null} */ (parsed.value);
     }
     else if (value === '--expect-operation') {
       const supplied = next();

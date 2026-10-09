@@ -19,6 +19,10 @@ import path from 'node:path';
 import { OPERATOR_CLI_GROUPS, validateOperatorMetadata } from './operator-cli.mjs';
 
 /** Relative paths of every top-level `bin/*.mjs`, sorted. */
+/**
+ * @param {string} root
+ * @returns {string[]}
+ */
 export function discoverOperatorBins(root) {
   const binDirectory = path.join(root, 'bin');
   const names = fs.readdirSync(binDirectory).filter((name) => name.endsWith('.mjs'));
@@ -54,14 +58,26 @@ export function readLibraryRetainedBins(root) {
  * checks can read without executing 62 processes; the behavioural facts (help,
  * refusal, metadata correctness) belong to the sweep.
  */
+/**
+ * @param {string} source
+ * @returns {boolean}
+ */
 export function sourceDeclaresOperatorMetadata(source) {
   return /defineOperatorCli\s*\(/.test(source);
 }
 
+/**
+ * @param {string} character
+ * @returns {boolean}
+ */
 function isIdentifierStart(character) {
   return /[A-Za-z_$]/.test(character);
 }
 
+/**
+ * @param {string} character
+ * @returns {boolean}
+ */
 function isIdentifierPart(character) {
   return /[A-Za-z0-9_$]/.test(character);
 }
@@ -95,7 +111,7 @@ function readLiteral(text, start) {
       break;
     }
   };
-  const readString = (quote) => {
+  const readString = (/** @type {string} */ quote) => {
     index += 1;
     let value = '';
     while (index < text.length) {
@@ -133,6 +149,7 @@ function readLiteral(text, start) {
   if (character === undefined) return null;
   if (character === '{') {
     index += 1;
+    /** @type {Record<string, unknown>} */
     const object = {};
     skip();
     if (text[index] === '}') { index += 1; return { value: object, next: index }; }
@@ -167,6 +184,7 @@ function readLiteral(text, start) {
   }
   if (character === '[') {
     index += 1;
+    /** @type {unknown[]} */
     const array = [];
     skip();
     if (text[index] === ']') { index += 1; return { value: array, next: index }; }
@@ -240,10 +258,63 @@ export function extractDeclaredOperatorMetadata(source) {
 }
 
 /**
+ * The declared metadata as the listing reads it.
+ * @typedef {object} OperatorCommandMetadata
+ * @property {string} group
+ * @property {string} name
+ * @property {string} purpose
+ * @property {string} entry
+ * @property {string | undefined} authorization
+ * @property {readonly { name: string }[] | undefined} commands
+ */
+
+/**
+ * The always-present fields of one listing row.
+ * @typedef {object} OperatorCommandEntryBase
+ * @property {string} bin
+ * @property {boolean} declared
+ * @property {OperatorCommandMetadata | null} metadata
+ * @property {string | null} error
+ */
+
+/**
+ * The optional library-row fields.
+ * @typedef {object} OperatorCommandEntryOptional
+ * @property {boolean | undefined} library a LIBRARY_RETAINED module: listed as a library, never as an undeclared command
+ * @property {string | undefined} reason the stated reason the library module is retained
+ */
+
+/**
+ * The answer of one runtime `--print-metadata` invocation.
+ * @typedef {object} ListingRunResult
+ * @property {number | null} status
+ * @property {string | null | undefined} stdout
+ * @property {string | null | undefined} stderr
+ * @property {Error | undefined} error
+ */
+
+/**
+ * The injectable fields of a listing request.
+ * @typedef {object} ListingOptionsFields
+ * @property {readonly string[]} bins the bin paths to list, instead of discovering them
+ * @property {ReadonlyMap<string, string>} libraryRetained the LIBRARY_RETAINED registry, instead of reading it
+ * @property {(absolute: string) => ListingRunResult} run the runtime `--print-metadata` probe, injected only by the sweep
+ */
+
+/** Every listing field optional: the listing is pure by default. */
+/**
+ * @typedef {Partial<ListingOptionsFields>} ListingOptions
+ */
+/**
+ * One listing row: the always-present fields plus the optional library flags.
+ * @typedef {OperatorCommandEntryBase & Partial<OperatorCommandEntryOptional>} OperatorCommandEntry
+ */
+
+/**
  * @typedef {object} ListingInput
  * @property {string} root
  * @property {readonly string[]} bins
- * @property {(absolute: string) => { status: number | null, stdout?: string | null, stderr?: string | null, error?: Error }} [run]
+ * @property {(absolute: string) => { status: number | null } & Partial<{ stdout: string | null, stderr: string | null, error: Error }>} [run]
  * @property {ReadonlyMap<string, string>} [libraryRetained] LIBRARY_RETAINED bins (file -> reason): listed as library modules, not as undeclared commands
  */
 
@@ -254,6 +325,7 @@ export function extractDeclaredOperatorMetadata(source) {
  * the help text, the listing and the parser must describe one contract.
  *
  * @param {ListingInput} input
+ * @returns {OperatorCommandEntry[]}
  */
 export function collectOperatorCommandMetadata(input) {
   const run = input.run;
@@ -279,7 +351,7 @@ export function collectOperatorCommandMetadata(input) {
       entries.push({ bin, declared: true, metadata: null, error: errors.join('; ') });
       continue;
     }
-    const declared = /** @type {{ entry: string }} */ (metadata);
+    const declared = /** @type {OperatorCommandMetadata} */ (metadata);
     if (declared.entry !== bin) {
       entries.push({ bin, declared: true, metadata: null, error: `entry ${declared.entry} does not match ${bin}` });
       continue;
@@ -287,22 +359,22 @@ export function collectOperatorCommandMetadata(input) {
     if (run !== undefined) {
       const result = run(path.join(input.root, bin));
       if (result.error !== undefined || result.status !== 0) {
-        entries.push({ bin, declared: true, metadata, error: 'OPERATOR_CLI_RUNTIME_METADATA_UNREADABLE' });
+        entries.push({ bin, declared: true, metadata: declared, error: 'OPERATOR_CLI_RUNTIME_METADATA_UNREADABLE' });
         continue;
       }
       let runtime;
       try {
         runtime = JSON.parse(String(result.stdout ?? ''));
       } catch {
-        entries.push({ bin, declared: true, metadata, error: 'OPERATOR_CLI_RUNTIME_METADATA_NOT_JSON' });
+        entries.push({ bin, declared: true, metadata: declared, error: 'OPERATOR_CLI_RUNTIME_METADATA_NOT_JSON' });
         continue;
       }
       if (JSON.stringify(runtime) !== JSON.stringify(metadata)) {
-        entries.push({ bin, declared: true, metadata, error: 'OPERATOR_CLI_RUNTIME_METADATA_MISMATCH' });
+        entries.push({ bin, declared: true, metadata: declared, error: 'OPERATOR_CLI_RUNTIME_METADATA_MISMATCH' });
         continue;
       }
     }
-    entries.push({ bin, declared: true, metadata, error: null });
+    entries.push({ bin, declared: true, metadata: declared, error: null });
   }
   return entries;
 }
@@ -321,6 +393,8 @@ const GROUP_TITLES = Object.freeze({
 /**
  * Render the grouped listing. Every declared entry appears under its declared
  * group; undeclared bins appear last so the gap is visible.
+ * @param {readonly OperatorCommandEntry[]} entries
+ * @returns {string}
  */
 export function renderOperatorCommandListing(entries) {
   const lines = [];
@@ -330,9 +404,10 @@ export function renderOperatorCommandListing(entries) {
   for (const group of OPERATOR_CLI_GROUPS) {
     const members = entries.filter((entry) => entry.metadata !== null && entry.metadata.group === group);
     if (members.length === 0) continue;
-    lines.push(`${GROUP_TITLES[group] ?? group}:`);
+    lines.push(`${GROUP_TITLES[/** @type {keyof typeof GROUP_TITLES} */ (group)] ?? group}:`);
     for (const member of members) {
       const metadata = member.metadata;
+      if (metadata === null) continue;
       const commands = Array.isArray(metadata.commands) && metadata.commands.length > 0
         ? ` [${metadata.commands.map((command) => command.name).join('|')}]`
         : '';
@@ -360,6 +435,9 @@ export function renderOperatorCommandListing(entries) {
 /**
  * The complete listing for a repository root. Pure by default; `run` is
  * injected only by the sweep that verifies runtime/static agreement.
+ * @param {string} root
+ * @param {ListingOptions} [options]
+ * @returns {{ bins: readonly string[], entries: OperatorCommandEntry[], text: string }}
  */
 export function operatorCommandListing(root, options = {}) {
   const bins = options.bins ?? discoverOperatorBins(root);

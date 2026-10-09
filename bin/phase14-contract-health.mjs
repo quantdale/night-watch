@@ -20,6 +20,7 @@ import path from "node:path";
 import { loadTypeScriptModule as loadRuntimeTypeScriptModule } from "./lib/typescript-runtime-loader.mjs";
 import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from "./lib/operator-cli.mjs";
 
+/** @type {import("./lib/operator-cli.mjs").OperatorCliMetadata} */
 const CLI_METADATA = {
   schemaVersion: OPERATOR_CLI_SCHEMA,
   name: "phase14-contract-health",
@@ -38,7 +39,18 @@ const CLI_METADATA = {
   artifacts: [],
 };
 
+/** @typedef {{ inventory: string | null, baseline: string | null, snapshot: string | null, sha: string | null, format: string, help: boolean }} ContractHealthArgs */
+
+/**
+ * @param {ContractHealthArgs} out
+ * @param {string} key
+ * @param {string | boolean} value
+ */
 function assign(out, key, value) {
+  // Every flag `assign` handles declares a value shape in the operator-CLI
+  // metadata, and the shared parser refuses a value-less invocation before
+  // `parseArgs` ever runs, so the bare-flag `true` form is unreachable here.
+  if (typeof value !== "string") return;
   if (key === "--inventory") out.inventory = value;
   else if (key === "--baseline") out.baseline = value;
   else if (key === "--snapshot") out.snapshot = value;
@@ -46,6 +58,10 @@ function assign(out, key, value) {
   else if (key === "--format") out.format = value;
 }
 
+/**
+ * @param {readonly string[]} argv
+ * @returns {ContractHealthArgs}
+ */
 function parseArgs(argv) {
   const out = {
     inventory: null,
@@ -57,6 +73,7 @@ function parseArgs(argv) {
   };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
+    if (arg === undefined) continue;
     if (arg === "--help" || arg === "-h") {
       out.help = true;
       continue;
@@ -82,13 +99,23 @@ function parseArgs(argv) {
   return out;
 }
 
+/**
+ * @param {string} root
+ * @param {string} file
+ */
 function loadTypeScriptModule(root, file) {
   return loadRuntimeTypeScriptModule(file, { root });
 }
 
+/** @param {string} snapshotDir */
 function makeSnapshotReader(snapshotDir) {
   const root = path.resolve(snapshotDir);
   return {
+    /**
+     * @param {string} _repoId
+     * @param {string} relativePath
+     * @returns {string | null}
+     */
     readFile(_repoId, relativePath) {
       if (
         typeof relativePath !== "string" ||
@@ -107,6 +134,7 @@ function makeSnapshotReader(snapshotDir) {
   };
 }
 
+/** @param {string} file */
 function readJsonFile(file) {
   try {
     return JSON.parse(fs.readFileSync(file, "utf8"));
@@ -129,7 +157,9 @@ function main() {
     buildContractCoverageReport,
     renderContractCoverageReportText,
     compareBaselineCoverage,
-  } = reportModule;
+  } = /** @type {typeof import("./../src/oracles/expectations/extract/contractCoverageReport")} */ (
+    reportModule
+  );
 
   let inventory;
   if (args.snapshot !== null) {
@@ -138,22 +168,25 @@ function main() {
       process.exitCode = 2;
       return;
     }
-    const coverageModule = loadTypeScriptModule(
-      root,
-      "src/oracles/expectations/coverageInventory.ts",
+    const coverageModule = /** @type {typeof import("./../src/oracles/expectations/coverageInventory")} */ (
+      loadTypeScriptModule(
+        root,
+        "src/oracles/expectations/coverageInventory.ts",
+      )
     );
     const reader = makeSnapshotReader(args.snapshot);
+    const sha = args.sha;
     const currentness = {
       currentSnapshot: () => ({
         repoId: "mobingilabs/ripple-api",
-        sha: args.sha,
+        sha,
       }),
     };
     inventory = coverageModule.buildCoverageInventory({
       reader,
       currentness,
-      snapshot: { repoId: "mobingilabs/ripple-api", sha: args.sha },
-      remoteSha: args.sha,
+      snapshot: { repoId: "mobingilabs/ripple-api", sha },
+      remoteSha: sha,
       canonicalUnchanged: null,
     });
   } else if (args.inventory === null) {

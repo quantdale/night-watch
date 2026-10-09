@@ -17,7 +17,7 @@ export function classifySha(
 export function inspectActiveTaskRouting(
   activeText: string,
   taskId: string,
-  stateBranch?: string | undefined,
+  stateBranch: string | undefined,
   liveWorktreeBranches?: string[] | null,
   gateEnvironment?: string | null
 ): {

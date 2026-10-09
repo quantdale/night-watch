@@ -24,11 +24,22 @@ const REQUIRED_JOB_NAMES = ['Executable quality gate'];
 const LOG_TIMEOUT = 30_000;
 const API_TIMEOUT = 30_000;
 
+/**
+ * Fail closed. Every refusal path in this observer ends here, so the declared
+ * `never` return is what lets the gate-definition reader below narrow its
+ * parsed value instead of an unconditioned optional.
+ *
+ * @param {string} code
+ * @returns {never}
+ */
 function fail(code) {
   throw new Error(`PHASE23_CI_OBSERVER_BLOCKED:${code}`);
 }
 
 class ExternalObservationError extends Error {
+  /**
+   * @param {string} readonlyCode
+   */
   constructor(readonlyCode) {
     super(readonlyCode);
     this.name = 'ExternalObservationError';
@@ -62,9 +73,24 @@ const CLI_METADATA = {
   artifacts: [],
 };
 
+/**
+ * Load one runtime TypeScript module. The declared type parameter carries the
+ * literal module path, so the loader's generated module map resolves the
+ * precise module type instead of erasing it to `unknown`.
+ *
+ * @template {keyof import('./lib/typescript-runtime-loader.mjs').TypeScriptRuntimeLoaderModuleMap} File
+ * @param {File} file
+ */
 function loadTypeScriptModule(file) {
   return loadRuntimeTypeScriptModule(file, { root: ROOT });
 }
+
+/**
+ * One raw GitHub Actions job row, before sanitization. Every field is raw
+ * external input and is narrowed by the sanitizers below.
+ *
+ * @typedef {{ id: unknown, name: unknown, status: unknown, conclusion: unknown, steps: ReadonlyArray<Record<string, unknown>> | null | undefined }} ExternalCiJobRow
+ */
 
 function currentHead() {
   const result = spawnSync('git', ['rev-parse', 'HEAD'], {
@@ -80,6 +106,7 @@ function currentHead() {
 }
 
 function ghEnvironment() {
+  /** @type {Record<string, string | undefined>} */
   const allowed = {
     PATH: process.env.PATH,
     HOME: process.env.HOME,
@@ -95,6 +122,10 @@ function ghEnvironment() {
   return Object.fromEntries(Object.entries(allowed).filter(([, value]) => value !== undefined));
 }
 
+/**
+ * @param {string[]} args
+ * @param {string} label
+ */
 function ghJson(args, label) {
   const result = spawnSync('gh', args, {
     cwd: ROOT,
@@ -112,10 +143,19 @@ function ghJson(args, label) {
   catch { throw new ExternalObservationError('API_UNOBSERVABLE'); }
 }
 
+/**
+ * @param {unknown} value
+ * @param {string | null} [fallback]
+ * @returns {string | null}
+ */
 function safeString(value, fallback = '') {
   return typeof value === 'string' && value.length <= 512 ? value : fallback;
 }
 
+/**
+ * @param {Record<string, unknown>} raw
+ * @param {string} current
+ */
 function sanitizeRun(raw, current) {
   return {
     runId: String(raw.id ?? ''),
@@ -126,6 +166,7 @@ function sanitizeRun(raw, current) {
   };
 }
 
+/** @param {Record<string, unknown>} step */
 function sanitizeStep(step) {
   return {
     name: safeString(step?.name),
@@ -134,6 +175,9 @@ function sanitizeStep(step) {
   };
 }
 
+/**
+ * @param {{ jobs: ReadonlyArray<ExternalCiJobRow> | null | undefined }} raw
+ */
 function sanitizeJobs(raw) {
   if (!Array.isArray(raw?.jobs)) return null;
   return raw.jobs.map((job) => ({
@@ -145,14 +189,18 @@ function sanitizeJobs(raw) {
   }));
 }
 
+/**
+ * @param {Record<string, unknown>} value
+ */
 function safeGateReceipt(value) {
   if (value?.schemaVersion !== 'nightwatch.quality-gate-receipt.v1') return null;
   if (typeof value.receiptDigest !== 'string' || !/^receipt:sha256:[0-9a-f]{24}$/.test(value.receiptDigest) || typeof value.gateDefinitionDigest !== 'string' || typeof value.finalResult !== 'string' || !Array.isArray(value.groups)) return null;
-  const groups = value.groups.slice(0, 64).map((group) => ({ id: safeString(group?.id), status: safeString(group?.status) }));
+  const groups = value.groups.slice(0, 64).map((/** @type {Record<string, unknown>} */ group) => ({ id: safeString(group?.id), status: safeString(group?.status) }));
   if (groups.some((group) => group.id === '' || group.status === '')) return null;
   return { receiptDigest: value.receiptDigest, gateDefinitionDigest: value.gateDefinitionDigest, finalResult: value.finalResult, groups };
 }
 
+/** @param {unknown} log */
 function receiptFromLog(log) {
   if (typeof log !== 'string') return null;
   for (const line of log.split(/\r?\n/)) {
@@ -169,6 +217,7 @@ function receiptFromLog(log) {
   return null;
 }
 
+/** @param {string} runId */
 function readJobLog(runId) {
   const result = spawnSync('gh', ['run', 'view', runId, '--repo', REPOSITORY, '--log'], {
     cwd: ROOT,
@@ -183,23 +232,34 @@ function readJobLog(runId) {
 }
 
 function expectedGate() {
+  /** @type {{ groups: ReadonlyArray<{ id: string, required: boolean }> }} */
   let definition;
   try {
     definition = JSON.parse(fs.readFileSync(path.join(ROOT, 'config', 'quality-gate.v1.json'), 'utf8'));
   } catch {
     fail('GATE_DEFINITION_UNREADABLE');
   }
+  /**
+   * @param {unknown} value
+   * @returns {string}
+   */
   const canonical = (value) => value === null || typeof value !== 'object'
     ? JSON.stringify(value)
     : Array.isArray(value)
       ? `[${value.map(canonical).join(',')}]`
-      : `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${canonical(value[key])}`).join(',')}}`;
+      : `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${canonical((/** @type {Record<string, unknown>} */ (value))[key])}`).join(',')}}`;
   return {
     gateDefinitionDigest: `sha256:${crypto.createHash('sha256').update(canonical(definition), 'utf8').digest('hex')}`,
     requiredGroupIds: definition.groups.filter((group) => group.required === true).map((group) => group.id),
   };
 }
 
+/**
+ * @param {string} runId
+ * @param {string} current
+ * @param {import('../src/core/qualityGate/externalCi').ExternalCiObservation} observation
+ * @param {typeof import('../src/core/qualityGate/externalCi')} qualityGate
+ */
 function reportFor(runId, current, observation, qualityGate) {
   const classification = qualityGate.classifyExternalCi(observation);
   const run = observation.run;
@@ -217,6 +277,7 @@ function reportFor(runId, current, observation, qualityGate) {
   };
 }
 
+/** @param {string} runId */
 function observe(runId) {
   const current = currentHead();
   const qualityGate = loadTypeScriptModule('src/core/qualityGate/externalCi.ts');
@@ -224,8 +285,11 @@ function observe(runId) {
   try {
     const rawRun = ghJson(['api', `repos/${REPOSITORY}/actions/runs/${runId}`], 'RUN');
     const rawJobs = ghJson(['api', `repos/${REPOSITORY}/actions/runs/${runId}/jobs?per_page=100`], 'JOBS');
-    const run = sanitizeRun(rawRun, current);
-    const jobs = sanitizeJobs(rawJobs);
+    // A one-argument `safeString` call cannot return null (its fallback is the
+    // empty string), so the sanitized run and job rows satisfy the
+    // classification vocabulary's non-null name/status/head fields.
+    const run = /** @type {import('../src/core/qualityGate/externalCi').ExternalCiRunObservation} */ (sanitizeRun(rawRun, current));
+    const jobs = /** @type {ReadonlyArray<import('../src/core/qualityGate/externalCi').ExternalCiJobObservation> | null} */ (sanitizeJobs(rawJobs));
     const requiredJobs = jobs?.filter((job) => REQUIRED_JOB_NAMES.includes(job.name)) ?? [];
     const requiredStepsUnavailable = requiredJobs.length === 0 || requiredJobs.some((job) => job.steps === null || job.steps.length === 0);
     // Empty steps are already a terminal external observation. Avoid a second
@@ -242,7 +306,7 @@ function observe(runId) {
       requiredJobNames: REQUIRED_JOB_NAMES,
       expectedGateDefinitionDigest: gate.gateDefinitionDigest,
       expectedRequiredGroupIds: gate.requiredGroupIds,
-      gateReceipt: log.receipt,
+      gateReceipt: /** @type {import('../src/core/qualityGate/externalCi').ExternalGateReceiptObservation | null} */ (log.receipt),
     };
     return reportFor(runId, current, observation, qualityGate);
   } catch (error) {
@@ -263,6 +327,11 @@ function observe(runId) {
   }
 }
 
+/**
+ * @param {unknown} file
+ * @param {unknown} value
+ * @param {string} label
+ */
 function writeExternalJson(file, value, label) {
   if (typeof file !== 'string' || !path.isAbsolute(file)) fail(`${label}_MUST_BE_ABSOLUTE`);
   const resolved = path.resolve(file);

@@ -62,11 +62,18 @@ function usage() {
   console.log('Adoption writes the non-secret lifecycle record only; it never launches a browser and declares the capture instant from operator knowledge.');
 }
 
+/**
+ * @param {string} message
+ * @returns {never}
+ */
 function fail(message) {
   console.error(`[auth:capture] FAIL: ${message}`);
   process.exit(2);
 }
 
+/**
+ * @param {import('../src/auth/stages').AuthCaptureStageEvent} event
+ */
 function printStage(event) {
   if (event.status === 'START') {
     console.log(`[auth:capture] STAGE ${event.stage} START`);
@@ -100,11 +107,12 @@ function printStage(event) {
   if (event.detail) console.error(`detail: ${event.detail}`);
 }
 
-/** Load the canonical TypeScript safety modules without a test runner. */
+/** @param {string} file @returns {unknown} */
 function loadTypeScriptModule(file) {
   return loadRuntimeTypeScriptModule(file, { root });
 }
 
+/** @returns {Promise<void>} */
 function waitForHumanEnter() {
   const prompt = readline.createInterface({ input: process.stdin, output: process.stdout });
   return new Promise((resolve, reject) => {
@@ -121,12 +129,17 @@ function waitForHumanEnter() {
 }
 
 async function main() {
+  /** @type {string | undefined} */
   let env;
+  /** @type {string | undefined} */
   let uiUrl;
+  /** @type {string | undefined} */
   let output;
   let adopt = false;
+  /** @type {string | undefined} */
   let capturedAt;
   let replaceExistingRecord = false;
+  /** @type {string | undefined} */
   let validityWindowHours;
   for (const arg of process.argv.slice(2)) {
     if (arg === '--help' || arg === '-h') {
@@ -169,6 +182,11 @@ async function main() {
   if (!output || !path.isAbsolute(output)) fail('--output must be an absolute path outside the Nightwatch repository and workspace');
   const outputPath = path.resolve(output);
   const workspaceRoot = path.resolve(root, '..');
+  /**
+   * @param {string} dir
+   * @param {string} file
+   * @returns {boolean}
+   */
   const inside = (dir, file) => {
     const rel = path.relative(dir, file);
     return rel === '' || (!rel.startsWith('..') && !path.isAbsolute(rel));
@@ -193,13 +211,13 @@ async function main() {
     if (capturedAt === undefined || capturedAt.trim() === '') fail('--adopt requires --captured-at=<ISO instant>; an unknown capture instant stays UNKNOWN_AGE');
     if (uiUrl !== undefined) fail('--adopt does not accept --ui-url; adoption binds the configured environment origin');
     if (!fs.existsSync(outputPath)) fail('--adopt requires an existing artefact at --output');
-    const lifecycle = loadTypeScriptModule('src/auth/capabilityLifecycle.ts');
+    const lifecycle = /** @type {typeof import('../src/auth/capabilityLifecycle')} */ (loadTypeScriptModule('src/auth/capabilityLifecycle.ts'));
     let adopted;
     try {
       const configured = JSON.parse(fs.readFileSync(path.join(root, 'config', 'environments', `${env}.json`), 'utf8'));
       adopted = lifecycle.adoptAuthCaptureRecord({
         artefactPath: outputPath,
-        environment: env,
+        environment: /** @type {import('../src/auth/capabilityLifecycle').AuthCapabilityEnvironment} */ (env),
         origin: new URL(configured.uiBaseUrl).origin,
         captureInstant: capturedAt.trim(),
         ...(validityWindowMs === undefined ? {} : { validityWindowMs }),
@@ -230,8 +248,8 @@ async function main() {
   }
   printStage({ stage: 'PREFLIGHT', status: 'PASS' });
 
-  const environmentModule = loadTypeScriptModule('src/core/environment/index.ts');
-  const runnerModule = loadTypeScriptModule('src/auth/directRunner.ts');
+  const environmentModule = /** @type {typeof import('../src/core/environment/index')} */ (loadTypeScriptModule('src/core/environment/index.ts'));
+  const runnerModule = /** @type {typeof import('../src/auth/directRunner')} */ (loadTypeScriptModule('src/auth/directRunner.ts'));
   const environment = environmentModule.selectEnvironment(env);
 
   // This is the parent CLI's terminal, not a Playwright worker's stdin.

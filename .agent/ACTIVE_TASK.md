@@ -7,7 +7,7 @@ Status: IN_PROGRESS
 TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1
 TASK_GROUPS_COMPLETE: 1,2,3,4,5,6,7,8
 TASK_GROUP_NEXT: 10
-TASK_NEXT_ID: 10.4
+TASK_NEXT_ID: 10.6
 TASK_GROUP_DEFERRED: 9.5b
 Task directory: .agent/tasks/nightwatch-final-product-completion-v1
 Starting SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
@@ -19,10 +19,10 @@ and exact-head CI GREEN (run 37044532848 at `4f4d7bfd`); Track B is integrated a
 GREEN (run 37062959122 at `5b2ea0f7`): the integrity fixes, the Producer Matrix and the certification
 evidence mechanism (`npm run certify:evidence`, the tracked `evidence/certification/<S>/` directory),
 the yield authorization record (NOT_GRANTED until this campaign's 12.3), the verified topology verdict
-and the reachability proof. The parent resumes at M9 task 10.4 in a fresh session; M9 tasks 10.2
-(76/76 at the time) and 10.3 are COMPLETE. RESUME POINT: M9 task 10.4 (annotate bins to zero
-diagnostics; measured baseline 1402 diagnostics, 15 of 77 bins conforming under the lane), then
-10.5-10.6, M10-M14 (including the single paid run 12.3 and the 15.4 npm query) and the 13-section
+and the reachability proof. M9 tasks 10.2 (76/76 declared) through 10.5 are COMPLETE: the bin
+type-check lane is BLOCKING at 0 diagnostics across all 143 tracked bin implementations (77 of
+77 conforming, 0 exemptions, 0 widening annotations). RESUME POINT: M9 task 10.6
+(`gate:milestone` PASS; commit), then M10-M14 (including the single paid run 12.3 and the 15.4 npm query) and the 13-section
 final report. The final certification pass is also owed here: rebind the lanes and conditions at the
 final S with `certify:evidence` (see `docs/RELEASE-ADVANCE-CONDITIONS.md`).
 Previous checkpoint: 2026-09-27 — M8 COMPLETE (9.1-9.13): DEV-lane
@@ -53,11 +53,11 @@ Previous checkpoint: 2026-09-26 — M4 COMPLETE (5.1-5.7): six release probes wi
 states + the CI block-record single authority (`a784e668`), and the final
 integration `137207b1` after reconciling origin/main `946b52c4` and restoring
 the ledger-governed README status block; gate:dev/gate:milestone 5520/0.
-Current milestone: M9 task 10.4 (annotate bins to zero diagnostics) — NOT
-STARTED; tasks 10.2 and 10.3 are COMPLETE and the review-5 child campaign is closed.
-Next action: implement task 10.4 in safety-critical-first batches with the gate plus probe
-campaign after each batch (start a fresh session with `nightwatch-session.mjs start`); then 10.5
-and 10.6.
+Current milestone: M9 task 10.6 — `gate:milestone` PASS; commit. Tasks 10.1-10.5 are COMPLETE
+(the bin type-check lane is BLOCKING at 0 diagnostics with 0 exemptions and 0 widening
+annotations; the recorded 1402 baseline was a FLOOR because `tsconfig.bin.json` used to include
+`bin/**/*.d.mts` and TypeScript dropped 53 shadowed implementations from the program).
+Next action: run the gate pair and commit the M9 checkpoint; then M10-M14.
 Authorization class: FINAL_PRODUCT_COMPLETION_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
@@ -103,7 +103,7 @@ EXTERNAL CONTACT AUTHORIZED (OD-3 ONLY):
   provider proof run; one npm registry advisory query.
 
 CURRENT STATUS:
-  IN_PROGRESS — RESUME AT M9 TASK 10.4 (10.2 and 10.3 COMPLETE). The review-5 child
+  IN_PROGRESS — RESUME AT M9 TASK 10.6 (10.2-10.5 COMPLETE). The review-5 child
   campaign `nightwatch-final-completion-review5-v1` is COMPLETE and archived
   (`2026-10-03-nightwatch-final-completion-review5-v1`); exact-head CI is GREEN at each of its
   integrated tips (runs 37044532848, 37062959122, 37120079300, 37123923541). No session is live; the

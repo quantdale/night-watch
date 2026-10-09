@@ -42,20 +42,11 @@ export const MALFORMED_SAMPLE_BY_SHAPE = Object.freeze(/** @type {Record<string,
 /**
  * The slices of the exercised modules this file depends on. Declared here so
  * the parameters are typed without widening to `any`.
- * @typedef {{ name: string, secretBearing?: boolean, requiredIn?: readonly string[], shape?: { kind?: string } }} DeclaredVariable
+ * @typedef {{ name: string } & Partial<{ secretBearing: boolean, requiredIn: readonly string[], shape: Partial<{ kind: string }> }>} DeclaredVariable
  * @typedef {{ variables: readonly DeclaredVariable[] }} Declaration
  * @typedef {{ refusals: ReadonlyArray<{ name: string, code: string }>, unknown: ReadonlyArray<{ name: string }> }} EnvironmentValidation
- * @typedef {{
- *   effectiveConfiguration: (environment: Record<string, string>, declaration: Declaration, file: Record<string, string>) => ReadonlyArray<unknown>,
- *   renderEffectiveConfiguration: (rows: ReadonlyArray<never>) => string,
- *   validateEnvironmentValues: (environment: Record<string, string>, declaration: Declaration, options?: { mode?: string }) => EnvironmentValidation,
- * }} EnvironmentSurfaceModule
- * @typedef {{
- *   authLifecycleRecordPath: (artefactPath: string) => string,
- *   assertAuthCapabilityPreflight: (input: { artefactPath: string, environment: 'local' }) => unknown,
- *   AUTH_CAPABILITY_REFUSAL_CODES: Readonly<Record<string, string>>,
- *   AuthCapabilityRefusalError: abstract new (...args: never[]) => Error & { code: string, state: string },
- * }} CapabilityLifecycleModule
+ * @typedef {{ effectiveConfiguration: (environment: Record<string, string>, declaration: Declaration, file: Record<string, string>) => ReadonlyArray<unknown>, renderEffectiveConfiguration: (rows: ReadonlyArray<never>) => string, validateEnvironmentValues: (environment: Record<string, string>, declaration: Declaration, ...options: readonly [] | readonly [Partial<{ mode: string }>]) => EnvironmentValidation }} EnvironmentSurfaceModule
+ * @typedef {{ authLifecycleRecordPath: (artefactPath: string) => string, assertAuthCapabilityPreflight: (input: { artefactPath: string, environment: 'local' }) => unknown, AUTH_CAPABILITY_REFUSAL_CODES: Readonly<Record<string, string>>, AuthCapabilityRefusalError: abstract new (...args: never[]) => Error & { code: string, state: string } }} CapabilityLifecycleModule
  */
 
 const SECRET_SENTINEL = 'nw-synthetic-secret-sentinel-value';
@@ -136,7 +127,18 @@ export function exercisePreflightRefusal(lifecycle) {
     fs.writeFileSync(expired, JSON.stringify({ cookies: [], origins: [] }), { mode: 0o600 });
     const wrongEnvironment = path.join(directory, 'wrong-environment.storage-state.json');
     fs.writeFileSync(wrongEnvironment, JSON.stringify({ cookies: [], origins: [] }), { mode: 0o600 });
+    /**
+     * @param {string} file
+     * @returns {string}
+     */
     const digestOf = (file) => `sha256:${createHash('sha256').update(fs.readFileSync(file)).digest('hex').slice(0, 24)}`;
+    /**
+     * @param {string} file
+     * @param {string} environment
+     * @param {string} captureInstant
+     * @param {number} validityWindowMs
+     * @returns {string}
+     */
     const lifecycleRecord = (file, environment, captureInstant, validityWindowMs) => JSON.stringify({
       schemaVersion: 'nightwatch.auth-capability-record.v1',
       captureInstant,

@@ -25,7 +25,7 @@ export function shardTempRoot(runRoot, shardId) {
 
 /**
  * @param {NodeJS.ProcessEnv} parentEnvironment
- * @param {{ lane: string, receiptPath: string, shardId: string, runRoot: string, skipReportPath?: string }} input
+ * @param {{ lane: string, receiptPath: string, shardId: string, runRoot: string } & Partial<{ skipReportPath: string }>} input
  * @returns {NodeJS.ProcessEnv}
  */
 export function buildShardChildEnvironment(parentEnvironment, input) {

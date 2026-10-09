@@ -42,6 +42,10 @@ const CLI_METADATA = {
   artifacts: ['disposable compile directory under the system temporary directory'],
 };
 
+/**
+ * @param {readonly string[]} argv
+ * @returns {{ sizes: number[], percents: number[], json: boolean }}
+ */
 function parseArgs(argv) {
   let sizes = [1000, 5000, 10000];
   let percents = [0, 10, 50, 100];
@@ -49,11 +53,12 @@ function parseArgs(argv) {
   const numeric = [];
   for (const argument of argv) {
     if (argument === '--json') json = true;
-    else if (/^[0-9,]+$/.test(argument)) numeric.push(argument.split(',').filter(Boolean).map((value) => Number.parseInt(value, 10)));
+    else if (/^[0-9,]+$/.test(argument)) numeric.push(argument.split(',').filter(Boolean).map(/** @param {string} value */ (value) => Number.parseInt(value, 10)));
     else throw new Error(`unknown argument ${argument}`);
   }
-  if (numeric.length > 0) sizes = numeric[0];
-  if (numeric.length > 1) percents = numeric[1];
+  const [firstNumeric, secondNumeric] = numeric;
+  if (firstNumeric !== undefined) sizes = firstNumeric;
+  if (secondNumeric !== undefined) percents = secondNumeric;
   if (sizes.some((size) => !Number.isInteger(size) || size < 2 || size > 200_000)) throw new Error('sizes must be 2..200000');
   if (percents.some((percent) => !Number.isInteger(percent) || percent < 0 || percent > 100)) throw new Error('percents must be 0..100');
   return { sizes, percents, json };
@@ -89,10 +94,12 @@ function compileProbe() {
   return { outDir, entry };
 }
 
+/** @param {number} bytes */
 function mib(bytes) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MiB`;
 }
 
+/** @param {number} bytes */
 function kib(bytes) {
   return `${(bytes / 1024).toFixed(1)} KiB`;
 }
@@ -103,7 +110,7 @@ let options;
 try {
   options = parseArgs(process.argv.slice(2));
 } catch (error) {
-  process.stderr.write(`[review:scale] usage: node bin/review-persistence-scale.mjs [sizes] [percents] [--json] (${error.message})\n`);
+  process.stderr.write(`[review:scale] usage: node bin/review-persistence-scale.mjs [sizes] [percents] [--json] (${error instanceof Error ? error.message : String(error)})\n`);
   process.exit(1);
 }
 

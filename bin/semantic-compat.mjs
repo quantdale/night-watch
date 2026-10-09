@@ -23,7 +23,7 @@ const safeTestPathPattern = /^tests\/(?:unit|smoke|manual)\/[A-Za-z0-9._/-]+$/;
 /** @param {unknown} identity */
 function safeSkipLocation(identity) {
   if (identity === null || typeof identity !== 'object' || Array.isArray(identity)) return 'UNKNOWN';
-  /** @type {{ file?: unknown, line?: unknown }} */
+  /** @type {Partial<{ file: unknown, line: unknown }>} */
   const candidate = identity;
   const file = typeof candidate.file === 'string' && safeTestPathPattern.test(candidate.file) && !candidate.file.includes('..')
     ? candidate.file
@@ -34,6 +34,7 @@ function safeSkipLocation(identity) {
   return `${file}:${line}`;
 }
 
+/** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
 const CLI_METADATA = {
   schemaVersion: OPERATOR_CLI_SCHEMA,
   name: 'semantic-compat',
@@ -48,6 +49,9 @@ const CLI_METADATA = {
   artifacts: [],
 };
 
+/**
+ * @param {string} code
+ */
 function fail(code) {
   throw new Error(code);
 }
@@ -99,7 +103,7 @@ function loadManifest() {
 }
 
 const cli = invokedDirectly(import.meta.url) ? defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url }) : { stop: true };
-if (!cli.stop) {
+if (!cli.stop && 'flags' in cli) {
 try {
   const { manifest, files } = loadManifest();
   // `--validate` is the bounded, contact-free observation surface: it proves
@@ -136,7 +140,7 @@ try {
     stdio: ['ignore', 'pipe', 'pipe'],
   });
   const output = `${result.stdout ?? ''}\n${result.stderr ?? ''}`;
-  const count = (pattern) => { const match = pattern.exec(output); return match ? Number(match[1]) : null; };
+  const count = /** @param {RegExp} pattern */ (pattern) => { const match = pattern.exec(output); return match ? Number(match[1]) : null; };
   const passed = count(/(\d+)\s+passed/i);
   const skipped = count(/(\d+)\s+skipped/i);
   // Playwright reports tests it never reached as "did not run", which is NOT a
@@ -146,7 +150,7 @@ try {
   let failed = count(/(\d+)\s+failed/i);
   const totalFromOutput = count(/Total:\s*(\d+)\s+tests?/i);
   if (result.status === 0 && failed === null) failed = 0;
-  const total = totalFromOutput ?? ([passed, skipped, failed].every((value) => Number.isInteger(value)) ? passed + skipped + failed + (didNotRun ?? 0) : null);
+  const total = totalFromOutput ?? ([passed, skipped, failed].every((value) => Number.isInteger(value)) && passed !== null && skipped !== null && failed !== null ? passed + skipped + failed + (didNotRun ?? 0) : null);
   const failedLocations = extractSanitizedFailedLocations(output, 16);
 
   let skipReport = null;
@@ -163,7 +167,7 @@ try {
     expectedSkipPolicy: manifest.execution?.expectedSkipPolicy,
   });
   const undeclaredSkips = skipPolicy.undeclared.slice(0, 16).map(safeSkipLocation);
-  let outcome = result.status === 0 ? 'PASS' : result.error?.code === 'ETIMEDOUT' ? 'TIMEOUT' : 'TEST_FAILURE';
+  let outcome = result.status === 0 ? 'PASS' : /** @type {NodeJS.ErrnoException | undefined} */ (result.error)?.code === 'ETIMEDOUT' ? 'TIMEOUT' : 'TEST_FAILURE';
   let exitCode = result.status === 0 ? 0 : 1;
   if (skipPolicy.result === 'SKIP_POLICY_UNCONFIGURED') {
     outcome = 'SKIP_POLICY_UNCONFIGURED';

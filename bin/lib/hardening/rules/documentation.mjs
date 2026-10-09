@@ -149,13 +149,20 @@ export function checkDecisionIdentityUniqueness() {
     fail(`${file} is missing`);
     return;
   }
+  /** @type {Map<string, string[]>} */
   const headings = new Map();
   for (const line of text.split(/\r?\n/)) {
     const match = /^## (D-\d+) — (.+)$/.exec(line);
     if (match === null) continue;
     const id = match[1];
-    if (!headings.has(id)) headings.set(id, []);
-    headings.get(id).push(match[2].trim());
+    const title = match[2];
+    if (id === undefined || title === undefined) continue;
+    const titles = headings.get(id);
+    if (titles === undefined) {
+      headings.set(id, [title.trim()]);
+      continue;
+    }
+    titles.push(title.trim());
   }
   if (headings.size < 50) {
     fail(`${file} yielded only ${headings.size} decision headings; the scan is broken rather than the document clean`);
@@ -358,7 +365,7 @@ export function checkProjectStateIntegrity() {
     'canonical source is never changed at runtime',
     'no runtime path can write canonical source',
   ];
-  for (const [label, source] of [['renderer', renderer], ['generated catalog', catalog]]) {
+  for (const [label, source] of /** @type {[string, string][]} */ ([['renderer', renderer], ['generated catalog', catalog]])) {
     // Check both raw and comment-flattened text so a reintroduction cannot
     // evade the guard by wrapping across comment lines.
     const flattened = source.replace(/\n\s*\/\/\s*/g, ' ');
@@ -368,7 +375,7 @@ export function checkProjectStateIntegrity() {
       }
     }
   }
-  for (const [label, source] of [['renderer', renderer], ['generated catalog', catalog]]) {
+  for (const [label, source] of /** @type {[string, string][]} */ ([['renderer', renderer], ['generated catalog', catalog]])) {
     if (!/Phase 8B sandbox/.test(source) || !/disposable/.test(source) || !/private source mirror/.test(source)) {
       fail(`${label} must keep the Phase 8B sandbox mirror-only write authority wording`);
     }
@@ -453,7 +460,7 @@ export function checkDocumentationTruth() {
   const activeTask = readDataFile('.agent/ACTIVE_TASK.md');
   const executionPrompt = readDataFile('.agent/EXECUTION_PROMPT.md');
   const blockMatch = /PROJECT_COMPLETION_STATUS:\s*(\S+)/.exec(currentState);
-  const machineStatus = blockMatch ? blockMatch[1].trim() : undefined;
+  const machineStatus = blockMatch !== null && blockMatch[1] !== undefined ? blockMatch[1].trim() : undefined;
   if (machineStatus === 'OPERATIONALLY_ACCEPTED') {
     // CURRENT_STATE narrative must not claim present-tense BLOCKED for operational acceptance.
     if (/Active task `nightwatch-operational-acceptance-v1` is BLOCKED/.test(currentState)) {
@@ -496,14 +503,15 @@ export function checkDocumentationFreshness() {
   const lines = text.split('\n');
   // --- the header date must cover the document's own last change ---
   const headerDate = /Last updated: \*\*(\d{4}-\d{2}-\d{2})\*\*/.exec(lines.slice(0, 10).join('\n'));
-  if (headerDate === null) {
+  const headerDay = headerDate === null ? undefined : headerDate[1]?.trim();
+  if (headerDay === undefined) {
     fail(`${doc} header must carry Last updated: **YYYY-MM-DD**`);
   } else {
     const touched = spawnSync('git', ['log', '-1', '--format=%ad', '--date=unix', '--', doc], { cwd: root, encoding: 'utf8', env: childEnvironment, timeout: 10_000, maxBuffer: 512 * 1024 });
     const touchSeconds = Number((touched.stdout ?? '').trim());
     const touchDate = Number.isFinite(touchSeconds) && touchSeconds > 0 ? new Date(touchSeconds * 1000).toISOString().slice(0, 10) : '';
-    if (touched.status === 0 && /^\d{4}-\d{2}-\d{2}$/.test(touchDate) && headerDate[1] < touchDate) {
-      fail(`${doc} header date ${headerDate[1]} predates its own last change ${touchDate}; bump the header when the document changes`);
+    if (touched.status === 0 && /^\d{4}-\d{2}-\d{2}$/.test(touchDate) && headerDay < touchDate) {
+      fail(`${doc} header date ${headerDay} predates its own last change ${touchDate}; bump the header when the document changes`);
     }
   }
   // --- MA-8 COMPLETE and MA-8 pending cannot both hold as current truth ---
@@ -545,6 +553,14 @@ export function checkDocumentationFreshness() {
 export const DOCUMENT_ROLE_CONFIG = 'config/document-role.v1.json';
 export const DOCUMENT_ROLE_VALUES = new Set(['CURRENT_TRUTH', 'APPEND_ONLY_ARCHIVE', 'OPERATOR_REFERENCE']);
 
+/**
+ * @typedef {{ path: string, role: string, maxLines: number | undefined }} DocumentRoleDeclaration
+ */
+
+/**
+ * @param {string} rule
+ * @returns {{ schemaVersion: string, documents: DocumentRoleDeclaration[], relocations: { id: string, from: string, to: string, date: string, digest: string }[], corrections: { id: string, path: string, oldLineSha256: string, reason: string }[] } | null}
+ */
 export function readDocumentRoleConfig(rule) {
   let config;
   try {
@@ -564,7 +580,10 @@ export function readDocumentRoleConfig(rule) {
   return config;
 }
 
-/** Count lines the way `wc -l` does: a trailing newline is a terminator, not a line. */
+/**
+ * @param {string} text
+ * @returns {number}
+ */
 export function countDocumentLines(text) {
   if (text.length === 0) return 0;
   return text.endsWith('\n') ? text.split('\n').length - 1 : text.split('\n').length;
@@ -595,7 +614,8 @@ export function checkDocumentRoleCurrency() {
     }
     declared.set(entry.path, entry);
     if (entry.role === 'CURRENT_TRUTH') {
-      if (!Number.isInteger(entry.maxLines) || entry.maxLines <= 0) {
+      const maxLines = entry.maxLines;
+      if (typeof maxLines !== 'number' || !Number.isInteger(maxLines) || maxLines <= 0) {
         fail(`DOCUMENT_ROLE CURRENT_TRUTH ${entry.path} must declare a positive integer maxLines`);
       }
     } else if (entry.maxLines !== undefined) {
@@ -615,8 +635,9 @@ export function checkDocumentRoleCurrency() {
   for (const [file, entry] of declared) {
     if (entry.role !== 'CURRENT_TRUTH') continue;
     const lines = countDocumentLines(readIncludingComments(file));
-    if (Number.isInteger(entry.maxLines) && lines > entry.maxLines) {
-      fail(`DOCUMENT_ROLE ${file} has ${lines} lines and exceeds its declared CURRENT_TRUTH maximum of ${entry.maxLines}; relocate the excess into an APPEND_ONLY_ARCHIVE`);
+    const maxLines = entry.maxLines;
+    if (typeof maxLines === 'number' && Number.isInteger(maxLines) && lines > maxLines) {
+      fail(`DOCUMENT_ROLE ${file} has ${lines} lines and exceeds its declared CURRENT_TRUTH maximum of ${maxLines}; relocate the excess into an APPEND_ONLY_ARCHIVE`);
     }
   }
 
@@ -704,8 +725,13 @@ export const MACHINE_BLOCK_PROTOCOL_MARKERS = [
   'LIVE_STATE_PROTOCOL_VERSION: nightwatch.live-state.v1',
 ];
 
+/**
+ * @param {string} text
+ * @returns {[number, number][]}
+ */
 export function machineBlockLineRanges(text) {
   const lines = text.split(/\r?\n/);
+  /** @type {[number, number][]} */
   const ranges = [];
   for (let index = 0; index < lines.length; index += 1) {
     const line = lines[index] ?? '';
@@ -763,8 +789,12 @@ export function checkAppendOnlyArchives() {
   for (const correction of loadedCorrections.corrections) {
     if (typeof correction.path !== 'string' || typeof correction.oldLineSha256 !== 'string') continue;
     if (!archives.has(correction.path)) continue;
-    if (!corrections.has(correction.path)) corrections.set(correction.path, new Set());
-    corrections.get(correction.path).add(correction.oldLineSha256);
+    let digests = corrections.get(correction.path);
+    if (digests === undefined) {
+      digests = new Set();
+      corrections.set(correction.path, digests);
+    }
+    digests.add(correction.oldLineSha256);
   }
   const base = resolveArchiveDiffBase();
   if (base === null) {
@@ -779,6 +809,7 @@ export function checkAppendOnlyArchives() {
     return;
   }
   const exemptRanges = machineBlockLineRanges(currentStateBase.stdout ?? '');
+  /** @param {string} file @param {number} oldLine */
   const isExempt = (file, oldLine) => file === 'docs/CURRENT_STATE.md'
     && exemptRanges.some(([start, end]) => oldLine >= start && oldLine <= end);
 
@@ -893,6 +924,7 @@ export function checkAppendOnlyArchives() {
 export const README_STATUS_BLOCK_BEGIN = '<!--status-block:begin-->';
 export const README_STATUS_BLOCK_END = '<!--status-block:end-->';
 
+/** @param {unknown} value */
 const normalizeStatusToken = (value) => String(value).toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_+|_+$/g, '');
 
 /**
@@ -914,15 +946,16 @@ export function deriveActiveTaskStatus() {
     if (/^##\s+/.test(line)) return { lines: accumulator.lines, done: true };
     accumulator.lines.push(line);
     return accumulator;
-  }, { lines: [], done: false }).lines.join('\n');
+  }, /** @type {{ lines: string[], done: boolean }} */ ({ lines: [], done: false })).lines.join('\n');
   const match = /^[ \t]*Status:[ \t]*(.+?)[ \t]*$/m.exec(preamble);
   return match === null ? null : normalizeStatusToken(match[1]);
 }
 
+/** @param {string} rule */
 export function parseGovernedStatusLedger(rule) {
   const source = readIncludingComments('src/core/source/censusFigureLedger.ts');
   const block = /export const GOVERNED_STATUS_KEYS[\s\S]*?Object\.freeze\(\[([\s\S]*?)\]\);/m.exec(source);
-  if (block === null) {
+  if (block === null || block[1] === undefined) {
     fail(`${rule} cannot read the GOVERNED_STATUS_KEYS declaration; the status ledger is missing`);
     return null;
   }
@@ -1039,6 +1072,7 @@ export function checkGovernedStatusWords() {
   // reader at it, so a governed status there is governed here too.
   documents.push({ path: 'README.md', text: readDataFile('README.md') });
 
+  /** @param {string} line */
   const isHistorical = (line) => (
     /<!--status:historical[^>]*?(?:\d{4}-\d{2}-\d{2}|[0-9a-f]{7,40})[^>]*?-->/u.test(line)
     || /\d{4}-\d{2}-\d{2}/.test(line)
@@ -1071,6 +1105,7 @@ export function checkGovernedStatusWords() {
   if (statements === 0) fail('STATUS_WORD found zero governed status statements; the scan is broken rather than the documents clean');
 
   // --- lane-class counts stay tied to the lane-state ledger ---
+  /** @type {{ lanes: { laneId: string, class: string }[] } | null} */
   let laneState;
   try {
     laneState = JSON.parse(readDataFile('config/validation-lane-state.v1.json'));
@@ -1102,11 +1137,11 @@ export function checkGovernedStatusWords() {
     // The README's per-lane entries are governed by lane id, not by a prose
     // paraphrase: a lane whose class changes changes the required README value.
     const laneById = new Map(laneState.lanes.map((lane) => [lane.laneId, lane]));
-    for (const [ledgerKey, laneId] of [
+    for (const [ledgerKey, laneId] of /** @type {[string, string][]} */ ([
       ['EXACT_CHECKPOINT_CI_LANE', 'exact-checkpoint-ci'],
       ['OWNER_MANUAL_LANE', 'owner-manual'],
       ['DEPENDENCY_ADVISORY_LANE', 'dependency-advisory'],
-    ]) {
+    ])) {
       const lane = laneById.get(laneId);
       const declared = declaredCounts.get(ledgerKey);
       if (lane === undefined) fail(`STATUS_WORD validation-lane-state declares no lane ${laneId} for ${ledgerKey}`);

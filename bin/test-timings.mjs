@@ -25,6 +25,7 @@ const MAX_FILES = 500;
 const MAX_FILE_BYTES = 512 * 1024;
 const MAX_RECEIPTS = 50;
 
+/** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
 const CLI_METADATA = {
   schemaVersion: OPERATOR_CLI_SCHEMA,
   name: 'test-timings',
@@ -42,7 +43,13 @@ const CLI_METADATA = {
   artifacts: [],
 };
 
+/**
+ * @param {string} directory
+ * @param {number} limit
+ * @returns {{ source: string, value: unknown }[]}
+ */
 function readJsonFiles(directory, limit) {
+  /** @type {{ source: string, value: unknown }[]} */
   const values = [];
   let entries;
   try {
@@ -67,7 +74,7 @@ function readJsonFiles(directory, limit) {
 }
 
 const cli = invokedDirectly(import.meta.url) ? defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url }) : { stop: true };
-if (!cli.stop) {
+if (!cli.stop && 'flags' in cli) {
   try {
     const flags = cli.flags ?? {};
     const documentDirectory = typeof flags['--dir'] === 'string' ? path.resolve(flags['--dir']) : DEFAULT_DOCUMENT_DIR;

@@ -39,7 +39,7 @@ const CLI_METADATA = {
 };
 
 const cli = defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url });
-if (cli.stop) {
+if (cli.ok !== true || cli.stop === true) {
   // --help / --print-metadata / usage already emitted.
 } else {
 const env = typeof cli.flags['--env'] === 'string' ? cli.flags['--env'] : undefined;
@@ -67,8 +67,8 @@ try {
     console.error(`[observe:authenticated] WARNING ${capability.budgetWarning.code}: remaining validity ${capability.budgetWarning.remainingValidityMs} ms is shorter than the declared run budget ${capability.budgetWarning.requiredValidityMs} ms`);
   }
 } catch (error) {
-  if (error && typeof error === 'object' && typeof error.code === 'string' && error.code.startsWith('AUTH_CAPABILITY_')) {
-    console.error(`[observe:authenticated] REFUSED ${error.code}: ${error.message}`);
+  if (error !== null && typeof error === 'object' && 'code' in error && typeof error.code === 'string' && error.code.startsWith('AUTH_CAPABILITY_')) {
+    console.error(`[observe:authenticated] REFUSED ${error.code}: ${/** @type {Record<string, unknown>} */ (error).message}`);
     process.exit(3);
   }
   throw error;

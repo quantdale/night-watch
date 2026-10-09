@@ -27,6 +27,7 @@ const DEFAULT_CONFIG = 'config/record-identity-contracts.v1.json';
 const DEFAULT_OUTPUT = 'artifacts/record-identity/current.json';
 const MAX_CONFIG_BYTES = 64 * 1024;
 
+/** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
 const CLI_METADATA = {
   schemaVersion: OPERATOR_CLI_SCHEMA,
   name: 'record-identity',
@@ -43,6 +44,10 @@ const CLI_METADATA = {
   artifacts: ['artifacts/record-identity/current.json'],
 };
 
+/**
+ * @param {string} code
+ * @param {string} [detail]
+ */
 function fail(code, detail) {
   process.stderr.write(detail === undefined ? `[record-identity] ERROR: ${code}\n` : `[record-identity] ERROR: ${code}: ${detail}\n`);
   process.exitCode = 2;
@@ -87,7 +92,8 @@ function main() {
     fs.mkdirSync(path.dirname(outPath), { recursive: true });
     fs.writeFileSync(outPath, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
   } catch (error) {
-    return fail('REPORT_WRITE_FAILED', String(error?.code ?? 'UNKNOWN'));
+    const writeFailure = /** @type {{ code: string | undefined }} */ (error);
+    return fail('REPORT_WRITE_FAILED', String(writeFailure?.code ?? 'UNKNOWN'));
   }
 
   if (cli.flags['--json'] === true) {

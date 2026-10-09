@@ -36,17 +36,31 @@ const MAX_DUPLICATE_REPORTS = 5;
 const MAX_ERRORS = 20;
 const MAX_DOCUMENT_CHARS = 256 * 1024;
 
-/** Strip control characters and bound length so diagnostics stay one line. */
+/**
+ * Strip control characters and bound length so diagnostics stay one line.
+ * @param {unknown} value
+ * @param {number} [max]
+ * @returns {string}
+ */
 function sanitizeFragment(value, max = MAX_IDENTITY_CHARS) {
   const text = typeof value === 'string' ? value : String(value);
   return text.replace(/[\0-\x1F\x7F]+/g, '?').slice(0, max);
 }
 
-/** Bound a full diagnostic line. */
+/**
+ * Bound a full diagnostic line.
+ * @param {string} code
+ * @param {unknown} detail
+ * @returns {string}
+ */
 function diagnostic(code, detail) {
   return `${code}: ${sanitizeFragment(detail, MAX_DIAGNOSTIC_CHARS - code.length - 2)}`;
 }
 
+/**
+ * @param {unknown} value
+ * @returns {boolean}
+ */
 function isPlainObject(value) {
   if (typeof value !== 'object' || value === null) return false;
   const prototype = Object.getPrototypeOf(value);
@@ -64,22 +78,33 @@ function isPlainObject(value) {
  * syntax errors afterwards.
  *
  * Returns `{ duplicates: [{ key, path, firstLine, line }], scannedLines }`.
+ *
+ * @param {string} raw
+ * @returns {{ duplicates: Array<{ key: string, path: string, firstLine: number | undefined, line: number }>, scannedLines: number }}
  */
 function scanDuplicateKeys(raw) {
+  /** @type {Array<{ key: string, path: string, firstLine: number | undefined, line: number }>} */
   const duplicates = [];
-  const stack = []; // { kind: 'object'|'array', keys: Map<string, number>, name: string }
+  /** @type {Array<{ kind: 'object' | 'array', keys: Map<string, number>, name: string }>} */
+  const stack = [];
+  /** @type {string | null} */
   let pendingKey = null;
   let line = 1;
   let i = 0;
   const n = raw.length;
 
+  /** @type {() => string} */
   const currentPath = () => {
+    /** @type {string[]} */
     const parts = [];
     for (const frame of stack) {
       if (frame.name !== '') parts.push(frame.name);
     }
-    if (pendingKey !== null && stack.length > 0 && stack[stack.length - 1].kind === 'object') {
-      parts.push(pendingKey);
+    if (pendingKey !== null) {
+      const frame = stack[stack.length - 1];
+      if (frame !== undefined && frame.kind === 'object') {
+        parts.push(pendingKey);
+      }
     }
     return parts.length === 0 ? '$' : `$.${parts.join('.')}`;
   };
@@ -114,7 +139,7 @@ function scanDuplicateKeys(raw) {
           out += String.fromCharCode(parseInt(raw.slice(j + 2, j + 6), 16));
           j += 6;
         } else {
-          const simple = { '"': '"', '\\': '\\', '/': '/', b: '\b', f: '\f', n: '\n', r: '\r', t: '\t' };
+          const simple = /** @type {Record<string, string>} */ ({ '"': '"', '\\': '\\', '/': '/', b: '\b', f: '\f', n: '\n', r: '\r', t: '\t' });
           out += next in simple ? simple[next] : next;
           j += 2;
         }
@@ -134,7 +159,7 @@ function scanDuplicateKeys(raw) {
   };
 
   const consumeLiteral = () => {
-    while (i < n && !' \t\r\n,]}:'.includes(raw[i])) i += 1;
+    while (i < n && !' \t\r\n,]}:'.includes(raw[i] ?? '')) i += 1;
     pendingKey = null;
   };
 
@@ -241,8 +266,9 @@ export function validateProgrammeState(rawText) {
     return { ok: false, errors: [diagnostic('PROGRAMME_MALFORMED_JSON', message)] };
   }
 
+  /** @type {string[]} */
   const errors = [];
-  const push = (code, detail) => {
+  const push = (/** @type {string} */ code, /** @type {unknown} */ detail) => {
     if (errors.length < MAX_ERRORS) errors.push(diagnostic(code, detail));
   };
 

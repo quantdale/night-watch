@@ -53,6 +53,26 @@ test.describe('child-process census indirection totality (9.11)', () => {
     expect([...result.bindings]).toContain('spawnSync');
   });
 
+  test('a JSDoc type reference to the child-process module is not a runtime load', () => {
+    // The bin type-check lane annotates every signature, and the natural JSDoc
+    // return type for a spawn helper is `import('node:child_process').X`. A
+    // census that reads the RAW source reports those as unresolved dynamic
+    // imports, which fails the structural gate on the repository's own
+    // annotation convention and destroys the census's ability to refuse a real
+    // load. The specifier is confirmed against the masked view, where a comment
+    // is blanked.
+    const annotated = "// @ts-check\nimport { spawnSync } from 'node:child_process';\n/**\n * @param {string[]} args\n * @returns {import('node:child_process').SpawnSyncReturns<string>}\n */\nfunction git(args) {\n  return spawnSync('git', args);\n}\n";
+    const result = parseChildProcessImports(annotated);
+    expect(result.unresolvedIndirections).toEqual([]);
+    expect(result.importsChildProcess).toBe(true);
+    // A real dynamic import in the same file still fails closed.
+    const live = `const cp = await import('node:child_process');\n${annotated}`;
+    expect(parseChildProcessImports(live).unresolvedIndirections).toContain('dynamic-import');
+    // Both spellings of the specifier quote are covered.
+    expect(parseChildProcessImports('const cp = await import(`node:child_process`);\n').unresolvedIndirections)
+      .toContain('dynamic-import');
+  });
+
   test('the enforcement rule still fails on any unresolved indirection', () => {
     const rule = fs.readFileSync(path.join(REPO_ROOT, 'bin', 'lib', 'hardening', 'rules', 'process-and-network.mjs'), 'utf8');
     expect(rule).toContain('unresolved import/indirection records (NW-AUD-014 totality)');

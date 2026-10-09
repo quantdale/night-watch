@@ -580,7 +580,9 @@ export function checkPhase23QualityGate() {
   const clean = readIncludingComments('bin/quality-gate-clean.mjs');
   const cleanCode = read("bin/quality-gate-clean.mjs");
   const cleanLibraryCode = read('bin/lib/cleanCheckoutReceipt.mjs');
+  /** @type {{ schemaVersion: string, groups: { id: string, required: boolean }[] }} */
   let gate;
+  /** @type {{ schemaVersion: string, requiredPhaseRange: { first: number, last: number } | undefined, phaseSuites: { phase: number }[] }} */
   let compatibility;
   try {
     gate = JSON.parse(readDataFile('config/quality-gate.v1.json'));
@@ -632,13 +634,13 @@ export function checkPhase23QualityGate() {
   // inner gate's PASS.
   if (!clean || !/\['ci',\s*'--ignore-scripts'\]/.test(cleanCode) || !/measureClean\(root\)/.test(cleanCode) || !/resolveCleanCheckoutVerdict\(\{/.test(cleanCode) || !/\['status',\s*'--porcelain'\]/.test(cleanLibraryCode)) fail('clean-checkout runner must use npm ci --ignore-scripts and verify Git cleanliness');
 
-  for (const [script, pattern] of [
+  for (const [script, pattern] of /** @type {ReadonlyArray<readonly [string, RegExp]>} */ ([
     ['dev:phase23:manifest', /"dev:phase23:manifest"\s*:\s*"node bin\/phase23-dev\.mjs manifest"/],
     ['dev:phase23:dry-run', /"dev:phase23:dry-run"\s*:\s*"node bin\/phase23-dev\.mjs dry-run"/],
     ['dev:phase23:execute', /"dev:phase23:execute"\s*:\s*"node bin\/phase23-dev\.mjs execute"/],
     ['dev:phase23:predev', /"dev:phase23:predev"\s*:\s*"node bin\/phase23-predev\.mjs evaluate"/],
     ['ci:phase23:observe', /"ci:phase23:observe"\s*:\s*"node bin\/phase23-ci\.mjs observe"/],
-  ]) if (!pattern.test(packageJson)) fail(`package.json must expose the fixed Phase 23 operator entry point: ${script}`);
+  ])) if (!pattern.test(packageJson)) fail(`package.json must expose the fixed Phase 23 operator entry point: ${script}`);
 
   const phase23Operator = read('bin/phase23-dev.mjs');
   const phase23Manifest = read('src/core/phase23/manifest.ts');
@@ -712,13 +714,13 @@ export function checkDeclaredDependencyResolvability() {
     if (file.startsWith('ui/')) continue;
     const source = read(file);
     for (const match of source.matchAll(specifierPattern)) {
-      const specifier = match[1];
+      const specifier = match[1] ?? '';
       if (specifier.startsWith('.') || specifier.startsWith('/') || specifier.startsWith('node:')) continue;
       // Template placeholders are not real specifiers.
       if (specifier.includes('${') || specifier.includes('\\')) continue;
       const packageName = specifier.startsWith('@')
         ? specifier.split('/').slice(0, 2).join('/')
-        : specifier.split('/')[0];
+        : specifier.split('/')[0] ?? '';
       if (!declared.has(packageName)) {
         fail(`${file} resolves '${specifier}' but '${packageName}' is not a declared dependency; a package tracked source reaches is used and must stay declared`);
       }
@@ -743,7 +745,7 @@ export function checkDeclaredDependencyResolvability() {
  * `c`. The task ledger is real metadata the task protocol already requires.
  */
 export function checkCampaignCertificationRegistry() {
-  const parse = (file) => {
+  const parse = (/** @type {string} */ file) => {
     try {
       return JSON.parse(readIncludingComments(file));
     } catch {
@@ -861,6 +863,7 @@ export function checkAuthenticatedCapabilitySingleEvaluator() {
  */
 export function checkWorkflowActionPinning() {
   const workflowsDirectory = path.join(root, '.github', 'workflows');
+  /** @type {string[]} */
   let entries = [];
   try {
     entries = fs.readdirSync(workflowsDirectory).filter((name) => /\.ya?ml$/.test(name)).sort();
@@ -985,7 +988,7 @@ export function checkCheckpointRoleGuardIntegrity() {
     reason: 'synthetic',
   });
   const corrections = (/** @type {unknown[]} */ entries) => JSON.stringify({ schemaVersion: DOCUMENT_ROLE_CORRECTIONS_SCHEMA, corrections: entries });
-  /** @type {Array<[string, string | null, string | null, boolean, string, { verifyReceipt?: (subject: string, digest: string, sha: string) => boolean } | undefined]>} */
+  /** @type {Array<[string, string | null, string | null, boolean, string, Partial<{ verifyReceipt: (subject: string, digest: string, sha: string) => boolean }> | undefined]>} */
   const cases = [
     [RELEASE_EVIDENCE_FILE, evidence([binding()]), evidence([binding()]), true, 'an unchanged bindings file', undefined],
     [RELEASE_EVIDENCE_FILE, evidence([binding()]), evidence([binding({ evidenceSha: sha('b'), receiptDigest: digest('2') })]), true, 'a re-bind that arrives with a new VERIFIED receipt', { verifyReceipt: () => true }],
@@ -1031,6 +1034,7 @@ export function checkCheckpointRoleGuardIntegrity() {
   // The classifier must still dispatch to the guard and exclude guarded paths
   // from path-alone approval.
   const checkpoint = read('bin/lib/checkpoint-role.mjs');
+  /** @type {ReadonlyArray<readonly [string, string]>} */
   const required = [
     ['guardHoldsForChange(file, before, after, guardOptions)', 'the classifier live guard consumption'],
     ['guardClassForPath(file) === null && !isApprovedCheckpointPath(file)', 'the guarded-path exclusion from path-alone approval'],

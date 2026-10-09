@@ -99,6 +99,9 @@ if (!COMMANDS.has(command)) {
  * never "what did the product do". Measured state is `npm run status:local`
  * (and the owner-local stores the Control Center reads), so the label says so
  * rather than leaving the reader to infer it from a scope string.
+ *
+ * @param {Record<string, unknown>} output
+ * @returns {Record<string, unknown>}
  */
 function labelSyntheticPreview(output) {
   if (output === null || typeof output !== 'object' || Array.isArray(output)) return output;
@@ -114,14 +117,31 @@ function labelSyntheticPreview(output) {
   };
 }
 
+/**
+ * Bounded pass-through to the shared runtime loader: identical behaviour, one
+ * `root` bound per process instead of a repeated call-site option.
+ *
+ * @template {readonly string[]} const Files
+ * @param {Files} files
+ */
 function loadTypeScriptModules(files) {
   return loadRuntimeTypeScriptModules(files, { root });
 }
 
+/**
+ * @param {unknown} value
+ * @returns {string}
+ */
 function renderJson(value) {
   return JSON.stringify(value, null, 2);
 }
 
+/**
+ * The synthetic mutation measurement projection. The previews never print the
+ * fixture/row detail, so this reads the summary counters of the measurement.
+ *
+ * @param {import('../src/core/semanticCoverage/mutation').SyntheticMutationMeasurement} measurement
+ */
 function mutationMeasurementSummary(measurement) {
   return {
     schemaVersion: measurement.schemaVersion,
@@ -149,6 +169,7 @@ function preview() {
     "src/core/campaignIntelligence/planner.ts",
     "src/core/campaignIntelligence/yield.ts",
   ]);
+  /** @type {import('../src/core/portfolio/types').PortfolioMemberInput} */
   const input = {
     targetId: "phase19.synthetic.preview",
     journeyId: null,
@@ -168,7 +189,10 @@ function preview() {
     phaseFrozen: false,
   };
   const portfolio = portfolioTypes.buildPortfolio({ approvedTargets: [input.targetId], memberInputs: [input] });
-  const memberId = portfolio.members[0].memberId;
+  // One approved target and one member input. buildPortfolio maps memberInputs
+  // 1:1 and refuses a duplicate memberId, so the single member always exists.
+  const member = /** @type {import('../src/core/portfolio/types').PortfolioMember} */ (portfolio.members[0]);
+  const memberId = member.memberId;
   const impact = impactModule.buildCampaignImpactReport({
     sourceCurrentness: "SYNTHETIC_ONLY",
     changedFiles: [],
@@ -249,13 +273,18 @@ function phase20Preview() {
   const metamorphicRelations = corpus.phase20MetamorphicRelations();
   const capabilityBindings = corpus.phase20CapabilityBindings();
   const admitted = inventory.candidates.filter((candidate) => candidate.coverage.semanticContractAdmitted);
+  /**
+   * Bindings admitted for one candidate id.
+   *
+   * @param {string} candidateId
+   */
   const byCandidate = (candidateId) => capabilityBindings.filter((binding) => binding.sourceCandidateId === candidateId);
   const graph = semantic.buildContractGraph({
     inventory,
     expectations: admitted.map((candidate) => ({ contractId: candidate.candidateId, expectationId: `expectation.${candidate.candidateId.replace(/[^A-Za-z0-9_.:/-]/g, "_")}`, supported: true })),
     projections: admitted.map((candidate) => ({ contractId: candidate.candidateId, projectionId: `projection.${candidate.candidateId.replace(/[^A-Za-z0-9_.:/-]/g, "_")}`, surfaces: candidate.observationSurfaces, supported: candidate.observationSurfaces.length > 0 })),
     scenarios: admitted.filter((candidate) => byCandidate(candidate.candidateId).length > 0).map((candidate) => ({ contractId: candidate.candidateId, scenarioId: `scenario.${candidate.candidateId.replace(/[^A-Za-z0-9_.:/-]/g, "_")}`, replaySupported: byCandidate(candidate.candidateId).some((binding) => binding.replaySupported) })),
-    oracles: admitted.filter((candidate) => byCandidate(candidate.candidateId).length > 0).map((candidate) => ({ contractId: candidate.candidateId, oracleId: byCandidate(candidate.candidateId)[0].capabilityId, relational: byCandidate(candidate.candidateId).some((binding) => binding.capabilityKind === "RELATIONAL"), differential: byCandidate(candidate.candidateId).some((binding) => binding.capabilityKind === "DIFFERENTIAL") })),
+    oracles: admitted.filter((candidate) => byCandidate(candidate.candidateId).length > 0).map((candidate) => ({ contractId: candidate.candidateId, oracleId: /** @type {{ capabilityId: string }} */ (byCandidate(candidate.candidateId)[0]).capabilityId, relational: byCandidate(candidate.candidateId).some((binding) => binding.capabilityKind === "RELATIONAL"), differential: byCandidate(candidate.candidateId).some((binding) => binding.capabilityKind === "DIFFERENTIAL") })),
     replays: admitted.filter((candidate) => byCandidate(candidate.candidateId).some((binding) => binding.replaySupported)).map((candidate) => ({ contractId: candidate.candidateId, replayAdapterId: `replay.${candidate.candidateId.replace(/[^A-Za-z0-9_.:/-]/g, "_")}`, reproduces: byCandidate(candidate.candidateId).some((binding) => binding.replayReproduces) })),
     minimizers: admitted.filter((candidate) => byCandidate(candidate.candidateId).some((binding) => binding.minimizationSupported)).map((candidate) => ({ contractId: candidate.candidateId, minimizerId: `minimizer.${candidate.candidateId.replace(/[^A-Za-z0-9_.:/-]/g, "_")}`, supported: true })),
     dossiers: admitted.map((candidate) => ({ contractId: candidate.candidateId, dossierId: `dossier.${candidate.candidateId.replace(/[^A-Za-z0-9_.:/-]/g, "_")}`, explainable: true })),
@@ -271,6 +300,7 @@ function phase20Preview() {
     const candidate = inventory.candidates.find((entry) => entry.candidateId === primaryCandidate);
     if (candidate !== undefined) {
       const targetId = "phase20.synthetic.coverage-member";
+      /** @type {import('../src/core/portfolio/types').PortfolioMemberInput} */
       const memberInput = {
         targetId,
         journeyId: null,
@@ -290,7 +320,9 @@ function phase20Preview() {
         phaseFrozen: false,
       };
       const portfolio = portfolioTypes.buildPortfolio({ approvedTargets: [targetId], memberInputs: [memberInput] });
-      const memberId = portfolio.members[0].memberId;
+      // Same 1:1 memberInputs -> members invariant as the Phase-19 preview.
+      const member = /** @type {import('../src/core/portfolio/types').PortfolioMember} */ (portfolio.members[0]);
+      const memberId = member.memberId;
       const capability = capabilityBindings.filter((binding) => binding.sourceCandidateId === candidate.candidateId);
       const memberBinding = [{ candidateId: candidate.candidateId, memberId, product: "synthetic-phase20-product", surface: "summary-api", expectationId: `expectation.${candidate.candidateId.replace(/[^A-Za-z0-9_.:/-]/g, "_")}`, scenarioBound: true, replaySupported: capability.some((binding) => binding.replaySupported), replayReproduces: capability.some((binding) => binding.replayReproduces), minimizationSupported: capability.some((binding) => binding.minimizationSupported), triageClassifiable: true, dossierExplainable: true, supported: true }];
       coverage = semantic.buildPhase20CoverageReport({ inventory, gapReport, memberBindings: memberBinding, mutationMeasurement: measurement });
@@ -329,6 +361,9 @@ function phase21Preview() {
   return { inventory, baselineGraph, graph, baselineLedger, ledger, differential, quality, plan, fixtures, measurement, lifecycle, operations, metamorphicAudit: corpus.phase21MetamorphicAudit(), corpusSize: adversarial.PHASE21_FULL_ADVERSARIAL_CASES.length, corpusFamilies: new Set(adversarial.PHASE21_FULL_ADVERSARIAL_CASES.map((entry) => entry.family)).size };
 }
 
+/**
+ * @param {ReturnType<typeof phase21Preview>} phase21
+ */
 function phase21Summary(phase21) {
   return {
     baselineGraph: { nodes: phase21.baselineGraph.nodeCount, edges: phase21.baselineGraph.edgeCount, gaps: phase21.baselineGraph.gaps.length, digest: phase21.baselineGraph.deterministicDigest },
@@ -376,6 +411,7 @@ try {
     // owner-local records, never a constant zero. Only sanitized identity
     // fields cross this surface; no dossier prose, evidence or source is read.
     const [storeMod] = loadTypeScriptModules(["src/core/localInvestigation/agentFindingStore.ts"]);
+    /** @type {readonly import('../src/core/localInvestigation/agentFindingRecord').AgentFindingRecord[]} */
     let rows = [];
     let storeRoot = null;
     let unavailable = null;

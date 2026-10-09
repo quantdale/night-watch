@@ -52,14 +52,31 @@ const CLI_METADATA = {
   artifacts: [],
 };
 
+/**
+ * Fail closed. Every refusal path in this operator surface ends here, so the
+ * declared `never` return is what lets the boundary readers below narrow their
+ * result to the validated value instead of an unconditioned optional.
+ *
+ * @param {string} code
+ * @returns {never}
+ */
 function fail(code) {
   throw new Error(`PHASE22_OPERATOR_BLOCKED:${code}`);
 }
 
+/**
+ * Load one runtime TypeScript module. The declared type parameter carries the
+ * literal module path, so the loader's generated module map resolves the
+ * precise module type instead of erasing it to `unknown`.
+ *
+ * @template {keyof import('./lib/typescript-runtime-loader.mjs').TypeScriptRuntimeLoaderModuleMap} File
+ * @param {File} file
+ */
 function loadTypeScriptModule(file) {
   return loadRuntimeTypeScriptModule(file, { root: ROOT });
 }
 
+/** @param {unknown} file */
 function safeJson(file) {
   if (typeof file !== 'string' || !path.isAbsolute(file)) fail('JSON_PATH_MUST_BE_ABSOLUTE');
   try { return JSON.parse(fs.readFileSync(file, 'utf8')); }
@@ -82,6 +99,18 @@ function currentNightwatchSha() {
   } catch { fail('NIGHTWATCH_SHA_UNAVAILABLE'); }
 }
 
+/**
+ * The one operator-surface argument object, projected from the shared parser
+ * flag map. Every value is still unvalidated when it reaches a command
+ * function, so each command performs its own type guard.
+ *
+ * @typedef {{ _: readonly string[], snapshot: unknown, 'source-sha': unknown, manifest: unknown, env: unknown, 'storage-state': unknown, results: unknown, out: unknown, execute: unknown, 'dry-run': unknown, [flag: string]: unknown }} Phase22DevArgs
+ */
+
+/**
+ * @param {unknown} snapshot
+ * @returns {import('../src/oracles/expectations/recipes/types').RealSourceReader}
+ */
 function sourceReader(snapshot) {
   if (typeof snapshot !== 'string' || !path.isAbsolute(snapshot)) fail('SOURCE_SNAPSHOT_MUST_BE_ABSOLUTE');
   let root;
@@ -98,6 +127,7 @@ function sourceReader(snapshot) {
   };
 }
 
+/** @param {Phase22DevArgs} args */
 function buildManifest(args) {
   const sourceSha = args['source-sha'];
   if (typeof sourceSha !== 'string' || !/^[0-9a-f]{40}$/.test(sourceSha)) fail('SOURCE_SHA_REQUIRED');
@@ -120,10 +150,11 @@ function buildManifest(args) {
     canonicalUnchanged: null,
   });
   const runtimeByTarget = new Map(runtime.REAL_RUNTIME_LINKAGE.map((item) => [item.apiOperationId, item]));
+  /** @type {Array<import('../src/core/phase22/index').Phase22CandidateRow>} */
   const rows = [];
   for (const entry of inventory.entries) {
     const derived = collectionByTarget.get(entry.targetId);
-    if (derived === undefined || entry.sourceSha === null || entry.evidenceDigest === null) continue;
+    if (derived === undefined || entry.sourceRepo === null || entry.sourceSha === null || entry.evidenceDigest === null) continue;
     const linkage = runtimeByTarget.get(entry.targetId);
     const expectationId = derived.collectionExpectationId;
     const projectionIdentity = phase22.phase22Digest({ targetId: entry.targetId, expectationId, sourceSha: entry.sourceSha, evidenceDigest: entry.evidenceDigest }, 'projection:sha256:');
@@ -164,12 +195,17 @@ function buildManifest(args) {
   const inventoryResult = phase22.buildPhase22CandidateInventory(rows);
   const additionalExclusions = registry.APPROVED_READ_ONLY_TARGET_IDS
     .filter((targetId) => !rows.some((row) => row.targetId === targetId))
-    .map((targetId) => ({ targetId, eligibility: 'SYNTHETIC_ONLY', reasonCode: 'NO_CURRENT_MECHANICAL_COLLECTION_CONTRACT' }));
+    .map((targetId) => ({ targetId, eligibility: /** @type {import('../src/core/phase22/index').Phase22EligibilityState} */ ('SYNTHETIC_ONLY'), reasonCode: 'NO_CURRENT_MECHANICAL_COLLECTION_CONTRACT' }));
   const candidates = inventoryResult.records.map((record) => record.manifestCandidate).filter((candidate) => candidate !== null);
-  const manifest = phase22.createFrozenPhase22Manifest({ nightwatchSha: args['nightwatch-sha'] ?? currentNightwatchSha(), candidates, additionalExclusions });
+  const declaredNightwatchSha = args['nightwatch-sha'];
+  const manifest = phase22.createFrozenPhase22Manifest({ nightwatchSha: typeof declaredNightwatchSha === 'string' ? declaredNightwatchSha : currentNightwatchSha(), candidates, additionalExclusions });
   return { manifest, inventory: inventoryResult, sourceDerivation: { derivedHistorical: derivation.derived.length, historicalFailures: derivation.failures.length, derivedCollection: collection.derived.length, collectionFailures: collection.failures.length } };
 }
 
+/**
+ * @param {unknown} file
+ * @param {unknown} value
+ */
 function writeSafeOutput(file, value) {
   if (typeof file !== 'string') return;
   if (!path.isAbsolute(file)) fail('OUTPUT_PATH_MUST_BE_ABSOLUTE');
@@ -179,6 +215,7 @@ function writeSafeOutput(file, value) {
   fs.writeFileSync(resolved, JSON.stringify(value, null, 2) + '\n', { mode: 0o600 });
 }
 
+/** @param {unknown} file */
 function checkStorageStatePath(file) {
   if (typeof file !== 'string' || !path.isAbsolute(file)) return false;
   const resolved = path.resolve(file);
@@ -189,8 +226,10 @@ function checkStorageStatePath(file) {
   } catch { return false; }
 }
 
+/** @param {Phase22DevArgs} args */
 function preflight(args) {
   const phase22 = loadTypeScriptModule('src/core/phase22/index.ts');
+  /** @type {import('../src/core/phase22/index').Phase22DevAcceptanceManifest} */
   const loaded = safeJson(args.manifest);
   phase22.validatePhase22Manifest(loaded);
   const storageSafe = checkStorageStatePath(args['storage-state']);
@@ -244,9 +283,11 @@ function preflight(args) {
   process.stdout.write(JSON.stringify({ receipt, storagePathAccepted: storageSafe, note: 'Authenticated readability/expiry and containment are rechecked by the guarded launcher; this local preflight makes no DEV contact.' }, null, 2) + '\n');
 }
 
+/** @param {Phase22DevArgs} args */
 function acceptance(args) {
   if (args['dry-run'] === true) {
     const phase22 = loadTypeScriptModule('src/core/phase22/index.ts');
+    /** @type {import('../src/core/phase22/index').Phase22DevAcceptanceManifest} */
     const manifest = safeJson(args.manifest);
     const result = phase22.simulatePhase22DevAcceptance(manifest);
     process.stdout.write(JSON.stringify(result, null, 2) + '\n');
@@ -271,6 +312,7 @@ function acceptance(args) {
   process.exitCode = child.status ?? 1;
 }
 
+/** @param {Phase22DevArgs} args */
 function results(args) {
   if (typeof args.results !== 'string') fail('RESULTS_PATH_REQUIRED');
   const result = safeJson(args.results);
@@ -279,9 +321,11 @@ function results(args) {
   process.stdout.write(JSON.stringify({ safe: true, result }, null, 2) + '\n');
 }
 
+/** @param {Phase22DevArgs} args */
 function explain(args) {
   const safeId = args._[0];
   if (typeof safeId !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._:/-]{0,199}$/.test(safeId)) fail('SAFE_ID_REQUIRED');
+  /** @type {import('../src/core/phase22/index').Phase22DevAcceptanceManifest} */
   const manifest = safeJson(args.manifest);
   const phase22 = loadTypeScriptModule('src/core/phase22/index.ts');
   phase22.validatePhase22Manifest(manifest);

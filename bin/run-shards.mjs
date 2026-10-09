@@ -30,8 +30,34 @@ import { extractSanitizedFailedLocations } from './lib/sanitized-failure-locatio
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const CLASSES_PATH = path.join(root, 'config', 'validation-execution-classes.v1.json');
 const WEIGHTS_PATH = path.join(root, 'config', 'shard-weights.v1.json');
+/** @typedef {'PARALLEL_SAFE' | 'PROCESS_ISOLATED_ONLY' | 'SERIAL_REQUIRED' | 'MUTATION_CAMPAIGN_EXCLUSIVE'} ExecutionClass */
+
+/**
+ * One suite group of the Playwright `--list --reporter=json` discovery. Only
+ * the file and the nested groups are read, so every other field the reporter
+ * carries is absent from this model.
+ */
+/** @typedef {Partial<{ file: string, suites: readonly PlaywrightListedSuite[] }>} PlaywrightListedSuite */
+
+/**
+ * One shard execution result, as `runShard` resolves it. `counts` is null when
+ * the shard produced no readable receipt at all, which the summation then
+ * reports as UNKNOWN rather than as zero.
+ */
+/** @typedef {{ id: string, exitStatus: number, executionStatus: string, executionCode: string | null, wallMs: number, counts: Record<string, number | null> | null, failedLocations: readonly string[] }} ShardRunResult */
+
+/**
+ * The receipt a shard's own execution reporter wrote, as `runShard` parses it:
+ * either the counted receipt with the disposition it implies, or a refusal
+ * naming why no receipt could be read.
+ */
+/** @typedef {{ ok: true, receipt: { planned: number, executed: number, passed: number, failed: number, skipped: number, didNotRun: number, unknown: number }, disposition: string } | { ok: false, code: string }} ParsedShardExecutionReceipt */
+
+/** @typedef {{ schemaVersion: string, planDigest: string, universeDigest: string, universeCount: number, parallelShardCount: number, weighted: boolean, shards: readonly unknown[], coverage: { ok: boolean } }} ShardRunSummary */
+/** @typedef {ShardRunSummary & { result: string, totals: Record<string, number | null>, shardResults: readonly ShardRunResult[] } & Partial<{ serial: boolean, workerCount: number }>} ShardRunReceipt */
 const npx = (() => { const b = path.join(root, 'node_modules', '.bin', 'playwright'); return process.platform === 'win32' ? `${b}.cmd` : b; })();
 
+/** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
 const CLI_METADATA = {
   schemaVersion: OPERATOR_CLI_SCHEMA,
   name: 'run-shards',
@@ -66,8 +92,9 @@ function discoverUniverse() {
   } catch {
     throw new Error('SHARD_UNIVERSE_REPORT_UNREADABLE');
   }
+  /** @type {Set<string>} */
   const files = new Set();
-  /** @param {any[]} suites */
+  /** @param {readonly PlaywrightListedSuite[]} suites */
   const walk = (suites) => {
     for (const suite of suites ?? []) {
       if (typeof suite.file === 'string' && suite.file.length > 0) files.add(path.relative(root, suite.file).split(path.sep).join('/'));
@@ -78,7 +105,7 @@ function discoverUniverse() {
   return [...files].sort();
 }
 
-/** @param {any} explicitPath */
+/** @param {unknown} explicitPath */
 function loadWeights(explicitPath) {
   const file = typeof explicitPath === 'string' ? explicitPath : WEIGHTS_PATH;
   try {
@@ -97,7 +124,7 @@ function loadWeights(explicitPath) {
 
 function loadClasses() {
   const declaration = JSON.parse(fs.readFileSync(CLASSES_PATH, 'utf8'));
-  /** @type {Record<string, string>} */
+  /** @type {Record<string, ExecutionClass>} */
   const classes = {};
   for (const [file, entry] of Object.entries(declaration.files ?? {})) classes[file] = entry.class;
   return classes;
@@ -123,6 +150,14 @@ function hasErrorCode(error, code) {
   return error !== null && typeof error === 'object' && 'code' in error && error.code === code;
 }
 
+/**
+ * @param {[string, ExecutionClass | undefined]} entry
+ * @returns {entry is [string, ExecutionClass]}
+ */
+function isDeclaredClass(entry) {
+  return entry[1] !== undefined;
+}
+
 
 /** @param {{ id: string }} shard */
 function shardReceiptPath(shard) {
@@ -134,7 +169,7 @@ function createShardScratchRoot() {
 }
 
 
-/** @param {any} output */
+/** @param {string} output */
 function parseTextCounts(output) {
   /** @param {RegExp} pattern */
   const lastNumber = (pattern) => {
@@ -158,7 +193,7 @@ function emptyExecutionCounts() {
   return { planned: 0, executed: 0, passed: 0, failed: 0, skipped: 0, didNotRun: 0, unknown: 0 };
 }
 
-/** @param {any[]} results */
+/** @param {readonly ShardRunResult[]} results */
 function sumCounts(results) {
   /** @type {Record<string, number | null>} */
   const totals = emptyCounts();
@@ -167,7 +202,7 @@ function sumCounts(results) {
     let known = true;
     for (const result of results) {
       const value = result.counts?.[key];
-      if (!Number.isSafeInteger(value) || value < 0) {
+      if (typeof value !== 'number' || !Number.isSafeInteger(value) || value < 0) {
         known = false;
         break;
       }
@@ -187,8 +222,8 @@ function executionCodeForDisposition(disposition) {
 }
 
 /**
- * @param {any} shard
- * @param {any} execution
+ * @param {import('../src/core/validation/shardPlan.ts').Shard} shard
+ * @param {typeof import('../src/core/validation/shardExecutionReceipt.ts')} execution
  * @param {string} scratchRoot
  */
 function runShard(shard, execution, scratchRoot) {
@@ -250,6 +285,7 @@ function runShard(shard, execution, scratchRoot) {
     child.on('close', (code) => {
       const exitStatus = code === 0 ? 0 : 1;
       const textCounts = parseTextCounts(output);
+      /** @type {ParsedShardExecutionReceipt} */
       let parsed;
       try {
         const serialized = fs.readFileSync(receiptPath, 'utf8');
@@ -335,12 +371,12 @@ function runShard(shard, execution, scratchRoot) {
   });
 }
 
-/** @param {any} value */
+/** @param {number | null | undefined} value */
 function displayCount(value) {
-  return Number.isSafeInteger(value) && value >= 0 ? String(value) : 'UNKNOWN';
+  return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0 ? String(value) : 'UNKNOWN';
 }
 
-/** @param {any} receipt */
+/** @param {ShardRunReceipt} receipt */
 function renderShardReceipt(receipt) {
   const lines = [];
   lines.push(`[run-shards] ${receipt.result} files=${receipt.universeCount} shards=${receipt.shards.length}${receipt.serial === true ? ' mode=serial' : ` workers=${receipt.workerCount ?? receipt.parallelShardCount}`}`);
@@ -363,26 +399,33 @@ if (!cli.stop) {
       'src/core/validation/shardPlan.ts',
       'src/core/validation/shardExecutionReceipt.ts',
     ], { root });
-    const workerCount = shardPlan.resolveParallelShardCount(cli.flags['--workers']);
+    // `defineOperatorCli` reaches `stop: false` only on the parsed
+    // (`ok: true`) result, so the falsy-`stop` branch above is exactly that
+    // union member; binding it once keeps every flag read checked against the
+    // parsed shape without re-testing `ok` per read.
+    const parsed = /** @type {import('./lib/operator-cli.mjs').OperatorCliParseResult & { readonly ok: true }} */ (cli);
+    const workerCount = shardPlan.resolveParallelShardCount(parsed.flags['--workers']);
     if (workerCount === null) {
       console.error(JSON.stringify({ schemaVersion: 'nightwatch.shard-run-receipt.v1', result: 'CONFIG_INVALID', code: 'SHARD_WORKERS_OUT_OF_RANGE' }));
       process.exitCode = 2;
     } else {
-      const explicit = typeof cli.flags['--files'] === 'string' && cli.flags['--files'].length > 0
-        ? cli.flags['--files'].split(',').map((/** @type {string} */ value) => value.trim()).filter(Boolean)
+      const explicit = typeof parsed.flags['--files'] === 'string' && parsed.flags['--files'].length > 0
+        ? parsed.flags['--files'].split(',').map((/** @type {string} */ value) => value.trim()).filter(Boolean)
         : null;
       const universe = explicit ?? discoverUniverse();
       const declaredClasses = loadClasses();
       // With an explicit selection the universe is a subset of the declared
       // inventory by design; validation is scoped to what will actually run so
       // an unclassified selected file still fails closed.
-      const classes = Object.fromEntries(universe.map((file) => [file, declaredClasses[file]]).filter(([, value]) => value !== undefined));
+      /** @type {[string, ExecutionClass | undefined][]} */
+      const selected = universe.map((file) => [file, declaredClasses[file]]);
+      const classes = Object.fromEntries(selected.filter(isDeclaredClass));
       const inputs = shardPlan.validateShardInputs({ universe, classes });
       if (!inputs.ok) {
         console.error(JSON.stringify({ schemaVersion: 'nightwatch.shard-run-receipt.v1', result: 'REFUSED', code: 'SHARD_INPUTS_INVALID', violations: inputs.violations.slice(0, 16) }));
         process.exitCode = 2;
       } else {
-        const weights = loadWeights(cli.flags['--weights']);
+        const weights = loadWeights(parsed.flags['--weights']);
         const plan = shardPlan.planShards({ universe, classes, parallelShardCount: workerCount, ...(weights === null ? {} : { weights }) });
         const weighted = weights !== null;
         const allShards = plan.exclusiveShard === null ? plan.parallelShards : [...plan.parallelShards, plan.exclusiveShard];
@@ -400,10 +443,10 @@ if (!cli.stop) {
         if (!coverage.ok) {
           console.error(JSON.stringify({ ...base, result: 'REFUSED', code: 'SHARD_COVERAGE_VIOLATION' }));
           process.exitCode = 2;
-        } else if (cli.flags['--dry-run'] === true) {
+        } else if (parsed.flags['--dry-run'] === true) {
           const receipt = { ...base, result: 'DRY_RUN' };
-          console.log(cli.json ? JSON.stringify(receipt, null, 2) : JSON.stringify(receipt));
-        } else if (cli.flags['--serial'] === true) {
+          console.log(parsed.json ? JSON.stringify(receipt, null, 2) : JSON.stringify(receipt));
+        } else if (parsed.flags['--serial'] === true) {
           const scratchRoot = createShardScratchRoot();
           try {
             const serialResult = await runShard({ id: 'serial', files: universe, digest: base.universeDigest, byClass: {} }, execution, scratchRoot);
@@ -417,7 +460,7 @@ if (!cli.stop) {
               totals,
               result: failed ? 'TEST_FAILURE' : 'PASS',
             };
-            console.log(cli.json ? JSON.stringify(receipt, null, 2) : renderShardReceipt(receipt));
+            console.log(parsed.json ? JSON.stringify(receipt, null, 2) : renderShardReceipt(receipt));
             process.exitCode = failed ? 1 : 0;
           } finally {
             fs.rmSync(scratchRoot, { recursive: true, force: true });
@@ -437,7 +480,7 @@ if (!cli.stop) {
               totals,
               result: failed ? 'TEST_FAILURE' : 'PASS',
             };
-            console.log(cli.json ? JSON.stringify(receipt, null, 2) : renderShardReceipt(receipt));
+            console.log(parsed.json ? JSON.stringify(receipt, null, 2) : renderShardReceipt(receipt));
             process.exitCode = failed ? 1 : 0;
           } finally {
             fs.rmSync(scratchRoot, { recursive: true, force: true });

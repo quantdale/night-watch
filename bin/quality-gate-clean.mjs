@@ -70,7 +70,7 @@ function sha256(value) {
 /**
  * @param {string[]} args
  * @param {string} cwd
- * @returns {{ status: number | null, stdout: string, stderr: string, error?: Error }}
+ * @returns {{ status: number | null, stdout: string, stderr: string } & Partial<{ error: Error }>}
  */
 function git(args, cwd) {
   return spawnSync('git', args, { cwd, encoding: 'utf8', timeout: 60_000, maxBuffer: 2 * 1024 * 1024, stdio: ['ignore', 'pipe', 'pipe'] });

@@ -14,6 +14,21 @@
 
 import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
 
+/**
+ * @typedef {{ key: string, value: string, line: number }} KeyValueRecord
+ * @typedef {{ records: KeyValueRecord[], byKey: Map<string, KeyValueRecord[]> }} ParsedKeyValues
+ * @typedef {{ sections: Map<string, MarkdownSection>, fencedLines: Set<number> }} ParsedMarkdownSections
+ * @typedef {{ lineNumber: number, text: string }} SectionLine
+ * @typedef {{ start: number, end: number, lines: SectionLine[] }} MarkdownSection
+ * @typedef {{ lines: SectionLine[] }} SectionBody
+ * @typedef {{ key: string, value: string, line: number, kind: 'kv' | 'numbered' | 'bold' }} ReportField
+ * @typedef {{ lineNumber: number, text: string, status: string | null, unchecked: boolean }} PlanMilestoneLine
+ * @typedef {{ key: string, lines: number[], values: string[] }} DuplicateFieldGroup
+ * @typedef {{ agree: boolean, active: Set<string>, state: Set<string>, reason: 'NONE_ON_EITHER_SIDE' | 'MISSING_ON_ONE_SIDE' | 'OVERLAP' | 'DISJOINT' }} MilestoneIdentityAgreement
+ * @typedef {{ code: string, path: string | undefined | null, line: number | string | undefined | null, detail: string }} ContinuityDiagnostic
+ * @typedef {{ dir: string, stateText: string, statePath: string, planText: string | null, planPath: string, reportText: string | null, reportPath: string, activeText: string | null | undefined, activePath: string | null | undefined }} ContinuityTask
+ */
+
 const CLI_METADATA = {
   schemaVersion: OPERATOR_CLI_SCHEMA,
   name: 'agent-continuity-protocol',
@@ -31,6 +46,10 @@ export const PROTOCOL_LEGACY = 'LEGACY_CONTINUITY_V1';
 export const TASK_STATUSES = new Set(['NONE', 'IN_PROGRESS', 'BLOCKED', 'COMPLETE']);
 export const PROJECT_VERDICT_EFFECTS = new Set(['PRESERVE', 'REEVALUATE', 'SUPERSEDE']);
 
+/**
+ * @param {string | null | undefined} value
+ * @returns {string | null}
+ */
 export function normalizeProjectVerdictEffect(value) {
   const normalized = String(value ?? '').trim();
   return PROJECT_VERDICT_EFFECTS.has(normalized) ? normalized : null;
@@ -62,6 +81,10 @@ const KNOWN_HUMAN_FIELDS = new Set([
 
 const UPPER_SNAKE_RE = /^[A-Z][A-Z0-9_]{1,79}$/;
 
+/**
+ * @param {string} key
+ * @returns {boolean}
+ */
 export function isCanonicalKey(key) {
   const k = String(key ?? '').trim();
   return KNOWN_HUMAN_FIELDS.has(k) || UPPER_SNAKE_RE.test(k);
@@ -71,7 +94,12 @@ export function isCanonicalKey(key) {
 // Key-value parsing with locations (replaces first-occurrence semantics).
 // ---------------------------------------------------------------------------
 
+/**
+ * @param {string | null | undefined} text
+ * @returns {ParsedKeyValues}
+ */
 export function parseKeyValuesWithLocations(text) {
+  /** @type {KeyValueRecord[]} */
   const records = [];
   const lines = String(text ?? '').split(/\r?\n/);
   let inFence = false;
@@ -86,19 +114,26 @@ export function parseKeyValuesWithLocations(text) {
     if (trimmed === '' || trimmed.startsWith('|') || trimmed.startsWith('>') || trimmed.startsWith('#')) return;
     const match = /^([^:#][^:]*):\s*(.*)$/.exec(trimmed);
     if (!match) return;
-    const key = match[1].trim();
+    const key = (match[1] ?? '').trim();
     if (!isCanonicalKey(key)) return;
-    records.push({ key, value: match[2].trim(), line: lineNumber });
+    records.push({ key, value: (match[2] ?? '').trim(), line: lineNumber });
   });
+  /** @type {Map<string, KeyValueRecord[]>} */
   const byKey = new Map();
   for (const record of records) {
-    if (!byKey.has(record.key)) byKey.set(record.key, []);
-    byKey.get(record.key).push(record);
+    const bucket = byKey.get(record.key);
+    if (bucket === undefined) byKey.set(record.key, [record]);
+    else bucket.push(record);
   }
   return { records, byKey };
 }
 
+/**
+ * @param {{ byKey: Map<string, KeyValueRecord[]> }} parsed
+ * @returns {DuplicateFieldGroup[]}
+ */
 export function findDuplicateFields(parsed) {
+  /** @type {DuplicateFieldGroup[]} */
   const duplicates = [];
   for (const [key, occurrences] of parsed.byKey) {
     if (occurrences.length > 1) {
@@ -112,19 +147,43 @@ export function findDuplicateFields(parsed) {
   return duplicates;
 }
 
+/**
+ * @param {ParsedKeyValues} parsed
+ * @param {string} key
+ * @returns {string | undefined}
+ */
 export function fieldValue(parsed, key) {
   const records = parsed.byKey.get(key);
-  return records && records.length > 0 ? records[0].value : undefined;
+  return records && records.length > 0 ? records[0]?.value : undefined;
 }
 
+/**
+ * @param {ParsedKeyValues} parsed
+ * @param {string} key
+ * @param {number} [minExclusive]
+ * @param {number} [maxInclusive]
+ * @returns {KeyValueRecord[]}
+ */
 export function fieldRecordsInLineRange(parsed, key, minExclusive = 0, maxInclusive = Number.POSITIVE_INFINITY) {
   return (parsed?.byKey.get(key) ?? []).filter((record) => record.line > minExclusive && record.line <= maxInclusive);
 }
 
+/**
+ * @param {ParsedKeyValues} parsed
+ * @param {string} key
+ * @param {number} [minExclusive]
+ * @param {number} [maxInclusive]
+ * @returns {string | undefined}
+ */
 export function fieldValueInLineRange(parsed, key, minExclusive = 0, maxInclusive = Number.POSITIVE_INFINITY) {
   return fieldRecordsInLineRange(parsed, key, minExclusive, maxInclusive)[0]?.value;
 }
 
+/**
+ * @param {ParsedKeyValues} parsed
+ * @param {string} key
+ * @returns {string[]}
+ */
 export function allFieldValues(parsed, key) {
   const records = parsed.byKey.get(key) ?? [];
   return records.map((record) => record.value);
@@ -134,11 +193,17 @@ export function allFieldValues(parsed, key) {
 // Markdown H2 section parser (repository-native task files only).
 // ---------------------------------------------------------------------------
 
+/**
+ * @param {string | null | undefined} text
+ * @returns {ParsedMarkdownSections}
+ */
 export function parseMarkdownSections(text) {
+  /** @type {Map<string, MarkdownSection>} */
   const sections = new Map();
   const fencedLines = new Set();
   const lines = String(text ?? '').split(/\r?\n/);
   let inFence = false;
+  /** @type {string | null} */
   let current = null;
   lines.forEach((raw, index) => {
     const lineNumber = index + 1;
@@ -154,12 +219,13 @@ export function parseMarkdownSections(text) {
     }
     const h2 = /^##\s+(.+)$/.exec(trimmed);
     if (h2) {
-      current = h2[1].trim();
+      current = (h2[1] ?? '').trim();
       sections.set(current, { start: lineNumber, end: lineNumber, lines: [] });
       return;
     }
-    if (current) {
+    if (current !== null) {
       const entry = sections.get(current);
+      if (entry === undefined) return;
       entry.end = lineNumber;
       entry.lines.push({ lineNumber, text: raw });
     }
@@ -168,6 +234,10 @@ export function parseMarkdownSections(text) {
 }
 
 // Body lines of a section excluding fenced code, blockquotes and table rows.
+/**
+ * @param {SectionBody | undefined} section
+ * @returns {SectionLine[]}
+ */
 export function sectionBodyLines(section) {
   return (section?.lines ?? []).filter(({ text }) => {
     const trimmed = text.trim();
@@ -175,6 +245,10 @@ export function sectionBodyLines(section) {
   });
 }
 
+/**
+ * @param {SectionBody | undefined} section
+ * @returns {string}
+ */
 export function sectionBodyText(section) {
   return sectionBodyLines(section ?? { lines: [] })
     .map(({ text }) => text)
@@ -185,6 +259,10 @@ export function sectionBodyText(section) {
 // Text normalization for token matching (deterministic, no NLP).
 // ---------------------------------------------------------------------------
 
+/**
+ * @param {string | null | undefined} value
+ * @returns {string}
+ */
 export function normalizeText(value) {
   return String(value ?? '')
     .replace(/[`*_]/g, ' ')
@@ -200,8 +278,12 @@ export function normalizeText(value) {
 // Status normalization.
 // ---------------------------------------------------------------------------
 
+/**
+ * @param {string | null | undefined} value
+ * @returns {string | null}
+ */
 export function normalizeTaskStatus(value) {
-  const first = String(value ?? '').trim().split(/\s+/)[0].toUpperCase();
+  const first = (String(value ?? '').trim().split(/\s+/)[0] ?? '').toUpperCase();
   return TASK_STATUSES.has(first) ? first : null;
 }
 
@@ -209,11 +291,19 @@ export function normalizeTaskStatus(value) {
 // Phase-status key derivation.
 // ---------------------------------------------------------------------------
 
+/**
+ * @param {string | null | undefined} phase
+ * @returns {string}
+ */
 export function phaseToken(phase) {
-  const first = String(phase ?? '').trim().split(/\s+/)[0];
+  const first = (String(phase ?? '').trim().split(/\s+/)[0] ?? '');
   return first;
 }
 
+/**
+ * @param {string | null | undefined} phase
+ * @returns {string | null}
+ */
 export function derivePhaseStatusKey(phase) {
   const token = phaseToken(phase);
   const normalized = token.toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/_+/g, '_').replace(/^_+|_+$/g, '');
@@ -226,6 +316,10 @@ export function derivePhaseStatusKey(phase) {
 
 const NONTERMINAL_LEADING_SUFFIX = /^\s*(?:\(|—|–|-)\s*(?:pending|in progress|not started|to be done|todo|awaiting|wip)\b/i;
 
+/**
+ * @param {string | null | undefined} value
+ * @returns {boolean}
+ */
 export function isTerminalMilestoneText(value) {
   const v = normalizeText(value);
   if (v === '') return false;
@@ -242,6 +336,10 @@ export function isTerminalMilestoneText(value) {
 
 const WIP_TERMINAL_PREFIX = /^(?:none|no active work|task complete)\b/i;
 
+/**
+ * @param {string | null | undefined} value
+ * @returns {boolean}
+ */
 export function isTerminalWorkInProgressText(value) {
   const v = normalizeText(value);
   if (v === '') return false;
@@ -251,6 +349,10 @@ export function isTerminalWorkInProgressText(value) {
 const NEXT_ACTION_TERMINAL_PREFIX = /^(?:stop|none|task complete)\b/i;
 const NEXT_ACTION_FORBIDDEN = /\b(?:continue|resume|implement|write\b|finish|proceed|execute|rerun|commence)\b/i;
 
+/**
+ * @param {string | null | undefined} value
+ * @returns {boolean}
+ */
 export function isTerminalNextActionText(value) {
   const v = normalizeText(value);
   if (v === '') return false;
@@ -263,6 +365,10 @@ const RESUME_NEGATION_STRIP = /\b(?:do not|don'?t|never|no longer)\s+(?:resume|c
 const RESUME_POSITIVE_INSTRUCTION =
   /\b(?:resume|continue|run|finish|proceed)\s+(?:m\d+|milestones?|remaining|the\s+(?:exact\s+)?next\s+action|from\s+m\d+)/i;
 
+/**
+ * @param {string | null | undefined} value
+ * @returns {boolean}
+ */
 export function isTerminalResumeRecipeText(value) {
   const v = normalizeText(value);
   if (!RESUME_TERMINAL_INDICATOR.test(v)) return false;
@@ -272,6 +378,10 @@ export function isTerminalResumeRecipeText(value) {
 
 const SNAPSHOT_POSITIVE = /\b(?:complete|pass|closed|stop)\b/i;
 
+/**
+ * @param {string | null | undefined} snapshotText
+ * @returns {boolean}
+ */
 export function claimsTaskCompletion(snapshotText) {
   const v = normalizeText(snapshotText);
   if (/^(?:not|unfinished|in progress)\b/.test(v)) return false;
@@ -281,6 +391,10 @@ export function claimsTaskCompletion(snapshotText) {
   return /^(?:task\s+)?(?:complete|done|closed|passed?|succeeded|success)\b/.test(v);
 }
 
+/**
+ * @param {string | null | undefined} snapshotText
+ * @returns {boolean}
+ */
 export function isCompleteSnapshotText(snapshotText) {
   const v = normalizeText(snapshotText);
   if (v === '') return false;
@@ -302,9 +416,13 @@ const MAX_MILESTONE_RANGE = 64;
  * Milestone identity tokens in a milestone field/section value. Ranges such
  * as `G4..G21` expand into their token set (bounded); a standalone token is
  * itself. Deterministic and order-independent.
+ *
+ * @param {string | null | undefined} text
+ * @returns {Set<string>}
  */
 export function parseMilestoneIdentities(text) {
   const source = String(text ?? '');
+  /** @type {Set<string>} */
   const tokens = new Set();
   for (const match of source.matchAll(/\b([GWM])(\d+)\.\.([GWM])(\d+)\b/g)) {
     if (match[1] !== match[3]) continue;
@@ -329,6 +447,10 @@ export function parseMilestoneIdentities(text) {
  * True when two milestone-bearing texts name the same identity. No token on
  * either side is agreement (nothing to bind); a token on exactly one side, or
  * disjoint token sets, is disagreement.
+ *
+ * @param {string | null | undefined} activeText
+ * @param {string | null | undefined} stateText
+ * @returns {MilestoneIdentityAgreement}
  */
 export function milestoneIdentitiesAgree(activeText, stateText) {
   const active = parseMilestoneIdentities(activeText);
@@ -345,12 +467,15 @@ export function milestoneIdentitiesAgree(activeText, stateText) {
  * The STATE.md current-milestone identity text: the `Milestone ID:` line of
  * `## Current Milestone` when present, otherwise the section's first
  * non-empty line. Empty string when the section is absent.
+ *
+ * @param {Map<string, MarkdownSection> | undefined} sections
+ * @returns {string}
  */
 export function stateMilestoneIdentityText(sections) {
   const section = sections?.get?.('Current Milestone');
   const body = sectionBodyText(section ?? { lines: [] });
   const match = /^[ \t]*Milestone ID:[ \t]*(.+)$/m.exec(body);
-  if (match !== null) return match[1].trim();
+  if (match !== null) return (match[1] ?? '').trim();
   return body.split(/\r?\n/).map((line) => line.trim()).find((line) => line !== '') ?? '';
 }
 
@@ -358,6 +483,11 @@ export function stateMilestoneIdentityText(sections) {
  * A milestone identity named by the ACTIVE next action that STATE.md records
  * as completed, or that is strictly below the current milestone in the same
  * letter family. Returns `{ token, reason }` or null.
+ *
+ * @param {string | null | undefined} nextActionText
+ * @param {string | null | undefined} completedText
+ * @param {string | null | undefined} currentText
+ * @returns {{ token: string, reason: 'RECORDED_COMPLETE' | 'BELOW_CURRENT' } | null}
  */
 export function findStaleNextActionMilestone(nextActionText, completedText, currentText) {
   const referenced = parseMilestoneIdentities(nextActionText);
@@ -387,6 +517,10 @@ const PLACEHOLDER_RE =
 // legitimate prose (e.g. this protocol's own documentation); the narrow
 // sentinel forms above are the enforceable contract.
 
+/**
+ * @param {string | null | undefined} value
+ * @returns {boolean}
+ */
 export function hasClosurePlaceholder(value) {
   return PLACEHOLDER_RE.test(String(value ?? ''));
 }
@@ -398,7 +532,12 @@ export function hasClosurePlaceholder(value) {
 const NUMBERED_BOLD_RE = /^\s*\d+(?:\s*[-–—]\s*\d+)?\.?\s*\*\*([^*]+)\*\*\s*:\s*(.*)$/;
 const BOLD_KEY_RE = /^\s*\*\*([^*]+)\*\*\s*:\s*(.*)$/;
 
+/**
+ * @param {string | null | undefined} text
+ * @returns {ReportField[]}
+ */
 export function parseReportFields(text) {
+  /** @type {ReportField[]} */
   const fields = [];
   const lines = String(text ?? '').split(/\r?\n/);
   let inFence = false;
@@ -412,7 +551,7 @@ export function parseReportFields(text) {
     if (inFence || trimmed === '' || trimmed.startsWith('|') || trimmed.startsWith('>') || trimmed.startsWith('#')) return;
     let match = NUMBERED_BOLD_RE.exec(trimmed);
     if (match) {
-      let value = match[2].trim();
+      let value = (match[2] ?? '').trim();
       let line = lineNumber;
       // Continuation-line values ("Key:\n    `value`") are joined.
       if (value === '') {
@@ -422,28 +561,35 @@ export function parseReportFields(text) {
           line = lineNumber + 1;
         }
       }
-      fields.push({ key: match[1].trim(), value, line, kind: 'numbered' });
+      fields.push({ key: (match[1] ?? '').trim(), value, line, kind: 'numbered' });
       return;
     }
     match = BOLD_KEY_RE.exec(trimmed);
     if (match) {
-      fields.push({ key: match[1].trim(), value: match[2].trim(), line: lineNumber, kind: 'bold' });
+      fields.push({ key: (match[1] ?? '').trim(), value: (match[2] ?? '').trim(), line: lineNumber, kind: 'bold' });
       return;
     }
     match = /^([^:#][^:]*):\s*(.*)$/.exec(trimmed);
-    if (match && isCanonicalKey(match[1].trim())) {
-      fields.push({ key: match[1].trim(), value: match[2].trim(), line: lineNumber, kind: 'kv' });
+    if (match && isCanonicalKey((match[1] ?? '').trim())) {
+      fields.push({ key: (match[1] ?? '').trim(), value: (match[2] ?? '').trim(), line: lineNumber, kind: 'kv' });
     }
   });
   return fields;
 }
 
+/**
+ * @param {ReportField[]} fields
+ * @returns {DuplicateFieldGroup[]}
+ */
 export function findDuplicateReportFields(fields) {
+  /** @type {Map<string, ReportField[]>} */
   const byKey = new Map();
   for (const field of fields) {
-    if (!byKey.has(field.key)) byKey.set(field.key, []);
-    byKey.get(field.key).push(field);
+    const bucket = byKey.get(field.key);
+    if (bucket === undefined) byKey.set(field.key, [field]);
+    else bucket.push(field);
   }
+  /** @type {DuplicateFieldGroup[]} */
   const duplicates = [];
   for (const [key, occurrences] of byKey) {
     if (occurrences.length > 1) {
@@ -460,7 +606,12 @@ export function findDuplicateReportFields(fields) {
 const MILESTONE_STATUS_RE = /(?:—|–|:)\s*(DONE|COMPLETE|PASS|SUCCESS|CLOSED|PENDING|IN_PROGRESS|NOT_STARTED|TODO|BLOCKED|FAILED)(?:\s*(?:\/|—)\s*STOP\b)?\s*[.)]?$/i;
 const NONTERMINAL_MILESTONE_STATUSES = new Set(['PENDING', 'IN_PROGRESS', 'NOT_STARTED', 'TODO']);
 
+/**
+ * @param {SectionLine[]} milestoneLines
+ * @returns {PlanMilestoneLine[]}
+ */
 export function parsePlanMilestoneLines(milestoneLines) {
+  /** @type {PlanMilestoneLine[]} */
   const out = [];
   for (const { lineNumber, text } of milestoneLines) {
     const trimmed = text.trim();
@@ -475,16 +626,20 @@ export function parsePlanMilestoneLines(milestoneLines) {
     out.push({
       lineNumber,
       text: trimmed,
-      status: statusMatch ? statusMatch[1].toUpperCase() : null,
+      status: statusMatch ? (statusMatch[1] ?? '').toUpperCase() : null,
       unchecked,
     });
   }
   return out;
 }
 
+/**
+ * @param {SectionLine[]} milestoneLines
+ * @returns {PlanMilestoneLine[]}
+ */
 export function findNonterminalPlanMilestones(milestoneLines) {
   return parsePlanMilestoneLines(milestoneLines).filter(
-    (milestone) => milestone.unchecked || NONTERMINAL_MILESTONE_STATUSES.has(milestone.status)
+    (milestone) => milestone.unchecked || (milestone.status !== null && NONTERMINAL_MILESTONE_STATUSES.has(milestone.status))
   );
 }
 
@@ -492,6 +647,10 @@ export function findNonterminalPlanMilestones(milestoneLines) {
 // Report anchor aliases (normalized key → anchor role).
 // ---------------------------------------------------------------------------
 
+/**
+ * @param {string} key
+ * @returns {string | null}
+ */
 export function reportAnchorRole(key) {
   const normalized = String(key ?? '').toLowerCase().replace(/[^a-z0-9]+/g, '');
   if (normalized.includes('validatedimplementationsha')) return 'validated';
@@ -501,12 +660,20 @@ export function reportAnchorRole(key) {
   return null;
 }
 
+/**
+ * @param {string | null | undefined} value
+ * @returns {string}
+ */
 export function cleanShaValue(value) {
   const cleaned = String(value ?? '').trim().replace(/`/g, '').trim();
   const hex = /[0-9a-f]{40}/i.exec(cleaned);
   return hex ? hex[0] : cleaned.replace(/[.,;:]+$/g, '');
 }
 
+/**
+ * @param {string | null | undefined} value
+ * @returns {string}
+ */
 export function cleanIdValue(value) {
   return String(value ?? '').trim().replace(/`/g, '').trim();
 }
@@ -536,6 +703,10 @@ export function cleanIdValue(value) {
 /** Leading NONE token, tolerating list markers, emphasis, quoting and a `SAFETY_EVENTS:` prefix. */
 const SAFETY_NONE_OPENING_RE = /^none\b/i;
 
+/**
+ * @param {string | null | undefined} line
+ * @returns {string}
+ */
 function stripSafetyClaimDecoration(line) {
   return String(line ?? '')
     .trim()
@@ -550,6 +721,9 @@ function stripSafetyClaimDecoration(line) {
 /**
  * True when a safety-events claim opens with a NONE token. Empty text is NOT
  * a NONE assertion: absence of a claim is not a claim of absence.
+ *
+ * @param {string | null | undefined} value
+ * @returns {boolean}
  */
 export function assertsNoSafetyEvents(value) {
   const firstLine = String(value ?? '')
@@ -565,23 +739,35 @@ export function assertsNoSafetyEvents(value) {
  * Scanned directly rather than through parseReportFields: the recorded
  * convention writes the claim as a list item (`- Safety events: ...`), which
  * the canonical-key field parser deliberately does not treat as a field.
+ *
+ * @param {string | null | undefined} text
+ * @returns {{ value: string, line: number } | null}
  */
 export function findReportSafetyEventsClaim(text) {
   const lines = String(text ?? '').split(/\r?\n/);
   let inFence = false;
   for (let index = 0; index < lines.length; index += 1) {
-    const trimmed = lines[index].trim();
+    const raw = lines[index];
+    if (raw === undefined) continue;
+    const trimmed = raw.trim();
     if (trimmed.startsWith('```')) {
       inFence = !inFence;
       continue;
     }
     if (inFence) continue;
     const match = /^(?:[-*+]\s+|\d+\.\s+)?\*{0,2}safety[_ ]events?\*{0,2}\s*:\s*(.*)$/i.exec(trimmed);
-    if (match) return { value: match[1].trim(), line: index + 1 };
+    if (match) return { value: (match[1] ?? '').trim(), line: index + 1 };
   }
   return null;
 }
 
+/**
+ * @param {string} code
+ * @param {string | null | undefined} path
+ * @param {number | string | null | undefined} line
+ * @param {string} detail
+ * @returns {ContinuityDiagnostic}
+ */
 function makeError(code, path, line, detail) {
   return { code, path, line, detail };
 }
@@ -589,15 +775,17 @@ function makeError(code, path, line, detail) {
 /**
  * Validate one task under protocol v2.
  *
- * @param {object} task - { dir, stateText, statePath, planText, planPath,
- *   reportText|null, reportPath, activeText|null, activePath|null }
- * @param {object} opts - { bindActive: boolean }
+ * @param {ContinuityTask} task - dir, stateText, statePath, planText, planPath,
+ *   reportText, reportPath, activeText, activePath
+ * @param {Partial<{ bindActive: boolean }>} [opts]
  *   When bindActive is true, status source is ACTIVE Status and ACTIVE
  *   fields (Current milestone / Next action) are also checked.
- * @returns {{ errors: object[], warnings: object[] }}
+ * @returns {{ errors: ContinuityDiagnostic[], warnings: ContinuityDiagnostic[] }}
  */
 export function validateTaskV2(task, opts = {}) {
+  /** @type {ContinuityDiagnostic[]} */
   const errors = [];
+  /** @type {ContinuityDiagnostic[]} */
   const warnings = [];
   const bindActive = opts.bindActive === true;
 
@@ -611,12 +799,13 @@ export function validateTaskV2(task, opts = {}) {
   const stateIdentitySection = stateSections.get('Identity');
   const stateIdentityStart = stateIdentitySection?.start ?? 0;
   const stateIdentityEnd = stateIdentitySection?.end ?? 0;
-  const stateMetadataValue = (key) => fieldValueInLineRange(stateParsed, key, stateIdentityStart, stateIdentityEnd);
+  const stateMetadataValue = /** @param {string} key */ (key) =>
+    fieldValueInLineRange(stateParsed, key, stateIdentityStart, stateIdentityEnd);
   const activeSectionStarts = task.activeText
     ? [...parseMarkdownSections(task.activeText).sections.values()].map((section) => section.start)
     : [];
   const firstActiveSection = activeSectionStarts.length > 0 ? Math.min(...activeSectionStarts) : Number.POSITIVE_INFINITY;
-  const activeMetadataValue = (key) => activeParsed
+  const activeMetadataValue = /** @param {string} key */ (key) => activeParsed
     ? fieldValueInLineRange(activeParsed, key, 0, firstActiveSection - 1)
     : undefined;
 
@@ -707,13 +896,16 @@ export function validateTaskV2(task, opts = {}) {
   // --- phase binding ---------------------------------------------------------
   const phase = statePhase;
   const phaseKey = derivePhaseStatusKey(phase);
+  /** @type {string | undefined} */
   let phaseStatusValue;
+  /** @type {number | undefined} */
   let phaseStatusLine;
   if (phaseKey && stateParsed.byKey.has(phaseKey)) {
     const occurrences = fieldRecordsInLineRange(stateParsed, phaseKey, stateIdentityStart, stateIdentityEnd);
-    if (occurrences.length > 0) {
-      phaseStatusValue = occurrences[0].value;
-      phaseStatusLine = occurrences[0].line;
+    const first = occurrences[0];
+    if (first !== undefined) {
+      phaseStatusValue = first.value;
+      phaseStatusLine = first.line;
     }
   }
   if (bindActive && activeParsed) {
@@ -730,6 +922,7 @@ export function validateTaskV2(task, opts = {}) {
   }
 
   // --- cross-file anchors ----------------------------------------------------
+  /** @type {Record<string, string | undefined>} */
   const stateAnchors = {
     starting: stateMetadataValue('Starting SHA') ?? stateMetadataValue('STARTING_SHA'),
     validated: stateMetadataValue('Last validated implementation SHA') ?? stateMetadataValue('LAST_VALIDATED_IMPLEMENTATION_SHA'),
@@ -747,6 +940,7 @@ export function validateTaskV2(task, opts = {}) {
     }
   }
   if (reportFields) {
+    /** @type {Record<string, string | undefined>} */
     const reportAnchors = {};
     for (const field of reportFields) {
       const role = reportAnchorRole(field.key);
@@ -828,6 +1022,7 @@ export function validateTaskV2(task, opts = {}) {
   const stateValidationLedgerSection = sectionBodyText(stateSections.get('Validation Ledger'));
 
   // Placeholder scan lines: canonical records + listed live sections.
+  /** @type {{ path: string, line: number, value: string }[]} */
   const placeholderScanLines = [];
   for (const record of stateParsed.records) {
     placeholderScanLines.push({ path: task.statePath, line: record.line, value: record.value });
@@ -892,7 +1087,7 @@ export function validateTaskV2(task, opts = {}) {
             'SAFETY_EVENT_ACCOUNTING_CONTRADICTION',
             task.reportPath,
             reportSafetyClaim.line,
-            `REPORT asserts "Safety events: ${reportSafetyClaim.value.slice(0, 60)}" while STATE ## Safety Events records "${stateSafetyText.split(/\r?\n/)[0].slice(0, 80)}"`
+            `REPORT asserts "Safety events: ${reportSafetyClaim.value.slice(0, 60)}" while STATE ## Safety Events records "${(stateSafetyText.split(/\r?\n/)[0] ?? '').slice(0, 80)}"`
           )
         );
       }
@@ -1032,6 +1227,10 @@ export function validateTaskV2(task, opts = {}) {
 export const LEGACY_DISPOSITION_KEY = 'LEGACY_V1_DISPOSITION';
 export const LEGACY_HISTORICAL_DISPOSITION = 'PERMANENTLY_HISTORICAL';
 
+/**
+ * @param {string | undefined | null} value
+ * @returns {string | null}
+ */
 export function parseLegacyHistoricalDisposition(value) {
   if (typeof value !== 'string') return null;
   const match = /^PERMANENTLY_HISTORICAL(?:\s*[—–:-]\s*(.+))?$/.exec(value.trim());
@@ -1044,7 +1243,13 @@ export function parseLegacyHistoricalDisposition(value) {
 // Legacy (v1) task structural inspection — warnings only.
 // ---------------------------------------------------------------------------
 
+/**
+ * @param {{ reportText: string | null, stateNextAction: string, statePath: string | undefined }} task
+ * @param {string | undefined} status
+ * @returns {ContinuityDiagnostic[]}
+ */
 export function inspectLegacyTask(task, status) {
+  /** @type {ContinuityDiagnostic[]} */
   const warnings = [];
   if (status === 'COMPLETE' && !task.reportText) {
     warnings.push(makeError('LEGACY_TASK_MISSING_REPORT', task.statePath, null, 'legacy COMPLETE task has no REPORT.md'));
@@ -1142,6 +1347,9 @@ export const APPROVED_CHECKPOINT_PATHS = [
  * files are excluded on purpose (VB-06 / corrections task 2.6): path shape
  * alone can never approve them — their admissibility is decided exclusively by
  * `guardClassForPath` + `guardHoldsForChange` in bin/lib/checkpoint-role.mjs.
+ *
+ * @param {string} file
+ * @returns {boolean}
  */
 export function isApprovedCheckpointPath(file) {
   return APPROVED_CHECKPOINT_PATHS.some((pattern) => pattern.test(file));

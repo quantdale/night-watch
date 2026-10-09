@@ -209,14 +209,25 @@ export function walkWorkingTree(directory, predicate) {
   return results;
 }
 
+/**
+ * 24-hex prefix of the SHA-256 of `text`, in the canonical `sha256:` form every
+ * evidence digest uses.
+ * @param {string} text
+ * @returns {string}
+ */
 export function sha256Prefix(text) {
   return `sha256:${crypto.createHash('sha256').update(text, 'utf8').digest('hex').slice(0, 24)}`;
 }
 
+/**
+ * Run one bounded git command against the repository root.
+ * @param {string[]} args
+ */
 export function gitResult(args) {
   return spawnSync('git', args, { cwd: root, encoding: 'utf8', env: childEnvironment, timeout: 30_000, maxBuffer: 16 * 1024 * 1024 });
 }
 
+/** @param {string} directory @param {string} file */
 export function pathIsInsideDirectory(directory, file) {
   return file === directory || file.startsWith(`${directory}/`);
 }
@@ -229,6 +240,8 @@ export function pathIsInsideDirectory(directory, file) {
  * and a line number derived from it is short by however many comment lines came
  * before. Anything that REPORTS A POSITION must scan this instead. Strings,
  * escapes and regex literals are all respected.
+ * @param {string} source
+ * @returns {Uint8Array}
  */
 function commentMask(source) {
   const mask = new Uint8Array(source.length);
@@ -237,7 +250,7 @@ function commentMask(source) {
   let index = 0;
   let previousSignificant = '';
   while (index < source.length) {
-    const character = source[index];
+    const character = source[index] ?? '';
     const next = source[index + 1];
     if (mode === 'code') {
       if (character === '\\') { index += 2; continue; }

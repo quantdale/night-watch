@@ -65,11 +65,12 @@ export function checkEnvironmentSurfaceDeclaration() {
     }
     declared.add(entry.name);
   }
+  /** @type {{ name: unknown | undefined, construction: unknown | undefined }[]} */
   const assembledEntries = Array.isArray(declaration.assembledReads) ? declaration.assembledReads : [];
   const assembled = new Set(
     assembledEntries
       .filter((entry) => entry !== null && typeof entry === 'object' && typeof entry.construction === 'string')
-      .map((entry) => entry.construction),
+      .map((entry) => /** @type {string} */ (entry.construction)),
   );
   for (const entry of assembledEntries) {
     if (entry === null || typeof entry !== 'object' || typeof entry.name !== 'string' || !declared.has(entry.name)) {
@@ -86,11 +87,12 @@ export function checkEnvironmentSurfaceDeclaration() {
     const code = codeWithCommentsBlanked(readIncludingComments(file));
     /** @type {Map<string, number>} */
     const reads = new Map();
+    /** @param {string} name @param {RegExpMatchArray} match */
     const addRead = (name, match) => {
       const line = code.slice(0, match.index ?? 0).split('\n').length;
       if (!reads.has(name)) reads.set(name, line);
     };
-    for (const match of code.matchAll(/process\.env\.(NIGHTWATCH_[A-Z0-9_]+)/g)) addRead(match[1], match);
+    for (const match of code.matchAll(/process\.env\.(NIGHTWATCH_[A-Z0-9_]+)/g)) addRead(match[1] ?? '', match);
     for (const match of code.matchAll(/process\.env\[\s*'NIGHTWATCH_([A-Z0-9_]+)'\s*\]/g)) addRead(`NIGHTWATCH_${match[1]}`, match);
     for (const match of code.matchAll(/(?:environment|env)\[\s*'NIGHTWATCH_([A-Z0-9_]+)'\s*\]/g)) addRead(`NIGHTWATCH_${match[1]}`, match);
     for (const [name, line] of reads) {
@@ -172,6 +174,7 @@ export const REFERENCE_GRAPH_ROOTS = Object.freeze(['src/', 'tests/', 'bin/', 'u
 export const REFERENCE_GRAPH_SOURCE_RE = /\.(?:ts|tsx|mts|cts|mjs|js|jsx)$/;
 export const REFERENCE_GRAPH_CANDIDATE_RE = /^src\/.*\.(?:ts|tsx)$/;
 
+/** @param {string} rule */
 export function readReferenceGraphConfig(rule) {
   let config;
   try {
@@ -205,6 +208,7 @@ export function referenceGraphFiles() {
   ));
 }
 
+/** @param {string} file @returns {string} */
 export function referenceModuleDirectory(file) {
   const slash = file.lastIndexOf('/');
   return slash < 0 ? '' : file.slice(0, slash);
@@ -231,16 +235,22 @@ export function referenceGraphAccess() {
   };
 }
 
-/** @type {{ files: string[], fileSet: Set<string>, edges: { from: string, to: string, kind: string, line: number }[], parsed: number } | null} */
+/**
+ * @typedef {{ from: string, to: string, kind: string, line: number }} ReferenceGraphEdge
+ * @typedef {{ files: string[], fileSet: Set<string>, edges: ReferenceGraphEdge[], parsed: number }} ReferenceGraph
+ */
+
+/** @type {ReferenceGraph | null} */
 let referenceGraphCache = null;
 
 export function buildReferenceGraph() {
   const files = referenceGraphFiles();
   const fileSet = new Set(files);
   const access = referenceGraphAccess();
-  /** @type {{ from: string, to: string, kind: string, line: number }[]} */
+  /** @type {ReferenceGraphEdge[]} */
   const edges = [];
   const edgeKeys = new Set();
+  /** @param {string} from @param {string} to @param {string} kind @param {number} line */
   const addEdge = (from, to, kind, line) => {
     if (typeof to !== 'string' || to.length === 0) return;
     const key = `${from}\0${to}\0${kind}\0${line}`;
@@ -259,7 +269,9 @@ export function buildReferenceGraph() {
         : typescript.ScriptKind.JS;
     const sourceFile = typescript.createSourceFile(file, raw, typescript.ScriptTarget.Latest, true, scriptKind);
     parsed += 1;
+    /** @param {typescript.Node} node */
     const lineOf = (node) => sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile)).line + 1;
+    /** @param {typescript.StringLiteralLike} literal @param {number} line @param {string} kind */
     const resolveLiteral = (literal, line, kind) => {
       const specifier = literal.text;
       if (!specifier.startsWith('.')) {
@@ -288,23 +300,27 @@ export function buildReferenceGraph() {
         resolveLiteral(node.moduleSpecifier, lineOf(node), 'REEXPORT');
       } else if (typescript.isCallExpression(node)) {
         const callee = node.expression;
+        const firstArgument = node.arguments[0];
         if (
           typescript.isIdentifier(callee)
           && callee.text === 'require'
-          && typescript.isStringLiteralLike(node.arguments[0])
+          && firstArgument !== undefined
+          && typescript.isStringLiteralLike(firstArgument)
         ) {
-          resolveLiteral(node.arguments[0], lineOf(node), 'REQUIRE');
+          resolveLiteral(firstArgument, lineOf(node), 'REQUIRE');
         } else if (
           callee.kind === typescript.SyntaxKind.ImportKeyword
-          && typescript.isStringLiteralLike(node.arguments[0])
+          && firstArgument !== undefined
+          && typescript.isStringLiteralLike(firstArgument)
         ) {
-          resolveLiteral(node.arguments[0], lineOf(node), 'DYNAMIC_IMPORT');
+          resolveLiteral(firstArgument, lineOf(node), 'DYNAMIC_IMPORT');
         } else if (
           typescript.isPropertyAccessExpression(callee)
           && callee.getText(sourceFile) === 'require.resolve'
-          && typescript.isStringLiteralLike(node.arguments[0])
+          && firstArgument !== undefined
+          && typescript.isStringLiteralLike(firstArgument)
         ) {
-          resolveLiteral(node.arguments[0], lineOf(node), 'REQUIRE_RESOLVE');
+          resolveLiteral(firstArgument, lineOf(node), 'REQUIRE_RESOLVE');
         }
       }
       typescript.forEachChild(node, visit);
@@ -328,13 +344,14 @@ export function referenceGraph() {
 
 /** @param {Record<string, unknown>} config @param {string} file */
 export function retentionEntryFor(config, file) {
-  for (const entry of /** @type {{ path?: unknown, kind?: unknown }[]} */ (config.retention ?? [])) {
+  for (const entry of /** @type {Partial<{ path: unknown, kind: unknown }>[]} */ (config.retention ?? [])) {
     if (entry === null || typeof entry !== 'object' || typeof entry.path !== 'string') continue;
     if (entry.kind === 'DIRECTORY' ? pathIsInsideDirectory(entry.path, file) : entry.path === file) return entry;
   }
   return null;
 }
 
+/** @param {ReferenceGraph} graph @param {Record<string, unknown>} config */
 export function evaluateReferenceGraph(graph, config) {
   /** @type {{ code: string, detail: string }[]} */
   const findings = [];
@@ -359,8 +376,11 @@ export function evaluateReferenceGraph(graph, config) {
     list.push(edge.to);
     outgoing.set(edge.from, list);
   }
+  /** @type {Set<string>} */
   const alive = new Set();
+  /** @type {string[]} */
   const queue = [];
+  /** @param {string} file */
   const seed = (file) => {
     if (graph.fileSet.has(file) && !alive.has(file)) {
       alive.add(file);
@@ -416,7 +436,7 @@ export function checkSourceReachability() {
 export function checkModuleBarrierEnforcement() {
   const config = readReferenceGraphConfig('MODULE_BARRIER');
   if (config === null) return;
-  const barriers = /** @type {{ module?: unknown, barrel?: unknown, reason?: unknown }[]} */ (config.enforcedBarriers ?? []);
+  const barriers = /** @type {Partial<{ module: unknown, barrel: unknown, reason: unknown }>[]} */ (config.enforcedBarriers ?? []);
   if (barriers.length === 0) {
     fail('MODULE_BARRIER no enforced module barrier is declared; the rule would pass vacuously');
     return;

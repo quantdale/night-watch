@@ -26,6 +26,7 @@ const DEFAULT_CONFIG = 'config/cache-key-contracts.v1.json';
 const DEFAULT_OUTPUT = 'artifacts/cache-key-contract/current.json';
 const MAX_CONFIG_BYTES = 64 * 1024;
 
+/** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
 const CLI_METADATA = {
   schemaVersion: OPERATOR_CLI_SCHEMA,
   name: 'cache-key-contract',
@@ -42,6 +43,10 @@ const CLI_METADATA = {
   artifacts: ['artifacts/cache-key-contract/current.json'],
 };
 
+/**
+ * @param {string} code
+ * @param {string} [detail]
+ */
 function fail(code, detail) {
   process.stderr.write(detail === undefined ? `[cache-key-contract] ERROR: ${code}\n` : `[cache-key-contract] ERROR: ${code}: ${detail}\n`);
   process.exitCode = 2;

@@ -38,7 +38,7 @@ export function checkAlphausHandoffBoundary() {
     }
     for (const file of coneFiles) {
       const source = read(file);
-      for (const [pattern, description] of [
+      for (const [pattern, description] of /** @type {ReadonlyArray<readonly [RegExp, string]>} */ ([
         [/from\s+['"]node:(?:net|http|https|dns|child_process|fs|os|path|url|util|events|stream|worker_threads)[^'"]*['"]/, 'a network/process/filesystem runtime import (any subpath)'],
         [/from\s+['"]child_process[^'"]*['"]/, 'a bare child_process import (no node: prefix)'],
         [/import\s*\(\s*['"]node:[^'"]+['"]\s*\)/, 'a dynamic runtime import'],
@@ -54,7 +54,7 @@ export function checkAlphausHandoffBoundary() {
         [/from\s+['"][^'"]*(slack|leslie|pondr)[^'"]*['"]/i, 'an external submission import'],
         [/(Slack|Leslie|Pondr)(Client|Webhook|Api|API|Message|Ticket|Issue)|postTo(Slack|Leslie|Pondr)|file(Leslie|Pondr|Slack)Report|create(GitHub|Slack|Pondr)(Issue|Message|Task)/, 'an external submission connector'],
         [/expectedPoints|estimatedReward|rewardTier|bountyPoints|bountyScore|calculateBounty|bountyCalculator/i, 'a bounty-scoring surface'],
-      ]) if (pattern.test(source)) fail(`${file} contains ${description}; the AH-1 cones must stay isolated from it`);
+      ])) if (pattern.test(source)) fail(`${file} contains ${description}; the AH-1 cones must stay isolated from it`);
     }
   }
   const handoffTypes = read('src/core/alphausHandoff/types.ts');
@@ -94,7 +94,7 @@ export function checkC12RehearsalBoundary() {
   }
   for (const file of coneFiles) {
     const source = read(file);
-    for (const [pattern, description] of [
+    for (const [pattern, description] of /** @type {ReadonlyArray<readonly [RegExp, string]>} */ ([
       [/from\s+['"]node:(?:net|http|https|dns|child_process|fs|os|path|url|util|events|stream|worker_threads)[^'"]*['"]/, 'a network/process/filesystem runtime import (any subpath)'],
       [/from\s+['"]child_process[^'"]*['"]/, 'a bare child_process import (no node: prefix)'],
       [/import\s*\(\s*['"]node:[^'"]+['"]\s*\)/, 'a dynamic runtime import'],
@@ -109,12 +109,12 @@ export function checkC12RehearsalBoundary() {
       [/from\s+['"][^'"]*core\/(alphausHandoff|c12Readiness)/, 'an AH-1 cone import (versions stay deliberate literal duplicates)'],
       [/from\s+['"][^'"]*(slack|leslie|pondr)[^'"]*['"]/i, 'an external submission import'],
       [/expectedPoints|estimatedReward|rewardTier|bountyPoints|bountyScore|calculateBounty|bountyCalculator/i, 'a bounty-scoring surface'],
-    ]) if (pattern.test(source)) fail(`${file} contains ${description}; the rehearsal cone must stay local-only`);
+    ])) if (pattern.test(source)) fail(`${file} contains ${description}; the rehearsal cone must stay local-only`);
   }
   const rehearsal = read(`${coneDirectory}/rehearsal.ts`);
   // Occurrence-complete, not merely present: a surviving safe literal on one
   // return path must not license an unsafe one on another (mutation M13).
-  for (const [file, source] of [['rehearsal.ts', rehearsal], ['types.ts', read(`${coneDirectory}/types.ts`)]]) {
+  for (const [file, source] of /** @type {ReadonlyArray<readonly [string, string]>} */ ([['rehearsal.ts', rehearsal], ['types.ts', read(`${coneDirectory}/types.ts`)]])) {
     for (const assignment of source.match(/liveAuthorization\s*:\s*'[^']*'/g) ?? []) {
       if (!assignment.endsWith("'NOT_CONFERRED_SYNTHETIC_ONLY'")) {
         fail(`${coneDirectory}/${file} assigns ${assignment}; every rehearsal live-authorization value must be NOT_CONFERRED_SYNTHETIC_ONLY`);
@@ -165,7 +165,7 @@ export function checkC02bProtobufBoundary() {
       fail(`C-02b the protobuf module ${file} is missing`);
       continue;
     }
-    for (const [pattern, description] of [
+    for (const [pattern, description] of /** @type {ReadonlyArray<readonly [RegExp, string]>} */ ([
       [/from\s+['"]node:fs['"]|require\(['"](?:node:)?fs['"]\)/, 'filesystem authority'],
       [/from\s+['"]node:child_process['"]|require\(['"](?:node:)?child_process['"]\)/, 'process authority'],
       [/from\s+['"]node:(?:net|http|https|dgram|tls)['"]/, 'network authority'],
@@ -177,7 +177,7 @@ export function checkC02bProtobufBoundary() {
       // compiler DEPENDENCY or a command string, not the prose.
       [/from\s+['"](?:protobufjs|google-protobuf)|require\(['"](?:protobufjs|google-protobuf)['"]\)/, 'a protobuf compiler dependency'],
       [/['"]protoc['"]|['"]buf['"]/, 'a protobuf compiler command'],
-    ]) {
+    ])) {
       if (pattern.test(source)) fail(`${file} contains ${description}; the C-02b protobuf path is data-in / data-out only`);
     }
   }
@@ -198,12 +198,12 @@ export function checkC02bProtobufBoundary() {
   }
   const lexer = readIncludingComments('src/core/source/protoLexer.ts');
   const lexerCode = read("src/core/source/protoLexer.ts");
-  for (const [pattern, description] of [
+  for (const [pattern, description] of /** @type {ReadonlyArray<readonly [RegExp, string]>} */ ([
     [/UNTERMINATED_COMMENT/, 'an unterminated block comment must fail closed'],
     [/UNTERMINATED_STRING/, 'an unterminated string must fail closed'],
     [/TOKEN_BUDGET_EXHAUSTED/, 'the token ceiling must be categorical'],
     [/DEPTH_EXCEEDED/, 'the nesting ceiling must be categorical'],
-  ]) if (!pattern.test(lexerCode)) fail(`C-02b protoLexer.ts lost a bounding state: ${description}`);
+  ])) if (!pattern.test(lexerCode)) fail(`C-02b protoLexer.ts lost a bounding state: ${description}`);
 
   // --- A-4: currency may not be upgraded by a count ---
   const corroboration = readIncludingComments('src/core/source/protoCorroboration.ts');
@@ -271,13 +271,13 @@ export function checkC03GrpcTopologyBoundary() {
       fail(`C-03 the topology module ${file} is missing`);
       return;
     }
-    for (const [pattern, description] of [
+    for (const [pattern, description] of /** @type {ReadonlyArray<readonly [RegExp, string]>} */ ([
       [/from\s+['"]node:fs['"]|require\(['"](?:node:)?fs['"]\)/, 'filesystem authority'],
       [/from\s+['"]node:child_process['"]|require\(['"](?:node:)?child_process['"]\)/, 'process authority'],
       [/from\s+['"]node:(?:net|http|https|dgram|tls)['"]/, 'network authority'],
       [/\beval\s*\(|new\s+Function\s*\(/, 'dynamic evaluation'],
       [/['"]go\s+build['"]|['"]go['"]\s*,\s*\[|gopls|go\/types/, 'a Go toolchain dependency'],
-    ]) {
+    ])) {
       if (pattern.test(source)) fail(`${file} contains ${description}; the C-03 topology path is data-in / data-out only`);
     }
   }
@@ -358,13 +358,13 @@ export function checkC04FrontendConsumerBoundary() {
       fail(`C-04 the frontend module ${file} is missing`);
       return;
     }
-    for (const [pattern, description] of [
+    for (const [pattern, description] of /** @type {ReadonlyArray<readonly [RegExp, string]>} */ ([
       [/from\s+['"]node:fs['"]|require\(['"](?:node:)?fs['"]\)/, 'filesystem authority'],
       [/from\s+['"]node:child_process['"]/, 'process authority'],
       [/from\s+['"]node:(?:net|http|https|dgram|tls)['"]/, 'network authority'],
       [/\beval\s*\(|new\s+Function\s*\(/, 'dynamic evaluation'],
       [/from\s+['"]@vue\/compiler-sfc['"]|from\s+['"]typescript['"]|jsdom|puppeteer/, 'a frontend toolchain dependency'],
-    ]) {
+    ])) {
       if (pattern.test(source)) fail(`${file} contains ${description}; the C-04 frontend path is data-in / data-out only`);
     }
   }
@@ -445,7 +445,7 @@ export function checkC05UniverseAdmissionBoundary() {
   if (block === null) {
     fail('C-05 could not read the OWNER_APPROVED_UNIVERSE declaration; the admission boundary cannot be verified');
   } else {
-    const declared = [...block[1].matchAll(/'([a-z0-9._-]+\/[a-z0-9._-]+)'\s*:/gi)].map((match) => match[1]);
+    const declared = [...(block[1] ?? '').matchAll(/'([a-z0-9._-]+\/[a-z0-9._-]+)'\s*:/gi)].map((match) => match[1] ?? '');
     for (const repoId of expected) {
       if (!declared.includes(repoId)) fail(`C-05 owner-approved universe is missing ${repoId}`);
     }
@@ -483,15 +483,16 @@ export function checkC05UniverseAdmissionBoundary() {
   if (definition === null) {
     fail('C-05 could not read the RepoDefinition declaration');
   } else {
+    const definitionBody = definition[1] ?? '';
     for (const field of ['branch', 'trackingSha', 'ahead', 'behind', 'dirty']) {
-      if (new RegExp(`(^|\\n)\\s*${field}\\s*:`).test(definition[1])) {
+      if (new RegExp(`(^|\\n)\\s*${field}\\s*:`).test(definitionBody)) {
         fail(`RepoDefinition must not persist current mutable Git state (${field}); query it live`);
       }
     }
     // The pins must SURVIVE. Removing them would make every staleness check
     // vacuously pass, which is worse than a stale value: a silent rebind.
     for (const pin of ['checkedOutSha', 'sourceMapSha']) {
-      if (!new RegExp(`(^|\\n)\\s*${pin}\\s*:`).test(definition[1])) {
+      if (!new RegExp(`(^|\\n)\\s*${pin}\\s*:`).test(definitionBody)) {
         fail(`RepoDefinition must keep the pinned provenance anchor ${pin}`);
       }
     }
@@ -554,7 +555,7 @@ export function checkC08DeploymentBindingBoundary() {
   if (basesBlock === null) {
     fail('C-08 could not read the FORBIDDEN_DEPLOYMENT_FACT_BASES declaration');
   } else {
-    const declared = withoutComments(basesBlock[1]);
+    const declared = withoutComments(basesBlock[1] ?? '');
     for (const basis of ['SERVICE_NAME_SIMILARITY', 'ROUTE_PREFIX_SIMILARITY', 'GUESSED_HOSTNAME',
       'HISTORICAL_FAMILIARITY', 'DOCUMENT_DESCRIBING_EXPECTED_ARCHITECTURE', 'CLIENT_CONFIGURATION']) {
       if (!declared.includes(`'${basis}'`)) fail(`C-08 must declare ${basis} as a forbidden DEPLOYMENT_FACT basis`);
@@ -597,8 +598,9 @@ export function checkC08DeploymentBindingBoundary() {
   if (vocabulary === null) {
     fail('C-08 could not read the DEPLOYMENT_BINDING_STATES declaration; the vocabulary cannot be verified');
   } else {
+    const vocabularyBody = vocabulary[1] ?? '';
     for (const state of ['AMBIGUOUS', 'UNKNOWN', 'PARTIAL', 'STALE', 'UNSUPPORTED', 'EXACT']) {
-      if (!new RegExp(`'${state}'`).test(vocabulary[1])) fail(`C-08 binding state ${state} is missing from the vocabulary`);
+      if (!new RegExp(`'${state}'`).test(vocabularyBody)) fail(`C-08 binding state ${state} is missing from the vocabulary`);
     }
   }
 

@@ -45,6 +45,57 @@ const CLI_METADATA = {
 
 const cli = defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url });
 
+/**
+ * The frozen evaluation definition this arm runs under. Every field below is
+ * persisted configuration from the committed freeze file, so the shape mirrors
+ * that JSON exactly; a freeze that gains a field does not widen this arm.
+ * @typedef {object} EvaluationFreeze
+ * @property {string} schemaVersion
+ * @property {string} arm
+ * @property {string} frozenAtSha
+ * @property {string} campaignIdPrefix
+ * @property {{ harness: string, cliPath: string, cliVersion: string, providerId: string, model: string, invocationMode: string, argvTemplate: string[], adapter: string, selectionRule: string, preferenceList: string[], preferenceOutcomes: Record<string, string> }} provider
+ * @property {{ fixtureCases: string[], fixtureNegativeControls: string[], minedCases: string[], minedSource: string, substantiveCaseCount: number, negativeControlCount: number, totalCaseCount: number }} corpus
+ * @property {Record<string, string>} repositorySnapshot
+ * @property {{ ceilingName: string, maxTurnsPerCase: number, perCaseWallClockMs: number, armWallClockMs: number, stoppingCondition: string }} budget
+ * @property {{ engine: string, exactRequires: string[], nearMatchDistance: string, tiersBelowExact: string[], thresholdsMayBeTuned: boolean }} scoring
+ * @property {{ admissionRequiresReproduction: boolean, refusalWhenAbsent: string, permittedClasses: string[], newProofClassesPermitted: boolean }} reproductionRequirement
+ * @property {{ forbiddenInReasonerVisibleRequests: string[], canaryProven: boolean, onDetection: string }} leakageRule
+ * @property {{ path: string, manualDossierInsertion: boolean, syntheticEvidenceRefs: boolean, reproductionCountReduction: boolean }} admissionRule
+ * @property {{ definition: string, excludedFromNumerator: boolean, excludedFromDenominator: boolean, reportedSeparately: boolean }} environmentBlockedRule
+ * @property {{ providerStructuredProbePasses: boolean, repositoryCensusNonZero: boolean, minRepositoriesVisibleToInvestigation: number, minDeterministicReproductionCapableTargets: number, historicalCorpusAvailable: boolean, mechanicalAdmissionPathAvailable: boolean, leakageGuardGreen: boolean, hardeningAndGateBaselineGreen: boolean, mayBeLoweredAfterResults: boolean }} reachabilityThreshold
+ */
+/**
+ * One row of this arm's own report. The three dispositions push different
+ * shapes, so every field a disposition owns is optional; the fields every
+ * disposition reports are shared and required.
+ * @typedef {object} ArmReportRow
+ * @property {string} caseId
+ * @property {string} kind
+ * @property {boolean} negativeControl
+ * @property {string} disposition
+ * @property {string | null} [note]
+ * @property {boolean} exactMatch
+ * @property {string} environmentDisposition
+ * @property {readonly string[]} leaked
+ * @property {number} [elapsedMs]
+ * @property {string} [terminationReason]
+ * @property {string} [outcome]
+ * @property {string} [rootCauseTier]
+ * @property {{ testMatch: boolean, fileHits: number, fileTotal: number, fileRecall: number, keywordRecall: number, keywordTotal: number }} [hiddenTargetDistance]
+ * @property {string | null} [nonExactReason]
+ * @property {string} [reproductionVerdict]
+ * @property {number} [reproductionCount]
+ * @property {readonly string[]} [candidateIds]
+ * @property {boolean} [candidatesProposed]
+ * @property {boolean} [mechanicallyAdmitted]
+ * @property {string | null} [admissionRefusal]
+ * @property {boolean} [dossier]
+ * @property {number} [reasonerCalls]
+ * @property {number} [requestBlobCount]
+ * @property {Record<string, number> | string} [efficacy]
+ */
+
 if (cli.ok !== true || cli.stop === true) {
   // The shared parser answered --help/--print-metadata or refused an argument;
   // no corpus case ran and no reasoner was loaded.
@@ -56,17 +107,30 @@ const FREEZE_PATH = path.join(
   '.agent/tasks/nightwatch-autonomous-yield-proof-w11-v1/evaluation-freeze.historical.json',
 );
 
+/**
+ * @param {string} message
+ * @returns {never}
+ */
 function fail(message) {
   console.error(`W11_HISTORICAL_ARM: ${message}`);
   process.exit(2);
 }
 
-let freeze;
-try {
-  freeze = JSON.parse(fs.readFileSync(FREEZE_PATH, 'utf8'));
-} catch {
-  fail('EVALUATION_FREEZE_UNREADABLE');
+/**
+ * The frozen historical evaluation definition, read once at startup. An
+ * unreadable freeze is a hard refusal: nothing in this arm may run under a
+ * definition it could not read.
+ * @returns {EvaluationFreeze}
+ */
+function readFreeze() {
+  try {
+    return JSON.parse(fs.readFileSync(FREEZE_PATH, 'utf8'));
+  } catch {
+    return fail('EVALUATION_FREEZE_UNREADABLE');
+  }
 }
+
+const freeze = readFreeze();
 const freezeFingerprint = `sha256:${crypto.createHash('sha256').update(JSON.stringify(freeze)).digest('hex').slice(0, 24)}`;
 
 const printCli = process.env.NIGHTWATCH_PRINT_CLI ?? '';
@@ -138,6 +202,7 @@ function resolveCorpus() {
 }
 
 /** `mined-bugatlas-git-<org>-<repo>-<sha12>` -> `<org>/<repo>`. Frozen ids only. */
+/** @param {string} caseId */
 function minedRepositoryOf(caseId) {
   if (caseId.startsWith('mined-bugatlas-git-mobingilabs-ouchan-')) return 'mobingilabs/ouchan';
   if (caseId.startsWith('mined-bugatlas-git-mobingilabs-ripple-ui-')) return 'mobingilabs/ripple-ui';
@@ -170,6 +235,10 @@ function buildDriver() {
  * could not execute it for a substrate reason. It is NOT a miss, and it leaves
  * both sides of every rate.
  */
+/**
+ * @param {import('../src/core/benchmark/case').DefinedBenchmarkCase} definedCase
+ * @param {import('../src/core/benchmark/hunt').BenchmarkHuntResult} huntResult
+ */
 function environmentDisposition(definedCase, huntResult) {
   if (definedCase.minedReplay === null || definedCase.minedReplay === undefined) return 'NOT_APPLICABLE';
   const audit = huntResult.minedReplayAudit;
@@ -188,6 +257,10 @@ function environmentDisposition(definedCase, huntResult) {
 }
 
 /** Why a case did not reach EXACT, in the score's own terms. Never editorial. */
+/**
+ * @param {import('../src/core/benchmark/score').BenchmarkScore} scoreValue
+ * @param {import('../src/core/agentProtocol/benchmark').BenchmarkOutcome} outcome
+ */
 function nonExactReason(scoreValue, outcome) {
   if (outcome === 'EXACT_REDISCOVERY') return null;
   const reasons = [];
@@ -202,6 +275,7 @@ function nonExactReason(scoreValue, outcome) {
 }
 
 const corpus = resolveCorpus();
+/** @type {ArmReportRow[]} */
 const results = [];
 const startedAt = Date.now();
 
@@ -222,6 +296,7 @@ for (const item of corpus) {
   }
   const definedCase = item.definedCase;
   let huntResult = null;
+  /** @type {string | null} */
   let failureMessage = null;
   try {
     huntResult = await hunt.runBenchmarkHunt(definedCase, {
@@ -343,11 +418,15 @@ const near = substantive.filter(
   (item) => !item.exactMatch && (item.outcome === 'PARTIAL_REDISCOVERY' || item.outcome === 'SAME_ROOT_CAUSE_ALTERNATE'),
 );
 const falsePositives = negativeControls.filter(
-  (item) => item.outcome === 'FALSE_POSITIVE' || item.candidateIds.length > 0,
+  (item) => item.outcome === 'FALSE_POSITIVE' || (item.candidateIds ?? []).length > 0,
 );
 const leakageEvents = results.flatMap((item) => item.leaked ?? []);
 
 /** Sum one mechanically derived efficacy field; null when any case lacks it. */
+/**
+ * @param {ArmReportRow[]} rows
+ * @param {string} field
+ */
 function sumEfficacy(rows, field) {
   let total = 0;
   for (const row of rows) {
@@ -384,7 +463,7 @@ const report = {
     exactRediscoveries: exact.length,
     exactRate: substantive.length === 0 ? null : exact.length / substantive.length,
     nearMatches: near.length,
-    reproductions: scored.filter((item) => item.reproductionCount > 0).length,
+    reproductions: scored.filter((item) => (item.reproductionCount ?? 0) > 0).length,
     // `admitted` on a hunt result means candidateIds.length > 0 — a candidate
     // was PROPOSED. It is not an admission. The mechanically admitted artefact
     // is the dossier, and `tryBuild*Dossier` returns null below

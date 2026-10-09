@@ -34,7 +34,7 @@ export function checkAiReviewBoundary() {
     fail('Phase 7B AI review source is missing');
     return;
   }
-  const aiSources = aiFiles.map((file) => [file, readIncludingComments(file)]);
+  const aiSources = aiFiles.map((file) => /** @type {[string, string]} */ ([file, readIncludingComments(file)]));
   const packageJson = readDataFile('package.json');
   if (/(?:"|')?(?:openai|@anthropic-ai|@google\/generative-ai|@aws-sdk\/client-bedrock|langchain|llamaindex)(?:"|')?/i.test(packageJson)) {
     fail('Phase 7B must not add a cloud AI SDK or agent framework');
@@ -96,7 +96,9 @@ export function checkLocalCanaryBoundary() {
 export function selfDevelopmentSourceFiles() {
   const directory = path.join(root, 'src', 'core', 'selfDev');
   if (!fs.existsSync(directory)) return [];
+  /** @type {string[]} */
   const result = [];
+  /** @param {string} current @param {string} relative */
   const visit = (current, relative) => {
     for (const entry of fs.readdirSync(current, { withFileTypes: true })) {
       const absolute = path.join(current, entry.name);
@@ -139,7 +141,7 @@ export function checkSelfDevTrustRootClosure() {
     fail(`${manifest} does not declare SELFDEV_AUTHORITATIVE_PATHS as a frozen literal list`);
     return;
   }
-  const declared = [...block[1].matchAll(/'([^']+)'/g)].map((match) => match[1]);
+  const declared = [...(block[1] ?? '').matchAll(/'([^']+)'/g)].map((match) => match[1] ?? '');
   if (declared.length === 0) {
     fail(`${manifest} declares an empty authoritative path set`);
     return;
@@ -161,7 +163,7 @@ export function checkSelfDevTrustRootClosure() {
     }
     const body = withoutComments(fs.readFileSync(absolute, 'utf8'));
     for (const match of body.matchAll(/(?:from|import)\s*\(?\s*['"](\.[^'"]*)['"]/g)) {
-      const specifier = match[1];
+      const specifier = match[1] ?? '';
       const resolvedBase = path.posix.normalize(path.posix.join(path.posix.dirname(relative), specifier));
       const candidates = [`${resolvedBase}.ts`, path.posix.join(resolvedBase, 'index.ts'), resolvedBase];
       const target = candidates.find((candidate) => listed.has(candidate))
@@ -183,7 +185,7 @@ export function checkSelfDevelopmentBoundary() {
     fail('Phase 8A self-development source is missing');
     return;
   }
-  const sources = files.map((file) => [file, readIncludingComments(file)]);
+  const sources = files.map((file) => /** @type {[string, string]} */ ([file, readIncludingComments(file)]));
   const combined = sources.map(([, source]) => source).join('\n');
   const provenanceManifest = read('src/core/selfDev/provenanceManifest.ts');
   for (const file of files) {
@@ -280,7 +282,7 @@ export function checkPhase8BSandboxBoundary() {
     fail('Phase 8B sandbox adoption source is missing');
     return;
   }
-  const sources = files.map((file) => [file, readIncludingComments(file)]);
+  const sources = files.map((file) => /** @type {[string, string]} */ ([file, readIncludingComments(file)]));
   const combined = sources.map(([, source]) => source).join('\n');
   const provenanceManifest = read('src/core/selfDev/provenanceManifest.ts');
   for (const file of files) {
@@ -567,7 +569,7 @@ export function checkPhase8B1CanonicalPromotionBoundary() {
     fail('Phase 8B.1 canonical promotion source is missing');
     return;
   }
-  const sources = files.map((file) => [file, readIncludingComments(file)]);
+  const sources = files.map((file) => /** @type {[string, string]} */ ([file, readIncludingComments(file)]));
   const combined = sources.map(([, source]) => source).join('\n');
   const provenanceManifest = read('src/core/selfDev/provenanceManifest.ts');
   for (const file of files) {
@@ -764,7 +766,7 @@ export function checkAgentProtocolBoundary() {
   }
   for (const file of coneFiles) {
     const source = read(file);
-    for (const [pattern, description] of [
+    for (const [pattern, description] of /** @type {ReadonlyArray<readonly [RegExp, string]>} */ ([
       [/from\s+['"]node:(?:net|http|https|dns|child_process|fs|os|path|url|events|stream|worker_threads)[^'"]*['"]/, 'a network/process/filesystem runtime import'],
       [/from\s+['"]child_process[^'"]*['"]/, 'a bare child_process import'],
       [/\brequire\s*\(\s*['"]/, 'a require() call'],
@@ -773,7 +775,7 @@ export function checkAgentProtocolBoundary() {
       [/from\s+['"][^'"]*core\/campaign\//, 'the campaign execution path'],
       [/from\s+['"][^'"]*browser\//, 'the browser cone'],
       [/(Slack|Leslie|Pondr)(Client|Webhook|Api)|postTo(Slack|Leslie|Pondr)/, 'an external submission connector'],
-    ]) if (pattern.test(source)) fail(`${file} contains ${description}; agentProtocol must stay pure`);
+    ])) if (pattern.test(source)) fail(`${file} contains ${description}; agentProtocol must stay pure`);
   }
   const validate = read('src/core/agentProtocol/validate.ts');
   for (const token of ['UNKNOWN_TOOL', 'UNSAFE_INTENT', 'UNAUTHORIZED_ENVIRONMENT', 'SECRET_ECHO', 'MALFORMED_OUTPUT']) {

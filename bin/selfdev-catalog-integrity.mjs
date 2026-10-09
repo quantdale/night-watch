@@ -43,14 +43,33 @@ const CLI_METADATA = {
 };
 const SELFDEV_ADOPTED_CATALOG_TARGET_PATH = 'src/core/selfDev/adoptedCaseCatalog.generated.ts';
 
+/**
+ * Load one runtime TypeScript module. The declared type parameter carries the
+ * literal module path, so the loader's generated module map resolves the
+ * precise module type instead of erasing it to `unknown`.
+ *
+ * @template {keyof import('./lib/typescript-runtime-loader.mjs').TypeScriptRuntimeLoaderModuleMap} File
+ * @param {File} file
+ */
 function loadTypeScriptModule(file) {
   return loadRuntimeTypeScriptModule(file, { root });
 }
 
+/**
+ * Fail closed. Declaring the `never` return lets callers narrow the
+ * assign-in-`try` values below instead of treating them as optional.
+ *
+ * @param {string} code
+ * @returns {never}
+ */
 function fail(code) {
   throw new Error(code);
 }
 
+/**
+ * @param {string} repositoryRoot
+ * @returns {string}
+ */
 function runGitStatusPorcelain(repositoryRoot) {
   const result = spawnSync('git', ['status', '--porcelain'], {
     cwd: repositoryRoot,

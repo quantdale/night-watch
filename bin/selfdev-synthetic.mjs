@@ -27,6 +27,14 @@ const CLI_METADATA = {
   artifacts: ['$HOME/.nightwatch private self-dev artifact store'],
 };
 
+/**
+ * Load one runtime TypeScript module. The declared type parameter carries the
+ * literal module path, so the loader's generated module map resolves the
+ * precise module type instead of erasing it to `unknown`.
+ *
+ * @template {keyof import('./lib/typescript-runtime-loader.mjs').TypeScriptRuntimeLoaderModuleMap} File
+ * @param {File} file
+ */
 function loadTypeScriptModule(file) {
   return loadRuntimeTypeScriptModule(file, { root });
 }
@@ -36,6 +44,10 @@ function usage() {
   console.log('Runs one bounded synthetic declarative candidate/evaluation matrix and records only a private sanitized result.');
 }
 
+/**
+ * @param {readonly string[]} args
+ * @returns {{ help: boolean }}
+ */
 function parseArgs(args) {
   if (args.length === 0) return { help: false };
   if (args.length === 1 && (args[0] === '--help' || args[0] === '-h')) return { help: true };

@@ -8,7 +8,7 @@ Status: IN_PROGRESS
 TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1
 TASK_GROUPS_COMPLETE: 1,2,3,4,5,6,7,8
 TASK_GROUP_NEXT: 10
-TASK_NEXT_ID: 10.4
+TASK_NEXT_ID: 10.6
 TASK_GROUP_DEFERRED: 9.5b
 Starting SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
 Last validated implementation SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
@@ -57,9 +57,51 @@ ledger, and end at `PROJECT_COMPLETE_AND_CI_CERTIFIED` under D-129 with a
 
 M9 D-129 CLI contract and bin type-check (group 10, tasks 10.1-10.6): 10.1
 DONE, 10.2 COMPLETE (76/76 declared: 72 operator-CLI + 4 library-retained, 0
-pending), 10.3 COMPLETE. The parent resumes at task 10.4 (annotate bins to
-zero diagnostics; NOT STARTED); the review-4 and review-5 child campaigns are
-closed and archived.
+pending), 10.3 COMPLETE. **10.4 and 10.5 are COMPLETE (2026-10-09)**: the bin
+type-check lane measures **0 diagnostics across all 143 tracked `bin/**/*.mjs`
+implementations**, 77 of 77 entry points conforming, 0 exemptions, 0 per-file
+ceilings, 0 diagnostic-silencing widening annotations, and the lane is
+**BLOCKING**. 10.6 (`gate:milestone` PASS; commit) is the remaining M9 task.
+
+Two structural findings made the recorded 1402-diagnostic baseline a FLOOR
+rather than a measurement, and both are closed:
+
+1. **Declaration shadowing (BIN_TYPECHECK_DECLARATION_SHADOWED).**
+   `tsconfig.bin.json` included `bin/**/*.d.mts` alongside `bin/**/*.mjs`.
+   TypeScript treats a hand-written sibling declaration as that module's
+   authoritative type and DROPS the counted implementation from the program, so
+   53 bin implementations — 30 of them carrying 952 real diagnostics, including
+   `bin/agent-continuity-protocol.mjs` (171), `bin/agent-state.mjs` (138) and
+   `bin/lib/operator-cli.mjs` (109) — were never checked at all while the lane
+   reported a clean number for them. `include` now matches the `.mjs`
+   implementations only (the declarations still govern importers through module
+   resolution, and `skipLibCheck` still skips them), and a new hard error
+   refuses any include pattern that would let a declaration shadow an
+   implementation again. Regression: `tests/unit/binTypecheckLaneCompleteness.test.ts`.
+2. **Vacuous success in `runTsc`.** An EMPTY tsc output was treated as
+   `BIN_TYPECHECK_TOOLCHAIN_UNAVAILABLE`, so the first fully clean surface
+   would have been reported as a missing toolchain. tsc exits 0 on a clean
+   surface and 1 when it has diagnostics; only a spawn error, a kill signal or
+   exit code 2 (configuration error, no per-file judgement) now fails closed.
+   Regression pinned in the same suite.
+
+The 1402 -> 0 burn-down therefore annotates 143 implementations rather than 77.
+`anyAnnotationBudget` reached 0 because every JSDoc object shape in `bin/` is
+single-line (the detector's `[^}]*` spans newlines, so a multi-line type is a
+false positive via its ` * ` continuation prefixes) and every optional field is
+a `Partial<...>` rather than the `?:` form.
+
+Three further defects were found and repaired in the same pass:
+`bin/planner-handoff-protocol.d.mts` omitted the runtime export
+`HANDOFF_PLANNING_ONLY_STATUS` (TS2305 at `bin/project-state-check.mjs:64`);
+`bin/lib/gate-receipt.d.mts` declared `origin` as `'DEFAULT' | 'EXPLICIT'` while
+the implementation also returns `'REPOSITORY_IGNORED'`; and
+`bin/lib/childProcessCensus.mjs` reported a JSDoc `import('node:child_process')`
+TYPE reference as an unresolved runtime dynamic import, which failed
+`hardening:check` on the repository's own annotation convention. Also repaired
+in the same pass: `bin/project-state-check.mjs`'s `parseKeyValueBlock` carried a
+multi-line `@returns` union that TypeScript's JSDoc parser silently reads as
+`any`, masking 12 real downstream diagnostics.
 
 ## Completed Milestones
 
@@ -497,18 +539,29 @@ agent:check PASS (86 warnings).
 
 ## Exact Next Action
 
-M9 task 10.4. Task 10.2 is COMPLETE at 76/76 conformance (72 operator-CLI
-entry points, 4 library-retained, 0 pending) and task 10.3 is COMPLETE: the
-shared-parser structural rule `checkSharedOperatorParserStructure` is registered
-and blocking with its five-member negative probe family (HC-246..HC-250, all
-DETECTED). Next: task 10.4 — annotate bins to zero diagnostics in
-safety-critical-first batches, with the gate plus the probe campaign after each
-batch; then 10.5 (flip `config/bin-typecheck.v1.json` to BLOCKING with 0
-exemptions) and 10.6 (`gate:milestone` PASS, commit), then M10-M14 and the
-13-section final report. The deferred `9.5b` (NW-AUD-020 tasks 3.2/4.2)
-continues to be carried by 14.1/14.2. Sequencing constraint recorded in D-148:
-run the paid proof (12.3) after the last substantive fix so G12's receipt binds
-to S.
+M9 task 10.6. Tasks 10.1-10.5 are COMPLETE: 76/76 CLI conformance (10.2), the
+shared-parser structural rule with HC-246..HC-250 (10.3), the bin type-check
+lane at **0 diagnostics / 77 of 77 conforming / 0 exemptions / 0 widening
+annotations / BLOCKING** across all 143 tracked implementations (10.4), and the
+lane flipped to BLOCKING with `perFileCeilings: []`, `totalCeiling: 0` and
+`anyAnnotationBudget: 0` (10.5). The two structural lane defects
+(`BIN_TYPECHECK_DECLARATION_SHADOWED` and `runTsc`'s empty-output
+misclassification) are closed with a permanent regression suite. Next: task
+10.6 — `npm run gate:milestone` PASS and commit — then M10-M14 (including the
+single paid run 12.3 and the 15.4 npm query) and the 13-section final report.
+The deferred `9.5b` (NW-AUD-020 tasks 3.2/4.2) continues to be carried by
+14.1/14.2. Sequencing constraint recorded in D-148: run the paid proof (12.3)
+after the last substantive fix so G12's receipt binds to S.
+
+Two LIVE-SOURCE items are carried forward into M12/M13, both pre-existing at
+`545b24f3` and both reproduced on a clean HEAD clone before repair:
+`tests/unit/c03GrpcTopology.test.ts`'s measured floor of twelve proven ouchan
+bindings no longer matches the pinned sibling SHA's walk yield (now ten), and
+the `RegisterMetricsControlPlaneServer` UNSUPPORTED expectation depended on a
+daemon the truncated enumeration no longer reaches. Both were re-based to the
+MEASUREMENT (floor 10; the honesty properties asserted over the whole reachable
+set rather than one remembered symbol) with the revisit trigger recorded in the
+test file. Nothing under the Alphaus sibling `services/` tree was modified.
 
 ## Superseded Next Action (8.1, complete)
 
@@ -1191,7 +1244,12 @@ named in the routing block; integration is fast-forward only.
 
 ## Completion Snapshot
 
-Not complete. M9 tasks 10.2 (76/76 declared, 0 pending) and 10.3 are COMPLETE; 10.4 is next (the review-5 child is closed).
+Not complete. M9 tasks 10.1-10.5 are COMPLETE: 72 operator-CLI + 4
+library-retained entry points on the shared CLI contract (76/76 declared, 0
+pending), the shared-parser structural rule with HC-246..HC-250, and the bin
+type-check lane BLOCKING at 0 diagnostics with 77 of 77 conforming entry
+points, 0 exemptions and 0 widening annotations across all 143 tracked
+implementations. Task 10.6 is next.
 Terminal snapshot is written at M14: all 228 census items
 dispositioned (OD-1), `PROJECT_COMPLETE_AND_CI_CERTIFIED` under D-129 with CI
 `EXECUTED_PASS` at S (OD-2), operator proofs recorded, ledger closed, and a

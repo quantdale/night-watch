@@ -80,6 +80,7 @@ export const PRIVATE_CONSUMER_REGISTRY = Object.freeze([
 ]);
 
 /** Strip strings and comments so call-site search is not fooled by literals. */
+/** @param {string} source */
 export function maskSource(source) {
   let out = '';
   let i = 0;
@@ -119,6 +120,11 @@ export function maskSource(source) {
   return out;
 }
 
+/**
+ * @param {string} masked
+ * @param {string} name
+ * @returns {number}
+ */
 function callCount(masked, name) {
   // Identifier-head only: `store.writeJson(` counts (the dot is not a word
   // character), `awriteJson(` does not, and a backslash between name and
@@ -127,22 +133,35 @@ function callCount(masked, name) {
   return [...masked.matchAll(re)].length;
 }
 
+/** @param {string} source @returns {number[]} */
 function lineStartsOf(source) {
   const starts = [0];
   for (let i = 0; i < source.length; i += 1) if (source[i] === '\n') starts.push(i + 1);
   return starts;
 }
 
+/**
+ * @param {readonly number[]} starts
+ * @param {number} index
+ * @returns {number}
+ */
 function lineOfIndex(starts, index) {
   let lo = 0;
   let hi = starts.length - 1;
   while (lo < hi) {
     const mid = (lo + hi + 1) >> 1;
-    if (starts[mid] <= index) lo = mid; else hi = mid - 1;
+    const start = starts[mid];
+    if (start !== undefined && start <= index) lo = mid; else hi = mid - 1;
   }
   return lo + 1;
 }
 
+/**
+ * @param {string} masked
+ * @param {readonly number[]} starts
+ * @param {string} name
+ * @returns {number[]}
+ */
 function callSites(masked, starts, name) {
   const re = new RegExp(`(?<![\\w])${name.replace(/\\./g, '\\\\.') }\\s*\\(`, 'g');
   const lines = [];
@@ -192,6 +211,10 @@ export function discoverConsumerActivity(file, source) {
 }
 
 /** Exact-file registry entries are consumers by DEFINITION when present. */
+/**
+ * @param {string} file
+ * @param {readonly { root: string, klass: string, capabilities: readonly string[] }[]} registry
+ */
 function isDefinitionalRoot(file, registry) {
   return registry.some((entry) => entry.root === file && !entry.root.endsWith('/'));
 }
@@ -222,6 +245,7 @@ export function buildPrivateConsumerCensus(files, registry = PRIVATE_CONSUMER_RE
       continue;
     }
     const entry = matches[0];
+    if (entry === undefined) continue;
     const klass = entry.klass;
     claimedBy.set(entry.root, [...(claimedBy.get(entry.root) ?? []), file]);
     const unauthorized = activity.activities.filter((a) => !entry.capabilities.includes(a));

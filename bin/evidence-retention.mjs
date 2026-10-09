@@ -32,6 +32,38 @@ const MAX_SCAN_BYTES = 32 * 1024 * 1024;
 // truth. Anything outside this set cannot make an artifact load-bearing.
 const REFERENCE_SOURCES = Object.freeze(['.agent', 'docs', 'openspec', 'config']);
 
+/**
+ * One enumerated artifact-root entry, exactly as the pure classifier observes
+ * it. `kind` is the closed vocabulary the classifier refuses on.
+ *
+ * @typedef {import('../src/core/evidenceRetention/index').RetentionEntryObservation['kind']} RetentionEntryKind
+ */
+
+/**
+ * The parsed operator request. `--root` exists so the removal path can be
+ * exercised against a disposable store; it is validated before any enumeration.
+ *
+ * @typedef {{ readonly command: 'status' | 'plan', readonly json: boolean, readonly apply: boolean, readonly confirm: string | null, readonly keepRecent: number, readonly suppliedRoot: string | null }} EvidenceRetentionOptions
+ */
+
+/**
+ * One removal outcome. A target that is no longer a plain directory, or is a
+ * symlink, is preserved with its own reason code.
+ *
+ * @typedef {{ readonly name: string, readonly result: 'PRESERVED' | 'REMOVED', readonly reasonCode: string }} RetentionRemovalResult
+ */
+
+/**
+ * Every field a retention report can carry. The refusal-first blocked reports
+ * carry a subset, so the report is the partial shape and the render reads the
+ * fields that are always present after the blocked early return.
+ *
+ * @typedef {{ readonly schemaVersion: string, readonly artifactRoot: string, readonly keepRecent: number, readonly entryCount: number, readonly refusedCount: number, readonly candidateCount: number, readonly reclaimableBytes: number | null, readonly referenceScanComplete: boolean, readonly confirmationToken: string, readonly refusedByReason: Record<string, number>, readonly candidates: string[], readonly mode: string, readonly result: string, readonly code: string, readonly removalResults: readonly RetentionRemovalResult[], readonly removedCount: number, readonly deletedSet: readonly { readonly name: string, readonly bytes: number | null }[], readonly deletedBytes: number | null, readonly appliedAt: string, readonly gitHead: string | null, readonly recordPath: string | null, readonly receiptFinalized: boolean }} RetentionReportFields
+ */
+
+/** @typedef {Partial<RetentionReportFields>} RetentionReport */
+
+/** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
 const CLI_METADATA = {
   schemaVersion: OPERATOR_CLI_SCHEMA,
   name: 'evidence-retention',
@@ -55,7 +87,12 @@ const CLI_METADATA = {
   artifacts: [],
 };
 
+/**
+ * @param {readonly string[]} argv
+ * @returns {EvidenceRetentionOptions}
+ */
 function parseArgs(argv) {
+  /** @type {'status' | 'plan'} */
   let command = 'status';
   let json = false;
   let apply = false;
@@ -110,13 +147,19 @@ function parseArgs(argv) {
   return { command, json, apply, confirm, keepRecent, suppliedRoot };
 }
 
+/**
+ * @param {string} target
+ * @returns {number | null}
+ */
 function directoryBytes(target) {
   // Bounded, no-follow recursive size. Any unreadable entry makes the whole
   // measurement null, which the classifier treats as UNPROVABLE and refuses.
   let total = 0;
+  /** @type {string[]} */
   const stack = [target];
   while (stack.length > 0) {
     const current = stack.pop();
+    if (current === undefined) break;
     let entries;
     try {
       entries = fs.readdirSync(current, { withFileTypes: true });
@@ -140,6 +183,10 @@ function directoryBytes(target) {
   return total;
 }
 
+/**
+ * @param {string} artifactRoot
+ * @returns {import('../src/core/evidenceRetention/index').RetentionEntryObservation[] | null}
+ */
 function enumerateEntries(artifactRoot) {
   let names;
   try {
@@ -150,6 +197,7 @@ function enumerateEntries(artifactRoot) {
   if (names.length > MAX_ENTRIES) return null;
   return names.map((entry) => {
     const target = path.join(artifactRoot, entry.name);
+    /** @type {RetentionEntryKind} */
     let kind = 'OTHER';
     if (entry.isSymbolicLink()) kind = 'SYMLINK';
     else if (entry.isDirectory()) kind = 'DIRECTORY';
@@ -165,17 +213,24 @@ function enumerateEntries(artifactRoot) {
   });
 }
 
+/**
+ * @param {string} root
+ * @returns {string[] | null}
+ */
 function collectReferenceTokens(root) {
   // Returns null when the scan could not be completed, which refuses every
   // entry rather than allowing a partial scan to prove a negative.
+  /** @type {string[]} */
   const tokens = [];
   let scannedBytes = 0;
   for (const source of REFERENCE_SOURCES) {
     const base = path.join(root, source);
     if (!fs.existsSync(base)) continue;
+    /** @type {string[]} */
     const stack = [base];
     while (stack.length > 0) {
       const current = stack.pop();
+      if (current === undefined) break;
       let entries;
       try {
         entries = fs.readdirSync(current, { withFileTypes: true });
@@ -199,13 +254,21 @@ function collectReferenceTokens(root) {
         } catch {
           return null;
         }
-        for (const match of text.matchAll(/[A-Za-z0-9][A-Za-z0-9._-]{2,127}/g)) tokens.push(match[0]);
+        for (const match of text.matchAll(/[A-Za-z0-9][A-Za-z0-9._-]{2,127}/g)) {
+          const token = match[0];
+          if (token !== undefined) tokens.push(token);
+        }
       }
     }
   }
   return tokens;
 }
 
+/**
+ * @param {string} artifactRoot
+ * @param {string} name
+ * @returns {RetentionRemovalResult}
+ */
 function removeCandidate(artifactRoot, name) {
   // Revalidate the exact target immediately before removal. A target that is
   // no longer a plain directory, or is a symlink, is preserved.
@@ -228,6 +291,10 @@ function removeCandidate(artifactRoot, name) {
   return { name, result: 'REMOVED', reasonCode: 'UNREFERENCED_AND_NOT_RECENT' };
 }
 
+/**
+ * @param {string | null} suppliedRoot
+ * @returns {string | null}
+ */
 function resolveRoot(suppliedRoot) {
   if (suppliedRoot === null) return ROOT;
   const resolved = path.resolve(suppliedRoot);
@@ -253,6 +320,11 @@ function resolveRoot(suppliedRoot) {
  * store, the window, the completeness of the reference scan, and every
  * candidate name and byte count. A plan that changes in any of those ways
  * yields a different token, so apply cannot silently act on a new plan.
+ *
+ * @param {string} root
+ * @param {number} keepRecent
+ * @param {import('../src/core/evidenceRetention/index').RetentionPlan} plan
+ * @returns {string}
  */
 function computeConfirmationToken(root, keepRecent, plan) {
   const payload = {
@@ -272,6 +344,10 @@ function computeConfirmationToken(root, keepRecent, plan) {
 }
 
 /** A bounded digest of the exact refusal set, so the receipt can prove it. */
+/**
+ * @param {import('../src/core/evidenceRetention/index').RetentionPlan} plan
+ * @returns {string}
+ */
 function computeRefusalSetDigest(plan) {
   const lines = plan.entries
     .filter((entry) => entry.disposition !== 'REMOVAL_CANDIDATE')
@@ -281,6 +357,10 @@ function computeRefusalSetDigest(plan) {
 }
 
 /** Best-effort repository SHA for the deletion record; null when unavailable. */
+/**
+ * @param {string} root
+ * @returns {string | null}
+ */
 function readGitHead(root) {
   const result = spawnSync('git', ['rev-parse', 'HEAD'], {
     cwd: root,
@@ -300,6 +380,10 @@ function readGitHead(root) {
  * future retention candidate. Returns the repository-relative path, or null
  * when the receipt could not be written — in which case the caller refuses to
  * delete anything.
+ *
+ * @param {string} root
+ * @param {{ readonly appliedAt: string } & Record<string, unknown>} receipt
+ * @returns {string | null}
  */
 function writeReceipt(root, receipt) {
   const directory = path.join(root, RECEIPT_DIRECTORY);
@@ -314,6 +398,10 @@ function writeReceipt(root, receipt) {
   return path.relative(root, file).split(path.sep).join('/');
 }
 
+/**
+ * @param {EvidenceRetentionOptions} options
+ * @returns {RetentionReport}
+ */
 function execute(options) {
   const retention = loadRuntimeTypeScriptModule('src/core/evidenceRetention/index.ts', { root: ROOT });
   const root = resolveRoot(options.suppliedRoot);
@@ -341,7 +429,15 @@ function execute(options) {
   const confirmationToken = computeConfirmationToken(root, options.keepRecent, plan);
   const refusedByReason = plan.entries
     .filter((entry) => entry.disposition !== 'REMOVAL_CANDIDATE')
-    .reduce((counts, entry) => ({ ...counts, [entry.reasonCode]: (counts[entry.reasonCode] ?? 0) + 1 }), {});
+    .reduce(
+      /**
+       * @param {Record<string, number>} counts
+       * @param {import('../src/core/evidenceRetention/index').RetentionPlanEntry} entry
+       * @returns {Record<string, number>}
+       */
+      (counts, entry) => ({ ...counts, [entry.reasonCode]: (counts[entry.reasonCode] ?? 0) + 1 }),
+      /** @type {Record<string, number>} */ ({}),
+    );
 
   const base = {
     schemaVersion: SCHEMA_VERSION,
@@ -422,18 +518,23 @@ function execute(options) {
   };
 }
 
+/**
+ * @param {RetentionReport} report
+ * @returns {string}
+ */
 function renderText(report) {
   if (report.result === 'BLOCKED') return `Nightwatch evidence retention: BLOCKED ${report.code}\n`;
+  const refusedByReason = report.refusedByReason ?? {};
   const lines = [
     `Nightwatch evidence retention: ${report.result}`,
     `mode=${report.mode} root=${report.artifactRoot} keepRecent=${report.keepRecent}`,
     `entries=${report.entryCount} refused=${report.refusedCount} candidates=${report.candidateCount} reclaimable=${report.reclaimableBytes ?? 'unmeasured'}`,
     `referenceScanComplete=${report.referenceScanComplete}`,
     `confirmationToken=${report.confirmationToken}`,
-    ...Object.entries(report.refusedByReason).map(([reason, count]) => `  refused ${reason}=${count}`),
+    ...Object.entries(refusedByReason).map(([reason, count]) => `  refused ${reason}=${count}`),
   ];
   if (report.mode === 'APPLY') {
-    lines.push(`removed=${report.removedCount}/${report.removalResults.length}`);
+    lines.push(`removed=${report.removedCount}/${(report.removalResults ?? []).length}`);
     lines.push(`record=${report.recordPath ?? 'unwritten'} receiptFinalized=${report.receiptFinalized === true}`);
   }
   return `${lines.join('\n')}\n`;

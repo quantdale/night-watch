@@ -39,6 +39,77 @@ export const OPERATOR_CLI_GROUPS = Object.freeze([
   'internal-tooling',
 ]);
 
+/**
+ * One declared command.
+ * @typedef {object} OperatorCliCommandDeclaration
+ * @property {string} name
+ * @property {string} summary
+ */
+
+/**
+ * The required part of one declared flag.
+ * @typedef {object} OperatorCliFlagRequired
+ * @property {string} name
+ * @property {string} shape
+ * @property {string} summary
+ */
+
+/**
+ * The optional declaration fields of one flag.
+ * @typedef {object} OperatorCliFlagOptional
+ * @property {string[] | undefined} values
+ * @property {boolean | undefined} repeatable
+ * @property {boolean | undefined} required
+ */
+
+/**
+ * One declared flag: the required fields plus the optional ones, where an
+ * omitted optional field reads as absent.
+ * @typedef {OperatorCliFlagRequired & Partial<OperatorCliFlagOptional>} OperatorCliFlagDeclaration
+ */
+
+/**
+ * Declared positional slots.
+ * @typedef {object} OperatorCliPositionalsDeclaration
+ * @property {number | undefined} min
+ * @property {number | undefined} max
+ * @property {string[] | undefined} names
+ * @property {string[] | undefined} choices
+ */
+
+/**
+ * One validated metadata declaration: the fields the contract's validator has
+ * proved, in the shapes the parser, the usage renderer and the process-facing
+ * wrapper read them.
+ * @typedef {object} OperatorCliDeclaration
+ * @property {string} schemaVersion
+ * @property {string} name
+ * @property {string} entry
+ * @property {string} purpose
+ * @property {string} group
+ * @property {string | undefined} usage
+ * @property {OperatorCliCommandDeclaration[] | undefined} commands
+ * @property {boolean | undefined} commandRequired
+ * @property {string | undefined} defaultCommand
+ * @property {OperatorCliFlagDeclaration[] | undefined} flags
+ * @property {OperatorCliPositionalsDeclaration | undefined} positionals
+ * @property {boolean | { summary: string | undefined } | undefined} trailing
+ * @property {boolean | undefined} json
+ * @property {string | undefined} authorization
+ * @property {string[] | undefined} artifacts
+ */
+
+/**
+ * The shared data half of a clean operator-CLI parse.
+ * @typedef {object} OperatorCliParseData
+ * @property {string | null} command
+ * @property {Record<string, unknown>} flags
+ * @property {string[]} positionals
+ * @property {string[]} trailing
+ * @property {boolean} json
+ * @property {readonly string[]} raw
+ */
+
 const GROUP_SET = new Set(OPERATOR_CLI_GROUPS);
 const FLAG_SHAPES = new Set(['boolean', 'string', 'integer', 'path', 'enum', 'string-list']);
 const NAME_PATTERN = /^[a-z0-9][a-z0-9-]{1,47}$/;
@@ -70,6 +141,10 @@ export class OperatorCliMetadataError extends Error {
   }
 }
 
+/**
+ * @param {unknown} value
+ * @returns {value is Record<string, unknown>}
+ */
 function isPlainObject(value) {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
@@ -105,7 +180,7 @@ export function validateOperatorMetadata(metadata) {
     errors.push('usage must be a non-empty string when present');
   }
   const commandNames = new Set();
-  for (const command of metadata.commands ?? []) {
+  for (const command of /** @type {unknown[]} */ (metadata.commands ?? [])) {
     if (!isPlainObject(command) || typeof command.name !== 'string' || !/^[a-z][a-z0-9-]{0,31}$/.test(command.name)) {
       errors.push('each command needs a lowercase name');
       continue;
@@ -126,14 +201,14 @@ export function validateOperatorMetadata(metadata) {
     }
   }
   const flagNames = new Set();
-  for (const flag of metadata.flags ?? []) {
+  for (const flag of /** @type {unknown[]} */ (metadata.flags ?? [])) {
     if (!isPlainObject(flag) || typeof flag.name !== 'string' || !FLAG_PATTERN.test(flag.name)) {
       errors.push('each flag needs a --lower-case-kebab name');
       continue;
     }
     if (flagNames.has(flag.name)) errors.push(`duplicate flag ${flag.name}`);
     flagNames.add(flag.name);
-    if (!FLAG_SHAPES.has(flag.shape)) errors.push(`flag ${flag.name} needs a shape in ${[...FLAG_SHAPES].join(', ')}`);
+    if (typeof flag.shape !== 'string' || !FLAG_SHAPES.has(flag.shape)) errors.push(`flag ${flag.name} needs a shape in ${[...FLAG_SHAPES].join(', ')}`);
     if (typeof flag.summary !== 'string' || flag.summary.trim().length === 0) errors.push(`flag ${flag.name} needs a summary`);
     if (flag.shape === 'enum' && (!Array.isArray(flag.values) || flag.values.length === 0 || flag.values.some((value) => typeof value !== 'string'))) {
       errors.push(`flag ${flag.name} with shape enum needs string values`);
@@ -145,8 +220,10 @@ export function validateOperatorMetadata(metadata) {
     if (!isPlainObject(positionals)) {
       errors.push('positionals must be an object');
     } else {
-      const min = positionals.min ?? 0;
-      const max = positionals.max ?? 0;
+      // `Number.isInteger` is the runtime proof that these are numbers; the
+      // annotation states only the numeric domain the comparisons need.
+      const min = /** @type {number} */ (positionals.min) ?? 0;
+      const max = /** @type {number} */ (positionals.max) ?? 0;
       if (!Number.isInteger(min) || min < 0) errors.push('positionals.min must be a non-negative integer');
       if (!Number.isInteger(max) || max < min) errors.push('positionals.max must be an integer not below min');
       if (positionals.names !== undefined && (!Array.isArray(positionals.names) || positionals.names.some((name) => typeof name !== 'string'))) {
@@ -170,17 +247,30 @@ export function validateOperatorMetadata(metadata) {
   return errors;
 }
 
+/**
+ * @param {OperatorCliDeclaration} metadata
+ * @returns {OperatorCliDeclaration}
+ */
 function requireMetadata(metadata) {
   const errors = validateOperatorMetadata(metadata);
   if (errors.length > 0) throw new OperatorCliMetadataError(errors.join('; '));
   return metadata;
 }
 
+/**
+ * @param {OperatorCliDeclaration} metadata
+ * @param {string} commandName
+ * @returns {string | null}
+ */
 function commandSummaryLine(metadata, commandName) {
   const command = (metadata.commands ?? []).find((candidate) => candidate.name === commandName);
   return command === undefined ? null : `  ${command.name.padEnd(18)} ${command.summary}`;
 }
 
+/**
+ * @param {OperatorCliDeclaration} metadata
+ * @returns {string}
+ */
 function declarationUsage(metadata) {
   if (typeof metadata.usage === 'string' && metadata.usage.length > 0) return metadata.usage;
   const parts = [`node ${metadata.entry}`];
@@ -217,7 +307,7 @@ function declarationUsage(metadata) {
 /**
  * Human usage. States purpose, commands, flags with value shapes, exit codes,
  * artifacts and authorization class, per the contract.
- * @param {object} metadata
+ * @param {OperatorCliDeclaration} metadata
  * @returns {string}
  */
 export function renderOperatorHelp(metadata) {
@@ -262,6 +352,11 @@ export function renderOperatorHelp(metadata) {
   return lines.join('\n');
 }
 
+/**
+ * @param {string} left
+ * @param {string} right
+ * @returns {number}
+ */
 function levenshtein(left, right) {
   const rows = left.length + 1;
   const columns = right.length + 1;
@@ -270,13 +365,23 @@ function levenshtein(left, right) {
     const current = [row];
     for (let column = 1; column < columns; column += 1) {
       const cost = left[row - 1] === right[column - 1] ? 0 : 1;
-      current[column] = Math.min(previous[column] + 1, current[column - 1] + 1, previous[column - 1] + cost);
+      // Every index is inside the two rows the loop builds, so each read is
+      // defined; the fallbacks state that invariant for the index check.
+      const above = previous[column] ?? 0;
+      const beside = current[column - 1] ?? 0;
+      const diagonal = previous[column - 1] ?? 0;
+      current[column] = Math.min(above + 1, beside + 1, diagonal + cost);
     }
     previous = current;
   }
-  return previous[columns - 1];
+  return previous[columns - 1] ?? 0;
 }
 
+/**
+ * @param {string} token
+ * @param {readonly string[]} candidates
+ * @returns {string | null}
+ */
 function suggest(token, candidates) {
   let best = null;
   for (const candidate of candidates) {
@@ -287,6 +392,11 @@ function suggest(token, candidates) {
   return best.candidate;
 }
 
+/**
+ * @param {OperatorCliDeclaration} metadata
+ * @param {string} token
+ * @returns {never}
+ */
 function refuseUnknownFlag(metadata, token) {
   const suggestion = suggest(token, [
     ...(metadata.flags ?? []).map((flag) => flag.name),
@@ -296,6 +406,13 @@ function refuseUnknownFlag(metadata, token) {
   throw new OperatorCliUsageError('CLI_UNKNOWN_ARGUMENT', `${token}${suggestion === null ? '' : ` (did you mean ${suggestion}?)`}`);
 }
 
+/**
+ * @param {OperatorCliDeclaration} metadata
+ * @param {OperatorCliFlagDeclaration} flag
+ * @param {string} token
+ * @param {string | undefined} value
+ * @returns {string | number | boolean}
+ */
 function coerceFlagValue(metadata, flag, token, value) {
   if (flag.shape === 'boolean') {
     if (value !== undefined) throw new OperatorCliUsageError('CLI_ARGUMENT_INVALID', `${token} is boolean and takes no value`);
@@ -323,10 +440,9 @@ function coerceFlagValue(metadata, flag, token, value) {
 
 /**
  * Pure argument parsing against one declaration.
- * @param {object} metadata
+ * @param {OperatorCliDeclaration} metadata
  * @param {readonly string[]} argv
- * @returns {{ ok: true, command: string|null, flags: Record<string, unknown>, positionals: string[], trailing: string[], json: boolean, raw: readonly string[] }
- *   | { ok: false, code: string, detail: string }}
+ * @returns {{ ok: true } & OperatorCliParseData | { ok: true, help: boolean } & OperatorCliParseData | { ok: false, code: string, detail: string }}
  */
 export function parseOperatorCli(metadata, argv) {
   let declared;
@@ -341,17 +457,23 @@ export function parseOperatorCli(metadata, argv) {
   }
   const commands = declared.commands ?? [];
   const commandNames = new Set(commands.map((command) => command.name));
-  const flagByName = new Map((declared.flags ?? []).map((flag) => [flag.name, flag]));
+  /** @type {Map<string, OperatorCliFlagDeclaration>} */
+  const flagByName = new Map((declared.flags ?? []).map((flag) => /** @type {[string, OperatorCliFlagDeclaration]} */ ([flag.name, flag])));
   if (declared.json === true) flagByName.set('--json', { name: '--json', shape: 'boolean', summary: 'emit exactly one JSON document on stdout' });
+  /** @type {string[]} */
   const positionals = [];
+  /** @type {string[]} */
   const trailing = [];
+  /** @type {Record<string, unknown>} */
   const flags = {};
+  /** @type {Map<string, string>} */
   const rawFlags = new Map();
+  /** @type {string | null} */
   let command = null;
   let sawTerminator = false;
   let helpRequested = false;
 
-  const acceptPositional = (token, index) => {
+  const acceptPositional = (/** @type {string} */ token, /** @type {number} */ index) => {
     if (command === null && commands.length > 0 && commandNames.has(token)) {
       command = token;
       return;
@@ -475,14 +597,8 @@ export function parseOperatorCli(metadata, argv) {
  * because the bin calls this before its own work. Returns the parsed result on
  * a clean invocation.
  *
- * @param {object} metadata
- * @param {{
- *   argv?: readonly string[],
- *   entryUrl?: string,
- *   stdout?: { write(chunk: string): unknown },
- *   stderr?: { write(chunk: string): unknown },
- *   exit?: (code: number) => void,
- * }} [options]
+ * @param {OperatorCliDeclaration} metadata
+ * @param {Partial<{ argv: readonly string[], entryUrl: string, stdout: { write(chunk: string): unknown }, stderr: { write(chunk: string): unknown }, exit: (code: number) => void }>} [options]
  */
 export function defineOperatorCli(metadata, options = {}) {
   const stdout = options.stdout ?? process.stdout;
@@ -537,24 +653,41 @@ export function defineOperatorCli(metadata, options = {}) {
  * The one JSON convention: exactly one document on stdout, nothing else; human
  * diagnostics belong on stderr. Stable top-level `status` is the caller's to
  * provide; this helper only guarantees one document.
+ * @param {unknown} document
+ * @param {{ write(chunk: string): unknown }} [stdout]
  */
 export function emitOperatorJson(document, stdout = process.stdout) {
   stdout.write(`${JSON.stringify(document)}\n`);
 }
 
 /** A fail-closed refusal (unauthorized, unsupported, policy): exit 3. */
+/**
+ * @param {string} name
+ * @param {string} code
+ * @param {string} detail
+ */
 export function refuseOperatorCli(name, code, detail) {
   process.stderr.write(`[${name}] ${code}: ${detail}\n`);
   process.exitCode = OPERATOR_CLI_EXIT.REFUSAL;
 }
 
 /** An environment or external block that is not a defect: exit 4. */
+/**
+ * @param {string} name
+ * @param {string} code
+ * @param {string} detail
+ */
 export function blockOperatorCli(name, code, detail) {
   process.stderr.write(`[${name}] ${code}: ${detail}\n`);
   process.exitCode = OPERATOR_CLI_EXIT.EXTERNAL_BLOCK;
 }
 
 /** True when the module was invoked as the process entry point. */
+/**
+ * @param {string} entryUrl
+ * @param {string | undefined} [argvEntry]
+ * @returns {boolean}
+ */
 export function invokedDirectly(entryUrl, argvEntry = process.argv[1]) {
   if (typeof argvEntry !== 'string' || argvEntry.length === 0) return false;
   const invoked = argvEntry.split('/').pop() ?? '';

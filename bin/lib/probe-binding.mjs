@@ -20,23 +20,11 @@
 const SHA_RE = /^[0-9a-f]{40}$/i;
 
 /**
- * @typedef {{
- *   certifiedCheckpointSha: string | null,
- *   headSha: string | null,
- *   treeClean: boolean | null,
- *   documentaryDescendant?: boolean | null,
- * }} ProbeBindingInput
+ * @typedef {{ certifiedCheckpointSha: string | null, headSha: string | null, treeClean: boolean | null } & Partial<{ documentaryDescendant: boolean | null }>} ProbeBindingInput
  */
 
 /**
- * @typedef {{
- *   atCheckpoint: boolean,
- *   reasonCode: string | null,
- *   certifiedCheckpointSha: string | null,
- *   headSha: string | null,
- *   treeClean: boolean | null,
- *   documentaryDescendant: boolean,
- * }} ProbeBinding
+ * @typedef {{ atCheckpoint: boolean, reasonCode: string | null, certifiedCheckpointSha: string | null, headSha: string | null, treeClean: boolean | null, documentaryDescendant: boolean }} ProbeBinding
  */
 
 /**

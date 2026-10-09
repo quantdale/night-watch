@@ -60,13 +60,51 @@ const cli = defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url });
 
 const WORKSPACE_ROOT = path.resolve(ROOT, '..', '..');
 
+/**
+ * Fail closed. Every refusal path in this surface ends here, so the declared
+ * `never` return is what lets the boundary readers below narrow their result
+ * to the validated value instead of an unconditioned optional.
+ *
+ * @param {string} code
+ * @returns {never}
+ */
 function fail(code) {
   throw new Error(`PHASE23_OPERATOR_BLOCKED:${code}`);
 }
 
+/**
+ * Load one runtime TypeScript module. The declared type parameter carries the
+ * literal module path, so the loader's generated module map resolves the
+ * precise module type instead of erasing it to `unknown`.
+ *
+ * @template {keyof import('./lib/typescript-runtime-loader.mjs').TypeScriptRuntimeLoaderModuleMap} File
+ * @param {File} file
+ */
 function loadTypeScriptModule(file) {
   return loadRuntimeTypeScriptModule(file, { root: ROOT });
 }
+
+/**
+ * The one operator-surface argument object, projected from the shared parser
+ * flag map. Every value is still unvalidated when it reaches a command
+ * function, so each command performs its own type guard.
+ *
+ * @typedef {{ _: readonly string[], snapshot: unknown, 'source-sha': unknown, 'gate-receipt': unknown, manifest: unknown, env: unknown, 'storage-state': unknown, 'ci-observation': unknown, out: unknown, [flag: string]: unknown }} Phase23DevArgs
+ */
+
+/**
+ * One Phase 22 derived target as read back from the derivation bridge output,
+ * before it is adapted into a Phase 23 manifest target.
+ *
+ * @typedef {{ targetId: string, product: string, journeyOrApiAdapter: string, expectationId: string, projectionIdentity: string, source: { repoId: string, sha: string, evidenceDigest: string }, materialClass: 'COLLECTION' | 'MEMBERSHIP' | 'RELATIONAL' | 'DIFFERENTIAL' | 'SHAPE' | 'PROTOCOL', anticipatedInvariantCount: number }} Phase23DerivedTarget
+ */
+
+/**
+ * The Phase 22 derivation bridge output. The Phase 22 value is never execution
+ * authority here: only its validated target identities are re-derived.
+ *
+ * @typedef {{ manifest: { schemaVersion: string, nightwatchSha: string, targets: ReadonlyArray<Phase23DerivedTarget>, exclusions: ReadonlyArray<{ targetId: string, reasonCode: string }> }, sourceDerivation: unknown }} Phase23DerivedManifest
+ */
 
 function currentHead() {
   try {
@@ -77,6 +115,10 @@ function currentHead() {
   } catch { fail('NIGHTWATCH_SHA_UNAVAILABLE'); }
 }
 
+/**
+ * @param {unknown} file
+ * @param {string} label
+ */
 function externalRegularFile(file, label) {
   if (typeof file !== 'string' || !path.isAbsolute(file)) fail(`${label}_MUST_BE_ABSOLUTE`);
   const resolved = path.resolve(file);
@@ -88,6 +130,7 @@ function externalRegularFile(file, label) {
   } catch { fail(`${label}_UNAVAILABLE`); }
 }
 
+/** @param {unknown} snapshot */
 function sourceSnapshotDirectory(snapshot) {
   if (typeof snapshot !== 'string' || !path.isAbsolute(snapshot)) fail('SOURCE_SNAPSHOT_MUST_BE_ABSOLUTE');
   try {
@@ -99,17 +142,29 @@ function sourceSnapshotDirectory(snapshot) {
   } catch { fail('SOURCE_SNAPSHOT_UNAVAILABLE'); }
 }
 
+/**
+ * @param {string} file
+ * @param {string} label
+ */
 function safeJson(file, label) {
   try { return JSON.parse(fs.readFileSync(file, 'utf8')); }
   catch { fail(`${label}_INVALID_JSON`); }
 }
 
+/**
+ * @param {unknown} file
+ * @param {unknown} value
+ */
 function writeSafeOutput(file, value) {
   if (file === undefined) return;
   const output = externalRegularFileForWrite(file, 'OUTPUT');
   fs.writeFileSync(output, JSON.stringify(value, null, 2) + '\n', { mode: 0o600 });
 }
 
+/**
+ * @param {unknown} file
+ * @param {string} label
+ */
 function externalRegularFileForWrite(file, label) {
   if (typeof file !== 'string' || !path.isAbsolute(file)) fail(`${label}_MUST_BE_ABSOLUTE`);
   const resolved = path.resolve(file);
@@ -121,12 +176,17 @@ function externalRegularFileForWrite(file, label) {
   return resolved;
 }
 
+/**
+ * @param {unknown} file
+ * @param {string} head
+ */
 function readGateReceipt(file, head) {
   const receipt = safeJson(externalRegularFile(file, 'QUALITY_GATE_RECEIPT'), 'QUALITY_GATE_RECEIPT');
   if (receipt.schemaVersion !== 'nightwatch.quality-gate-receipt.v1' || receipt.finalResult !== 'PASS' || receipt.gitHead !== head || typeof receipt.receiptDigest !== 'string' || !/^receipt:sha256:[0-9a-f]{24}$/.test(receipt.receiptDigest) || typeof receipt.gateDefinitionDigest !== 'string' || !/^sha256:[0-9a-f]{64}$/.test(receipt.gateDefinitionDigest)) fail('QUALITY_GATE_RECEIPT_NOT_EXACT_PASS');
   return receipt;
 }
 
+/** @param {Phase23DevArgs} args */
 function buildManifest(args) {
   if (args.all !== undefined) fail('DYNAMIC_TARGET_DISCOVERY_FORBIDDEN');
   const snapshot = sourceSnapshotDirectory(args.snapshot);
@@ -142,11 +202,13 @@ function buildManifest(args) {
     `--nightwatch-sha=${head}`,
   ], { cwd: ROOT, encoding: 'utf8', timeout: 300_000, maxBuffer: 8 * 1024 * 1024, stdio: ['ignore', 'pipe', 'pipe'] });
   if (child.status !== 0 || child.error) fail('SOURCE_DERIVATION_FAILED');
+  /** @type {Phase23DerivedManifest} */
   let derived;
   try { derived = JSON.parse(child.stdout); }
   catch { fail('SOURCE_DERIVATION_RECEIPT_INVALID'); }
   if (derived?.manifest?.schemaVersion !== 'nightwatch.dev-semantic-acceptance-manifest.v1' || derived.manifest.nightwatchSha !== head) fail('HISTORICAL_DERIVATION_BRIDGE_INVALID');
   const phase23 = loadTypeScriptModule('src/core/phase23/manifest.ts');
+  /** @type {Array<import('../src/core/phase23/manifest').Phase23ManifestTarget>} */
   const targets = derived.manifest.targets.map((target) => ({
     targetId: target.targetId,
     product: target.product,
@@ -189,6 +251,7 @@ function buildManifest(args) {
   }) + '\n');
 }
 
+/** @param {Phase23DevArgs} args */
 function dryRun(args) {
   const manifestFile = externalRegularFile(args.manifest, 'MANIFEST');
   const phase23 = loadTypeScriptModule('src/core/phase23/manifest.ts');
@@ -199,17 +262,27 @@ function dryRun(args) {
   if (args.out !== undefined) writeSafeOutput(args.out, receipt);
 }
 
+/**
+ * @param {string[]} args
+ * @param {string} code
+ */
 function gitValue(args, code) {
   const result = spawnSync('git', args, { cwd: ROOT, encoding: 'utf8', timeout: 10_000, maxBuffer: 128 * 1024, stdio: ['ignore', 'pipe', 'ignore'] });
   if (result.status !== 0) fail(code);
   return result.stdout.trim();
 }
 
+/** @param {string} head */
 function exactCurrentCheckout(head) {
   if (gitValue(['status', '--porcelain'], 'NIGHTWATCH_GIT_STATUS_UNAVAILABLE') !== '') fail('NIGHTWATCH_TREE_DIRTY');
   if (gitValue(['rev-parse', 'origin/main'], 'ORIGIN_HEAD_UNAVAILABLE') !== head) fail('HEAD_NOT_SYNCHRONIZED_WITH_ORIGIN_MAIN');
 }
 
+/**
+ * @param {unknown} file
+ * @param {string} head
+ * @param {import('../src/core/phase23/manifest').Phase23Manifest} manifest
+ */
 function readCiObservation(file, head, manifest) {
   const report = safeJson(externalRegularFile(file, 'CI_OBSERVATION'), 'CI_OBSERVATION');
   if (report.schemaVersion !== 'nightwatch.external-ci-observation.v1' || report.currentHeadSha !== head || report.observation === null || typeof report.observation !== 'object') fail('CI_OBSERVATION_INVALID');
@@ -223,6 +296,7 @@ function readCiObservation(file, head, manifest) {
   return { report, classification: observed, runId: report.runId };
 }
 
+/** @param {unknown} file */
 function assertAuthReadiness(file) {
   const authPath = externalRegularFile(file, 'DEV_AUTH');
   const stat = fs.lstatSync(authPath);
@@ -238,13 +312,18 @@ function assertAuthReadiness(file) {
   const expiries = storage.inspectStorageStateCookieExpiries(authPath);
   const origins = Array.isArray(parsed?.origins) ? parsed.origins : [];
   const unexpiredCookie = expiries.sessionCookieCount > 0 || expiries.unexpiredTimedCookieCount > 0;
-  const structurallyReadable = origins.every((origin) => origin !== null && typeof origin === 'object' && typeof origin.origin === 'string' && Array.isArray(origin.localStorage));
+  const structurallyReadable = origins.every((/** @type {Record<string, unknown> | null} */ origin) => origin !== null && typeof origin === 'object' && typeof origin.origin === 'string' && Array.isArray(origin.localStorage));
   if (!structurallyReadable || !unexpiredCookie) fail('DEV_AUTH_EXPIRED_OR_MISSING');
   return authPath;
 }
 
+/**
+ * @param {import('../src/core/phase23/manifest').Phase23Manifest} manifest
+ * @param {string} head
+ */
 function buildPhase22ExecutionManifest(manifest, head) {
   const phase22 = loadTypeScriptModule('src/core/phase22/index.ts');
+  /** @type {Array<import('../src/core/phase22/index').Phase22ManifestCandidate>} */
   const candidates = manifest.targets.map((target, index) => ({
     target: {
       targetId: target.targetId,
@@ -291,20 +370,24 @@ function buildPhase22ExecutionManifest(manifest, head) {
     }),
   }));
   const adapted = phase22.createFrozenPhase22Manifest({ nightwatchSha: head, candidates });
-  if (adapted.targets.length !== manifest.targets.length || adapted.targets.some((target, index) => target.targetId !== manifest.targets[index].targetId)) fail('PHASE22_EXECUTION_ADAPTER_DRIFT');
+  if (adapted.targets.length !== manifest.targets.length || adapted.targets.some((target, index) => target.targetId !== manifest.targets[index]?.targetId)) fail('PHASE22_EXECUTION_ADAPTER_DRIFT');
   return adapted;
 }
 
+/** @param {string} root */
 function privacyAudit(root) {
   let files = 0;
   const forbiddenName = /(?:auth|storage[-_]?state|cookie|token|secret|screenshot|trace|\.har$|\.zip$|\.png$|\.jpe?g$|\.html?$)/i;
   const forbiddenContent = /(?:<html\b|<body\b|bearer\s+[A-Za-z0-9._-]+|"(?:rawValue|rawBody|rawObserved|responseBody|domText|customerValue|customerId|accountName|mspName|email|members|setMembers)"\s*:\s*(?!false\b|null\b|0\b))/i;
+  /** @param {string} directory */
   const visit = (directory) => {
+    /** @type {import('node:fs').Dirent[]} */
     let entries;
     try { entries = fs.readdirSync(directory, { withFileTypes: true }); }
     catch { fail('PRIVACY_AUDIT_UNREADABLE'); }
     for (const entry of entries) {
       const file = path.join(directory, entry.name);
+      /** @type {import('node:fs').Stats} */
       let stat;
       try { stat = fs.lstatSync(file); }
       catch { fail('PRIVACY_AUDIT_UNREADABLE'); }
@@ -313,6 +396,7 @@ function privacyAudit(root) {
       if (!stat.isFile()) fail('PRIVACY_AUDIT_NON_REGULAR');
       files += 1;
       if (forbiddenName.test(entry.name)) fail('PRIVACY_AUDIT_PRIVATE_FILE');
+      /** @type {string} */
       let content;
       try { content = fs.readFileSync(file, 'utf8'); }
       catch { fail('PRIVACY_AUDIT_UNREADABLE'); }
@@ -324,6 +408,7 @@ function privacyAudit(root) {
   return files;
 }
 
+/** @param {Phase23DevArgs} args */
 function execute(args) {
   if (args.all !== undefined) fail('DYNAMIC_TARGET_DISCOVERY_FORBIDDEN');
   if (args.env !== 'dev' || typeof args['storage-state'] !== 'string' || typeof args.manifest !== 'string' || typeof args['ci-observation'] !== 'string') fail('DEV_EXECUTION_ARGUMENTS_REQUIRED');
@@ -331,6 +416,7 @@ function execute(args) {
   exactCurrentCheckout(head);
   const manifestFile = externalRegularFile(args.manifest, 'MANIFEST');
   const phase23 = loadTypeScriptModule('src/core/phase23/manifest.ts');
+  /** @type {import('../src/core/phase23/manifest').Phase23Manifest} */
   const manifest = safeJson(manifestFile, 'MANIFEST');
   try { phase23.validatePhase23Manifest(manifest); }
   catch { fail('MANIFEST_SCHEMA_INVALID'); }
@@ -355,7 +441,7 @@ function execute(args) {
       maxBuffer: 8 * 1024 * 1024,
       stdio: ['ignore', 'pipe', 'pipe'],
     });
-    if (child.error?.code === 'ETIMEDOUT') fail('DEV_CAMPAIGN_TIMEOUT');
+    if (/** @type {NodeJS.ErrnoException | undefined} */ (child.error)?.code === 'ETIMEDOUT') fail('DEV_CAMPAIGN_TIMEOUT');
     if (child.error) fail('DEV_CAMPAIGN_SPAWN_FAILED');
     const privacyFiles = privacyAudit(ownerRoot);
     process.stdout.write(JSON.stringify({

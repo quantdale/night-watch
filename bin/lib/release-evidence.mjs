@@ -69,6 +69,8 @@ export const EVIDENCE_BINDING_MAX_ARTIFACTS = 8;
 /**
  * sha256-prefix digest of one line (no newline) — the exact digest semantics
  * the APPEND_ONLY guard and the correction entries share.
+ * @param {string} text
+ * @returns {string}
  */
 export function lineSha256Prefix(text) {
   return `sha256:${crypto.createHash('sha256').update(text, 'utf8').digest('hex').slice(0, 24)}`;
@@ -90,6 +92,7 @@ export const LEGACY_PRE_REGISTERED_CORRECTION_IDS = Object.freeze(["CORR-7-001",
 /** Exact key set of one document-role correction entry. */
 export const CORRECTION_ENTRY_KEYS = Object.freeze(['id', 'path', 'oldLineSha256', 'oldLineExcerpt', 'reason']);
 
+/** @type {Readonly<Record<string, string>>} */
 export const GUARD_CLASSES = Object.freeze({
   'config/release-evidence.v1.json': 'VALUES_ONLY_BINDINGS',
   'config/document-role-corrections.v1.json': 'APPEND_ONLY_CORRECTIONS',
@@ -191,7 +194,7 @@ export function evidenceReceiptChangeHolds(file, beforeText, afterText) {
 /**
  * Closed-schema validation of one evidence binding record.
  * @param {unknown} record
- * @returns {{ ok: boolean, errors: string[], binding: null | { subject: string, evidenceSha: string | null, receiptDigest: string | null, observedAt: string | null, executor: string | null } }}
+ * @returns {{ ok: boolean, errors: string[], binding: null | { subject: string, evidenceSha: string | null, receiptDigest: string | null, observedAt: string | null, executor: string | null, artifactPaths: string[], certifying: boolean, [key: string]: unknown } }}
  */
 export function parseEvidenceBinding(record) {
   const errors = [];
@@ -204,11 +207,14 @@ export function parseEvidenceBinding(record) {
     errors.push(`BINDING_KEYS_INVALID:${keys.join(',')}`);
     return { ok: false, errors, binding: null };
   }
-  /** @type {Record<string, unknown>} */
-  const raw = record;
-  const subject = raw.subject;
-  if (typeof subject !== 'string' || !SUBJECT_RE.test(subject)) errors.push(`BINDING_SUBJECT_INVALID:${String(subject)}`);
-  const valueOrNull = (value, pattern, label) => {
+  const raw = /** @type {Record<string, unknown>} */ (record);
+  // The subject is validated rather than cast, so a non-string or
+  // pattern-invalid value is REPORTED (it keeps `ok` false) and the success
+  // path below holds an actual `string`.
+  const declaredSubject = raw.subject;
+  const subject = typeof declaredSubject === 'string' && SUBJECT_RE.test(declaredSubject) ? declaredSubject : null;
+  if (subject === null) errors.push(`BINDING_SUBJECT_INVALID:${String(declaredSubject)}`);
+  const valueOrNull = (/** @type {unknown} */ value, /** @type {RegExp} */ pattern, /** @type {string} */ label) => {
     if (value === null) return null;
     if (typeof value !== 'string' || !pattern.test(value)) {
       errors.push(`BINDING_${label}_INVALID:${String(value)}`);
@@ -230,6 +236,7 @@ export function parseEvidenceBinding(record) {
   // VB-02 / corrections task 2.2: every binding declares its evidence artifact
   // paths - safe relative repository paths, de-duplicated, bounded. Host-local
   // evidence with no tracked artifact declares an empty list explicitly.
+  /** @type {string[]} */
   let artifactPaths = [];
   if (!Array.isArray(raw.artifactPaths)) {
     errors.push('BINDING_ARTIFACT_PATHS_NOT_AN_ARRAY');
@@ -250,12 +257,15 @@ export function parseEvidenceBinding(record) {
       artifactPaths.push(entry);
     }
   }
-  if (typeof raw.certifying !== 'boolean') errors.push(`BINDING_CERTIFYING_INVALID:${String(raw.certifying)}`);
-  if (errors.length > 0) return { ok: false, errors, binding: null };
+  const certifying = typeof raw.certifying === 'boolean' ? raw.certifying : null;
+  if (certifying === null) errors.push(`BINDING_CERTIFYING_INVALID:${String(raw.certifying)}`);
+  // `errors` is non-empty exactly when some field above failed validation, and
+  // every failed field is `null` here, so the null tests only restate `errors`.
+  if (errors.length > 0 || subject === null || certifying === null) return { ok: false, errors, binding: null };
   return {
     ok: true,
     errors,
-    binding: { subject, evidenceSha, receiptDigest, observedAt, executor, artifactPaths, certifying: raw.certifying },
+    binding: { subject, evidenceSha, receiptDigest, observedAt, executor, artifactPaths, certifying },
   };
 }
 
@@ -263,7 +273,7 @@ export function parseEvidenceBinding(record) {
  * Closed-schema validation of the release-evidence document. The subject set
  * is order-significant: reordering bindings is a structural change.
  * @param {unknown} record
- * @returns {{ ok: boolean, errors: string[], bindings: ReturnType<typeof parseEvidenceBinding>['binding'][] }}
+ * @returns {{ ok: boolean, errors: string[], bindings: Array<NonNullable<ReturnType<typeof parseEvidenceBinding>['binding']>> }}
  */
 export function parseReleaseEvidence(record) {
   const errors = [];
@@ -274,20 +284,23 @@ export function parseReleaseEvidence(record) {
   if (keys.join(',') !== ['bindings', 'schemaVersion'].join(',')) {
     return { ok: false, errors: [`RELEASE_EVIDENCE_KEYS_INVALID:${keys.join(',')}`], bindings: [] };
   }
-  /** @type {Record<string, unknown>} */
-  const raw = record;
+  const raw = /** @type {Record<string, unknown>} */ (record);
   if (raw.schemaVersion !== RELEASE_EVIDENCE_SCHEMA) {
     return { ok: false, errors: [`RELEASE_EVIDENCE_SCHEMA_UNSUPPORTED:${String(raw.schemaVersion)}`], bindings: [] };
   }
   if (!Array.isArray(raw.bindings)) {
     return { ok: false, errors: ['RELEASE_EVIDENCE_BINDINGS_NOT_AN_ARRAY'], bindings: [] };
   }
+  /** @type {Array<NonNullable<ReturnType<typeof parseEvidenceBinding>['binding']>>} */
   const bindings = [];
+  /** @type {Set<string>} */
   const seen = new Set();
   for (const entry of raw.bindings) {
     const parsed = parseEvidenceBinding(entry);
     for (const error of parsed.errors) errors.push(error);
-    if (!parsed.ok) continue;
+    // `ok` and `binding` are not correlated by a single literal type, so the
+    // null test restates what `ok` already records for the success path.
+    if (!parsed.ok || parsed.binding === null) continue;
     if (seen.has(parsed.binding.subject)) errors.push(`BINDING_SUBJECT_DUPLICATE:${parsed.binding.subject}`);
     seen.add(parsed.binding.subject);
     bindings.push(parsed.binding);
@@ -298,6 +311,7 @@ export function parseReleaseEvidence(record) {
 /**
  * Closed-schema validation of the document-role corrections document.
  * @param {unknown} record
+ * @returns {{ ok: boolean, errors: string[], corrections: { id: string, path: string, oldLineSha256: string, oldLineExcerpt: string, reason: string, [key: string]: unknown }[] }}
  */
 export function parseDocumentRoleCorrections(record) {
   const errors = [];
@@ -308,15 +322,16 @@ export function parseDocumentRoleCorrections(record) {
   if (keys.join(',') !== ['corrections', 'schemaVersion'].join(',')) {
     return { ok: false, errors: [`CORRECTIONS_KEYS_INVALID:${keys.join(',')}`], corrections: [] };
   }
-  /** @type {Record<string, unknown>} */
-  const raw = record;
+  const raw = /** @type {Record<string, unknown>} */ (record);
   if (raw.schemaVersion !== DOCUMENT_ROLE_CORRECTIONS_SCHEMA) {
     return { ok: false, errors: [`CORRECTIONS_SCHEMA_UNSUPPORTED:${String(raw.schemaVersion)}`], corrections: [] };
   }
   if (!Array.isArray(raw.corrections)) {
     return { ok: false, errors: ['CORRECTIONS_NOT_AN_ARRAY'], corrections: [] };
   }
+  /** @type {{ id: string, path: string, oldLineSha256: string, oldLineExcerpt: string, reason: string, [key: string]: unknown }[]} */
   const corrections = [];
+  /** @type {Set<string>} */
   const seen = new Set();
   const seenDigests = new Set();
   for (const entry of raw.corrections) {
@@ -332,8 +347,11 @@ export function parseDocumentRoleCorrections(record) {
     }
     /** @type {Record<string, unknown>} */
     const item = entry;
+    // Every field is validated (not merely type-checked), so a rejected value
+    // is reported and the success path below holds a real `string`.
+    const entryId = typeof item.id === 'string' && CORRECTION_ID_RE.test(item.id) ? item.id : null;
     let ok = true;
-    if (typeof item.id !== 'string' || !CORRECTION_ID_RE.test(item.id)) {
+    if (entryId === null) {
       errors.push(`CORRECTION_ID_INVALID:${String(item.id)}`);
       ok = false;
     }
@@ -346,29 +364,34 @@ export function parseDocumentRoleCorrections(record) {
       errors.push(`CORRECTION_PATH_INVALID:${String(item.path)}`);
       ok = false;
     }
-    if (typeof item.oldLineSha256 !== 'string' || !LINE_DIGEST_RE.test(item.oldLineSha256)) {
+    const oldLineSha256 = typeof item.oldLineSha256 === 'string' && LINE_DIGEST_RE.test(item.oldLineSha256) ? item.oldLineSha256 : null;
+    if (oldLineSha256 === null) {
       errors.push(`CORRECTION_DIGEST_INVALID:${String(item.oldLineSha256)}`);
       ok = false;
     }
-    if (typeof item.oldLineExcerpt !== 'string' || item.oldLineExcerpt.length > 400) {
+    const oldLineExcerpt = typeof item.oldLineExcerpt === 'string' && item.oldLineExcerpt.length <= 400 ? item.oldLineExcerpt : null;
+    if (oldLineExcerpt === null) {
       errors.push(`CORRECTION_EXCERPT_INVALID:${String(item.id)}`);
       ok = false;
     }
-    if (typeof item.reason !== 'string' || item.reason.trim() === '' || item.reason.length > 2000) {
+    const reason = typeof item.reason === 'string' && item.reason.trim() !== '' && item.reason.length <= 2000 ? item.reason : null;
+    if (reason === null) {
       errors.push(`CORRECTION_REASON_INVALID:${String(item.id)}`);
       ok = false;
     }
-    if (!ok) continue;
-    if (seen.has(item.id)) errors.push(`CORRECTION_ID_DUPLICATE:${item.id}`);
-    seen.add(item.id);
+    // `ok` is false exactly when one of the validated fields above is null, so
+    // the null tests only restate what `ok` already records.
+    if (!ok || entryId === null || oldLineSha256 === null || oldLineExcerpt === null || reason === null) continue;
+    if (seen.has(entryId)) errors.push(`CORRECTION_ID_DUPLICATE:${entryId}`);
+    seen.add(entryId);
     // RV-01 / corrections task 7.1: two entries exempting the SAME archive line
     // (same path, same digest) are one exemption stated twice — the second
     // could outlive the removal that justified the first. R3-17: the path is
     // the NORMALISED one, so an alias cannot dodge the duplicate check.
-    const digestKey = `${normalizedPath}\u0000${item.oldLineSha256}`;
-    if (seenDigests.has(digestKey)) errors.push(`CORRECTION_DIGEST_DUPLICATE:${item.id}`);
+    const digestKey = `${normalizedPath}\u0000${oldLineSha256}`;
+    if (seenDigests.has(digestKey)) errors.push(`CORRECTION_DIGEST_DUPLICATE:${entryId}`);
     seenDigests.add(digestKey);
-    corrections.push({ id: item.id, path: normalizedPath, oldLineSha256: item.oldLineSha256, oldLineExcerpt: item.oldLineExcerpt, reason: item.reason });
+    corrections.push({ id: entryId, path: normalizedPath, oldLineSha256, oldLineExcerpt, reason });
   }
   return { ok: errors.length === 0, errors, corrections };
 }
@@ -392,7 +415,7 @@ export function parseDocumentRoleCorrections(record) {
  * verifier the change is substantive — the fail-closed direction.
  * @param {string | null} beforeText
  * @param {string | null} afterText
- * @param {{ verifyReceipt?: ((subject: string, digest: string, sha: string) => boolean) | undefined }} [options]
+ * @param {Partial<{ verifyReceipt: (subject: string, digest: string, sha: string) => boolean }>} [options]
  * @returns {{ valuesOnly: boolean, reason: string }}
  */
 export function isValuesOnlyBindingChange(beforeText, afterText, options = {}) {
@@ -416,6 +439,10 @@ export function isValuesOnlyBindingChange(beforeText, afterText, options = {}) {
   for (let index = 0; index < before.bindings.length; index += 1) {
     const left = before.bindings[index];
     const right = after.bindings[index];
+    // The equal-length check above bounds both sides to the same subject list,
+    // so a missing side is unreachable; the guard only restates that invariant
+    // for the typed index access below.
+    if (left === undefined || right === undefined) continue;
     if (left.subject !== right.subject) {
       return { valuesOnly: false, reason: 'BINDING_SUBJECT_SET_CHANGED' };
     }
@@ -455,20 +482,22 @@ export function isValuesOnlyBindingChange(beforeText, afterText, options = {}) {
     }
     for (const key of EVIDENCE_BINDING_KEYS) {
       if (key === 'subject') continue;
+      const leftValue = left[key];
+      const rightValue = right[key];
       // Array-valued keys (artifactPaths) need element-wise equality: two
       // separately parsed [] are never `===`.
-      if (Array.isArray(left[key]) && Array.isArray(right[key])) {
-        if (left[key].length === right[key].length && left[key].every((entry, i) => entry === right[key][i])) continue;
+      if (Array.isArray(leftValue) && Array.isArray(rightValue)) {
+        if (leftValue.length === rightValue.length && leftValue.every((entry, i) => entry === rightValue[i])) continue;
         return { valuesOnly: false, reason: `BINDING_NON_VALUE_KEY_CHANGED:${key}` };
       }
-      if (left[key] === right[key]) continue;
+      if (leftValue === rightValue) continue;
       // VB-01 / corrections task 2.1: erasing an evidence value (non-null ->
       // null) is a substantive loss of proof, never a values-only
       // documentation edit — a documentary commit must never be able to turn
       // a stale PROVEN lane into a fresh-looking one by removing its
       // evidence. Adding evidence where there was none (null -> value) and
       // value -> value refreshes stay values-only.
-      if (valueKeys.has(key) && right[key] === null) {
+      if (valueKeys.has(key) && rightValue === null) {
         return { valuesOnly: false, reason: `BINDING_VALUE_NULLED:${key}` };
       }
       if (valueKeys.has(key)) continue;
@@ -506,6 +535,10 @@ export function isAppendOnlyCorrectionsChange(beforeText, afterText) {
   for (let index = 0; index < before.corrections.length; index += 1) {
     const left = before.corrections[index];
     const right = after.corrections[index];
+    // `after.corrections.length >= before.corrections.length` is proven above,
+    // so a missing side is unreachable; the guard restates that invariant for
+    // the typed index access below.
+    if (left === undefined || right === undefined) continue;
     for (const key of CORRECTION_ENTRY_KEYS) {
       if (left[key] !== right[key]) {
         return { appendOnly: false, reason: `CORRECTION_EXISTING_ENTRY_CHANGED:${key}` };
@@ -670,7 +703,7 @@ export function verifyPersistedReceipt(root, subject, digest, sha) {
   let anyDirectory = false;
   /** @type {string | null} */
   let firstRefusal = null;
-  const refuse = (reason) => {
+  const refuse = (/** @type {string} */ reason) => {
     if (firstRefusal === null) firstRefusal = reason;
   };
   for (const directory of directories) {
@@ -738,14 +771,6 @@ export function productionBindingReceiptVerifier(root) {
 export { stableCanonical };
 
 /**
- * Evaluate one file's guard for a raw byte change. Unknown guard classes fail
- * closed: only the two declared bindings files are guarded at all.
- * @param {string} file
- * @param {string | null} beforeText
- * @param {string | null} afterText
- * @param {{ verifyReceipt?: ((subject: string, digest: string, sha: string) => boolean) | undefined }} [options]
- */
-/**
  * VB-03 / corrections task 2.3 — the correction entries appended by one
  * commit (after minus before, by id). null when either side is unparseable.
  * @param {string | null} beforeText
@@ -795,6 +820,14 @@ export function correctionStillExemptsArchive(entry, archiveText) {
   return archiveText.split(/\r?\n/).some((line) => lineSha256Prefix(line) === entry.oldLineSha256);
 }
 
+/**
+ * Evaluate one file's guard for a raw byte change. Unknown guard classes fail
+ * closed: only the two declared bindings files are guarded at all.
+ * @param {string} file
+ * @param {string | null} beforeText
+ * @param {string | null} afterText
+ * @param {Partial<{ verifyReceipt: (subject: string, digest: string, sha: string) => boolean }>} [options]
+ */
 export function guardHoldsForChange(file, beforeText, afterText, options = {}) {
   const guard = guardClassForPath(file);
   if (guard === 'VALUES_ONLY_BINDINGS') return isValuesOnlyBindingChange(beforeText, afterText, options).valuesOnly;
@@ -808,6 +841,11 @@ export function guardHoldsForChange(file, beforeText, afterText, options = {}) {
 // compatibility for pre-migration checkouts and never wins over the new file.
 // ---------------------------------------------------------------------------
 
+/**
+ * @param {string} root
+ * @param {string} relative
+ * @returns {unknown}
+ */
 function readJsonFile(root, relative) {
   try {
     return JSON.parse(fs.readFileSync(path.join(root, relative), 'utf8'));
@@ -821,6 +859,8 @@ function readJsonFile(root, relative) {
  * legacy evidence value. The literal `HEAD` is SELF-CERTIFYING (it resolves to
  * whatever HEAD is at evaluation time) and is invalid everywhere: no binding,
  * legacy field or definition may carry it.
+ * @param {unknown} value
+ * @returns {boolean}
  */
 function isLegacyEvidenceValue(value) {
   return typeof value === 'string' && SHA40_RE.test(value);
@@ -828,10 +868,10 @@ function isLegacyEvidenceValue(value) {
 
 /**
  * @param {string} root
- * @param {{ requireFile?: boolean }} [options] `requireFile` fails closed when
+ * @param {Partial<{ requireFile: boolean }>} [options] `requireFile` fails closed when
  *   the release-evidence file is absent (the hardening rule); the default is
  *   the compatibility window — absent falls back to the retired locations.
- * @returns {{ ok: boolean, present: boolean, errors: string[], bySubject: Map<string, ReturnType<typeof parseEvidenceBinding>['binding']> }}
+ * @returns {{ ok: boolean, present: boolean, errors: string[], bySubject: Map<string, NonNullable<ReturnType<typeof parseEvidenceBinding>['binding']>> }}
  */
 export function loadReleaseEvidenceBindings(root, options = {}) {
   const raw = readJsonFile(root, RELEASE_EVIDENCE_FILE);
@@ -849,6 +889,7 @@ export function loadReleaseEvidenceBindings(root, options = {}) {
     };
   }
   const parsed = parseReleaseEvidence(raw);
+  /** @type {Map<string, NonNullable<ReturnType<typeof parseEvidenceBinding>['binding']>>} */
   const bySubject = new Map();
   for (const binding of parsed.bindings) bySubject.set(binding.subject, binding);
   return { ok: parsed.ok, present: true, errors: parsed.errors, bySubject };
@@ -898,7 +939,7 @@ export function loadDocumentRoleCorrections(root) {
  * Citation is token-bounded (`ui` never matches inside `suite`); a null on
  * either side is "no comparison", not agreement. Pure.
  *
- * @param {ReadonlyArray<{ id: string, evidence?: unknown, evidenceSha: string | null }>} conditions
+ * @param {ReadonlyArray<{ id: string, evidence: unknown, evidenceSha: string | null }>} conditions
  * @param {ReadonlyMap<string, string | null>} laneEvidence lane id -> bound evidence SHA
  * @returns {string[]} one message per disagreement
  */

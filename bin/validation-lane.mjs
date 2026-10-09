@@ -20,6 +20,39 @@ import { OPERATOR_CLI_SCHEMA, defineOperatorCli, invokedDirectly } from './lib/o
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const LANE_LABEL = 'NON-CERTIFICATION LANE — release authority remains gate:local / npm test / gate:clean';
 
+/**
+ * One recorded lane step. Every step carries the identity and outcome fields;
+ * the measurement fields are present only for the step kinds that produce them,
+ * so each recorded step is a `Partial` of the full field set.
+ *
+ * `totals` is `null` — never absent — when the shard step's output could not be
+ * parsed.
+ *
+ * @typedef {{ readonly id: string, readonly kind: string, readonly exitStatus: number | null, readonly wallMs: number, readonly errorCode: string | null, readonly code: string, readonly changed: number | null, readonly universe: number | null, readonly selected: number | null, readonly broadened: boolean | null, readonly result: string, readonly shards: number | null, readonly totals: { readonly passed: number, readonly failed: number } | null, readonly coverage: boolean | null }} ValidationLaneReceiptStepFields
+ */
+
+/** @typedef {Partial<ValidationLaneReceiptStepFields>} ValidationLaneReceiptStep */
+
+/**
+ * The human render's view of a recorded step. It dereferences `totals` after an
+ * `=== undefined` check only, and an unreadable shard output records `null`
+ * there — so the render would throw on that path. That is pre-existing
+ * behaviour (the receipt's own `result` already reports the failure); this view
+ * records the shape the render is written against.
+ *
+ * @typedef {{ readonly id: string, readonly exitStatus: number | null, readonly wallMs: number, readonly selected: number | null, readonly totals: { readonly passed: number, readonly failed: number } | undefined }} ValidationLaneReceiptStepRender
+ */
+
+/**
+ * The receipt is assembled incrementally: the failing step, the total wall
+ * clock and the target comparison are attached after the steps have run. The
+ * `undefined` initialisers are dropped by `JSON.stringify`, so a dry run emits
+ * exactly the same document as before they were added.
+ *
+ * @typedef {{ readonly schemaVersion: string, readonly lane: import('../src/core/validation/validationLane.ts').LaneId, readonly title: string, readonly authority: string, readonly label: string, readonly targetSeconds: number, readonly base: string, readonly workerCount: number, readonly steps: ValidationLaneReceiptStep[], result: string, failedStep: string | undefined, totalWallMs: number | undefined, withinTarget: boolean | undefined }} ValidationLaneReceipt
+ */
+
+/** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
 const CLI_METADATA = {
   schemaVersion: OPERATOR_CLI_SCHEMA,
   name: 'validation-lane',
@@ -53,20 +86,27 @@ function childEnvironment() {
   return environment;
 }
 
+/**
+ * @param {readonly string[]} argv
+ * @returns {{ exitStatus: number | null, wallMs: number, stdout: string, stderr: string, errorCode: string | null }}
+ */
 function runStep(argv) {
+  const command = argv[0];
+  if (command === undefined) throw new Error('LANE_STEP_COMMAND_MISSING');
   const startedAt = Date.now();
-  const result = spawnSync(argv[0], argv.slice(1), { cwd: root, env: childEnvironment(), encoding: 'utf8', timeout: 3_600_000, maxBuffer: 64 * 1024 * 1024, stdio: ['ignore', 'pipe', 'pipe'] });
+  const result = spawnSync(command, argv.slice(1), { cwd: root, env: childEnvironment(), encoding: 'utf8', timeout: 3_600_000, maxBuffer: 64 * 1024 * 1024, stdio: ['ignore', 'pipe', 'pipe'] });
+  const spawnError = /** @type {NodeJS.ErrnoException | undefined} */ (result.error);
   return {
     exitStatus: result.status,
     wallMs: Date.now() - startedAt,
     stdout: result.stdout ?? '',
     stderr: result.stderr ?? '',
-    errorCode: result.error?.code ?? null,
+    errorCode: spawnError?.code ?? null,
   };
 }
 
 const cli = invokedDirectly(import.meta.url) ? defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url }) : { stop: true };
-if (!cli.stop) {
+if (!cli.stop && 'flags' in cli) {
   try {
     const laneId = typeof cli.command === 'string' ? cli.command : '';
     const [lane, affected, shardPlan] = loadTypeScriptModules([
@@ -76,7 +116,7 @@ if (!cli.stop) {
     ], { root });
     const composition = lane.validateLaneDefinitions();
     if (!composition.ok) throw new Error(`LANE_DEFINITION_INVALID:${composition.violations[0]?.code ?? 'UNKNOWN'}`);
-    const definition = lane.VALIDATION_LANE_DEFINITIONS[laneId];
+    const definition = lane.VALIDATION_LANE_DEFINITIONS[/** @type {import('../src/core/validation/validationLane.ts').LaneId} */ (laneId)];
     if (definition === undefined) {
       console.error(JSON.stringify({ schemaVersion: 'nightwatch.validation-lane-receipt.v1', result: 'CONFIG_INVALID', code: 'LANE_UNKNOWN', detail: String(laneId) }));
       process.exitCode = 2;
@@ -87,6 +127,7 @@ if (!cli.stop) {
         console.error(JSON.stringify({ schemaVersion: 'nightwatch.validation-lane-receipt.v1', result: 'CONFIG_INVALID', code: 'LANE_WORKERS_OUT_OF_RANGE' }));
         process.exitCode = 2;
       } else {
+        /** @type {ValidationLaneReceipt} */
         const receipt = {
           schemaVersion: 'nightwatch.validation-lane-receipt.v1',
           lane: definition.id,
@@ -98,6 +139,9 @@ if (!cli.stop) {
           workerCount: requestedWorkers,
           steps: [],
           result: 'IN_PROGRESS',
+          failedStep: undefined,
+          totalWallMs: undefined,
+          withinTarget: undefined,
         };
         // The affected step runs first: the shard step needs its output, and a
         // refusal must stop the lane before any other work is spent.
@@ -152,6 +196,7 @@ if (!cli.stop) {
                 selectedTests: selection.selectedTests,
                 parallelShardCount: requestedWorkers,
               }).steps.find((step) => step.kind === 'shards');
+              if (shardExecution === undefined) throw new Error('LANE_COMPOSITION_INCOMPLETE');
               const shardRun = runStep(shardExecution.argv);
               let shardReceipt = null;
               try {
@@ -175,14 +220,15 @@ if (!cli.stop) {
               }
             }
           }
-          receipt.totalWallMs = receipt.steps.reduce((sum, step) => sum + (step.wallMs ?? 0), 0);
+          const totalWallMs = receipt.steps.reduce((sum, step) => sum + (step.wallMs ?? 0), 0);
+          receipt.totalWallMs = totalWallMs;
           if (!failed) receipt.result = 'PASS';
-          receipt.withinTarget = receipt.totalWallMs <= definition.targetSeconds * 1000;
+          receipt.withinTarget = totalWallMs <= definition.targetSeconds * 1000;
           if (cli.json) console.log(JSON.stringify(receipt, null, 2));
           else {
-            console.log(`[validation-lane] ${definition.id}: ${receipt.result} wall=${(receipt.totalWallMs / 1000).toFixed(1)}s target=${definition.targetSeconds}s ${receipt.withinTarget ? 'WITHIN_TARGET' : 'OVER_TARGET'}`);
+            console.log(`[validation-lane] ${definition.id}: ${receipt.result} wall=${(totalWallMs / 1000).toFixed(1)}s target=${definition.targetSeconds}s ${receipt.withinTarget ? 'WITHIN_TARGET' : 'OVER_TARGET'}`);
             console.log(`[validation-lane] ${LANE_LABEL}`);
-            for (const step of receipt.steps) console.log(`  ${step.id}: exit=${step.exitStatus} wall=${((step.wallMs ?? 0) / 1000).toFixed(1)}s${step.selected === undefined ? '' : ` selected=${step.selected}`}${step.totals === undefined ? '' : ` passed=${step.totals.passed} failed=${step.totals.failed}`}`);
+            for (const step of /** @type {ValidationLaneReceiptStepRender[]} */ (receipt.steps)) console.log(`  ${step.id}: exit=${step.exitStatus} wall=${((step.wallMs ?? 0) / 1000).toFixed(1)}s${step.selected === undefined ? '' : ` selected=${step.selected}`}${step.totals === undefined ? '' : ` passed=${step.totals.passed} failed=${step.totals.failed}`}`);
           }
           process.exitCode = failed ? 1 : 0;
         }

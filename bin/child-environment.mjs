@@ -76,7 +76,7 @@ export function buildChildEnvironment(parentEnvironment, explicitValues = {}) {
  * with piped stdio must call this before exiting, otherwise the official
  * command prints nothing on success or failure.
  *
- * @param {{ stdout?: string | Buffer | null, stderr?: string | Buffer | null }} result
+ * @param {Partial<{ stdout: string | Buffer | null, stderr: string | Buffer | null }>} result
  */
 export function emitChildStdio(result) {
   if (result?.stdout !== undefined && result.stdout !== null && result.stdout !== '') {

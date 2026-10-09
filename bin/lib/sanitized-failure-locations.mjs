@@ -46,11 +46,13 @@ export function extractSanitizedFailedLocations(output, limit = 16) {
   const matches = [...text.matchAll(LOCATION_PATTERN)];
   const seen = new Set();
   const locations = [];
-  for (let index = 0; index < matches.length; index += 1) {
-    const match = matches[index];
-    const end = index + 1 < matches.length ? matches[index + 1].index : text.length;
+  for (const [index, match] of matches.entries()) {
+    const file = match[1];
+    const line = match[2];
+    if (file === undefined || line === undefined) continue;
+    const end = index + 1 < matches.length ? matches[index + 1]?.index : text.length;
     const block = text.slice(match.index, end);
-    const location = `${match[1]}:${match[2]}:${classifyAssertionBlock(block)}`;
+    const location = `${file}:${line}:${classifyAssertionBlock(block)}`;
     if (seen.has(location)) continue;
     seen.add(location);
     locations.push(location);

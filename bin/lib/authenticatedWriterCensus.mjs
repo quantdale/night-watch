@@ -74,6 +74,7 @@ const WRITE_VOCABULARY = Object.freeze([
 ]);
 
 /** Strip strings and comments so call-location search is not fooled by literals. */
+/** @param {string} source */
 export function maskSource(source) {
   let out = '';
   let i = 0;
@@ -113,23 +114,37 @@ export function maskSource(source) {
   return out;
 }
 
+/** @param {string} source @returns {number[]} */
 function lineStartsOf(source) {
   const starts = [0];
   for (let i = 0; i < source.length; i += 1) if (source[i] === '\n') starts.push(i + 1);
   return starts;
 }
 
+/**
+ * @param {readonly number[]} starts
+ * @param {number} index
+ * @returns {number}
+ */
 function lineOfIndex(starts, index) {
   let lo = 0;
   let hi = starts.length - 1;
   while (lo < hi) {
     const mid = (lo + hi + 1) >> 1;
-    if (starts[mid] <= index) lo = mid; else hi = mid - 1;
+    const start = starts[mid];
+    if (start !== undefined && start <= index) lo = mid; else hi = mid - 1;
   }
   return lo + 1;
 }
 
-/** Extract one call's raw argument text (call located on masked source). */
+/**
+ * Extract one call's raw argument text (call located on masked source).
+ *
+ * @param {string} masked
+ * @param {string} raw
+ * @param {string} name
+ * @param {number} from
+ */
 function argumentTextForCall(masked, raw, name, from) {
   const re = new RegExp(`(?<![\\w$])${name}\\s*\\(`, 'g');
   re.lastIndex = from;
@@ -147,11 +162,12 @@ function argumentTextForCall(masked, raw, name, from) {
   return { args: raw.slice(open + 1), end: masked.length, index: match.index };
 }
 
+/** @param {string} args */
 function firstArgument(args) {
   let depth = 0;
   let quote = null;
   for (let i = 0; i < args.length; i += 1) {
-    const ch = args[i];
+    const ch = args[i] ?? '';
     if (quote !== null) {
       if (ch === '\\') { i += 1; continue; }
       if (ch === quote) quote = null;
@@ -165,8 +181,13 @@ function firstArgument(args) {
   return args.trim();
 }
 
-/** Target classes present in ONE write call's raw arguments (plus, when
- * given, the resolved local-const initializer text for its identifiers). */
+/**
+ * Target classes present in ONE write call's raw arguments (plus, when
+ * given, the resolved local-const initializer text for its identifiers).
+ *
+ * @param {string} args
+ * @param {string} [resolvedConstText]
+ */
 export function runRootTargetsFor(args, resolvedConstText = '') {
   const targets = [];
   const corpus = `${args}\n${resolvedConstText}`;
@@ -179,7 +200,12 @@ export function runRootTargetsFor(args, resolvedConstText = '') {
   return targets;
 }
 
-/** One-level local `const|let X = ...;` initializer lookup (bounded). */
+/**
+ * One-level local `const|let X = ...;` initializer lookup (bounded).
+ *
+ * @param {string} source
+ * @param {string} name
+ */
 export function resolveLocalConst(source, name) {
   if (!/^[A-Za-z_$][\w$]*$/.test(name)) return null;
   const re = new RegExp(`(?:const|let)\\s+${name.replace(/\$/g, '\\$')}\\s*=\\s*([^;]+);`);
@@ -188,9 +214,10 @@ export function resolveLocalConst(source, name) {
 }
 
 /** Identifiers used inside a write's first argument, for const resolution. */
+/** @param {string} text */
 function identifiersIn(text) {
   return [...new Set([...text.matchAll(/[A-Za-z_$][\w$]*/g)].map((m) => m[0]))]
-    .filter((name) => !['path', 'file', 'JSON', 'Buffer', 'String', 'Number'].includes(name))
+    .filter((name) => name !== undefined && !['path', 'file', 'JSON', 'Buffer', 'String', 'Number'].includes(name))
     .slice(0, 8);
 }
 
@@ -386,6 +413,7 @@ export function buildAuthenticatedWriterCensus(files, registry = AUTHENTICATED_W
       continue;
     }
     const entry = matches[0];
+    if (entry === undefined) continue;
     claimedBy.set(entry.root, [...(claimedBy.get(entry.root) ?? []), file]);
     writers.push({
       identity: `${file}:${entry.klass}`,

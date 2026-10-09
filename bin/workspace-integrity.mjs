@@ -86,10 +86,92 @@ const WORKTREE_CLASSES = Object.freeze([
   'UNKNOWN',
 ]);
 
+/**
+ * One shared Git-state or session-state diagnostic, exactly as it is carried
+ * into the durable report surface. Declaring the shape here keeps every
+ * invariant collector and the final report in agreement without a widening
+ * escape hatch.
+ * @typedef {{ code: string, detail: string }} WorkspaceDiagnostic
+ */
+
+/**
+ * One block of `git worktree list --porcelain` output. `headSha` and `branch`
+ * start `null` and are filled in as their lines arrive, so both are nullable.
+ * @typedef {{ path: string, headSha: string | null, branch: string | null, detached: boolean, bare: boolean, locked: boolean, prunable: boolean }} WorkspacePorcelainEntry
+ */
+
+/**
+ * A resolved session ownership record. Absent or hostile fields are never
+ * silently trusted: `validateRecord` re-checks every one of them structurally
+ * before the record can make a worktree `OWNED_SESSION`.
+ * @typedef {{ sessionId: string, taskId: string, campaignId: string | undefined, role: string, branch: string, baseSha: string, createdAtIso: string, ownershipState: string, integrationState: string, holder: { pid: number | undefined | null, bootDigest: string } | null | undefined }} WorkspaceSessionRecord
+ */
+
+/**
+ * The C-00 canonical-branch policy section, exactly as
+ * `config/workspace-integrity.v1.json` declares it.
+ * @typedef {{ branch: string, remote: string, sessionBranchPrefix: string, mayHostImplementationSession: boolean, requireCleanWhenSessionLive: boolean }} WorkspaceCanonicalPolicy
+ */
+
+/** The C-00 index-flag section: the allowlist and the skip/assume tags. */
+/** @typedef {{ allowedTags: readonly string[], skipWorktreeTags: readonly string[], maxReportedExamples: number }} WorkspaceIndexFlagPolicy */
+
+/** The C-00 shared-exclude section: the allowlist and the size bounds. */
+/** @typedef {{ allowedEffectivePatterns: readonly string[], maxBytes: number, maxLines: number }} WorkspaceExcludePolicy */
+
+/** The C-00 hooks section: the sample suffix and the count bound. */
+/** @typedef {{ allowedSuffix: string, requireUnsetHooksPath: boolean, maxEntries: number }} WorkspaceHookPolicy */
+
+/** The C-00 worktree-ownership section: the topology and record bounds. */
+/** @typedef {{ maxWorktrees: number, maxRecordBytes: number, allowedRoles: readonly string[], allowedOwnershipStates: readonly string[], allowedIntegrationStates: readonly string[], requireOwnerRecordForLinkedWorktree: boolean, pruneIsOwnerDecision: boolean }} WorkspaceWorktreePolicy */
+
+/** The C-00 declared-deletion section: the SPEC heading and its bound. */
+/** @typedef {{ declaredDeletionHeading: string, maxReportedExamples: number }} WorkspaceDeletionPolicy */
+
+/**
+ * The full C-00 policy surface. Every accessor in this module supplies its own
+ * default, so each section is read as possibly-absent and the committed file
+ * supplies the real values; the built-in default policy is the same shape.
+ * @typedef {{ sessionRecordSchema: string | undefined, sessionRecordFile: string | undefined, canonical: WorkspaceCanonicalPolicy | undefined, indexFlagPolicy: WorkspaceIndexFlagPolicy | undefined, excludePolicy: WorkspaceExcludePolicy | undefined, hookPolicy: WorkspaceHookPolicy | undefined, worktreePolicy: WorkspaceWorktreePolicy | undefined, deletionPolicy: WorkspaceDeletionPolicy | undefined }} WorkspacePolicy
+ */
+
+/**
+ * Liveness probes injected so `readRecord` never reads the process itself.
+ * @typedef {{ bootDigest: () => string, processAlive: (pid: number) => boolean }} WorkspaceLiveness
+ */
+
+/**
+ * One registered worktree as this module derives it: the porcelain facts, the
+ * live filesystem state, the resolved ownership record and the resulting
+ * writability class.
+ * @typedef {{ name: string, path: string, isMain: boolean, branch: string | null, headSha: string | null, bare: boolean, detached: boolean, locked: boolean, prunable: boolean, exists: boolean, isSymlink: boolean, clean: boolean | null, class: string, classReason: string | null, record: WorkspaceSessionRecord | null, recordProblems: string[], holderLive: boolean }} WorkspaceWorktree
+ */
+
+/**
+ * A claim naming a task whose STATE.md is terminal or unresolvable. Attention,
+ * never a failure and never an action.
+ * @typedef {{ code: 'CLAIM_TASK_TERMINAL' | 'CLAIM_TASK_UNKNOWN', worktree: string, worktreeClass: string, isMain: boolean, role: string, taskId: string, taskStatus: string | null, reason: string | null, ownerAction: string, detail: string }} WorkspaceClaimTaskFinding
+ */
+
+/**
+ * A `session/*` branch with no registered worktree, recorded read-only with its
+ * unique-commit count.
+ * @typedef {{ code: 'WORKSPACE_ORPHAN_SESSION_BRANCH', worktree: null, detail: string, ownerAction: string }} WorkspaceOrphanBranchFinding
+ */
+
+/** @typedef {WorkspaceClaimTaskFinding | WorkspaceOrphanBranchFinding} WorkspaceClaimFinding */
+
+/** The report surface `admitProspectiveWorktree` models a candidate against. */
+/** @typedef {{ worktrees: readonly { name: string }[] }} WorkspaceWorktreeReport */
+
 // ---------------------------------------------------------------------------
 // primitives
 // ---------------------------------------------------------------------------
 
+/**
+ * @param {string} cwd
+ * @param {string[]} args
+ */
 function git(cwd, args) {
   const result = spawnSync('git', args, {
     cwd,
@@ -102,6 +184,10 @@ function git(cwd, args) {
   return { ok: result.status === 0, stdout: result.stdout ?? '', code: result.status };
 }
 
+/**
+ * @param {string} cwd
+ * @param {string[]} args
+ */
 function gitValue(cwd, args) {
   const result = git(cwd, args);
   if (!result.ok) return null;
@@ -109,6 +195,7 @@ function gitValue(cwd, args) {
   return value === '' ? null : value;
 }
 
+/** @param {string} value */
 function digest24(value) {
   return crypto.createHash('sha256').update(String(value), 'utf8').digest('hex').slice(0, 24);
 }
@@ -128,16 +215,24 @@ export function bootDigest() {
   return 'NO_BOOT_IDENTITY';
 }
 
+/** @param {number} pid */
 function processAlive(pid) {
   if (!Number.isInteger(pid) || pid <= 0) return false;
   try {
     process.kill(pid, 0);
     return true;
   } catch (error) {
-    return error?.code === 'EPERM';
+    // EPERM is the "live but not ours to signal" answer, so an unexplained
+    // failure object carries no liveness information at all.
+    const code = typeof error === 'object' && error !== null && 'code' in error ? error.code : undefined;
+    return code === 'EPERM';
   }
 }
 
+/**
+ * @param {string} file
+ * @param {number} maxBytes
+ */
 function readTextIfPresent(file, maxBytes) {
   try {
     const stat = fs.statSync(file);
@@ -151,6 +246,7 @@ function readTextIfPresent(file, maxBytes) {
   }
 }
 
+/** @param {string} root */
 export function loadPolicy(root) {
   try {
     const parsed = JSON.parse(fs.readFileSync(path.join(root, POLICY_RELATIVE_PATH), 'utf8'));
@@ -165,6 +261,11 @@ export function loadPolicy(root) {
 // session ownership records
 // ---------------------------------------------------------------------------
 
+/**
+ * @param {string} commonDir
+ * @param {string | null} worktreeName
+ * @param {WorkspacePolicy | null} policy
+ */
 export function sessionRecordPath(commonDir, worktreeName, policy) {
   const file = policy?.sessionRecordFile ?? 'nightwatch-session.v1.json';
   return worktreeName === null
@@ -172,35 +273,47 @@ export function sessionRecordPath(commonDir, worktreeName, policy) {
     : path.join(commonDir, 'worktrees', worktreeName, file);
 }
 
+/**
+ * @param {unknown} raw
+ * @param {WorkspacePolicy | null} policy
+ */
 function validateRecord(raw, policy) {
   const problems = [];
   if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) return { valid: false, problems: ['NOT_AN_OBJECT'] };
-  if (raw.schemaVersion !== WORKSPACE_SESSION_SCHEMA) problems.push('SCHEMA_UNSUPPORTED');
+  const record = /** @type {Record<string, unknown>} */ (raw);
+  if (record.schemaVersion !== WORKSPACE_SESSION_SCHEMA) problems.push('SCHEMA_UNSUPPORTED');
   for (const key of ['sessionId', 'taskId', 'role', 'branch', 'baseSha', 'createdAtIso', 'ownershipState', 'integrationState']) {
-    if (typeof raw[key] !== 'string' || raw[key] === '') problems.push(`FIELD_INVALID:${key}`);
+    if (typeof record[key] !== 'string' || record[key] === '') problems.push(`FIELD_INVALID:${key}`);
   }
   const roles = policy?.worktreePolicy?.allowedRoles ?? ['IMPLEMENTATION', 'MAINTENANCE'];
   const ownerships = policy?.worktreePolicy?.allowedOwnershipStates ?? ['OWNED', 'RELEASED'];
   const integrations = policy?.worktreePolicy?.allowedIntegrationStates ?? ['NOT_INTEGRATED', 'INTEGRATED'];
-  if (typeof raw.role === 'string' && !roles.includes(raw.role)) problems.push('ROLE_UNKNOWN');
-  if (typeof raw.ownershipState === 'string' && !ownerships.includes(raw.ownershipState)) problems.push('OWNERSHIP_STATE_UNKNOWN');
-  if (typeof raw.integrationState === 'string' && !integrations.includes(raw.integrationState)) problems.push('INTEGRATION_STATE_UNKNOWN');
-  if (typeof raw.baseSha === 'string' && !/^[0-9a-f]{40}$/.test(raw.baseSha)) problems.push('BASE_SHA_INVALID');
-  if (raw.holder !== undefined && raw.holder !== null) {
-    if (typeof raw.holder !== 'object' || Array.isArray(raw.holder)) problems.push('HOLDER_INVALID');
+  if (typeof record.role === 'string' && !roles.includes(record.role)) problems.push('ROLE_UNKNOWN');
+  if (typeof record.ownershipState === 'string' && !ownerships.includes(record.ownershipState)) problems.push('OWNERSHIP_STATE_UNKNOWN');
+  if (typeof record.integrationState === 'string' && !integrations.includes(record.integrationState)) problems.push('INTEGRATION_STATE_UNKNOWN');
+  if (typeof record.baseSha === 'string' && !/^[0-9a-f]{40}$/.test(record.baseSha)) problems.push('BASE_SHA_INVALID');
+  if (record.holder !== undefined && record.holder !== null) {
+    if (typeof record.holder !== 'object' || Array.isArray(record.holder)) problems.push('HOLDER_INVALID');
     else {
+      const holder = /** @type {Record<string, unknown>} */ (record.holder);
       // A process anchor is OPTIONAL: a conversational agent session has no
       // single long-lived pid. When absent, ownership is a declaration that
       // ends at explicit release or at reboot (bootDigest change).
-      if (raw.holder.pid !== undefined && raw.holder.pid !== null && (!Number.isInteger(raw.holder.pid) || raw.holder.pid <= 0)) problems.push('HOLDER_PID_INVALID');
-      if (typeof raw.holder.bootDigest !== 'string' || raw.holder.bootDigest === '') problems.push('HOLDER_BOOT_INVALID');
+      const pid = holder.pid;
+      if (pid !== undefined && pid !== null && (typeof pid !== 'number' || !Number.isInteger(pid) || pid <= 0)) problems.push('HOLDER_PID_INVALID');
+      if (typeof holder.bootDigest !== 'string' || holder.bootDigest === '') problems.push('HOLDER_BOOT_INVALID');
     }
   }
   // Durable project truth must not carry a machine-specific absolute path.
-  if (typeof raw.worktreePath === 'string') problems.push('ABSOLUTE_PATH_PERSISTED');
+  if (typeof record.worktreePath === 'string') problems.push('ABSOLUTE_PATH_PERSISTED');
   return { valid: problems.length === 0, problems };
 }
 
+/**
+ * @param {string} file
+ * @param {WorkspacePolicy | null} policy
+ * @param {WorkspaceLiveness} liveness
+ */
 function readRecord(file, policy, liveness) {
   const maxBytes = policy?.worktreePolicy?.maxRecordBytes ?? 4096;
   const found = readTextIfPresent(file, maxBytes);
@@ -228,8 +341,11 @@ function readRecord(file, policy, liveness) {
 // worktree topology
 // ---------------------------------------------------------------------------
 
+/** @param {string} text @returns {WorkspacePorcelainEntry[]} */
 function parseWorktreePorcelain(text) {
+  /** @type {WorkspacePorcelainEntry[]} */
   const entries = [];
+  /** @type {WorkspacePorcelainEntry | null} */
   let current = null;
   for (const rawLine of text.split(/\r?\n/)) {
     const line = rawLine.trimEnd();
@@ -263,6 +379,7 @@ function parseWorktreePorcelain(text) {
  * parser the workspace checks use. Returns `null` when git topology is
  * unreadable so callers can fail closed instead of assuming absence.
  */
+/** @param {string} root @returns {string[] | null} */
 export function listWorktreeBranches(root) {
   const result = git(root, ['worktree', 'list', '--porcelain']);
   if (!result.ok) return null;
@@ -273,6 +390,7 @@ export function listWorktreeBranches(root) {
   return [...branches].sort();
 }
 
+/** @param {string} commonDir @returns {Map<string, string>} */
 function linkedWorktreeNames(commonDir) {
   const directory = path.join(commonDir, 'worktrees');
   let names;
@@ -299,6 +417,11 @@ function linkedWorktreeNames(commonDir) {
 // invariants
 // ---------------------------------------------------------------------------
 
+/**
+ * @param {readonly WorkspaceWorktree[]} worktrees
+ * @param {WorkspacePolicy | null} policy
+ * @param {WorkspaceDiagnostic[]} errors
+ */
 function checkIndexFlags(worktrees, policy, errors) {
   const allowed = new Set(policy?.indexFlagPolicy?.allowedTags ?? ['H', 'M', 'R', 'C', 'K', '?']);
   const skipTags = new Set(policy?.indexFlagPolicy?.skipWorktreeTags ?? ['S', 's']);
@@ -315,7 +438,7 @@ function checkIndexFlags(worktrees, policy, errors) {
     inspected += 1;
     for (const line of result.stdout.split(/\r?\n/)) {
       if (line === '') continue;
-      const tag = line[0];
+      const tag = line[0] ?? '';
       const file = line.slice(2);
       const lowercase = /^[a-z]$/.test(tag);
       if (skipTags.has(tag)) {
@@ -345,6 +468,7 @@ function checkIndexFlags(worktrees, policy, errors) {
   };
 }
 
+/** @param {string} text @returns {string[]} */
 function effectiveExcludePatterns(text) {
   return text
     .split(/\r?\n/)
@@ -359,6 +483,13 @@ function effectiveExcludePatterns(text) {
  * default policy has no authoritative allowlist to compare against, so the
  * result is reported as NOT_APPLICABLE with an advisory rather than asserted
  * as a violation. Enforcement in the Nightwatch repository is unchanged.
+ */
+/**
+ * @param {string} commonDir
+ * @param {WorkspacePolicy | null} policy
+ * @param {string} policySource
+ * @param {WorkspaceDiagnostic[]} errors
+ * @param {WorkspaceDiagnostic[]} warnings
  */
 function checkExclude(commonDir, policy, policySource, errors, warnings) {
   const maxBytes = policy?.excludePolicy?.maxBytes ?? 8192;
@@ -410,10 +541,17 @@ function checkExclude(commonDir, policy, policySource, errors, warnings) {
   };
 }
 
+/**
+ * @param {string} commonDir
+ * @param {string} worktreeRoot
+ * @param {WorkspacePolicy | null} policy
+ * @param {WorkspaceDiagnostic[]} errors
+ */
 function checkHooks(commonDir, worktreeRoot, policy, errors) {
   const suffix = policy?.hookPolicy?.allowedSuffix ?? '.sample';
   const maxEntries = policy?.hookPolicy?.maxEntries ?? 64;
   const directory = path.join(commonDir, 'hooks');
+  /** @type {import('node:fs').Dirent[]} */
   let entries = [];
   let present = true;
   try {
@@ -464,6 +602,7 @@ function checkHooks(commonDir, worktreeRoot, policy, errors) {
 const TERMINAL_CLAIM_TASK_STATUSES = new Set(['COMPLETE', 'BLOCKED']);
 const CLAIM_TASK_STATE_MAX_BYTES = 512 * 1024;
 
+/** @param {string} root @param {string} taskId */
 export function resolveClaimTask(root, taskId) {
   if (typeof taskId !== 'string' || !/^[a-z0-9][a-z0-9._-]*$/.test(taskId)) {
     return { state: 'UNKNOWN', status: null, reason: 'the task id is not a safe .agent/tasks directory name' };
@@ -486,6 +625,10 @@ export function resolveClaimTask(root, taskId) {
   };
 }
 
+/**
+ * @param {WorkspaceWorktree} worktree
+ * @param {WorkspaceSessionRecord} record
+ */
 function claimTaskOwnerAction(worktree, record) {
   if (worktree.isMain || record.role === 'MAINTENANCE') {
     return 'release the canonical maintenance claim or re-point it at the active task through bin/nightwatch-session.mjs; never by deleting a directory or editing a record';
@@ -493,6 +636,13 @@ function claimTaskOwnerAction(worktree, record) {
   return 'release this session through bin/nightwatch-session.mjs release; never by deleting a directory or editing a record';
 }
 
+/**
+ * @param {string} root
+ * @param {readonly WorkspaceWorktree[]} worktrees
+ * @param {WorkspacePolicy | null} policy
+ * @param {WorkspaceDiagnostic[]} errors
+ * @param {WorkspaceDiagnostic[]} warnings
+ */
 function checkWorktreeMetadata(root, worktrees, policy, errors, warnings) {
   const maxWorktrees = policy?.worktreePolicy?.maxWorktrees ?? 8;
   if (worktrees.length > maxWorktrees) {
@@ -517,7 +667,7 @@ function checkWorktreeMetadata(root, worktrees, policy, errors, warnings) {
       warnings.push({ code: 'WORKSPACE_STALE_SESSION_WORKTREE', detail: `worktree ${worktree.name} claims task ${worktree.record?.taskId ?? 'UNKNOWN'} but its holder is not live; adopt or release explicitly` });
     }
   }
-  const claimTaskFindings = [];
+  const claimTaskFindings = /** @type {WorkspaceClaimFinding[]} */ ([]);
   for (const worktree of worktrees) {
     const record = worktree.record;
     if (record === null) continue;
@@ -620,6 +770,11 @@ function checkWorktreeMetadata(root, worktrees, policy, errors, warnings) {
   };
 }
 
+/**
+ * @param {readonly WorkspaceWorktree[]} worktrees
+ * @param {WorkspacePolicy | null} policy
+ * @param {WorkspaceDiagnostic[]} errors
+ */
 function checkCanonicalProtection(worktrees, policy, errors) {
   const canonical = worktrees.find((worktree) => worktree.isMain) ?? null;
   if (canonical === null) {
@@ -661,12 +816,14 @@ function checkCanonicalProtection(worktrees, policy, errors) {
   };
 }
 
+/** @param {string} root @returns {string | null} */
 function activeTaskDirectory(root) {
   try {
     const text = fs.readFileSync(path.join(root, '.agent/ACTIVE_TASK.md'), 'utf8');
     const match = /^Task directory:\s*(\S+)\s*$/m.exec(text);
     if (match === null) return null;
     const candidate = match[1];
+    if (candidate === undefined) return null;
     if (candidate === 'NONE' || path.isAbsolute(candidate) || candidate.includes('..')) return null;
     return candidate;
   } catch {
@@ -690,6 +847,11 @@ function activeTaskDirectory(root) {
 // This is deliberately not bypassable by `--allow-drift`. Drift tolerance
 // exists so an owner can start work in a workspace that already has an
 // unrelated violation; it must not be a route to creating a new one.
+/**
+ * @param {WorkspaceWorktreeReport} report
+ * @param {string} candidateName
+ * @param {WorkspacePolicy | null} policy
+ */
 export function admitProspectiveWorktree(report, candidateName, policy) {
   const maxWorktrees = policy?.worktreePolicy?.maxWorktrees ?? 8;
   const registered = Array.isArray(report?.worktrees) ? report.worktrees : [];
@@ -716,6 +878,11 @@ export function admitProspectiveWorktree(report, candidateName, policy) {
   });
 }
 
+/**
+ * @param {string} specText
+ * @param {string} heading
+ * @returns {string[]}
+ */
 export function parseDeclaredDeletions(specText, heading) {
   const lines = specText.split(/\r?\n/);
   const declared = [];
@@ -734,6 +901,13 @@ export function parseDeclaredDeletions(specText, heading) {
   return declared;
 }
 
+/**
+ * @param {string} root
+ * @param {WorkspaceWorktree | null} self
+ * @param {WorkspacePolicy | null} policy
+ * @param {WorkspaceDiagnostic[]} errors
+ * @param {WorkspaceDiagnostic[]} warnings
+ */
 function checkDeclaredDeletions(root, self, policy, errors, warnings) {
   const heading = policy?.deletionPolicy?.declaredDeletionHeading ?? '## Declared Deletions';
   const maxExamples = policy?.deletionPolicy?.maxReportedExamples ?? 16;
@@ -771,6 +945,7 @@ function checkDeclaredDeletions(root, self, policy, errors, warnings) {
     return { id: 'WORKSPACE_DECLARED_DELETIONS', status: 'PASS', baseKind, deletionCount: 0, undeclared: [] };
   }
   const taskDirectory = activeTaskDirectory(root);
+  /** @type {string[]} */
   let declared = [];
   if (taskDirectory !== null) {
     try {
@@ -797,6 +972,12 @@ function checkDeclaredDeletions(root, self, policy, errors, warnings) {
   };
 }
 
+/**
+ * @param {string} root
+ * @param {WorkspaceWorktree | null} self
+ * @param {WorkspacePolicy | null} policy
+ * @param {WorkspaceDiagnostic[]} warnings
+ */
 function checkIntegrationReadiness(root, self, policy, warnings) {
   const remote = policy?.canonical?.remote ?? 'origin';
   const branch = policy?.canonical?.branch ?? 'main';
@@ -859,12 +1040,14 @@ function checkIntegrationReadiness(root, self, policy, warnings) {
 /**
  * Read-only inspection of the workspace. Never mutates anything.
  *
- * @param {{ root?: string, policy?: object|null, liveness?: { bootDigest: () => string, processAlive: (pid: number) => boolean } }} [options]
+ * @param {Partial<{ root: string, policy: object|null, liveness: { bootDigest: () => string, processAlive: (pid: number) => boolean } }>} [options]
  */
 export function inspectWorkspace(options = {}) {
   const requestedRoot = options.root ?? process.cwd();
   const liveness = options.liveness ?? { bootDigest, processAlive };
+  /** @type {WorkspaceDiagnostic[]} */
   const errors = [];
+  /** @type {WorkspaceDiagnostic[]} */
   const warnings = [];
 
   const toplevel = gitValue(requestedRoot, ['rev-parse', '--show-toplevel']);
@@ -992,10 +1175,15 @@ export function inspectWorkspace(options = {}) {
   const sharedDrift = invariants
     .filter((invariant) => ['WORKSPACE_INDEX_FLAGS', 'WORKSPACE_EXCLUDE_POLICY', 'WORKSPACE_HOOKS_POLICY'].includes(invariant.id))
     .some((invariant) => invariant.status === 'VIOLATED');
-  const integration = invariants.find((invariant) => invariant.id === 'WORKSPACE_INTEGRATION_READINESS');
+  const integration = /** @type {{ baseState: string, canIntegrate: boolean, reason: string } | undefined} */ (
+    invariants.find((invariant) => invariant.id === 'WORKSPACE_INTEGRATION_READINESS')
+  );
   const canonicalInvariant = invariants.find((invariant) => invariant.id === 'WORKSPACE_CANONICAL_PROTECTION');
-  const worktreeInvariant = invariants.find((invariant) => invariant.id === 'WORKSPACE_WORKTREE_METADATA');
+  const worktreeInvariant = /** @type {{ claimTaskFindings: WorkspaceClaimFinding[] } | undefined} */ (
+    invariants.find((invariant) => invariant.id === 'WORKSPACE_WORKTREE_METADATA')
+  );
   const claimTaskFindings = worktreeInvariant?.claimTaskFindings ?? [];
+  /** @type {Map<string | null, WorkspaceClaimFinding[]>} */
   const claimFindingsByWorktree = new Map();
   for (const finding of claimTaskFindings) {
     const existing = claimFindingsByWorktree.get(finding.worktree) ?? [];
@@ -1080,6 +1268,11 @@ export function inspectWorkspace(options = {}) {
 // text rendering / CLI
 // ---------------------------------------------------------------------------
 
+/**
+ * @param {ReturnType<typeof inspectWorkspace>} report
+ * @param {Map<string, string>} [worktreePaths]
+ * @returns {string}
+ */
 export function renderText(report, worktreePaths = new Map()) {
   const lines = [];
   lines.push(`[workspace] verdict=${report.verdict} reason=${report.reason}`);
@@ -1107,6 +1300,7 @@ export function renderText(report, worktreePaths = new Map()) {
   return lines.join('\n');
 }
 
+/** @param {readonly string[]} argv */
 function parseCliArgs(argv) {
   const args = argv.slice(2);
   let command = 'check';
@@ -1126,6 +1320,7 @@ function parseCliArgs(argv) {
   return { command, root, json };
 }
 
+/** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
 const CLI_METADATA = {
   schemaVersion: OPERATOR_CLI_SCHEMA,
   name: 'workspace-integrity',

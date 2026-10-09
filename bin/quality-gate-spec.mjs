@@ -33,10 +33,25 @@ const timeoutClasses = new Set(['SHORT', 'MEDIUM', 'LONG']);
 const idPattern = /^[A-Z][A-Z0-9_]{1,63}$/;
 const filePattern = /^tests\/(?:unit|smoke)\/[A-Za-z0-9._/-]+\.test\.ts$/;
 
+/** @typedef {{ id: string, commandKey: string, required: boolean, environmentRequirements: unknown[], timeoutClass: string, dependsOn: string[], ciCapable: boolean, cleanCheckoutCapable: boolean, requiresSiblingTopology: boolean, preDevRelevant: boolean, expectedFailClosedBehavior: string }} QualityGateGroup */
+/** @typedef {{ schemaVersion: string, definitionName: string, groups: QualityGateGroup[] }} QualityGateDefinition */
+/** @typedef {{ first: number, last: number }} SemanticCompatibilityPhaseRange */
+/** @typedef {{ project: string, workers: number, serial: boolean }} SemanticCompatibilityExecution */
+/** @typedef {{ phase: number, files: string[] }} SemanticCompatibilitySuite */
+/** @typedef {{ schemaVersion: string, requiredPhaseRange: SemanticCompatibilityPhaseRange | undefined, execution: SemanticCompatibilityExecution | undefined, phaseSuites: SemanticCompatibilitySuite[], supportFiles: string[] | undefined, intentionalDuplicateFileReasons: unknown[] }} SemanticCompatibilityDefinition */
+
+/**
+ * @param {string} code
+ * @returns {never}
+ */
 function fail(code) {
   throw new Error(code);
 }
 
+/**
+ * @param {string} file
+ * @param {string} code
+ */
 function readJson(file, code) {
   try {
     return JSON.parse(fs.readFileSync(file, 'utf8'));
@@ -45,16 +60,29 @@ function readJson(file, code) {
   }
 }
 
+/**
+ * @param {unknown} value
+ * @returns {string}
+ */
 function canonical(value) {
   if (value === null || typeof value !== 'object') return JSON.stringify(value);
   if (Array.isArray(value)) return `[${value.map(canonical).join(',')}]`;
-  return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${canonical(value[key])}`).join(',')}}`;
+  const record = /** @type {Record<string, unknown>} */ (value);
+  return `{${Object.keys(record).sort().map((key) => `${JSON.stringify(key)}:${canonical(record[key])}`).join(',')}}`;
 }
 
+/**
+ * @param {unknown} value
+ * @returns {string}
+ */
 function digest(value) {
   return `sha256:${crypto.createHash('sha256').update(canonical(value), 'utf8').digest('hex')}`;
 }
 
+/**
+ * @param {QualityGateDefinition} value
+ * @returns {QualityGateDefinition}
+ */
 function validateDefinition(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) fail('QUALITY_GATE_DEFINITION_INVALID');
   if (value.schemaVersion !== 'nightwatch.quality-gate.v1') fail('QUALITY_GATE_SCHEMA_UNSUPPORTED');
@@ -74,6 +102,7 @@ function validateDefinition(value) {
   }
   for (let index = 0; index < value.groups.length; index += 1) {
     const group = value.groups[index];
+    if (group === undefined) continue;
     for (const dependency of group.dependsOn) {
       if (!ids.has(dependency)) fail(`QUALITY_GATE_UNKNOWN_DEPENDENCY:${group.id}:${dependency}`);
       const dependencyIndex = value.groups.findIndex((candidate) => candidate.id === dependency);
@@ -83,6 +112,10 @@ function validateDefinition(value) {
   return value;
 }
 
+/**
+ * @param {SemanticCompatibilityDefinition} value
+ * @returns {{ phases: number, files: number }}
+ */
 function validateCompatibility(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) fail('SEMANTIC_COMPATIBILITY_INVALID');
   if (value.schemaVersion !== 'nightwatch.semantic-compatibility.v1') fail('SEMANTIC_COMPATIBILITY_SCHEMA_UNSUPPORTED');

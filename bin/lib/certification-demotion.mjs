@@ -38,14 +38,7 @@ export const CERTIFICATION_DEMOTION_RELATIONS = Object.freeze([
 const SHA_RE = /^[0-9a-f]{40}$/i;
 
 /**
- * @param {{
- *   advanceClaimed: boolean,
- *   certifiedCheckpointSha: string | null,
- *   liveHeadSha: string | null,
- *   isAncestor?: boolean | null,
- *   changedFiles?: readonly string[] | null,
- *   substantivePaths?: readonly string[] | null,
- * }} input
+ * @param {{ advanceClaimed: boolean, certifiedCheckpointSha: string | null, liveHeadSha: string | null } & Partial<{ isAncestor: boolean | null, changedFiles: readonly string[] | null, substantivePaths: readonly string[] | null }>} input
  * @returns {{ relation: string, attention: readonly string[], detail: string }}
  */
 export function classifyCertificationDemotion(input) {

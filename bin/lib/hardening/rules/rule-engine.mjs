@@ -81,7 +81,9 @@ function analysedFiles(moduleFiles) {
  *      `isRuleEngineSource()` predicate rather than an open-coded path, so the
  *      exclusion cannot go stale the next time the engine gains a module.
  *
- * @param {ReadonlyArray<{name: string, module: string, family: string, quantifier: string, subject: string, firstMatch?: string, implementation?: Function, run?: Function}>} registry
+ * @typedef {{ name: string, module: string, family: string, quantifier: string, subject: string, implementation: (registry: readonly RegistryEntry[]) => unknown, run: () => void } & Partial<{ firstMatch: string }>} RegistryEntry
+ *
+ * @param {readonly RegistryEntry[]} registry
  */
 export function checkRuleEngineSoundness(registry) {
   // --- 0. discover the rule modules on disk -----------------------------
@@ -156,6 +158,7 @@ export function checkRuleEngineSoundness(registry) {
     const moduleName = file === RULE_ENGINE_ENTRY ? '(entry point)' : file.slice(`${RULE_MODULE_DIRECTORY}/`.length, -'.mjs'.length);
     for (const match of loaded.raw.matchAll(/^(?:export )?function (check\w+)\(/gm)) {
       const name = match[1];
+      if (name === undefined) continue;
       const previous = definitions.get(name);
       if (previous !== undefined) {
         fail(`RULE_ENGINE_DUPLICATE_RULE_DEFINITION ${name} is defined in both ${previous.file} and ${file}`);
@@ -214,7 +217,7 @@ export function checkRuleEngineSoundness(registry) {
     const ruleBodies = [...raw.matchAll(/^(?:export )?function (\w+)\(/gm)].map((match, index, all) => ({
       name: match[1],
       start: match.index ?? 0,
-      end: index + 1 < all.length ? (all[index + 1].index ?? raw.length) : raw.length,
+      end: index + 1 < all.length ? (all[index + 1]?.index ?? raw.length) : raw.length,
     }));
     for (const rule of ruleBodies) {
       const body = code.slice(rule.start, rule.end);
@@ -267,12 +270,14 @@ export function checkRuleEngineSoundness(registry) {
     const end = nextIndex < 0 ? loaded.code.length : start + 1 + nextIndex;
     const body = loaded.code.slice(start, end);
     for (const match of body.matchAll(firstMatchRe)) {
+      if (match[1] === undefined) continue;
       if (regexFlags(match[1]).includes('g')) continue;
       if (rule.quantifier !== 'TOTALITY') continue;
       if (typeof rule.firstMatch === 'string' && rule.firstMatch.length > 0) continue;
       fail(`rule ${rule.name} is TOTALITY but uses a direct first-match .${match[2]}(...) with no recorded singleton justification (${where.file}:${loaded.code.slice(0, start + (match.index ?? 0)).split('\n').length})`);
     }
     for (const match of body.matchAll(stringMatchRe)) {
+      if (match[1] === undefined) continue;
       if (regexFlags(match[1]).includes('g')) continue;
       if (rule.quantifier !== 'TOTALITY') continue;
       if (typeof rule.firstMatch === 'string' && rule.firstMatch.length > 0) continue;
@@ -311,22 +316,22 @@ export function checkRuleEngineSoundness(registry) {
     const lines = loaded.code.slice(start, end).split('\n');
     const indentOf = (/** @type {string} */ line) => line.length - line.trimStart().length;
     for (let index = 0; index < lines.length; index += 1) {
-      if (!/^\s*return\b/.test(lines[index])) continue;
+      if (!/^\s*return\b/.test(lines[index] ?? '')) continue;
       // The statement immediately above must be the tail of a fail(...) call.
       let above = index - 1;
-      while (above >= 0 && lines[above].trim().length === 0) above -= 1;
-      if (above < 0 || !/\bfail\s*\(|^\s*\)?\s*;?\s*$/.test(lines[above])) continue;
+      while (above >= 0 && (lines[above] ?? '').trim().length === 0) above -= 1;
+      if (above < 0 || !/\bfail\s*\(|^\s*\)?\s*;?\s*$/.test(lines[above] ?? '')) continue;
       let failLine = above;
-      while (failLine >= 0 && !/\bfail\s*\(/.test(lines[failLine])) {
-        if (indentOf(lines[failLine]) < indentOf(lines[index])) break;
+      while (failLine >= 0 && !/\bfail\s*\(/.test(lines[failLine] ?? '')) {
+        if (indentOf(lines[failLine] ?? '') < indentOf(lines[index] ?? '')) break;
         failLine -= 1;
       }
-      if (failLine < 0 || !/\bfail\s*\(/.test(lines[failLine])) continue;
+      if (failLine < 0 || !/\bfail\s*\(/.test(lines[failLine] ?? '')) continue;
       // Walk outward by indentation: is any enclosing block a loop?
-      let depth = indentOf(lines[index]);
+      let depth = indentOf(lines[index] ?? '');
       let enclosingLoop = -1;
       for (let cursor = index - 1; cursor >= 0 && depth > 0; cursor -= 1) {
-        const line = lines[cursor];
+        const line = lines[cursor] ?? '';
         if (line.trim().length === 0) continue;
         const indent = indentOf(line);
         if (indent >= depth) continue;

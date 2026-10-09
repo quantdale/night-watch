@@ -35,6 +35,7 @@ const CONCERN_VERDICTS = new Set([
   'CLASSIFICATION_AMBIGUOUS',
 ]);
 
+/** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
 const CLI_METADATA = {
   schemaVersion: OPERATOR_CLI_SCHEMA,
   name: 'test-oracle-quality',
@@ -51,6 +52,10 @@ const CLI_METADATA = {
   artifacts: ['artifacts/test-oracle-quality/current.json'],
 };
 
+/**
+ * @param {string} code
+ * @param {string} [detail]
+ */
 function fail(code, detail) {
   process.stderr.write(detail === undefined ? `[test-oracle-quality] ERROR: ${code}\n` : `[test-oracle-quality] ERROR: ${code}: ${detail}\n`);
   process.exitCode = 2;
@@ -95,7 +100,8 @@ function main() {
     fs.mkdirSync(path.dirname(outPath), { recursive: true });
     fs.writeFileSync(outPath, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
   } catch (error) {
-    return fail('REPORT_WRITE_FAILED', String(error?.code ?? 'UNKNOWN'));
+    const writeFailure = /** @type {{ code: string | undefined }} */ (error);
+    return fail('REPORT_WRITE_FAILED', String(writeFailure?.code ?? 'UNKNOWN'));
   }
 
   if (cli.flags['--json'] === true) {
@@ -106,7 +112,7 @@ function main() {
     }
     process.stdout.write(`[test-oracle-quality] digest=${report.reportDigest} targets=${report.targets.length}\n`);
   }
-  if (report.targets.length === 1 && report.targets[0].verdict === 'DECLARATION_INVALID') process.exitCode = 2;
+  if (report.targets.length === 1 && report.targets[0]?.verdict === 'DECLARATION_INVALID') process.exitCode = 2;
   else if (report.targets.some((target) => CONCERN_VERDICTS.has(target.verdict))) process.exitCode = 1;
   else process.exitCode = 0;
 }

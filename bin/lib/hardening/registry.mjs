@@ -75,10 +75,15 @@ export function discoverRuleModuleFiles() {
 }
 
 /**
+ * @typedef {{ name: string, module: string, family: string, quantifier: string, subject: string } & Partial<{ firstMatch: string, injectRegistry: boolean }>} RuleMetadata
+ * @typedef {{ name: string, module: string, family: string, quantifier: string, subject: string, implementation: (registry: readonly RuleMetadata[]) => unknown, run: () => void } & Partial<{ firstMatch: string, injectRegistry: boolean }>} RegisteredRuleMetadata
+ */
+
+/**
  * Ordered rule metadata. `module` binds each rule to its owning family module;
  * `firstMatch`, where present, is the recorded justification for a deliberate
  * singleton extraction inside a TOTALITY rule.
- * @type {ReadonlyArray<{name: string, module: string, family: string, quantifier: string, subject: string, firstMatch?: string, injectRegistry?: boolean}>}
+ * @type {ReadonlyArray<RuleMetadata>}
  */
 export const RULE_TABLE = Object.freeze([
   { name: 'checkM8GuardTotality', module: 'process-and-network', family: 'process-boundaries', quantifier: 'TOTALITY', subject: 'every guard the M8 milestones established is still present in code and carries a registered mutation probe' },
@@ -182,6 +187,7 @@ export const RULE_TABLE = Object.freeze([
  * Resolve the table against the module map. A missing module or a missing
  * export is a load-time failure: a registry with a hole would let the runner
  * report success for a rule that never ran.
+ * @param {typeof RULE_TABLE[number]} entry
  */
 function resolveRule(entry) {
   const namespace = RULE_MODULES[entry.module];
@@ -192,14 +198,18 @@ function resolveRule(entry) {
   if (typeof implementation !== 'function') {
     throw new Error(`hardening registry: rule ${entry.name} is registered against module '${entry.module}', which exports no such function`);
   }
-  return { ...entry, implementation, run: implementation };
+  // The guard only proves "callable", so the parameter shape is asserted here
+  // once: every rule implementation receives the resolved registry (only the
+  // one entry marked `injectRegistry` ever passes it).
+  const ruleImplementation = /** @type {(registry: readonly RuleMetadata[]) => unknown} */ (implementation);
+  return { ...entry, implementation: ruleImplementation, run: /** @type {() => void} */ (implementation) };
 }
 
 /**
  * The resolved registry. `implementation` is always the raw module export, so
  * the identity check in the self-check is exact; `run` is what the runner
  * invokes and differs only for the one entry that needs the registry itself.
- * @type {ReadonlyArray<{name: string, module: string, family: string, quantifier: string, subject: string, firstMatch?: string, injectRegistry?: boolean, implementation: Function, run: () => void}>}
+ * @type {ReadonlyArray<RegisteredRuleMetadata>}
  */
 export const REGISTERED_RULES = Object.freeze(RULE_TABLE.map(resolveRule).map((rule) => (
   rule.injectRegistry === true

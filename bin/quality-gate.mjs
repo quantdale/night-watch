@@ -19,6 +19,41 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const definitionFile = path.join(root, 'config', 'quality-gate.v1.json');
 const modes = new Set(['local', 'ci', 'clean', 'predev']);
 
+/** @typedef {'SHORT' | 'MEDIUM' | 'LONG'} GateTimeoutClass */
+
+/** @typedef {import('./lib/gate-receipt.mjs').GateReceiptCounts} GateReceiptCounts */
+
+/** @typedef {import('./lib/gate-receipt.mjs').GateReceiptSafeDetails} GateReceiptSafeDetails */
+
+/** @typedef {import('./lib/gate-receipt.mjs').GateReceiptTarget} GateReceiptTarget */
+
+/**
+ * One group's outcome. `status` is always recorded; the measured fields are
+ * attached by the branches that produce them, so the outcome is the partial
+ * field set with the status fixed.
+ *
+ * @typedef {{ readonly status: string, readonly exitCode: number | null, readonly counts: GateReceiptCounts, readonly durationMs: number | null, readonly details: GateReceiptSafeDetails | null, readonly errorClass: string | null }} GateGroupResultFields
+ */
+
+/** @typedef {Partial<GateGroupResultFields> & { readonly status: string }} GateGroupResult */
+
+/**
+ * One recorded group in the receipt. Identity and verdict are always present;
+ * the measured outcome fields are attached by the branch that ran the group.
+ *
+ * @typedef {{ readonly id: string, readonly required: boolean, readonly status: string } & Partial<{ readonly exitCode: number | null, readonly counts: Partial<GateReceiptCounts>, readonly durationMs: number | null, readonly details: GateReceiptSafeDetails | null }>} GateReceiptGroup
+ */
+
+/**
+ * The authoritative receipt. `receiptDigest` is attached at emit time by the
+ * single emitter, so it is the one mutable field.
+ *
+ * @typedef {{ readonly schemaVersion: string, readonly subject: string, readonly gateDefinitionDigest: string, readonly gitHead: string | null, readonly packageLockDigest: string | null, readonly nodeMajor: number, readonly nodeVersion: string, readonly npmVersion: string | null, readonly environmentClass: string, readonly receiptPersistenceRequested: boolean, readonly sourceRootCleanAtEmit: boolean | null, readonly groupIds: readonly string[], readonly groups: GateReceiptGroup[], readonly gateDurationMs: number, readonly finalResult: string, receiptDigest: string }} QualityGateReceiptFields
+ */
+
+/** @typedef {Partial<QualityGateReceiptFields>} QualityGateReceipt */
+
+/** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
 const CLI_METADATA = {
   schemaVersion: OPERATOR_CLI_SCHEMA,
   name: 'quality-gate',
@@ -37,23 +72,40 @@ const CLI_METADATA = {
   authorization: 'LOCAL_ONLY',
   artifacts: ['artifacts/quality-gate receipts (NIGHTWATCH_GATE_RECEIPT_PATH overrides)'],
 };
+/** @type {Readonly<Record<GateTimeoutClass, number>>} */
 const timeoutMs = { SHORT: 120_000, MEDIUM: 600_000, LONG: 1_200_000 };
 const packageManager = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 const nodeExecutable = process.execPath;
+/**
+ * A canonical JSON string over any structured value. The recursion is typed
+ * `unknown`, and the object branch narrows to the record shape the key walk
+ * needs.
+ *
+ * @param {unknown} value
+ * @returns {string}
+ */
 function canonical(value) {
   if (value === null || typeof value !== 'object') return JSON.stringify(value);
   if (Array.isArray(value)) return `[${value.map(canonical).join(',')}]`;
-  return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${canonical(value[key])}`).join(',')}}`;
+  const record = /** @type {Record<string, unknown>} */ (value);
+  return `{${Object.keys(record).sort().map((key) => `${JSON.stringify(key)}:${canonical(record[key])}`).join(',')}}`;
 }
 
+/** @param {string} value @returns {string} */
 function sha256(value) {
   return crypto.createHash('sha256').update(value, 'utf8').digest('hex');
 }
 
+/**
+ * @param {string} mode
+ * @param {string | null} [commandKey]
+ * @returns {NodeJS.ProcessEnv}
+ */
 function safeChildEnvironment(mode, commandKey = null) {
   return buildGateChildEnvironment(process.env, { mode, commandKey });
 }
 
+/** @param {string} file */
 function readJson(file) {
   return JSON.parse(fs.readFileSync(file, 'utf8'));
 }
@@ -70,6 +122,10 @@ function sourceRootCleanAtEmit() {
   return porcelain === null ? null : porcelain === '';
 }
 
+/**
+ * @param {readonly string[]} args
+ * @returns {string | null}
+ */
 function gitValue(args) {
   const result = spawnSync('git', args, { cwd: root, encoding: 'utf8', timeout: 10_000, maxBuffer: 256 * 1024, stdio: ['ignore', 'pipe', 'ignore'] });
   if (result.status !== 0) return null;
@@ -79,6 +135,12 @@ function gitValue(args) {
 // F-PERF-1: every group carries a measured wall-clock duration in the receipt
 // so validation-speed regressions are visible in evidence instead of only at a
 // timeout. The timing is additive and never changes a group's status.
+/**
+ * @param {string} commandKey
+ * @param {string} mode
+ * @param {GateTimeoutClass} timeoutClass
+ * @returns {GateGroupResult}
+ */
 function runFixedCommand(commandKey, mode, timeoutClass) {
   const startedAt = process.hrtime.bigint();
   const result = runFixedCommandInner(commandKey, mode, timeoutClass);
@@ -86,6 +148,12 @@ function runFixedCommand(commandKey, mode, timeoutClass) {
   return { ...result, durationMs };
 }
 
+/**
+ * @param {string} commandKey
+ * @param {string} mode
+ * @param {GateTimeoutClass} timeoutClass
+ * @returns {GateGroupResult}
+ */
 function runFixedCommandInner(commandKey, mode, timeoutClass) {
   const environment = safeChildEnvironment(mode, commandKey);
   let command;
@@ -189,7 +257,7 @@ function runFixedCommandInner(commandKey, mode, timeoutClass) {
     } catch {
       report = null;
     }
-    /** @type {{ canonicalSkipIdentities?: unknown, expectedSkipPolicy?: unknown }} */
+    /** @type {Partial<{ canonicalSkipIdentities: unknown, expectedSkipPolicy: unknown }>} */
     let skipPolicyConfig = {};
     try {
       skipPolicyConfig = readJson(path.join(root, 'config', 'semantic-compatibility.v1.json')).execution ?? {};
@@ -269,9 +337,15 @@ function runFixedCommandInner(commandKey, mode, timeoutClass) {
   return summarizeChild(result, commandKey);
 }
 
+/**
+ * @param {import('node:child_process').SpawnSyncReturns<string>} result
+ * @param {string} commandKey
+ * @returns {GateGroupResult}
+ */
 function summarizeChild(result, commandKey) {
-  if (result.error?.code === 'ETIMEDOUT') return { status: 'TIMEOUT', exitCode: null, counts: parseCounts(''), errorClass: 'TIMEOUT' };
-  if (result.error?.code === 'ENOENT') return { status: 'INSTALL_FAILURE', exitCode: null, counts: parseCounts(''), errorClass: 'TOOL_UNAVAILABLE' };
+  const spawnError = /** @type {NodeJS.ErrnoException | undefined} */ (result.error);
+  if (spawnError?.code === 'ETIMEDOUT') return { status: 'TIMEOUT', exitCode: null, counts: parseCounts(''), errorClass: 'TIMEOUT' };
+  if (spawnError?.code === 'ENOENT') return { status: 'INSTALL_FAILURE', exitCode: null, counts: parseCounts(''), errorClass: 'TOOL_UNAVAILABLE' };
   if (result.error) return { status: 'ENVIRONMENT_MISMATCH', exitCode: null, counts: parseCounts(''), errorClass: 'SPAWN_ERROR' };
   if (result.signal === 'SIGINT' || result.signal === 'SIGTERM') return { status: 'INTERRUPTED', exitCode: null, counts: parseCounts(`${result.stdout ?? ''}\n${result.stderr ?? ''}`), errorClass: result.signal };
   if (result.status === null) return { status: 'UNKNOWN_FAILURE', exitCode: null, counts: parseCounts(`${result.stdout ?? ''}\n${result.stderr ?? ''}`), errorClass: 'NO_EXIT_STATUS' };
@@ -289,6 +363,11 @@ function summarizeChild(result, commandKey) {
  * Persistence failure is a gate failure. A run whose evidence could not be
  * durably recorded is reported as such rather than passing quietly — that is
  * the whole point of the mechanism.
+ *
+ * @param {QualityGateReceipt} receipt
+ * @param {GateReceiptTarget} target
+ * @param {number} exitCode
+ * @returns {void}
  */
 function emitReceipt(receipt, target, exitCode) {
   receipt.receiptDigest = `receipt:sha256:${sha256(canonical(receipt)).slice(0, 24)}`;
@@ -312,8 +391,12 @@ function emitReceipt(receipt, target, exitCode) {
   process.exitCode = exitCode;
 }
 
+/**
+ * @param {{ readonly command: string | null }} cli
+ * @returns {void}
+ */
 function main(cli) {
-  const mode = cli?.command ?? process.argv[2];
+  const mode = cli?.command ?? process.argv[2] ?? '';
   if (!modes.has(mode)) {
     console.error(JSON.stringify({ status: 'CONFIG_INVALID', code: 'QUALITY_GATE_MODE_INVALID' }));
     process.exitCode = 2;
@@ -357,6 +440,7 @@ function main(cli) {
     emitReceipt(receipt, target, 1);
     return;
   }
+  /** @type {GateReceiptGroup[]} */
   const groups = [];
   let finalResult = 'PASS';
   const gateStartedAt = process.hrtime.bigint();
@@ -400,5 +484,5 @@ function main(cli) {
 
 if (invokedDirectly(import.meta.url)) {
   const cli = defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url });
-  if (!cli.stop) main(cli);
+  if (cli.ok === true && cli.stop !== true) main(cli);
 }

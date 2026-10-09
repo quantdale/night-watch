@@ -32,6 +32,53 @@ const OWNED_OUTPUT_ROOTS = Object.freeze(['test-results', '.tmp-nightwatch']);
 const OWNED_OUTPUT_ROOT_SET = new Set(OWNED_OUTPUT_ROOTS);
 const PROTECTED_ROOT_NAMES = new Set(['artifacts', '.nightwatch', 'node_modules', '.git', 'dist']);
 
+// ---------------------------------------------------------------------------
+// Report shapes. The CLI emits these objects verbatim (JSON or rendered text),
+// so every field is declared exactly as it is produced; nothing is inferred.
+// ---------------------------------------------------------------------------
+
+/** @typedef {{ path: string, head: string | null, branch: string | null, detached: boolean, prunable: boolean }} HygieneWorktreeRegistration */
+
+/** @typedef {{ name: string, head: string, upstream: string | null }} HygieneBranchRecord */
+
+/** @typedef {{ resolvedPath: string, available: boolean, clean: boolean | null, dirtyFileCount: number | null, reasonCode: string }} HygieneWorktreeState */
+
+/** @typedef {{ name: string, present: boolean, kind: string | null }} HygieneGeneratedOutput */
+
+/** @typedef {{ status: string, ignoredEntryCount: number | null }} HygieneIgnoredOutput */
+
+/** @typedef {{ status: string, files: string[], code: string | null }} HygieneTrackedPaths */
+
+/** @typedef {{ fileCount: number, bytes: number }} HygieneTreeStats */
+
+/** @typedef {{ name: string, owned: boolean, trackedFileCount: number | null, fileCount: number | null, bytes: number | null, disposition: string, reasonCode: string }} HygieneOutputRootEntry */
+
+/** @typedef {{ status: string, entries: HygieneOutputRootEntry[], unownedRoots: string[] }} HygieneOutputRootState */
+
+/** @typedef {{ name: string, result: string, reasonCode: string }} HygieneOutputRemoval */
+
+/** @typedef {{ path: string, branch: string }} HygieneTarget */
+
+/** @typedef {{ target: HygieneTarget, result: string, reasonCode: string }} HygieneApplyOutcome */
+
+/** A registration classified as preserved: no removable target is published. */
+/** @typedef {{ path: string, head: string | null, branch: string | null, detached: boolean, prunable: boolean, available: boolean, clean: boolean | null, dirtyFileCount: number | null, disposition: string, reasonCode: string }} HygienePreservedRegistration */
+
+/** The one classification that publishes a removable target. */
+/** @typedef {{ path: string, head: string | null, branch: string | null, detached: boolean, prunable: boolean, available: boolean, clean: boolean | null, dirtyFileCount: number | null, disposition: string, reasonCode: string, target: HygieneTarget }} HygieneCleanTargetRegistration */
+
+/** @typedef {HygienePreservedRegistration | HygieneCleanTargetRegistration} HygieneClassification */
+
+/**
+ * The full status/apply report. The three apply fields are present only on the
+ * report `execute` builds for apply mode; they are declared so the shape is
+ * explicit rather than inferred per call site.
+ *
+ * @typedef {{ schemaVersion: string, mode: string, result: string, root: string, gitHead: string, currentBranch: string | null, mainReference: string | null, policy: { defaultIsReadOnly: boolean, applyRequiresCleanReachableSwarmTarget: boolean, forceRemovalAllowed: boolean, broadPruneAllowed: boolean, generatedOutputsAreObservedOnly: boolean, outputRemovalRequiresNoTrackedFiles: boolean }, safeTargets: HygieneTarget[], registrations: HygieneClassification[], branches: { name: string, head: string, upstream: string | null, disposition: string, reasonCode: string }[], generatedOutputs: HygieneGeneratedOutput[], ignoredOutputs: HygieneIgnoredOutput, outputRemovalTargets: HygieneOutputRootEntry[], outputRemovalPlan: string[], unownedOutputRoots: string[], outputStatus: string, applyPlan: HygieneTarget[] | undefined, applyResults: HygieneApplyOutcome[] | undefined, outputRemovalResults: HygieneOutputRemoval[] | undefined }} HygieneReport
+ * }
+ */
+
+/** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
 const CLI_METADATA = {
   schemaVersion: OPERATOR_CLI_SCHEMA,
   name: 'nightwatch-hygiene',
@@ -53,6 +100,10 @@ const CLI_METADATA = {
   artifacts: [],
 };
 
+/**
+ * @param {string[]} argv
+ * @returns {{ command: string, json: boolean, apply: boolean, suppliedRoot: string | null }}
+ */
 function parseArgs(argv) {
   let command = 'status';
   let json = false;
@@ -90,6 +141,11 @@ function parseArgs(argv) {
   return { command, json, apply, suppliedRoot };
 }
 
+/**
+ * @param {string} cwd
+ * @param {string[]} args
+ * @returns {{ ok: true, stdout: string, code: null } | { ok: false, stdout: string, code: string }}
+ */
 function runGit(cwd, args) {
   const result = spawnSync('git', args, {
     cwd,
@@ -105,12 +161,21 @@ function runGit(cwd, args) {
   return { ok: true, stdout: result.stdout ?? '', code: null };
 }
 
+/**
+ * @param {string} cwd
+ * @param {string[]} args
+ * @returns {string}
+ */
 function requiredGitText(cwd, args) {
   const result = runGit(cwd, args);
   if (!result.ok) throw new Error(result.code);
   return result.stdout.trim();
 }
 
+/**
+ * @param {string | null} suppliedRoot
+ * @returns {string}
+ */
 function resolveRoot(suppliedRoot) {
   const candidate = path.resolve(suppliedRoot ?? DEFAULT_ROOT);
   const discovered = runGit(candidate, ['rev-parse', '--show-toplevel']);
@@ -120,8 +185,14 @@ function resolveRoot(suppliedRoot) {
   return root;
 }
 
+/**
+ * @param {string} text
+ * @returns {HygieneWorktreeRegistration[]}
+ */
 function parseWorktreeList(text) {
+  /** @type {HygieneWorktreeRegistration[]} */
   const records = [];
+  /** @type {HygieneWorktreeRegistration | null} */
   let current = null;
   const flush = () => {
     if (current !== null) records.push(current);
@@ -135,14 +206,15 @@ function parseWorktreeList(text) {
     const worktree = /^worktree (.+)$/.exec(line);
     if (worktree) {
       flush();
-      current = { path: worktree[1], head: null, branch: null, detached: false, prunable: false };
+      // Each pattern captures exactly one group, so a match always defines it.
+      current = { path: /** @type {string} */ (worktree[1]), head: null, branch: null, detached: false, prunable: false };
       continue;
     }
     if (current === null) continue;
     const head = /^HEAD ([0-9a-f]{40})$/i.exec(line);
-    if (head) current.head = head[1].toLowerCase();
+    if (head) current.head = /** @type {string} */ (head[1]).toLowerCase();
     const branch = /^branch refs\/heads\/(.+)$/.exec(line);
-    if (branch) current.branch = branch[1];
+    if (branch) current.branch = /** @type {string} */ (branch[1]);
     if (line === 'detached') current.detached = true;
     if (line.startsWith('prunable ')) current.prunable = true;
   }
@@ -150,26 +222,42 @@ function parseWorktreeList(text) {
   return records.slice(0, MAX_WORKTREES);
 }
 
+/**
+ * @param {string} root
+ * @returns {HygieneBranchRecord[]}
+ */
 function localBranches(root) {
   const text = requiredGitText(root, [
     'for-each-ref',
     '--format=%(refname:short)%00%(objectname)%00%(upstream:short)',
     'refs/heads',
   ]);
+  /** @type {HygieneBranchRecord[]} */
   const branches = [];
   for (const record of text.split(/\r?\n/).filter(Boolean)) {
     const [name, head, upstream = ''] = record.split('\0');
-    if (!name || !/^[0-9a-f]{40}$/i.test(head ?? '')) continue;
-    branches.push({ name, head: head.toLowerCase(), upstream: upstream || null });
+    const headSha = head ?? '';
+    if (!name || !/^[0-9a-f]{40}$/i.test(headSha)) continue;
+    branches.push({ name, head: headSha.toLowerCase(), upstream: upstream || null });
   }
   return branches.sort((left, right) => left.name.localeCompare(right.name)).slice(0, MAX_BRANCHES);
 }
 
+/**
+ * @param {string} root
+ * @param {string} ancestor
+ * @param {string} descendant
+ * @returns {boolean}
+ */
 function isAncestor(root, ancestor, descendant) {
   const result = runGit(root, ['merge-base', '--is-ancestor', ancestor, descendant]);
   return result.ok;
 }
 
+/**
+ * @param {HygieneWorktreeRegistration} worktree
+ * @returns {HygieneWorktreeState}
+ */
 function worktreeState(worktree) {
   const resolvedPath = path.resolve(worktree.path);
   let stat;
@@ -193,6 +281,10 @@ function worktreeState(worktree) {
   };
 }
 
+/**
+ * @param {string} root
+ * @returns {HygieneGeneratedOutput[]}
+ */
 function generatedOutputState(root) {
   return GENERATED_OUTPUTS.map((name) => {
     const target = path.join(root, name);
@@ -205,6 +297,10 @@ function generatedOutputState(root) {
   });
 }
 
+/**
+ * @param {string} root
+ * @returns {HygieneIgnoredOutput}
+ */
 function ignoredOutputState(root) {
   // Include bounded untracked/ignored directory entries so the report does
   // not claim zero merely because the probe disabled untracked output. The
@@ -217,6 +313,11 @@ function ignoredOutputState(root) {
 }
 
 /** Tracked paths under one root-level name. Failure is unprovable, not empty. */
+/**
+ * @param {string} root
+ * @param {string} name
+ * @returns {HygieneTrackedPaths}
+ */
 function trackedPathsUnder(root, name) {
   const result = runGit(root, ['ls-files', '-z', '--', name]);
   if (!result.ok) return { status: 'UNAVAILABLE', files: [], code: result.code };
@@ -224,12 +325,17 @@ function trackedPathsUnder(root, name) {
 }
 
 /** Bounded, no-follow file count and byte size; null when unmeasurable. */
+/**
+ * @param {string} target
+ * @returns {HygieneTreeStats | null}
+ */
 function boundedTreeStats(target) {
   let fileCount = 0;
   let bytes = 0;
   const stack = [target];
   while (stack.length > 0) {
-    const current = stack.pop();
+    // The loop condition proves the pop succeeds.
+    const current = /** @type {string} */ (stack.pop());
     let entries;
     try {
       entries = fs.readdirSync(current, { withFileTypes: true });
@@ -261,6 +367,9 @@ function boundedTreeStats(target) {
  * file, and that is not a protected root, is a removal target. `artifacts/`
  * and `.nightwatch/` are outside the pattern by construction and protected by
  * name as well; neither can be reached from here.
+ *
+ * @param {string} root
+ * @returns {HygieneOutputRootState}
  */
 function outputRootState(root) {
   let names;
@@ -269,6 +378,7 @@ function outputRootState(root) {
   } catch {
     return { status: 'UNAVAILABLE', entries: [], unownedRoots: [] };
   }
+  /** @type {HygieneOutputRootEntry[]} */
   const entries = [];
   for (const entry of names) {
     if (!entry.isDirectory() || entry.isSymbolicLink()) continue;
@@ -330,6 +440,10 @@ function outputRootState(root) {
  * Revalidate and remove exactly one previously planned output root. The exact
  * target is re-checked for tracked files immediately before removal, so a file
  * that became tracked between plan and apply is preserved, not deleted.
+ *
+ * @param {string} root
+ * @param {string} name
+ * @returns {HygieneOutputRemoval}
  */
 function applyOutputTarget(root, name) {
   if (!OUTPUT_ROOT_PATTERN.test(name) || PROTECTED_ROOT_NAMES.has(name)) {
@@ -357,6 +471,14 @@ function applyOutputTarget(root, name) {
   return { name, result: 'REMOVED', reasonCode: 'RUNNER_OUTPUT_OR_SCRATCH_REMOVED' };
 }
 
+/**
+ * @param {string} root
+ * @param {HygieneWorktreeRegistration} registration
+ * @param {Map<string, HygieneBranchRecord>} branchByName
+ * @param {string | null} currentBranch
+ * @param {string | null} mainReference
+ * @returns {HygieneClassification}
+ */
 function classifyRegistration(root, registration, branchByName, currentBranch, mainReference) {
   const state = worktreeState(registration);
   const base = {
@@ -390,6 +512,10 @@ function classifyRegistration(root, registration, branchByName, currentBranch, m
   };
 }
 
+/**
+ * @param {string} root
+ * @returns {HygieneReport}
+ */
 function inspect(root) {
   const gitHead = requiredGitText(root, ['rev-parse', 'HEAD']).toLowerCase();
   const currentBranchResult = runGit(root, ['symbolic-ref', '--quiet', '--short', 'HEAD']);
@@ -398,6 +524,7 @@ function inspect(root) {
   const mainReference = mainResult.ok ? 'refs/heads/main' : null;
   const registrations = parseWorktreeList(requiredGitText(root, ['worktree', 'list', '--porcelain']));
   const branches = localBranches(root);
+  /** @type {Map<string, HygieneBranchRecord>} */
   const branchByName = new Map(branches.map((branch) => [branch.name, branch]));
   const classifiedRegistrations = registrations.map((registration) => classifyRegistration(root, registration, branchByName, currentBranch, mainReference));
   const registeredBranches = new Set(registrations.map((registration) => registration.branch).filter(Boolean));
@@ -418,12 +545,12 @@ function inspect(root) {
   }));
   const safeTargets = classifiedRegistrations
     .filter((registration) => registration.disposition === 'SAFE_CLEAN_REACHABLE_TARGET')
-    .map((registration) => registration.target);
+    .map((registration) => /** @type {HygieneCleanTargetRegistration} */ (registration).target);
   const outputState = outputRootState(root);
   const outputRemovalPlan = outputState.entries
     .filter((entry) => entry.disposition === 'REMOVAL_TARGET')
     .map((entry) => entry.name);
-  return {
+  return /** @type {HygieneReport} */ ({
     schemaVersion: SCHEMA_VERSION,
     mode: 'STATUS',
     result: safeTargets.length === 0 && outputRemovalPlan.length === 0 ? 'PRESERVED' : 'REMOVAL_TARGETS_FOUND',
@@ -448,9 +575,14 @@ function inspect(root) {
     outputRemovalPlan,
     unownedOutputRoots: outputState.unownedRoots,
     outputStatus: outputState.status,
-  };
+  });
 }
 
+/**
+ * @param {string} root
+ * @param {HygieneTarget} target
+ * @returns {HygieneApplyOutcome}
+ */
 function applyTarget(root, target) {
   const current = inspect(root);
   const match = current.safeTargets.find((candidate) => candidate.path === target.path && candidate.branch === target.branch);
@@ -462,6 +594,10 @@ function applyTarget(root, target) {
   return { target, result: 'APPLIED', reasonCode: 'CLEAN_REACHABLE_TARGET_REMOVED' };
 }
 
+/**
+ * @param {HygieneReport} report
+ * @returns {string}
+ */
 function renderText(report) {
   const applied = report.applyResults?.filter((entry) => entry.result === 'APPLIED').length ?? 0;
   const outputsApplied = report.outputRemovalResults?.filter((entry) => entry.result === 'REMOVED').length ?? 0;
@@ -482,6 +618,10 @@ function renderText(report) {
   return lines.join('\n') + '\n';
 }
 
+/**
+ * @param {{ command: string, json: boolean, apply: boolean, suppliedRoot: string | null }} options
+ * @returns {HygieneReport}
+ */
 function execute(options) {
   const root = resolveRoot(options.suppliedRoot);
   if (!options.apply) {

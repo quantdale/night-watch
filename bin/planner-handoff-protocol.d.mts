@@ -2,6 +2,7 @@
 export const HANDOFF_PROTOCOL_VERSION: 'nightwatch.planner-executor-handoff.v1';
 export const HANDOFF_RECEIPT_SCHEMA: 'nightwatch.planner-handoff-receipt.v1';
 export const HANDOFF_STATUSES: ReadonlySet<string>;
+export const HANDOFF_PLANNING_ONLY_STATUS: 'READY_FOR_EXECUTION';
 export const HANDOFF_REQUIRED_FIELDS: readonly string[];
 
 export interface HandoffDiagnostic {

@@ -21,6 +21,33 @@ export const LANE_STATE_CLASSES = Object.freeze(['PROVEN', 'BLOCKED_EXTERNAL', '
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const SHA_RE = /^[0-9a-f]{40}$/i;
 
+/**
+ * One lane entry as `validateLaneState` proved it: a named owner of declared
+ * classes carrying an exact evidence binding. A field the record need not
+ * declare is `undefined` rather than absent, so a runtime `??` fallback stays
+ * available to a caller that never validated its input.
+ *
+ * @typedef {{ laneId: string, classes: readonly string[] | undefined, class: string | undefined, command: string | undefined, evidence: string | undefined, evidenceSha: string | null | undefined, unblockCondition: string | null | undefined, revisitDate: string | null | undefined }} LaneStateRecord
+ * @typedef {{ code: string, detail: string }} LaneStateDiagnostic
+ */
+
+/**
+ * @param {unknown} value
+ * @returns {value is Record<string, unknown>}
+ */
+function isRecord(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+/**
+ * The two fields this loader reads out of the stored record. A JSON document
+ * that is not an object declares neither, so its `schemaVersion` reads as
+ * `undefined` and it is reported as an unsupported schema rather than as
+ * unreadable JSON.
+ *
+ * @param {string} file
+ * @returns {Partial<{ schemaVersion: unknown, lanes: unknown }> | null}
+ */
 function readJson(file) {
   try {
     return JSON.parse(fs.readFileSync(file, 'utf8'));
@@ -29,17 +56,23 @@ function readJson(file) {
   }
 }
 
+/** @param {string} root @returns {string} */
 export function laneStatePath(root) {
   return path.join(root, LANE_STATE_FILE.config, LANE_STATE_FILE.name);
 }
 
+/**
+ * @param {string} root
+ * @returns {{ ok: boolean, errors: LaneStateDiagnostic[], lanes: unknown[] }}
+ */
 export function loadLaneState(root) {
   const raw = readJson(laneStatePath(root));
   if (raw === null) return { ok: false, errors: [{ code: 'LANE_STATE_UNREADABLE', detail: 'config/validation-lane-state.v1.json missing or invalid JSON' }], lanes: [] };
   if (raw.schemaVersion !== LANE_STATE_SCHEMA) {
     return { ok: false, errors: [{ code: 'LANE_STATE_SCHEMA_UNSUPPORTED', detail: String(raw.schemaVersion) }], lanes: [] };
   }
-  const lanes = Array.isArray(raw.lanes) ? raw.lanes : [];
+  /** @type {unknown[]} */
+  const lanes = Array.isArray(raw.lanes) ? /** @type {unknown[]} */ (raw.lanes) : [];
   if (lanes.length === 0) {
     return { ok: false, errors: [{ code: 'LANE_STATE_EMPTY', detail: 'the lane-state record declares no lane' }], lanes: [] };
   }
@@ -49,7 +82,8 @@ export function loadLaneState(root) {
   // consulted — an unbound lane resolves to null (an unevidenced PROVEN claim
   // then fails structurally), never to a stale copy left in the lane record.
   const resolved = lanes.map((lane) => {
-    const laneId = lane !== null && typeof lane === 'object' && typeof lane.laneId === 'string' ? lane.laneId : null;
+    if (!isRecord(lane)) return lane;
+    const laneId = typeof lane.laneId === 'string' ? lane.laneId : null;
     if (laneId === null) return lane;
     return { ...lane, evidenceSha: resolveEvidenceShaForSubject(root, laneId) };
   });
@@ -60,31 +94,39 @@ export function loadLaneState(root) {
  * Structural validation. `declaredClasses` is the list of classes declared in
  * config/validation-universe.v1.json; every one must resolve to exactly one
  * lane entry, and a lane may not claim an undeclared class.
+ *
+ * @param {readonly unknown[]} lanes
+ * @param {readonly string[]} declaredClasses
+ * @returns {LaneStateDiagnostic[]}
  */
 export function validateLaneState(lanes, declaredClasses) {
+  /** @type {LaneStateDiagnostic[]} */
   const errors = [];
   const seenIds = new Set();
+  /** @type {Map<string, string>} */
   const classOwners = new Map();
   const declared = new Set(declaredClasses);
   for (const lane of lanes) {
-    const laneId = typeof lane?.laneId === 'string' && lane.laneId !== '' ? lane.laneId : null;
+    const entry = isRecord(lane) ? lane : {};
+    const laneId = typeof entry.laneId === 'string' && entry.laneId !== '' ? entry.laneId : null;
     if (laneId === null) {
       errors.push({ code: 'LANE_STATE_LANE_ID_MISSING', detail: 'a lane entry declares no laneId' });
       continue;
     }
     if (seenIds.has(laneId)) errors.push({ code: 'LANE_STATE_DUPLICATE', detail: laneId });
     seenIds.add(laneId);
-    if (!LANE_STATE_CLASSES.includes(lane?.class)) {
-      errors.push({ code: 'LANE_STATE_CLASS_INVALID', detail: `${laneId}: ${String(lane?.class)}` });
+    const laneClass = typeof entry.class === 'string' ? entry.class : null;
+    if (laneClass === null || !LANE_STATE_CLASSES.includes(laneClass)) {
+      errors.push({ code: 'LANE_STATE_CLASS_INVALID', detail: `${laneId}: ${String(entry.class)}` });
     }
-    if (typeof lane?.evidence !== 'string' || lane.evidence.trim() === '') {
+    if (typeof entry.evidence !== 'string' || entry.evidence.trim() === '') {
       errors.push({ code: 'LANE_STATE_EVIDENCE_MISSING', detail: laneId });
     }
-    if (lane?.evidenceSha !== null && lane?.evidenceSha !== undefined) {
-      if (typeof lane.evidenceSha !== 'string' || !SHA_RE.test(lane.evidenceSha)) {
-        errors.push({ code: 'LANE_STATE_EVIDENCE_SHA_INVALID', detail: `${laneId}: ${String(lane?.evidenceSha)}` });
+    if (entry.evidenceSha !== null && entry.evidenceSha !== undefined) {
+      if (typeof entry.evidenceSha !== 'string' || !SHA_RE.test(entry.evidenceSha)) {
+        errors.push({ code: 'LANE_STATE_EVIDENCE_SHA_INVALID', detail: `${laneId}: ${String(entry.evidenceSha)}` });
       }
-    } else if (lane?.class === 'PROVEN') {
+    } else if (laneClass === 'PROVEN') {
       // VB-01 / corrections task 2.1: a PROVEN claim requires EXACT evidence.
       // A null evidenceSha is not "no staleness" — it is an unevidenced
       // PROVEN claim and must fail structural validation, so a documentary
@@ -92,17 +134,19 @@ export function validateLaneState(lanes, declaredClasses) {
       // evidence it was proven against.
       errors.push({ code: 'LANE_STATE_EVIDENCE_SHA_MISSING', detail: laneId });
     }
-    if (lane?.class !== 'PROVEN') {
-      if (typeof lane?.unblockCondition !== 'string' || lane.unblockCondition.trim() === '') {
+    if (laneClass !== 'PROVEN') {
+      if (typeof entry.unblockCondition !== 'string' || entry.unblockCondition.trim() === '') {
         errors.push({ code: 'LANE_STATE_CONDITION_MISSING', detail: laneId });
       }
-      if (typeof lane?.revisitDate !== 'string' || !DATE_RE.test(lane.revisitDate)) {
+      if (typeof entry.revisitDate !== 'string' || !DATE_RE.test(entry.revisitDate)) {
         errors.push({ code: 'LANE_STATE_REVISIT_MISSING', detail: laneId });
       }
     }
-    for (const claimed of Array.isArray(lane?.classes) ? lane.classes : []) {
-      if (!declared.has(claimed)) {
-        errors.push({ code: 'LANE_STATE_CLASS_UNKNOWN', detail: `${laneId}: ${claimed}` });
+    /** @type {unknown[]} */
+    const claimedClasses = Array.isArray(entry.classes) ? /** @type {unknown[]} */ (entry.classes) : [];
+    for (const claimed of claimedClasses) {
+      if (typeof claimed !== 'string' || !declared.has(claimed)) {
+        errors.push({ code: 'LANE_STATE_CLASS_UNKNOWN', detail: `${laneId}: ${String(claimed)}` });
         continue;
       }
       if (classOwners.has(claimed)) errors.push({ code: 'LANE_STATE_CLASS_DUPLICATE', detail: claimed });
@@ -118,6 +162,10 @@ export function validateLaneState(lanes, declaredClasses) {
 /**
  * Report state per lane. `isAncestor(a, b)` answers whether commit `a` is an
  * ancestor of `b`; the fourth state is report-only and never stored.
+ *
+ * @param {readonly LaneStateRecord[]} lanes
+ * @param {string | null} lastSubstantiveSha
+ * @param {(left: string, right: string) => boolean} isAncestor
  */
 export function reportLaneState(lanes, lastSubstantiveSha, isAncestor) {
   return lanes.map((lane) => {
@@ -142,12 +190,22 @@ export function reportLaneState(lanes, lastSubstantiveSha, isAncestor) {
   });
 }
 
-/** Revisit-due lanes for an injected calendar date (YYYY-MM-DD). */
+/**
+ * Revisit-due lanes for an injected calendar date (YYYY-MM-DD).
+ *
+ * @param {readonly LaneStateRecord[]} lanes
+ * @param {string} todayIso
+ * @returns {{ laneId: string, revisitDate: string }[]}
+ */
 export function collectRevisitDue(lanes, todayIso) {
   const today = typeof todayIso === 'string' && DATE_RE.test(todayIso) ? todayIso : null;
   if (today === null) return [];
-  return lanes
-    .filter((lane) => typeof lane?.revisitDate === 'string' && DATE_RE.test(lane.revisitDate) && lane.revisitDate < today)
-    .map((lane) => ({ laneId: lane.laneId, revisitDate: lane.revisitDate }))
-    .sort((left, right) => left.laneId.localeCompare(right.laneId));
+  /** @type {{ laneId: string, revisitDate: string }[]} */
+  const due = [];
+  for (const lane of lanes) {
+    const revisitDate = lane?.revisitDate;
+    if (typeof revisitDate !== 'string' || !DATE_RE.test(revisitDate) || revisitDate >= today) continue;
+    due.push({ laneId: lane.laneId, revisitDate });
+  }
+  return due.sort((left, right) => left.laneId.localeCompare(right.laneId));
 }

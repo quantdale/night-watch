@@ -8,22 +8,39 @@
 export const SEMANTIC_SKIP_POLICY_VERSION = 'nightwatch.semantic-skip-identity.v2';
 export const SKIP_IDENTITY_REPORT_SCHEMA = 'nightwatch.skip-identity-report.v2';
 
+/**
+ * @typedef {object} SkipIdentity
+ * @property {string} file
+ * @property {string[]} titlePath
+ * @property {string} reason
+ */
+
+/**
+ * @param {unknown} value
+ * @returns {value is Record<string, unknown>}
+ */
 function isRecord(value) {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
+/** @param {unknown} value */
 function isFilePath(value) {
   return typeof value === 'string'
     && /^tests\/(?:unit|smoke|manual)\/[A-Za-z0-9._/-]+$/.test(value)
     && !value.includes('..');
 }
 
+/** @param {unknown} value */
 function isTitlePath(value) {
   return Array.isArray(value)
     && value.length > 0
     && value.every((part) => typeof part === 'string' && part.trim().length > 0);
 }
 
+/**
+ * @param {unknown} value
+ * @returns {value is SkipIdentity}
+ */
 function isValidIdentity(value) {
   return isRecord(value)
     && isFilePath(value.file)
@@ -32,6 +49,7 @@ function isValidIdentity(value) {
     && value.reason.trim().length > 0;
 }
 
+/** @param {unknown} value */
 function isValidAllowlistEntry(value) {
   if (!isRecord(value)) return false;
   const keys = Object.keys(value).sort();
@@ -42,17 +60,30 @@ function isValidAllowlistEntry(value) {
     && value.reasonToken.trim().length > 0;
 }
 
+/**
+ * @param {readonly string[]} left
+ * @param {readonly string[]} right
+ */
 function sameTitlePath(left, right) {
   return left.length === right.length && left.every((part, index) => part === right[index]);
 }
 
+/**
+ * @param {unknown} identity
+ * @param {unknown} canonicalSkipIdentities
+ */
 function isDeclared(identity, canonicalSkipIdentities) {
   if (!isValidIdentity(identity)) return false;
-  return canonicalSkipIdentities.some((entry) => entry.file === identity.file
+  const entries = Array.isArray(canonicalSkipIdentities) ? canonicalSkipIdentities : [];
+  return entries.some((entry) => entry.file === identity.file
     && sameTitlePath(entry.titlePath, identity.titlePath)
     && identity.reason.includes(entry.reasonToken));
 }
 
+/**
+ * @param {unknown} canonicalSkipIdentities
+ * @param {unknown} expectedSkipPolicy
+ */
 function evaluateConfiguration(canonicalSkipIdentities, expectedSkipPolicy) {
   if (typeof expectedSkipPolicy !== 'string' || expectedSkipPolicy.trim() === '') {
     return { result: 'SKIP_POLICY_UNCONFIGURED', detail: 'expectedSkipPolicy is absent or empty' };
@@ -75,6 +106,8 @@ function evaluateConfiguration(canonicalSkipIdentities, expectedSkipPolicy) {
 /**
  * Evaluate the skip policy for one Playwright JSON identity report.
  * Missing and malformed reports are distinct non-pass outcomes.
+ *
+ * @param {Partial<{ report: unknown, canonicalSkipIdentities: unknown, expectedSkipPolicy: unknown }>} input
  */
 export function evaluateSemanticSkipIdentityReport({ report, canonicalSkipIdentities, expectedSkipPolicy } = {}) {
   if (report === undefined || report === null) {
@@ -93,6 +126,8 @@ export function evaluateSemanticSkipIdentityReport({ report, canonicalSkipIdenti
 /**
  * Evaluate pre-collected v2 skip identities (for lane runners).
  * Returns PASS only when every skip is exactly allowlisted and reasoned.
+ *
+ * @param {Partial<{ identities: unknown, canonicalSkipIdentities: unknown, expectedSkipPolicy: unknown }>} input
  */
 export function evaluateSemanticSkipPolicyIdentities({ identities, canonicalSkipIdentities, expectedSkipPolicy } = {}) {
   const invalid = evaluateConfiguration(canonicalSkipIdentities, expectedSkipPolicy);
@@ -155,7 +190,7 @@ export function vc01ExecutionFailure(report) {
   if (report === null || typeof report !== 'object' || Array.isArray(report)) return 'VC01_EXECUTION_REPORT_MISSING';
   const record = /** @type {Record<string, unknown>} */ (report);
   const executed = Array.isArray(record.executedSecurity)
-    ? /** @type {Array<{ file?: unknown, titlePath?: unknown }>} */ (record.executedSecurity)
+    ? /** @type {Array<Partial<{ file: unknown, titlePath: unknown }>>} */ (record.executedSecurity)
     : null;
   if (executed === null) return 'VC01_EXECUTION_UNRECORDED';
   const titles = new Set();

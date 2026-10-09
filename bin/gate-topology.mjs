@@ -68,7 +68,25 @@ const OWNER_PROVENANCE_SUITES = Object.freeze([
   'tests/unit/aiReview.test.ts',
 ]);
 
-/** @type {any} */
+/**
+ * Every capability observation carries the probe envelope fields; each absence
+ * then measures its own capability-specific fields. A probe for one absence
+ * never reports another's fields, so the observation is the union of the five
+ * shapes rather than one object with optional members.
+ */
+/** @typedef {{ schemaVersion: 'nightwatch.topology-probe.v1', absence: string, observedAt: string }} CapabilityProbeEnvelope */
+/** @typedef {CapabilityProbeEnvelope & { available: boolean, blockerCode: string | null, found: number }} BwrapCapabilityProbe */
+/** @typedef {CapabilityProbeEnvelope & { rootResolved: boolean, pathUsable: boolean, entries: number | null, blockerCode: string | null }} SiblingRootCapabilityProbe */
+/** @typedef {CapabilityProbeEnvelope & { available: boolean, blockerCode: string | null, executableCount: number, browserBundle: boolean }} ChromeCapabilityProbe */
+/** @typedef {CapabilityProbeEnvelope & { home: string, expectedHome: string | null, writable: boolean }} FreshHomeCapabilityProbe */
+/** @typedef {CapabilityProbeEnvelope & { error: string }} UnknownAbsenceProbe */
+/** @typedef {BwrapCapabilityProbe | SiblingRootCapabilityProbe | ChromeCapabilityProbe | FreshHomeCapabilityProbe | UnknownAbsenceProbe} CapabilityProbe */
+
+/** @typedef {{ code: string, detail: string }} TopologyGateFinding */
+/** @typedef {Partial<{ status: string, detail: string, receipts: unknown }> | null} TopologyEntryLane */
+/** @typedef {{ absence: string, constructed: boolean, lane: TopologyEntryLane, findings: readonly TopologyGateFinding[] } & Partial<{ notExercised: string, probe: unknown }>} TopologyAbsenceEntry */
+
+/** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
 const CLI_METADATA = {
   schemaVersion: OPERATOR_CLI_SCHEMA,
   name: 'gate-topology',
@@ -102,7 +120,7 @@ function readText(relative) {
   }
 }
 
-/** @param {string} relative @returns {any} */
+/** @param {string} relative @returns {Record<string, unknown> | null} */
 function readJson(relative) {
   const text = readText(relative);
   if (text === null) return null;
@@ -176,9 +194,10 @@ function browserBundlePresent() {
  * this inside the envelope, so the observation is made by the process that is
  * actually subject to the absence.
  * @param {string} absenceId
- * @returns {any}
+ * @returns {CapabilityProbe}
  */
 function probeCapability(absenceId) {
+  /** @type {CapabilityProbeEnvelope} */
   const base = { schemaVersion: 'nightwatch.topology-probe.v1', absence: absenceId, observedAt: new Date().toISOString() };
   if (absenceId === 'bwrap') {
     const found = canonicalBwrapCandidates().filter(isExecutableRegularFile);
@@ -246,12 +265,13 @@ function probeCapability(absenceId) {
 
 /**
  * The union of test suites the REQUIRED gate lanes actually select.
- * @param {any} synthetic
- * @param {any} semantic
- * @param {any} scripts
+ * @param {Record<string, unknown> | null} synthetic
+ * @param {Record<string, unknown> | null} semantic
+ * @param {unknown} scripts
  * @returns {string[]}
  */
 function gateSuiteFiles(synthetic, semantic, scripts) {
+  /** @type {Set<string>} */
   const suites = new Set();
   for (const file of Array.isArray(synthetic?.files) ? synthetic.files : []) suites.add(file);
   for (const suite of Array.isArray(semantic?.phaseSuites) ? semantic.phaseSuites : []) {
@@ -321,7 +341,7 @@ function staticFindings() {
   const universe = readJson(UNIVERSE_FILE);
   const synthetic = readJson(SYNTHETIC_MANIFEST);
   const registration = validateTopologyRegistration({
-    packageScripts: packageJson?.scripts ?? {},
+    packageScripts: /** @type {Record<string, string>} */ (packageJson?.scripts ?? {}),
     universe,
     gateManifestFiles: gateSuiteFiles(synthetic, readJson(SEMANTIC_MANIFEST), packageJson?.scripts),
     binFile: 'bin/gate-topology.mjs',
@@ -356,12 +376,18 @@ function staticFindings() {
   // LEGACY_HOST_PATH_SKIP declaration records real host-path debt (the
   // declaration is a debt ledger, not an eraser), while a
   // NONE_INPUT_FIXTURE entry is opaque data and never a dependence.
+  /**
+   * @param {{ id: string, commandKey: string, requiresSiblingTopology: boolean }} group
+   * @returns {string[]}
+   */
   const groupFiles = (group) => {
     if (group.commandKey === 'SEMANTIC_COMPATIBILITY') {
       const semantic = readJson(SEMANTIC_MANIFEST);
+      const phaseSuites = Array.isArray(semantic?.phaseSuites) ? semantic.phaseSuites : [];
+      const supportFiles = Array.isArray(semantic?.supportFiles) ? semantic.supportFiles : [];
       return [...new Set([
-        ...((semantic?.phaseSuites ?? []).flatMap((suite) => Array.isArray(suite?.files) ? suite.files : [])),
-        ...((semantic?.supportFiles ?? [])),
+        ...(phaseSuites.flatMap(/** @param {{ phase: number, files: string[] }} suite */ (suite) => Array.isArray(suite?.files) ? suite.files : [])),
+        ...(supportFiles),
       ])];
     }
     if (group.commandKey === 'OWNER_PROVENANCE') return [...OWNER_PROVENANCE_SUITES];
@@ -457,7 +483,7 @@ function readProjectStateBlock() {
 /**
  * @param {string} command
  * @param {readonly string[]} args
- * @param {{ cwd?: string, env?: Record<string, string | undefined>, timeoutMs?: number }} [options]
+ * @param {Partial<{ cwd: string, env: Record<string, string | undefined>, timeoutMs: number }>} [options]
  */
 function runCapture(command, args, options = {}) {
   const result = spawnSync(command, args, {
@@ -480,7 +506,7 @@ function runCapture(command, args, options = {}) {
 /**
  * @param {string} output
  * @param {string} [marker]
- * @returns {any}
+ * @returns {Record<string, unknown> | null}
  */
 function parseLastJsonLine(output, marker) {
   const lines = output.split(/\r?\n/).reverse();
@@ -497,7 +523,7 @@ function parseLastJsonLine(output, marker) {
 }
 
 /**
- * @param {any} absence
+ * @param {{ laneSuites: readonly string[] }} absence
  * @param {string} lane
  * @returns {{ kind: string, command: string, args: string[] } | null}
  */
@@ -516,10 +542,10 @@ function makeFreshHome() {
 }
 
 /**
- * @param {readonly any[]} selectedAbsences
+ * @param {readonly import('./lib/topology-gate.mjs').TopologyAbsence[]} selectedAbsences
  * @param {string} lane
- * @param {{ staticOnly?: boolean }} options
- * @returns {{ entries: any[], findings: any[], envelope: 'BUBBLEWRAP' | 'BWRAP_UNAVAILABLE_DEGRADED' }}
+ * @param {{ staticOnly: boolean }} options
+ * @returns {{ entries: TopologyAbsenceEntry[], findings: TopologyGateFinding[], envelope: 'BUBBLEWRAP' | 'BWRAP_UNAVAILABLE_DEGRADED' }}
  */
 function runDynamic(selectedAbsences, lane, options) {
   const entries = [];
@@ -727,11 +753,11 @@ function runDynamic(selectedAbsences, lane, options) {
   return { entries, findings, envelope: bwrapExecutable === undefined ? 'BWRAP_UNAVAILABLE_DEGRADED' : 'BUBBLEWRAP' };
 }
 
-/** @param {any} receipt */
+/** @param {Record<string, unknown> | null} receipt */
 function extractDeepLane(receipt) {
   if (receipt === null || typeof receipt !== 'object') return null;
   const groups = Array.isArray(receipt.groups) ? receipt.groups : [];
-  const synthetic = groups.find((/** @type {any} */ group) => group?.id === 'SYNTHETIC_CAMPAIGN');
+  const synthetic = groups.find((group) => group?.id === 'SYNTHETIC_CAMPAIGN');
   return synthetic?.details?.deepContainmentLane ?? null;
 }
 
@@ -753,8 +779,8 @@ function resolveGitHead() {
 }
 
 /**
- * @param {any} document
- * @param {{ noReceipt?: boolean }} options
+ * @param {Record<string, unknown>} document
+ * @param {{ noReceipt: boolean }} options
  */
 function emitReceipt(document, options) {
   document.receiptDigest = topologyReceiptDigest(document, (value) => crypto.createHash('sha256').update(value, 'utf8').digest('hex'));
@@ -774,7 +800,7 @@ function emitReceipt(document, options) {
   process.exitCode = document.result === 'PASS' ? 0 : 1;
 }
 
-/** @param {any} cli */
+/** @param {import('./lib/operator-cli.mjs').OperatorCliParseResult & { readonly ok: true }} cli */
 function main(cli) {
   const command = cli.command ?? 'run';
   if (command === 'probe') {
@@ -787,9 +813,9 @@ function main(cli) {
     process.stdout.write(`${JSON.stringify(probeCapability(absence))}\n`);
     return;
   }
-  const mode = cli.flags['--mode'] ?? (command === 'static' ? 'static' : 'all');
-  const selected = cli.flags['--absence'] ?? 'all';
-  const lane = cli.flags['--lane'] ?? 'capability';
+  const mode = /** @type {string} */ (cli.flags['--mode'] ?? (command === 'static' ? 'static' : 'all'));
+  const selected = /** @type {string} */ (cli.flags['--absence'] ?? 'all');
+  const lane = /** @type {string} */ (cli.flags['--lane'] ?? 'capability');
   const noReceipt = cli.flags['--no-receipt'] === true;
   const absences = selected === 'all' ? TOPOLOGY_ABSENCES : TOPOLOGY_ABSENCES.filter((absence) => absence.id === selected);
   const staticResult = mode === 'dynamic' ? { findings: [], record: null, recordDigest: null, routesOk: true, requiresSiblingTopologyMeasurements: [] } : staticFindings();
@@ -865,5 +891,5 @@ function main(cli) {
 
 if (invokedDirectly(import.meta.url)) {
   const cli = defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url });
-  if (!cli.stop) main(cli);
+  if (!cli.stop) main(/** @type {import('./lib/operator-cli.mjs').OperatorCliParseResult & { readonly ok: true }} */ (cli));
 }

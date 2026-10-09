@@ -44,6 +44,7 @@ import {
  * no rule and no probe is a claim that rots silently.
  */
 export function checkM8GuardTotality() {
+  /** @type {ReadonlyArray<readonly [string, string, string]>} */
   const guards = [
     ["src/core/policy/devLanePreconditions.ts", "DEV_LANE_PRECONDITION_OPEN", "the DEV-lane precondition refusal"],
     ["bin/lib/dev-lane-precondition.mjs", "guardDevLane(", "the DEV-lane launcher guard"],
@@ -72,8 +73,8 @@ export function checkM8GuardTotality() {
     if (!read(file).includes(token)) fail(`${description} is missing from ${file}`);
   }
   // The probes must be registered for this rule, one per guard family.
-  const registry = JSON.parse(read('config/hardening-rule-probes.v1.json'));
-  const probes = registry.probes.checkM8GuardTotality;
+  const registry = /** @type {{ probes: Record<string, { id: string, ops: unknown }[]> }} */ (JSON.parse(read('config/hardening-rule-probes.v1.json')));
+  const probes = /** @type {{ id: string, ops: unknown }[]} */ (registry.probes.checkM8GuardTotality);
   if (!Array.isArray(probes) || probes.length < guards.length) {
     fail('every M8 guard must carry a registered mutation probe');
   }
@@ -420,7 +421,7 @@ export function checkR11ProxyGateReliability() {
     fail("R-11 portAvailable must retain a real loopback TCP bind probe");
   }
   // Allocator safety properties R-11 must not have weakened.
-  for (const [pattern, message] of [
+  for (const [pattern, message] of /** @type {ReadonlyArray<readonly [RegExp, string]>} */ ([
     [
       /fs\.openSync\(file,\s*'wx',\s*0o600\)/,
       "exclusive lease creation with owner-only mode",
@@ -436,7 +437,7 @@ export function checkR11ProxyGateReliability() {
       "lstat-based lease inspection so a symlink is never followed",
     ],
     [/current\?\.token === token/, "token ownership on release"],
-  ])
+  ]))
     if (!pattern.test(leaseSource))
       fail(`R-11 the port allocator must retain ${message}`);
 
@@ -470,14 +471,14 @@ export function checkR11ProxyGateReliability() {
     if (!/^tests\/unit\/(?:phase2[34].*|proxy).*\.test\.ts$/i.test(file))
       continue;
     const source = read(file);
-    for (const [pattern, message] of [
+    for (const [pattern, message] of /** @type {ReadonlyArray<readonly [RegExp, string]>} */ ([
       [/\bMath\.random\(\)/, "Math.random()"],
       [/\bDate\.now\(\)\s*[%+*]/, "a Date.now()-derived port"],
       [
         /(?:preferred|port)\w*\s*=\s*[^;\n]*process\.pid/i,
         "a process.pid-derived port",
       ],
-    ])
+    ]))
       if (pattern.test(source)) {
         fail(
           `${file} selects a proxy port using ${message}; R-11 forbids probabilistic port selection in proxy tests`,
@@ -627,6 +628,7 @@ export function checkC11ProdObserveBoundary() {
   }
 
   // --- F-12: the production cone may not import the DEV/NEXT/real-run cones ---
+  /** @type {ReadonlyArray<readonly [RegExp, string]>} */
   const forbiddenInProductionCone = [
     [
       /from\s+['"][^'"]*safety\/realRunGate['"]/,
@@ -653,13 +655,13 @@ export function checkC11ProdObserveBoundary() {
     }
     // No dispatcher anywhere in the cone: the kernel DECIDES and cannot contact
     // anything even if every gate were bypassed.
-    for (const [pattern, description] of [
+    for (const [pattern, description] of /** @type {ReadonlyArray<readonly [RegExp, string]>} */ ([
       [/from\s+['"]node:https?['"]/, "an HTTP client"],
       [/from\s+['"]node:net['"]/, "a socket client"],
       [/from\s+['"]node:dns['"]/, "a DNS resolver"],
       [/\bfetch\s*\(/, "fetch()"],
       [/storageState/, "a storage-state path"],
-    ])
+    ]))
       if (pattern.test(source))
         fail(
           `${file} contains ${description}; the C-11 production cone must contain no network or credential path`,
@@ -730,6 +732,7 @@ export function checkC11ProdObserveBoundary() {
   if (gateBlock === null) {
     fail("C-11 the ordered gate list must be a literal const array");
   } else {
+    const gateList = /** @type {string} */ (gateBlock[1]);
     for (const gate of [
       "G_KILL_SWITCH_ENTRY",
       "G_OWNER_AUTHORIZATION",
@@ -750,13 +753,13 @@ export function checkC11ProdObserveBoundary() {
       "G_BREAKER_STATE",
       "G_KILL_SWITCH_PREDISPATCH",
     ])
-      if (!gateBlock[1].includes(`'${gate}'`))
+      if (!gateList.includes(`'${gate}'`))
         fail(`C-11 the admission chain is missing the required gate ${gate}`);
     // Configuration integrity supplies the window, so it must precede it or the
     // integrity gate becomes unfalsifiable.
     if (
-      gateBlock[1].indexOf("'G_CONFIGURATION_INTEGRITY'") >
-      gateBlock[1].indexOf("'G_ORGANIZATION_WINDOW'")
+      gateList.indexOf("'G_CONFIGURATION_INTEGRITY'") >
+      gateList.indexOf("'G_ORGANIZATION_WINDOW'")
     ) {
       fail(
         "C-11 G_CONFIGURATION_INTEGRITY must precede G_ORGANIZATION_WINDOW: the window is read from the config",
@@ -854,6 +857,7 @@ export function checkP1ObservationScopeBoundary() {
 
   // --- F-12: the P1 cone may not import the request, DEV/NEXT, browser, or campaign cones ---
   // Patterns must match a RELATIVE import too (the DEF-C11-3 vacuity class).
+  /** @type {ReadonlyArray<readonly [RegExp, string]>} */
   const forbiddenInP1Cone = [
     [
       /from\s+['"][^'"]*prodObserve[^P][^'"]*['"]/,
@@ -884,7 +888,7 @@ export function checkP1ObservationScopeBoundary() {
     // No dispatcher, navigator, actuator, or credential path anywhere in the
     // cone: the observer DECIDES and OBSERVES and cannot contact or mutate
     // anything even if every gate were bypassed.
-    for (const [pattern, description] of [
+    for (const [pattern, description] of /** @type {ReadonlyArray<readonly [RegExp, string]>} */ ([
       [/from\s+['"]node:https?['"]/, "an HTTP client"],
       [/from\s+['"]node:net['"]/, "a socket client"],
       [/from\s+['"]node:dns['"]/, "a DNS resolver"],
@@ -893,7 +897,7 @@ export function checkP1ObservationScopeBoundary() {
       [/\.click\(/, "a click primitive"],
       [/storageState/, "a storage-state path"],
       [/replayExecutor/i, "a replay executor"],
-    ])
+    ]))
       if (pattern.test(source))
         fail(
           `${file} contains ${description}; the P1 cone must contain no traffic, actuation, replay, or credential path`,
@@ -946,6 +950,7 @@ export function checkP1ObservationScopeBoundary() {
   if (gateBlock === null) {
     fail("MA-8 the P1 ordered gate list must be a literal const array");
   } else {
+    const gateList = /** @type {string} */ (gateBlock[1]);
     for (const gate of [
       "P1_KILL_SWITCH_ENTRY",
       "P1_OWNER_AUTHORIZATION",
@@ -963,7 +968,7 @@ export function checkP1ObservationScopeBoundary() {
       "P1_ATTRIBUTION_CAPABILITY",
       "P1_KILL_SWITCH_PREATTACH",
     ])
-      if (!gateBlock[1].includes(`'${gate}'`))
+      if (!gateList.includes(`'${gate}'`))
         fail(
           `MA-8 the P1 observation-scope chain is missing the required gate ${gate}`,
         );
@@ -971,16 +976,16 @@ export function checkP1ObservationScopeBoundary() {
     // binding, so it must precede both or those gates become unfalsifiable
     // (the DEF-C11-1 / DEF-P1-1 class).
     if (
-      gateBlock[1].indexOf("'P1_CONFIGURATION_INTEGRITY'") >
-      gateBlock[1].indexOf("'P1_IMPLEMENTATION_IDENTITY'")
+      gateList.indexOf("'P1_CONFIGURATION_INTEGRITY'") >
+      gateList.indexOf("'P1_IMPLEMENTATION_IDENTITY'")
     ) {
       fail(
         "MA-8 P1_CONFIGURATION_INTEGRITY must precede P1_IMPLEMENTATION_IDENTITY: the binding is read from the config",
       );
     }
     if (
-      gateBlock[1].indexOf("'P1_CONFIGURATION_INTEGRITY'") >
-      gateBlock[1].indexOf("'P1_OBSERVATION_WINDOW'")
+      gateList.indexOf("'P1_CONFIGURATION_INTEGRITY'") >
+      gateList.indexOf("'P1_OBSERVATION_WINDOW'")
     ) {
       fail(
         "MA-8 P1_CONFIGURATION_INTEGRITY must precede P1_OBSERVATION_WINDOW: the window is read from the config",

@@ -18,6 +18,7 @@ import { OPERATOR_CLI_SCHEMA, defineOperatorCli, invokedDirectly } from './lib/o
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
+/** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
 const CLI_METADATA = {
   schemaVersion: OPERATOR_CLI_SCHEMA,
   name: 'efficacy-corpus',
@@ -36,13 +37,19 @@ const CLI_METADATA = {
 };
 
 const cli = invokedDirectly(import.meta.url) ? defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url }) : { stop: true };
-const command = cli.stop ? 'compare' : (cli.command ?? 'compare');
+// Only a clean parse contributes a subcommand; every stop/refusal path keeps
+// the default command exactly as before.
+const command = 'ok' in cli && cli.ok ? (cli.command ?? 'compare') : 'compare';
 
+/**
+ * @param {string} message
+ */
 function fail(message) {
   process.stderr.write(`NIGHTWATCH_EFFICACY: ${message}\n`);
   process.exitCode = 2;
 }
 
+/** @type {Map<string, 'W7_BASELINE' | 'W8_MEMORY'>} */
 const MODES = new Map([
   ['baseline', 'W7_BASELINE'],
   ['candidate', 'W8_MEMORY'],
@@ -62,7 +69,9 @@ try {
       comparison: result.comparison,
     }, null, 2)}\n`);
   } else if (MODES.has(command)) {
-    const report = await efficacy.runEfficacyCorpus({ mode: MODES.get(command) });
+    // `has` above is the invariant that the lookup is present.
+    const mode = /** @type {'W7_BASELINE' | 'W8_MEMORY'} */ (MODES.get(command));
+    const report = await efficacy.runEfficacyCorpus({ mode });
     process.stdout.write(`${JSON.stringify({ corpusId: efficacy.EFFICACY_CORPUS_ID, report }, null, 2)}\n`);
   } else {
     fail(`unknown command ${command}; use baseline|candidate|compare`);

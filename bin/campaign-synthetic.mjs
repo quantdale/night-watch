@@ -39,6 +39,7 @@ import { evaluateSemanticSkipIdentityReport, skipCountDisagreement, vc01Executio
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
+/** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
 const CLI_METADATA = {
   schemaVersion: OPERATOR_CLI_SCHEMA,
   name: 'campaign-synthetic',
@@ -61,6 +62,14 @@ const SCHEMA_VERSION = 'nightwatch.synthetic-campaign.v1';
 const filePattern = /^tests\/(?:unit|smoke)\/[A-Za-z0-9._/-]+\.test\.ts$/;
 const npx = (() => { const b = path.join(root, 'node_modules', '.bin', 'playwright'); return process.platform === 'win32' ? `${b}.cmd` : b; })();
 
+/**
+ * Fail closed. Every refusal path in the campaign ends here, so the declared
+ * `never` return is what lets the boundary readers below narrow their result
+ * to the validated value instead of an unconditioned optional.
+ *
+ * @param {string} code
+ * @returns {never}
+ */
 function fail(code) {
   throw new Error(code);
 }
@@ -118,7 +127,13 @@ function deepContainmentLane() {
 // capped at 107 usable bytes — the previous 30-byte prefix plus the
 // 28-byte exclusive-lane directory overflowed that cap and FATALed
 // (process_singleton_posix: "Socket path too long") on every live-browser test.
+/** @type {string | null} */
 let campaignTempRoot = null;
+
+/**
+ * @param {string} lane
+ * @returns {string}
+ */
 function isolatedCampaignTempRoot(lane) {
   if (campaignTempRoot === null) {
     campaignTempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'nw-synth-'));
@@ -171,6 +186,12 @@ function campaignEnvironment(lane, skipReportPath) {
   return environment;
 }
 
+/**
+ * @param {readonly string[]} fileList
+ * @param {string} project
+ * @param {string} outputDir
+ * @returns {string[]}
+ */
 function playwrightArguments(fileList, project, outputDir) {
   return [
     'test', ...fileList, `--project=${project}`, '--workers=1', '--retries=0',
@@ -186,7 +207,7 @@ function evaluateSkipReport(skipReportPath) {
   } catch {
     report = null;
   }
-  /** @type {{ canonicalSkipIdentities?: unknown, expectedSkipPolicy?: unknown }} */
+  /** @type {Partial<{ canonicalSkipIdentities: unknown, expectedSkipPolicy: unknown }>} */
   let policy = {};
   try {
     policy = JSON.parse(fs.readFileSync(skipPolicyPath, 'utf8')).execution ?? {};
@@ -217,8 +238,18 @@ function vc01CampaignFailure(reports) {
   return vc01ExecutionFailure({ executedSecurity });
 }
 
+/**
+ * @typedef {{ total: number, passed: number | null, skipped: number | null, didNotRun: number | null, failed: number | null, failedLocations: string[] }} SyntheticCampaignObservationCounts
+ */
+
+/**
+ * @param {string} output
+ * @param {number | null} status
+ * @param {number} maxFailedLocations
+ * @returns {SyntheticCampaignObservationCounts}
+ */
 function parseCampaignOutput(output, status, maxFailedLocations) {
-  const count = (pattern) => { const match = pattern.exec(output); return match ? Number(match[1]) : null; };
+  const count = /** @param {RegExp} pattern */ (pattern) => { const match = pattern.exec(output); return match ? Number(match[1]) : null; };
   const passed = count(/(\d+)\s+passed/i);
   const skipped = count(/(\d+)\s+skipped/i);
   // Playwright reports tests it never reached as "did not run", NOT as
@@ -229,7 +260,7 @@ function parseCampaignOutput(output, status, maxFailedLocations) {
   let failed = count(/(\d+)\s+failed/i);
   if (status === 0 && failed === null) failed = 0;
   const total = [passed, skipped, failed, didNotRun]
-    .map((value) => (Number.isInteger(value) ? value : 0))
+    .map((value) => (Number.isInteger(value) ? (value ?? 0) : 0))
     .reduce((left, right) => left + right, 0);
   // Only the tracked test path, the 1-based line, and a sanitized assertion
   // class (TIMEOUT / EXPECT_* / UNCLASSIFIED) survive; the failure message,
@@ -238,6 +269,12 @@ function parseCampaignOutput(output, status, maxFailedLocations) {
   return { total, passed, skipped, didNotRun, failed, failedLocations };
 }
 
+/**
+ * @param {readonly string[]} fileList
+ * @param {string} outputDir
+ * @param {string} lane
+ * @param {string} project
+ */
 function runInvocation(fileList, outputDir, lane, project) {
   return new Promise((resolve) => {
     const startedAt = Date.now();
@@ -279,7 +316,7 @@ function runInvocation(fileList, outputDir, lane, project) {
 }
 
 const cli = invokedDirectly(import.meta.url) ? defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url }) : { stop: true };
-if (!cli.stop) {
+if (!cli.stop && 'flags' in cli) {
 try {
   const { manifest, files, maxFailedLocations } = loadManifest();
   // `--validate` is the bounded, contact-free observation surface: it proves
@@ -332,12 +369,14 @@ try {
   } else {
     const [shardPlan] = loadTypeScriptModules(['src/core/validation/shardPlan.ts'], { root });
     const classesDeclaration = JSON.parse(fs.readFileSync(classesPath, 'utf8'));
+    /** @type {Record<string, import('../src/core/validation/executionClasses').ExecutionClass>} */
     const classes = {};
     for (const file of files) {
       const entry = classesDeclaration.files?.[file];
       if (entry === undefined) fail(`SYNTHETIC_CAMPAIGN_CLASS_MISSING:${file}`);
       classes[file] = entry.class;
     }
+    /** @type {Record<string, number> | null} */
     let weights = null;
     try {
       const stored = JSON.parse(fs.readFileSync(weightsPath, 'utf8'));
@@ -359,10 +398,11 @@ try {
       const exclusiveResults = plan.exclusiveShard === null ? [] : [await runInvocation(plan.exclusiveShard.files, 'test-results/synthetic-exclusive', 'campaign-synthetic-exclusive', manifest.execution.project)];
       const results = [...parallelResults, ...exclusiveResults];
       const failedLocations = [];
+      /** @type {Record<'total' | 'passed' | 'skipped' | 'didNotRun' | 'failed', number>} */
       const totals = { total: 0, passed: 0, skipped: 0, didNotRun: 0, failed: 0 };
       const parsed = results.map((result) => ({ result, counts: parseCampaignOutput(result.output, result.status, maxFailedLocations) }));
       for (const entry of parsed) {
-        for (const key of Object.keys(totals)) totals[key] += entry.counts[key] ?? 0;
+        for (const key of /** @type {Array<keyof typeof totals>} */ (Object.keys(totals))) totals[key] += entry.counts[key] ?? 0;
         failedLocations.push(...entry.counts.failedLocations);
       }
       // RV-15: per shard, the reporter's skipped count must equal the identity report's.

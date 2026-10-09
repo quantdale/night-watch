@@ -39,10 +39,7 @@ const HARDENING_SUITES = ['tests/unit/reviewStoreHardening.test.ts'];
 const SAFETY_SUITES = ['tests/unit/safetyEventAccounting.test.ts'];
 
 /**
- * @typedef {{
- *   id: string, title: string, file: string, from: string, to: string,
- *   suites: string[], kind?: 'EQUIVALENT' | 'CONTROL', why?: string
- * }} Mutation
+ * @typedef {{ id: string, title: string, file: string, from: string, to: string, suites: string[] } & Partial<{ kind: 'EQUIVALENT' | 'CONTROL', why: string }>} Mutation
  */
 
 /** @type {Mutation[]} */
@@ -324,15 +321,25 @@ const MUTATIONS = [
   },
 ];
 
+/** @param {string} file @returns {string} */
 function readFile(file) {
   return fs.readFileSync(path.join(root, file), 'utf8');
 }
 
+/**
+ * @param {string} file
+ * @param {string} contents
+ */
 function writeFile(file, contents) {
   fs.writeFileSync(path.join(root, file), contents, 'utf8');
 }
 
-/** Run one suite set. Returns true when ALL suites pass. */
+/**
+ * Run one suite set. Returns true when ALL suites pass.
+ *
+ * @param {readonly string[]} suites
+ * @returns {boolean}
+ */
 function suitesPass(suites) {
   const pwBin = path.join(root, 'node_modules', '.bin', 'playwright');
   const cmd = process.platform === 'win32' ? `${pwBin}.cmd` : pwBin;

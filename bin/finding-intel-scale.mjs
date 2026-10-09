@@ -31,6 +31,15 @@ import { OPERATOR_CLI_SCHEMA, defineOperatorCli, invokedDirectly } from './lib/o
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
+/**
+ * One probe stage measurement as the compiled probe emits it. The probe is
+ * the source of this shape, and the harness never invents a stage it did
+ * not measure.
+ * @typedef {{ stage: string, status: string, wallMs: number, cpuUserMs: number, cpuSystemMs: number, peakRssBytes: number, heapUsedDeltaBytes: number, workUnit: string, workCompleted: number, workPlanned: number }} ScaleStageMeasurement
+ * @typedef {{ schemaVersion: string, findings: number, budgetMs: number, nodeMajor: number, stages: ScaleStageMeasurement[], processWallMs: number }} ScaleProbeRun
+ */
+
+/** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
 const CLI_METADATA = {
   schemaVersion: OPERATOR_CLI_SCHEMA,
   name: 'finding-intel-scale',
@@ -46,18 +55,22 @@ const CLI_METADATA = {
   artifacts: ['disposable compile directory under the system temporary directory'],
 };
 
+/**
+ * @param {string[]} argv
+ */
 function parseArgs(argv) {
   let sizes = [1000, 5000, 10000];
   let budgetMs = 60_000;
   let json = false;
   for (let index = 0; index < argv.length; index += 1) {
     const argument = argv[index];
+    if (argument === undefined) continue;
     if (argument === '--json') json = true;
     else if (argument === '--budget-ms') {
       budgetMs = Number.parseInt(argv[index + 1] ?? '', 10);
       index += 1;
     } else if (/^[0-9,]+$/.test(argument)) {
-      sizes = argument.split(',').filter(Boolean).map((value) => Number.parseInt(value, 10));
+      sizes = argument.split(',').filter(Boolean).map(/** @param {string} value */ (value) => Number.parseInt(value, 10));
     } else {
       throw new Error(`unknown argument ${argument}`);
     }
@@ -99,12 +112,19 @@ function compileProbe() {
   return { outDir, entry };
 }
 
+/**
+ * @param {number} bytes
+ */
 function mib(bytes) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MiB`;
 }
 
+/**
+ * @param {ScaleStageMeasurement | undefined} previous
+ * @param {ScaleStageMeasurement | undefined} current
+ */
 function ratio(previous, current) {
-  if (previous === undefined || previous.wallMs <= 0) return null;
+  if (previous === undefined || current === undefined || previous.wallMs <= 0) return null;
   return current.wallMs / previous.wallMs;
 }
 
@@ -113,6 +133,10 @@ function ratio(previous, current) {
  * with the square of the corpus is quadratic whatever the code looks like, and
  * a stage that merely looks quadratic but measures linear is not a problem to
  * solve today.
+ */
+/**
+ * @param {number} sizeRatio
+ * @param {number | null} timeRatio
  */
 function growthClass(sizeRatio, timeRatio) {
   if (timeRatio === null || sizeRatio <= 1) return 'UNKNOWN';
@@ -130,7 +154,7 @@ let options;
 try {
   options = parseArgs(process.argv.slice(2));
 } catch (error) {
-  process.stderr.write(`[intel:scale] usage: node bin/finding-intel-scale.mjs [sizes] [--budget-ms N] [--json] (${error.message})\n`);
+  process.stderr.write(`[intel:scale] usage: node bin/finding-intel-scale.mjs [sizes] [--budget-ms N] [--json] (${error instanceof Error ? error.message : String(error)})\n`);
   process.exit(1);
 }
 
@@ -142,6 +166,7 @@ try {
   process.exit(1);
 }
 
+/** @type {ScaleProbeRun[]} */
 const runs = [];
 try {
   for (const size of options.sizes) {
@@ -174,7 +199,8 @@ try {
   fs.rmSync(probe.outDir, { recursive: true, force: true });
 }
 
-const stageNames = runs.length === 0 ? [] : runs[0].stages.map((stage) => stage.stage);
+const firstRun = runs[0];
+const stageNames = firstRun === undefined ? [] : firstRun.stages.map((stage) => stage.stage);
 const report = {
   schemaVersion: 'nightwatch.finding-intel-scale-report.v1',
   sizes: options.sizes,
@@ -184,10 +210,10 @@ const report = {
     stage: name,
     points: runs.map((run) => {
       const stage = run.stages.find((candidate) => candidate.stage === name);
-      return { findings: run.findings, ...stage };
+      return /** @type {{ findings: number } & ScaleStageMeasurement} */ ({ findings: run.findings, ...stage });
     }),
     growth: runs.slice(1).map((run, index) => {
-      const previousRun = runs[index];
+      const previousRun = /** @type {ScaleProbeRun} */ (runs[index]);
       const previous = previousRun.stages.find((candidate) => candidate.stage === name);
       const current = run.stages.find((candidate) => candidate.stage === name);
       const sizeRatio = run.findings / previousRun.findings;

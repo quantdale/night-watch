@@ -58,10 +58,22 @@ if (cli.stop) {
 const WORKSPACE_ROOT = path.resolve(ROOT, '..', '..');
 const SAFE_ID_RE = /^[A-Za-z0-9][A-Za-z0-9._:/-]{0,199}$/;
 
+/**
+ * Fail closed. Every refusal path in this launcher ends here, so the declared
+ * `never` return is what lets the boundary readers below narrow their result
+ * to the validated value instead of an unconditioned optional.
+ *
+ * @param {string} code
+ * @returns {never}
+ */
 function fail(code) {
   throw new Error(`PHASE22_BLOCKED_BEFORE_DEV:${code}`);
 }
 
+/**
+ * @param {string[]} argv
+ * @returns {{ env: string, storageState: string, manifest: string, help: boolean }}
+ */
 function parseArgs(argv) {
   let env;
   let storageState;
@@ -77,10 +89,22 @@ function parseArgs(argv) {
   return { env: env ?? '', storageState: storageState ?? '', manifest: manifest ?? '', help };
 }
 
+/**
+ * Load one runtime TypeScript module. The declared type parameter carries the
+ * literal module path, so the loader's generated module map resolves the
+ * precise module type instead of erasing it to `unknown`.
+ *
+ * @template {keyof import('./lib/typescript-runtime-loader.mjs').TypeScriptRuntimeLoaderModuleMap} File
+ * @param {File} file
+ */
 function loadTypeScriptModule(file) {
   return loadRuntimeTypeScriptModule(file, { root: ROOT });
 }
 
+/**
+ * @param {string[]} args
+ * @returns {string}
+ */
 function git(args) {
   try {
     const r = spawnSync('git', args, {
@@ -122,6 +146,7 @@ function assertGitAndCi() {
       env: buildChildEnvironment(process.env),
     });
     if (jobsResult.status !== 0) throw new Error(jobsResult.stderr || 'gh failed');
+    /** @type {{ jobs: ReadonlyArray<{ status: string, conclusion: string, steps: unknown }> }} */
     const jobs = JSON.parse(jobsResult.stdout ?? '{}');
     if (!Array.isArray(jobs.jobs) || jobs.jobs.length === 0 || jobs.jobs.some((job) => job.status !== 'completed' || job.conclusion !== 'success' || !Array.isArray(job.steps) || job.steps.length === 0)) fail('EXTERNAL_CI_STEPS_UNOBSERVABLE');
   } catch (error) {
@@ -131,6 +156,11 @@ function assertGitAndCi() {
   return head;
 }
 
+/**
+ * @param {string} file
+ * @param {import('../src/core/phase22/index')} phase22
+ * @returns {import('../src/core/phase22/index').Phase22DevAcceptanceManifest}
+ */
 function assertManifestPath(file, phase22) {
   if (!path.isAbsolute(file) || file.startsWith(ROOT + path.sep) || file.startsWith(WORKSPACE_ROOT + path.sep)) fail('MANIFEST_SCOPE');
   let stat;
@@ -145,6 +175,10 @@ function assertManifestPath(file, phase22) {
   return value;
 }
 
+/**
+ * @param {string} file
+ * @returns {string}
+ */
 function assertStoragePath(file) {
   if (!path.isAbsolute(file) || file.startsWith(ROOT + path.sep) || file.startsWith(WORKSPACE_ROOT + path.sep)) fail('STORAGE_STATE_SCOPE');
   let stat;
@@ -154,6 +188,10 @@ function assertStoragePath(file) {
   return file;
 }
 
+/**
+ * @param {string} root
+ * @returns {import('../src/oracles/expectations/recipes/types').RealSourceReader}
+ */
 function sourceReader(root) {
   const resolved = fs.realpathSync(root);
   return {
@@ -167,9 +205,14 @@ function sourceReader(root) {
   };
 }
 
+/**
+ * @param {import('../src/core/phase22/index').Phase22DevAcceptanceManifest} manifest
+ * @returns {{ snapshot: string, sha: string }}
+ */
 function currentSourceSnapshot(manifest) {
   const sourceIds = manifest.targets.map((target) => target.source);
-  if (sourceIds.length === 0 || sourceIds.some((source) => source.repoId !== 'mobingilabs/ripple-api' || source.sha !== sourceIds[0].sha)) fail('MULTIPLE_OR_UNSUPPORTED_SOURCE_SNAPSHOTS');
+  const [expectedSource] = sourceIds;
+  if (sourceIds.length === 0 || expectedSource === undefined || sourceIds.some((source) => source.repoId !== 'mobingilabs/ripple-api' || source.sha !== expectedSource.sha)) fail('MULTIPLE_OR_UNSUPPORTED_SOURCE_SNAPSHOTS');
   let remoteSha;
   try { remoteSha = (() => {
       const r = spawnSync('gh', ['api', 'repos/mobingilabs/ripple-api/git/refs/heads/master', '--jq', '.object.sha'], {  cwd: ROOT, encoding: 'utf8', timeout: 30_000, stdio: ['ignore', 'pipe', 'ignore'] ,
@@ -180,7 +223,7 @@ function currentSourceSnapshot(manifest) {
       return r.stdout;
     })().trim(); }
   catch { fail('SOURCE_REMOTE_HEAD_UNAVAILABLE'); }
-  if (!/^[0-9a-f]{40}$/.test(remoteSha) || remoteSha !== sourceIds[0].sha) fail('MANIFEST_SOURCE_SHA_STALE');
+  if (!/^[0-9a-f]{40}$/.test(remoteSha) || remoteSha !== expectedSource.sha) fail('MANIFEST_SOURCE_SHA_STALE');
   let snapshot;
   try { snapshot = fs.mkdtempSync(path.join(os.tmpdir(), 'nightwatch-phase22-source.')); }
   catch { fail('SOURCE_DISPOSABLE_ROOT_UNAVAILABLE'); }
@@ -198,6 +241,10 @@ function currentSourceSnapshot(manifest) {
   }
 }
 
+/**
+ * @param {import('../src/core/phase22/index').Phase22DevAcceptanceManifest} manifest
+ * @param {{ snapshot: string, sha: string }} source
+ */
 function rederiveAndCheckManifest(manifest, source) {
   const admission = loadTypeScriptModule('src/oracles/expectations/admission.ts');
   const collectionAdmission = loadTypeScriptModule('src/oracles/expectations/collectionAdmission.ts');

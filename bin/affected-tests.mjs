@@ -23,6 +23,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const POLICY_PATH = path.join(root, 'config', 'affected-tests.v1.json');
 const TEST_MATCH = [/^tests\/.*\.(?:test|smoke)\.ts$/, /^scenarios\/.*\.smoke\.ts$/];
 
+/** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
 const CLI_METADATA = {
   schemaVersion: OPERATOR_CLI_SCHEMA,
   name: 'affected-tests',
@@ -39,6 +40,10 @@ const CLI_METADATA = {
   artifacts: [],
 };
 
+/**
+ * @param {string[]} args
+ * @returns {string[]}
+ */
 function git(args) {
   const result = spawnSync('git', args, { cwd: root, encoding: 'utf8', timeout: 30_000, maxBuffer: 16 * 1024 * 1024 });
   if (result.status !== 0) throw new Error(`AFFECTED_GIT_FAILED:${args[0]}`);
@@ -46,7 +51,7 @@ function git(args) {
 }
 
 const cli = invokedDirectly(import.meta.url) ? defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url }) : { stop: true };
-if (!cli.stop) {
+if (!cli.stop && 'flags' in cli) {
   try {
     const base = typeof cli.flags['--base'] === 'string' ? cli.flags['--base'].trim() : '';
     if (base === '') {

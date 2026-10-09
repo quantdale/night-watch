@@ -539,7 +539,7 @@ export function checkPhase12AuthoritySetsUnchanged() {
     if (!approvedCode.includes(`'${id}'`)) fail(`Phase 12 DEV-reachable target missing: ${id}`);
   }
   const devBlockMatch = approved.match(/DEV_REACHABLE_RECIPE_TARGET_IDS[\s\S]*?Object\.freeze\(\[([\s\S]*?)\]\)/);
-  const devTargetCount = devBlockMatch ? (devBlockMatch[1].match(/'ripple\.[^']+\.read'/g) ?? []).length : 0;
+  const devTargetCount = devBlockMatch ? ((devBlockMatch[1] ?? '').match(/'ripple\.[^']+\.read'/g) ?? []).length : 0;
   if (devTargetCount !== devReachable.length) fail(`Phase 12 DEV-reachable target count drift: expected ${devReachable.length}, found ${devTargetCount}`);
   // Safe-action catalog version must remain the single Phase 4 authority.
   if (!/SAFE_ACTION_CATALOG_VERSION\s*=\s*'nightwatch\.safe-actions\.phase4\.v1'/.test(read('src/core/exploration/types.ts'))) {
@@ -763,7 +763,7 @@ export function checkC09SpecExpectationBoundary() {
   const classesBlock = /export const SPEC_EXPECTATION_CLASSES\s*=\s*\[([\s\S]*?)\]\s*as const;/.exec(expectations);
   if (classesBlock === null) {
     fail('C-09 could not read the SPEC_EXPECTATION_CLASSES declaration');
-  } else if (/REQUIRED_KEY/.test(withoutComments(classesBlock[1]))) {
+  } else if (/REQUIRED_KEY/.test(withoutComments(classesBlock[1] ?? ''))) {
     fail('C-09 must not declare a REQUIRED_KEY expectation class; protobuf3 emits no required arrays and the artifacts contain none');
   }
 
@@ -779,7 +779,7 @@ export function checkC09SpecExpectationBoundary() {
   if (vocabularyBlock === null) {
     fail('C-09 could not read the SCENARIO_CLASSIFICATIONS declaration');
   } else {
-    const declared = withoutComments(vocabularyBlock[1]);
+    const declared = withoutComments(vocabularyBlock[1] ?? '');
     for (const member of ['CHECKABLE', 'NON_CHECKABLE', 'AMBIGUOUS', 'UNSUPPORTED',
       'NO_OPERATION_BINDING', 'MULTIPLE_BINDINGS', 'STALE', 'OUTSIDE_SCOPE']) {
       if (!declared.includes(`'${member}'`)) fail(`C-09 scenario classification ${member} is missing from the vocabulary`);
@@ -836,7 +836,7 @@ export function checkC16EigBoundary() {
   for (const factor of ['NOVELTY_LEVELS', 'CONTRACT_DEPTH_LEVELS', 'CHANGE_RECENCY_LEVELS', 'BLAST_RADIUS_LEVELS', 'COST_LEVELS', 'DUPLICATE_RISK_LEVELS']) {
     const block = new RegExp(`export const ${factor}[^=]*=\\s*Object\\.freeze\\(\\{([\\s\\S]*?)\\}\\);`).exec(eig);
     if (block === null) { fail(`C-16 could not read the ${factor} declaration`); continue; }
-    const entries = [...withoutComments(block[1]).matchAll(/([A-Z_]+)\s*:\s*(-?\d+)/g)].map((m) => [m[1], Number(m[2])]);
+    const entries = [...withoutComments(block[1] ?? '').matchAll(/([A-Z_]+)\s*:\s*(-?\d+)/g)].map((m) => [m[1], Number(m[2])]);
     if (entries.length === 0) { fail(`C-16 ${factor} declares no levels`); continue; }
     const unknown = entries.find(([name]) => name === 'UNKNOWN');
     if (unknown === undefined) { fail(`C-16 ${factor} must declare an explicit UNKNOWN level`); continue; }
@@ -849,7 +849,7 @@ export function checkC16EigBoundary() {
   for (const factor of ['NOVELTY_LEVELS', 'CONTRACT_DEPTH_LEVELS', 'CHANGE_RECENCY_LEVELS', 'BLAST_RADIUS_LEVELS']) {
     const block = new RegExp(`export const ${factor}[^=]*=\\s*Object\\.freeze\\(\\{([\\s\\S]*?)\\}\\);`).exec(eig);
     if (block === null) continue;
-    for (const match of withoutComments(block[1]).matchAll(/[A-Z_]+\s*:\s*(-?\d+)/g)) {
+    for (const match of withoutComments(block[1] ?? '').matchAll(/[A-Z_]+\s*:\s*(-?\d+)/g)) {
       if (Number(match[1]) <= 0) fail(`C-16 ${factor} levels must all be positive; a zero in the numerator deletes the target`);
     }
   }

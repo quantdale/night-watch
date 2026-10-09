@@ -57,7 +57,7 @@ export function probeAccessibility(root, certifiedCheckpointSha) {
   };
 }
 
-export /**
+/**
  * G18 — UI error taxonomy (D3 / VD-02): the F-18 differential render harness
  * drives every view through every ApiErrorKind member and requires distinct
  * renderings. This probe no longer trusts the presence of the harness file: it
@@ -70,7 +70,7 @@ export /**
  * @param {string | null} certifiedCheckpointSha
  * @returns {{state: string, detail: string}}
  */
-function probeUiErrorTaxonomy(root, certifiedCheckpointSha) {
+export function probeUiErrorTaxonomy(root, certifiedCheckpointSha) {
   // R5-13: the host-local receipt first; in a clean clone only the TRACKED verbatim copy of S exists.
   const trackedPath = typeof certifiedCheckpointSha === 'string' && HEX40.test(certifiedCheckpointSha)
     ? `${CERTIFICATION_EVIDENCE_DIRECTORY}/${certifiedCheckpointSha.toLowerCase()}/ui-error-taxonomy-rendering.json`
@@ -105,7 +105,7 @@ function probeUiErrorTaxonomy(root, certifiedCheckpointSha) {
   };
 }
 
-export /**
+/**
  * G12 — yield campaign result (D3 / VD-03 / CF-03): resolves ONLY from a
  * yield-campaign receipt — the D-7 manifest + summary + product-run receipt of
  * a run that passed, executed at a recorded clean Nightwatch commit through
@@ -120,13 +120,14 @@ export /**
  * @param {string | null} certifiedCheckpointSha
  * @returns {{state: string, detail: string}}
  */
-function probeYieldCampaignResult(root, certifiedCheckpointSha) {
+export function probeYieldCampaignResult(root, certifiedCheckpointSha) {
   let receiptModule;
   try {
-    receiptModule = loadTypeScriptModule(root, 'src/core/agentRuntime/productRunReceipt.ts');
+    receiptModule = /** @type {typeof import('../../src/core/agentRuntime/productRunReceipt')} */ (loadTypeScriptModule(root, 'src/core/agentRuntime/productRunReceipt.ts'));
   } catch {
     return { state: 'UNAVAILABLE_CAPABILITY', detail: 'product run receipt module unavailable' };
   }
+  /** @type {string[]} */
   let entries;
   try {
     entries = fs.readdirSync(path.join(root, 'artifacts'));

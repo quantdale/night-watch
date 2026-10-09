@@ -20,12 +20,23 @@ import {
   lineSha256Prefix,
 } from './release-evidence.mjs';
 
+/**
+ * @param {string} root
+ * @param {string[]} args
+ * @returns {string | null} the command's stdout, or null when it failed
+ */
 function gitText(root, args) {
   const result = spawnSync('git', args, { cwd: root, encoding: 'utf8', shell: false, timeout: 30_000, maxBuffer: 8 * 1024 * 1024 });
   if (result.status !== 0 || result.error) return null;
   return result.stdout ?? '';
 }
 
+/**
+ * @param {string} root
+ * @param {string} ref
+ * @param {string} file
+ * @returns {string | null} the blob's text, or null when it is absent/unreadable
+ */
 function blobAt(root, ref, file) {
   // A missing blob is a null side (added or deleted file) for the guard.
   const result = spawnSync('git', ['show', `${ref}:${file}`], { cwd: root, encoding: 'utf8', shell: false, timeout: 30_000, maxBuffer: 8 * 1024 * 1024 });
@@ -62,16 +73,6 @@ export function removedLineDigestsFromDiff(diffText) {
   return digest;
 }
 
-/**
- * Files whose change makes the given commit (or range) NOT documentation-only:
- * paths outside `APPROVED_CHECKPOINT_PATHS`, plus any guarded binding file
- * whose diff shape fails its guard. An unresolvable diff fails closed.
- *
- * @param {string} root
- * @param {readonly string[]} files paths the commit/range touches
- * @param {{ kind: 'commit', commit: string } | { kind: 'range', from: string, to: string }, verifyBindingReceipt?: (subject: string, digest: string, sha: string) => boolean }} context
- * @returns {string[]} violating files (de-duplicated, source order)
- */
 /**
  * VB-03 / corrections task 2.3 — the removed-line digests for one file in one
  * commit (its diff against its parent; a root commit removes nothing).
@@ -137,7 +138,7 @@ export function correctionPairingViolations(root, commit, correctionsFile) {
  * @param {string} fromExclusive
  * @param {string} toInclusive
  * @param {string} correctionsFile
- * @returns {Array<{ commit: string, code: string, id?: string, archiveFile?: string }> | null} null when the range cannot be listed
+ * @returns {Array<{ commit: string, code: string } & Partial<{ id: string, archiveFile: string }>> | null} null when the range cannot be listed
  */
 export function unpairedCorrectionsInRange(root, fromExclusive, toInclusive, correctionsFile) {
   const listed = gitText(root, ['rev-list', '--reverse', `${fromExclusive}..${toInclusive}`]);
@@ -209,11 +210,30 @@ export const UNLISTABLE_RANGE_VIOLATION = '<unlistable-range>';
  * binding files and archive-move shapes are decided by their own diff-shape
  * checks, not here.
  * @param {string} file
+ * @returns {boolean}
  */
 function pathAloneViolation(file) {
   return guardClassForPath(file) === null && !isApprovedCheckpointPath(file) && !ARCHIVE_MOVE_PATH_RE.test(file);
 }
 
+/**
+ * The commit (or inclusive range) a role judgement is made over. The optional
+ * production receipt verifier is what keeps a persisted, subject-matching PASS
+ * binding receipt documentary (A-01 / R4-01).
+ * @typedef {{ kind: 'commit', commit: string } | { kind: 'range', from: string, to: string }} CheckpointContextSelection
+ * @typedef {CheckpointContextSelection & Partial<{ verifyBindingReceipt: (subject: string, digest: string, sha: string) => boolean }>} CheckpointContext
+ */
+
+/**
+ * Files whose change makes the given commit (or range) NOT documentation-only:
+ * paths outside `APPROVED_CHECKPOINT_PATHS`, plus any guarded binding file
+ * whose diff shape fails its guard. An unresolvable diff fails closed.
+ *
+ * @param {string} root
+ * @param {readonly string[]} files paths the commit/range touches
+ * @param {CheckpointContext} context
+ * @returns {string[]} violating files (de-duplicated, source order)
+ */
 export function checkpointRoleViolations(root, files, context) {
   // VB-06: guarded paths are excluded from the path-alone filter — their
   // admissibility is decided exclusively by their diff-shape guard below.

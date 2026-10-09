@@ -17,13 +17,7 @@
  * filesystem, process, network or clock authority, and every unknown fails
  * closed to `UNKNOWN` (never to a pass).
  *
- * @typedef {(
- *   'SAME'
- *   | 'DOCUMENTARY_DESCENDANT'
- *   | 'SUBSTANTIVE_DESCENDANT'
- *   | 'UNRELATED'
- *   | 'UNKNOWN'
- * )} CheckpointRangeClass
+ * @typedef {'SAME' | 'DOCUMENTARY_DESCENDANT' | 'SUBSTANTIVE_DESCENDANT' | 'UNRELATED' | 'UNKNOWN'} CheckpointRangeClass
  */
 
 export const CHECKPOINT_RANGE_CLASSES = Object.freeze([
@@ -47,13 +41,7 @@ const SHA_RE = /^[0-9a-f]{40}$/i;
  *   - `checkpointRoleViolations(files)` returns the violating paths of the
  *     range, or null when the range cannot be classified.
  *
- * @param {{
- *   certifiedCheckpointSha: string | null,
- *   headSha: string | null,
- *   isAncestor: ((ancestor: string, descendant: string) => boolean) | null,
- *   changedFiles: ((from: string, to: string) => readonly string[] | null) | null,
- *   checkpointRoleViolations: ((files: readonly string[]) => readonly string[] | null) | null,
- * }} facts
+ * @param {{ certifiedCheckpointSha: string | null, headSha: string | null, isAncestor: ((ancestor: string, descendant: string) => boolean) | null, changedFiles: ((from: string, to: string) => readonly string[] | null) | null, checkpointRoleViolations: ((files: readonly string[]) => readonly string[] | null) | null }} facts
  * @returns {CheckpointRangeClass}
  */
 export function classifyCheckpointRange(facts) {

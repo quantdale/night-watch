@@ -23,6 +23,9 @@ const MAX_ROUTE_ENTRIES = 256;
 const REQUIRED_OPEN_SPEC_FILES = Object.freeze(['audit.md', 'proposal.md', 'design.md', 'tasks.md']);
 const SAFE_RELATIVE_PATH_RE = /^[A-Za-z0-9._/-]+$/;
 
+/**
+ * @param {string[]} argv
+ */
 function parseArgs(argv) {
   let root = process.cwd();
   for (let index = 0; index < argv.length; index += 1) {
@@ -39,6 +42,7 @@ function parseArgs(argv) {
 }
 
 function safeGitEnvironment(root = process.cwd()) {
+  /** @type {NodeJS.ProcessEnv} */
   const environment = {
     PATH: '/usr/bin:/bin',
     HOME: root,
@@ -57,6 +61,10 @@ function safeGitEnvironment(root = process.cwd()) {
   return environment;
 }
 
+/**
+ * @param {string} root
+ * @param {string[]} args
+ */
 function git(root, args) {
   return spawnSync('git', args, {
     cwd: root,
@@ -69,6 +77,13 @@ function git(root, args) {
   });
 }
 
+/**
+ * @param {string} root
+ * @param {string} relativePath
+ * @param {string[]} errors
+ * @param {string} missingCode
+ * @param {string} [noncanonicalCode]
+ */
 function lstatNoSymlinks(root, relativePath, errors, missingCode, noncanonicalCode = 'HANDOFF_NONCANONICAL_FILE') {
   if (!SAFE_RELATIVE_PATH_RE.test(relativePath)) {
     errors.push(missingCode);
@@ -102,6 +117,12 @@ function lstatNoSymlinks(root, relativePath, errors, missingCode, noncanonicalCo
   }
 }
 
+/**
+ * @param {string} root
+ * @param {string} relativePath
+ * @param {string[]} errors
+ * @param {string} missingCode
+ */
 function readRegular(root, relativePath, errors, missingCode) {
   if (!SAFE_RELATIVE_PATH_RE.test(relativePath) || relativePath.includes('..')) {
     errors.push(missingCode);
@@ -128,6 +149,11 @@ function readRegular(root, relativePath, errors, missingCode) {
   }
 }
 
+/**
+ * @param {string} root
+ * @param {string} relativePath
+ * @param {string[]} errors
+ */
 function trackedRegular(root, relativePath, errors) {
   const resolved = lstatNoSymlinks(root, relativePath, errors, 'HANDOFF_OPENSPEC_FILE_MISSING', 'HANDOFF_OPENSPEC_NONCANONICAL_FILE');
   if (resolved === null) {
@@ -146,8 +172,15 @@ function trackedRegular(root, relativePath, errors) {
   return true;
 }
 
+/**
+ * @param {string} root
+ * @param {Readonly<Record<string, string>>} fields
+ * @param {string[]} errors
+ */
 function inspectOpenSpecRoute(root, fields, errors) {
-  const route = fields.OpenSpec;
+  // `OpenSpec` is a required header field, so this default is inert; it only
+  // types the lookup below.
+  const route = fields.OpenSpec ?? '';
   const resolvedRoute = lstatNoSymlinks(root, route, errors, 'HANDOFF_OPENSPEC_ROUTE_MISSING');
   if (resolvedRoute === null) {
     return [];
@@ -202,18 +235,30 @@ function inspectOpenSpecRoute(root, fields, errors) {
   return files.sort();
 }
 
+/**
+ * @param {string} root
+ * @param {string[]} errors
+ * @returns {{ activeTaskId: string | undefined, activeTaskStatus: string | undefined, continuityOk: boolean }}
+ */
 function inspectActiveTask(root, errors) {
   const text = readRegular(root, '.agent/ACTIVE_TASK.md', errors, 'HANDOFF_ACTIVE_TASK_MISSING');
   if (text === null) return { activeTaskId: undefined, activeTaskStatus: undefined, continuityOk: false };
   const parsed = parseKeyValuesWithLocations(text);
   for (const duplicate of findDuplicateFields(parsed)) errors.push('HANDOFF_ACTIVE_TASK_DUPLICATE_FIELD');
   const activeTaskId = fieldValue(parsed, 'Task ID');
-  const activeTaskStatus = normalizeTaskStatus(fieldValue(parsed, 'Status'));
+  const activeTaskStatus = normalizeTaskStatus(fieldValue(parsed, 'Status') ?? '');
   if (activeTaskId === undefined) errors.push('HANDOFF_ACTIVE_TASK_ID_MISSING');
   if (activeTaskStatus === null || activeTaskStatus === undefined) errors.push('HANDOFF_ACTIVE_TASK_STATUS_INVALID');
-  return { activeTaskId, activeTaskStatus, continuityOk: false };
+  // The handoff context projects the active status as a STRING, so an
+  // unreadable status is absent here rather than the parser's null.
+  // validateHandoffState rejects both with the same code, and the receipt is
+  // only emitted when the status is one of the accepted tokens.
+  return { activeTaskId, activeTaskStatus: activeTaskStatus ?? undefined, continuityOk: false };
 }
 
+/**
+ * @param {string} root
+ */
 function runContinuity(root) {
   const checker = path.join(root, 'bin', 'agent-state.mjs');
   try {
@@ -238,6 +283,9 @@ function runContinuity(root) {
  * actually owns for the active task. This is a narrowing of the old
  * "must be on main" rule, not a widening: an unowned or foreign session
  * branch is still rejected.
+ *
+ * @param {string} root
+ * @param {string} branch
  */
 function ownedSessionBranch(root, branch) {
   if (typeof branch !== 'string' || !branch.startsWith('session/')) return false;
@@ -248,6 +296,11 @@ function ownedSessionBranch(root, branch) {
     && report.self.branch === branch;
 }
 
+/**
+ * @param {string} root
+ * @param {Readonly<Record<string, string>>} fields
+ * @param {string[]} errors
+ */
 function inspectGitBinding(root, fields, errors) {
   const top = git(root, ['rev-parse', '--show-toplevel']);
   if (top.status !== 0 || path.resolve((top.stdout ?? '').trim()) !== path.resolve(root)) {
@@ -271,17 +324,22 @@ function inspectGitBinding(root, fields, errors) {
     errors.push('HANDOFF_GIT_HEAD_UNAVAILABLE');
     return undefined;
   }
-  const commit = git(root, ['cat-file', '-e', `${fields['Planned-From']}^{commit}`]);
+  const plannedFrom = fields['Planned-From'] ?? '';
+  const commit = git(root, ['cat-file', '-e', `${plannedFrom}^{commit}`]);
   if (commit.status !== 0) {
     errors.push('HANDOFF_PLANNED_FROM_NOT_FOUND');
   } else {
-    const ancestor = git(root, ['merge-base', '--is-ancestor', fields['Planned-From'], headSha]);
+    const ancestor = git(root, ['merge-base', '--is-ancestor', plannedFrom, headSha]);
     if (ancestor.status !== 0) errors.push('HANDOFF_PLANNED_FROM_NOT_ANCESTOR');
   }
   return headSha;
 }
 
+/**
+ * @param {string} root
+ */
 export function inspectHandoff(root) {
+  /** @type {string[]} */
   const errors = [];
   const prompt = readRegular(root, '.agent/EXECUTION_PROMPT.md', errors, 'HANDOFF_PROMPT_MISSING');
   if (prompt === null) return { ok: false, errors: Object.freeze([...new Set(errors)]), receipt: null };
@@ -289,8 +347,11 @@ export function inspectHandoff(root) {
   const header = parsed;
   if (!header.ok) errors.push(...(header.errors ?? []).map((item) => item.code));
 
+  /** @type {Readonly<Record<string, string>>} */
   let fields = header.fields ?? {};
+  /** @type {{ activeTaskId: string | undefined, activeTaskStatus: string | undefined, continuityOk: boolean }} */
   let active = { activeTaskId: undefined, activeTaskStatus: undefined, continuityOk: false };
+  /** @type {string[]} */
   let openSpecFiles = [];
   let headSha;
   if (header.ok) {
@@ -326,6 +387,7 @@ export function inspectHandoff(root) {
   };
 }
 
+/** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
 const CLI_METADATA = {
   schemaVersion: OPERATOR_CLI_SCHEMA,
   name: 'planner-handoff-check',
@@ -353,7 +415,10 @@ function main() {
   }
   const result = inspectHandoff(root);
   if (!result.ok) {
-    console.error(JSON.stringify({ status: 'FAIL', schemaVersion: HANDOFF_RECEIPT_SCHEMA, errors: uniqueErrorCodes(result.errors.map((code) => ({ code }))) }));
+    // `errors` here is already the deduplicated code list; the protocol helper
+    // reads the codes back out, so rebuild the diagnostic shape it projects.
+    const diagnostics = result.errors.map((code) => ({ code, line: null, field: null }));
+    console.error(JSON.stringify({ status: 'FAIL', schemaVersion: HANDOFF_RECEIPT_SCHEMA, errors: uniqueErrorCodes(diagnostics) }));
     process.exitCode = 1;
     return;
   }

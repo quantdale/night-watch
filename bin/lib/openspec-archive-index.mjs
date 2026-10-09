@@ -26,6 +26,10 @@ const ROW_RE = /^\| ([^|]+?) \| ([^|]+?) \| ([^|]+?) \| ([^|]*?) \|$/;
 const DATE_PREFIX_RE = /^\d{4}-\d{2}-\d{2}-/;
 const PURPOSE_STUB_RE = /^TBD\b|created by archiving change/i;
 
+/**
+ * @param {string | null | undefined} value
+ * @returns {boolean}
+ */
 export function isArchiveIndexChangeId(value) {
   const text = String(value ?? '').trim();
   if (text === '' || /^undefined$/i.test(text) || /^\d+$/.test(text)) return false;
@@ -35,27 +39,41 @@ export function isArchiveIndexChangeId(value) {
 /**
  * Published spec names from a `CAPABILITY_BEARING` reason: the substring
  * after `published:`, split on commas and whitespace. Empty when absent.
+ * @param {string | null | undefined} reason
+ * @returns {string[]}
  */
 export function publishedSpecNames(reason) {
   const match = /published:\s*(.*)$/.exec(String(reason ?? ''));
   if (match === null) return [];
-  return match[1].split(/[,\s]+/).map((name) => name.trim()).filter(Boolean);
+  const captured = match[1] ?? '';
+  return captured.split(/[,\s]+/).map((name) => name.trim()).filter(Boolean);
 }
+
+/**
+ * @typedef {object} ArchiveIndexRow
+ * @property {number} line
+ * @property {string} change
+ * @property {string} status
+ * @property {string} classification
+ * @property {string} reason
+ */
 
 /**
  * Parse the index table. Structural failures are returned, never thrown:
  * schema declaration, row grammar, Change cell shape, task status and
  * classification vocabulary. Directory/spec cross-checks are in
  * `inspectArchiveIndex`, which also needs the repository root.
+ * @param {string} text
+ * @returns {{ rows: ArchiveIndexRow[], errors: string[] }}
  */
 export function parseArchiveIndex(text) {
   const errors = [];
   const rows = [];
   const lines = String(text ?? '').split(/\r?\n/);
   let schemaSeen = false;
-  for (let index = 0; index < lines.length; index += 1) {
+  for (const [index, line] of lines.entries()) {
     const lineNumber = index + 1;
-    const trimmed = lines[index].trim();
+    const trimmed = line.trim();
     if (/^Schema:\s*\S+/.test(trimmed)) {
       schemaSeen = true;
       if (!trimmed.endsWith(ARCHIVE_INDEX_SCHEMA)) {
@@ -70,10 +88,11 @@ export function parseArchiveIndex(text) {
       errors.push(`ARCHIVE_INDEX_MALFORMED_ROW: line ${lineNumber}: unparseable table row`);
       continue;
     }
-    const change = match[1].trim();
-    const status = match[2].trim();
-    const classification = match[3].trim();
-    const reason = match[4].trim();
+    const [, rawChange = '', rawStatus = '', rawClassification = '', rawReason = ''] = match;
+    const change = rawChange.trim();
+    const status = rawStatus.trim();
+    const classification = rawClassification.trim();
+    const reason = rawReason.trim();
     if (!isArchiveIndexChangeId(change)) {
       errors.push(
         `ARCHIVE_INDEX_MALFORMED_ROW: line ${lineNumber}: Change cell ${JSON.stringify(change)} is empty, undefined, or a bare integer`
@@ -92,7 +111,11 @@ export function parseArchiveIndex(text) {
   return { rows, errors };
 }
 
-/** Archived change ids keyed by date-prefix-stripped directory name. */
+/**
+ * Archived change ids keyed by date-prefix-stripped directory name.
+ * @param {string} root
+ * @returns {Map<string, string>}
+ */
 export function archivedChangeDirectories(root) {
   const archiveRoot = path.join(root, 'openspec', 'changes', 'archive');
   const byId = new Map();
@@ -112,6 +135,8 @@ export function archivedChangeDirectories(root) {
 /**
  * Full index integrity: the 1:1 directory pairing and the classification
  * vocabulary's published-name contract. Returns string diagnostics.
+ * @param {string} root
+ * @returns {{ errors: string[], rows: ArchiveIndexRow[] }}
  */
 export function inspectArchiveIndex(root) {
   const errors = [];
@@ -165,8 +190,11 @@ export function inspectArchiveIndex(root) {
  * Published-spec Purpose integrity. The archive CLI fills Purpose with
  * `TBD - created by archiving change <id>. Update Purpose after archive.`,
  * which satisfies `openspec validate` but says nothing about the capability.
+ * @param {string} root
+ * @returns {{ errors: string[], capabilities: number }}
  */
 export function inspectPublishedSpecPurposes(root) {
+  /** @type {string[]} */
   const errors = [];
   const specsRoot = path.join(root, 'openspec', 'specs');
   let entries = [];

@@ -27,6 +27,7 @@ import { OPERATOR_CLI_SCHEMA, defineOperatorCli, invokedDirectly } from './lib/o
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
+/** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
 const CLI_METADATA = {
   schemaVersion: OPERATOR_CLI_SCHEMA,
   name: 'nightwatch-status',
@@ -41,6 +42,16 @@ const CLI_METADATA = {
   artifacts: [],
 };
 
+/**
+ * Bounded pass-through to the shared runtime loader: identical behaviour, one
+ * `root` bound per process instead of a repeated call-site option. The
+ * declared `Files` type parameter carries the literal module paths, so the
+ * loader's generated module map resolves each precise module type.
+ *
+ * @param {string} root
+ * @template {readonly string[]} const Files
+ * @param {Files} files
+ */
 function loadTypeScriptModules(root, files) {
   return loadRuntimeTypeScriptModules(files, { root });
 }

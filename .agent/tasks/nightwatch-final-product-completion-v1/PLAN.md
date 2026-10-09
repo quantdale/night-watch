@@ -265,7 +265,7 @@ approved paths.
   rule + probe, README claim, `bin/run-shards.mjs` batches.
 - Acceptance criteria: 76/76 conformance; zero diagnostics; the gate lane is
   blocking; declared deletions for retired bins.
-- **Status:** IN_PROGRESS — 10.1 DONE, 10.2 COMPLETE (76/76 declared, 0 pending), 10.3 COMPLETE; 10.4 NOT STARTED (the review-5 child campaign is closed)
+- **Status:** IN_PROGRESS — 10.1 DONE, 10.2 COMPLETE (76/76 declared, 0 pending), 10.3 COMPLETE, 10.4 COMPLETE (0 diagnostics across all 143 tracked implementations, 77/77 conforming, 0 exemptions, 0 widening annotations), 10.5 COMPLETE (BLOCKING, 0 exemptions, no ceilings, budget 0); 10.6 (`gate:milestone` PASS; commit) is next. The recorded 1402 baseline was a FLOOR rather than a measurement: `tsconfig.bin.json` used to include `bin/**/*.d.mts`, which made TypeScript drop each shadowed `.mjs` implementation from the program, so 53 implementations carrying 952 real diagnostics were never checked; `runTsc` also read an empty (clean) tsc output as a toolchain failure. Both are closed with a permanent regression suite, and four declaration-drift defects plus the census's JSDoc false positive were repaired in the same pass.
 
 ### M10 — Residual dispositions, quality debt and behaviour documentation (tasks 11.1-11.7)
 

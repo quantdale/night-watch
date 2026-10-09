@@ -36,7 +36,10 @@ const CLI_METADATA = {
 };
 
 const cli = defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url });
-if (cli.stop) {
+// R4-18 / review-4 task 4.5: every `ok: false` return of the shared parser
+// carries `stop: true` (it has already written the reason and set the exit
+// code), so the reached branch is always a clean parse.
+if (cli.stop || !cli.ok) {
   // --help / --print-metadata / usage already emitted.
 } else {
   const envFlag = cli.flags['--env'];

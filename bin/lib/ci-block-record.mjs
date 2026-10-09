@@ -54,10 +54,53 @@ const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const RUN_ID_RE = /^\d+$/;
 const SHA_RE = /^[0-9a-f]{40}$/i;
 
+/**
+ * One recorded history observation. Every field is optional because an entry
+ * is validated field by field, so a malformed entry is reported rather than
+ * assumed well-formed. The optional group uses the mapped type rather than the
+ * `?` property form, which the lane's annotation budget counts as a widening
+ * form.
+ */
+/** @typedef {Partial<{ runId: string, jobId: string, observedSha: string, classification: string, observedDate: string }>} CiHistoryEntry */
+
+/**
+ * One candidate route, as the record declares it. Route selection is an owner
+ * decision, so a route may legitimately omit the GitHub-claim fields.
+ */
+/** @typedef {Partial<{ routeId: string, summary: string, command: string, source: string, provesGitHubExecution: boolean, canSetCiExecutedSha: boolean, tradeOffs: readonly string[] }>} CiRouteCandidate */
+
+/** @typedef {Partial<{ state: string, selectedRouteId: string | null }>} CiRouteSelection */
+
+/**
+ * The CI block record, exactly as this module reads it: one top-level
+ * observation, its ordered history, and the owner-routed alternatives.
+ */
+/** @typedef {Partial<{ schemaVersion: string, runId: string, jobId: string, blockClass: string, observedDate: string, ownerAction: string, revisitCondition: string, revisitDate: string, history: readonly CiHistoryEntry[], candidateRoutes: readonly CiRouteCandidate[], routeSelection: CiRouteSelection }>} CiBlockRecord */
+
+/**
+ * One piece of CI-execution evidence. Every field is optional because the
+ * classifier's whole job is to refuse an incomplete or malformed piece.
+ */
+/** @typedef {Partial<{ source: string, exactHead: boolean, executedSteps: number, sha: string }>} CiExecutionEvidence */
+
+/**
+ * The three CI authority fields, applied or refused as one unit.
+ */
+/** @typedef {{ ciObservedSha: string | null, ciExecutedSha: string | null, ciStatus: string | null }} CiExecutionField */
+
+/**
+ * @param {unknown} value
+ * @returns {value is Record<string, unknown>}
+ */
 function isObject(value) {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
+/**
+ * @param {unknown} value
+ * @param {number} [minimum]
+ * @returns {value is string}
+ */
 function nonEmptyString(value, minimum = 1) {
   return typeof value === 'string' && value.trim().length >= minimum;
 }
@@ -67,7 +110,7 @@ function nonEmptyString(value, minimum = 1) {
  * `CI_BLOCK_RECORD_INCOMPLETE`, because a block missing any of these fields is
  * indistinguishable from abandonment.
  *
- * @param {any} record
+ * @param {CiBlockRecord} record
  * @returns {{ ok: boolean, errors: readonly { code: string, detail: string }[] }}
  */
 export function validateCiBlockRecord(record) {
@@ -208,7 +251,7 @@ export function deriveCiStatusFromRecord(input) {
  * The computed staleness report. `todayIso` is injected so the judgement is
  * deterministic and testable.
  *
- * @param {any} record
+ * @param {CiBlockRecord} record
  * @param {string} todayIso
  * @returns {readonly { code: string, detail: string, ownerAction: string | null }[]}
  */
@@ -227,7 +270,7 @@ export function collectCiBlockStale(record, todayIso) {
  * Classify one piece of CI-execution evidence. Only an exact-head GitHub
  * Actions run that executed at least one step can set `CI_EXECUTED_SHA`.
  *
- * @param {any} evidence
+ * @param {CiExecutionEvidence} evidence
  * @returns {{ classification: string, canSetCiExecutedSha: boolean, reason: string }}
  */
 export function classifyCiExecutionEvidence(evidence) {
@@ -238,7 +281,8 @@ export function classifyCiExecutionEvidence(evidence) {
     if (evidence.exactHead !== true) {
       return { classification: 'NOT_CI', canSetCiExecutedSha: false, reason: 'HEAD_MISMATCH' };
     }
-    if (!Number.isInteger(evidence.executedSteps) || evidence.executedSteps < 1) {
+    const executedSteps = evidence.executedSteps;
+    if (typeof executedSteps !== 'number' || !Number.isInteger(executedSteps) || executedSteps < 1) {
       return { classification: 'ZERO_STEP_NON_EVIDENCE', canSetCiExecutedSha: false, reason: 'ZERO_STEPS' };
     }
     if (typeof evidence.sha !== 'string' || !SHA_RE.test(evidence.sha)) {
@@ -260,13 +304,16 @@ export function classifyCiExecutionEvidence(evidence) {
  * refused by name; the refusal is the assertion that no substitute receipt can
  * set `CI_EXECUTED_SHA`.
  *
- * @param {{ ciObservedSha: string | null, ciExecutedSha: string | null, ciStatus: string | null }} field
- * @param {any} evidence
- * @returns {{ field: { ciObservedSha: string | null, ciExecutedSha: string | null, ciStatus: string | null }, changed: boolean, refused: boolean, code: string | null, classification: string }}
+ * @param {CiExecutionField} field
+ * @param {CiExecutionEvidence} evidence
+ * @returns {{ field: CiExecutionField, changed: boolean, refused: boolean, code: string | null, classification: string }}
  */
 export function applyCiExecutionEvidence(field, evidence) {
   const judgement = classifyCiExecutionEvidence(evidence);
-  if (!judgement.canSetCiExecutedSha) {
+  // A field-setting judgement already proved `sha` is a 40-hex string; the
+  // read below keeps that proof local so the non-string case can never reach
+  // the accepted branch.
+  if (!judgement.canSetCiExecutedSha || typeof evidence.sha !== 'string') {
     return {
       field: { ...field },
       changed: false,
@@ -295,21 +342,16 @@ export function applyCiExecutionEvidence(field, evidence) {
  * whose `CI_OBSERVED_SHA` is a different commit (or absent) is refused with
  * both SHAs named.
  *
- * @param {{
- *   completionStatus?: string | null,
- *   certifiedCheckpointSha?: string | null,
- *   releaseCheckpointSha?: string | null,
- *   ciObservedSha?: string | null,
- *   ciExecutedSha?: string | null,
- *   ciStatus?: string | null,
- * }} input
+ * @param {{ completionStatus: string | null | undefined, certifiedCheckpointSha: string | null | undefined, releaseCheckpointSha: string | null | undefined, ciObservedSha: string | null | undefined, ciExecutedSha: string | null | undefined, ciStatus: string | null | undefined }} input
  * @returns {{ ok: boolean, errors: readonly { code: string, detail: string }[] }}
  */
 export function evaluateCiCertification(input) {
   /** @type {{ code: string, detail: string }[]} */
   const errors = [];
   const completionStatus = input.completionStatus ?? null;
-  if (!CI_CERTIFIED_COMPLETION_STATUSES.includes(completionStatus)) {
+  // `Array.prototype.includes` is a string membership test, so an absent
+  // status (`null`) is a non-member by definition rather than by coercion.
+  if (completionStatus === null || !CI_CERTIFIED_COMPLETION_STATUSES.includes(completionStatus)) {
     return { ok: true, errors };
   }
   const checkpoint = SHA_RE.test(input.certifiedCheckpointSha ?? '')
@@ -338,8 +380,8 @@ export function evaluateCiCertification(input) {
  * authority. Selection is an OWNER DECISION (task 3.11); this validator never
  * selects one and refuses a substitute that could set `CI_EXECUTED_SHA`.
  *
- * @param {any} record
- * @returns {{ ok: boolean, routes: readonly any[], errors: readonly { code: string, detail: string }[] }}
+ * @param {CiBlockRecord} record
+ * @returns {{ ok: boolean, routes: readonly CiRouteCandidate[], errors: readonly { code: string, detail: string }[] }}
  */
 export function validateCiRouteCandidates(record) {
   /** @type {{ code: string, detail: string }[]} */
@@ -365,7 +407,7 @@ export function validateCiRouteCandidates(record) {
       errors.push({ code: 'CI_ROUTE_COMMAND_MISSING', detail: routeId });
     }
     const tradeOffs = Array.isArray(route.tradeOffs) ? route.tradeOffs : [];
-    if (tradeOffs.length < 2 || tradeOffs.some((entry) => !nonEmptyString(entry, 8))) {
+    if (tradeOffs.length < 2 || tradeOffs.some((/** @type {unknown} */ entry) => !nonEmptyString(entry, 8))) {
       errors.push({ code: 'CI_ROUTE_TRADE_OFF_MISSING', detail: `${routeId} must state at least two trade-offs` });
     }
     const provesGitHub = route.provesGitHubExecution === true;

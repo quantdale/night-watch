@@ -49,6 +49,8 @@ const DISPOSITION_TOKEN_RE = new RegExp(`\\b(?:${LEDGER_DISPOSITION_TOKENS.join(
  * struck text. A token that merely appears inside the struck task text (for
  * example a task whose own wording says "FIX" or "EXECUTE") is not a
  * disposition and never settles the entry (VA-04 / corrections task 5.4).
+ * @param {string} strikeText
+ * @returns {boolean}
  */
 export function carriesDispositionToken(strikeText) {
   const text = String(strikeText ?? '');
@@ -62,6 +64,10 @@ const DONE_LINE_RE = /^\s*-\s*\[[xX]\]/;
 const ARCHIVE_DATE_PREFIX_RE = /^\d{4}-\d{2}-\d{2}-/;
 const EXTERNAL_BLOCKER_RE = /\b(?:EXTERNAL|BLOCKED_EXTERNAL|owner|authorization|credential|cookie|access|CI|DEV|organization|network|egress|GCP|GKE)\b/i;
 
+/**
+ * @param {string} file
+ * @returns {string | null}
+ */
 function readFileIfPresent(file) {
   try {
     const stat = fs.lstatSync(file);
@@ -77,6 +83,8 @@ function readFileIfPresent(file) {
  * their line numbers, the completed count, the settled struck count
  * (`declaredNotInScope`, disposition token present) and the UNDISPOSITIONED
  * struck entries (no token — never settled). Pure over text; deterministic.
+ * @param {string} tasksText
+ * @returns {{ open: Array<{ line: number, text: string }>, done: number, declaredNotInScope: number, undispositioned: Array<{ line: number, text: string }> }}
  */
 export function parseLedgerTasks(tasksText) {
   const lines = String(tasksText ?? '').split(/\r?\n/);
@@ -84,26 +92,26 @@ export function parseLedgerTasks(tasksText) {
   const undispositioned = [];
   let done = 0;
   let declaredNotInScope = 0;
-  for (let index = 0; index < lines.length; index += 1) {
-    const line = lines[index];
+  for (const [index, line] of lines.entries()) {
     const openMatch = OPEN_LINE_RE.exec(line);
     if (openMatch) {
-      let entryText = openMatch[1];
+      const entryStart = openMatch[1] ?? '';
+      let entryText = entryStart;
       let cursor = index + 1;
       while (
         cursor < lines.length
-        && /^\s+/.test(lines[cursor])
-        && !/^\s*-\s*\[/.test(lines[cursor])
-        && !/^\s*#/.test(lines[cursor])
+        && /^\s+/.test(lines[cursor] ?? '')
+        && !/^\s*-\s*\[/.test(lines[cursor] ?? '')
+        && !/^\s*#/.test(lines[cursor] ?? '')
       ) {
-        entryText += `\n${lines[cursor]}`;
+        entryText += `\n${lines[cursor] ?? ''}`;
         cursor += 1;
       }
       if (/~~[\s\S]*?~~/.test(entryText)) {
         if (carriesDispositionToken(entryText)) declaredNotInScope += 1;
-        else undispositioned.push({ line: index + 1, text: openMatch[1].trim().slice(0, 160) });
+        else undispositioned.push({ line: index + 1, text: entryStart.trim().slice(0, 160) });
       } else {
-        open.push({ line: index + 1, text: openMatch[1].trim().slice(0, 160) });
+        open.push({ line: index + 1, text: entryStart.trim().slice(0, 160) });
       }
       continue;
     }
@@ -112,13 +120,18 @@ export function parseLedgerTasks(tasksText) {
   return { open, done, declaredNotInScope, undispositioned };
 }
 
-/** First non-empty line of the STATE `## Blockers` section, or null. */
+/**
+ * First non-empty line of the STATE `## Blockers` section, or null.
+ * @param {string} stateText
+ * @returns {string | null}
+ */
 export function parseBlockersSection(stateText) {
   const lines = String(stateText ?? '').split(/\r?\n/);
   const start = lines.findIndex((line) => line.trim() === '## Blockers');
   if (start === -1) return null;
-  for (let index = start + 1; index < lines.length; index += 1) {
-    const trimmed = lines[index].trim();
+  for (const [index, line] of lines.entries()) {
+    if (index <= start) continue;
+    const trimmed = line.trim();
     if (/^##\s/.test(trimmed)) return null;
     if (trimmed === '') continue;
     if (/^none\b/i.test(trimmed)) return null;
@@ -127,12 +140,20 @@ export function parseBlockersSection(stateText) {
   return null;
 }
 
+/**
+ * @param {string | null | undefined} blockerText
+ * @returns {'NONE' | 'INTERNAL' | 'EXTERNAL'}
+ */
 export function classifyBlocker(blockerText) {
   if (blockerText === null || blockerText === undefined) return 'NONE';
   return EXTERNAL_BLOCKER_RE.test(blockerText) ? 'EXTERNAL' : 'INTERNAL';
 }
 
-/** Active (non-archived) change ids that carry a tasks.md ledger. */
+/**
+ * Active (non-archived) change ids that carry a tasks.md ledger.
+ * @param {string} root
+ * @returns {string[]}
+ */
 export function listActiveChangeIds(root) {
   const changesRoot = path.join(root, 'openspec', 'changes');
   let entries = [];
@@ -150,7 +171,11 @@ export function listActiveChangeIds(root) {
   return ids.sort();
 }
 
-/** Archived change ids, with the date prefix stripped, for orphan pairing. */
+/**
+ * Archived change ids, with the date prefix stripped, for orphan pairing.
+ * @param {string} root
+ * @returns {string[]}
+ */
 export function listArchivedChangeIds(root) {
   const archiveRoot = path.join(root, 'openspec', 'changes', 'archive');
   let entries = [];
@@ -171,8 +196,11 @@ export function listArchivedChangeIds(root) {
  * entries, the declared count, and the blocker with its internal/external
  * class. Terminal ledgers are omitted here; their disagreement is the
  * agreement check's failure, not a status row.
+ * @param {string} root
+ * @returns {Array<{ changeId: string, taskStatus: string, openCount: number, declaredNotInScope: number, undispositionedCount: number, doneCount: number, blocker: string | null, blockerClass: 'NONE' | 'INTERNAL' | 'EXTERNAL' }>}
  */
 export function collectOpenWorkInput(root) {
+  /** @type {Array<{ changeId: string, taskStatus: string, openCount: number, declaredNotInScope: number, undispositionedCount: number, doneCount: number, blocker: string | null, blockerClass: 'NONE' | 'INTERNAL' | 'EXTERNAL' }>} */
   const entries = [];
   for (const changeId of listActiveChangeIds(root)) {
     const tasksText = readFileIfPresent(path.join(root, 'openspec', 'changes', changeId, 'tasks.md')) ?? '';
@@ -192,7 +220,7 @@ export function collectOpenWorkInput(root) {
       continue;
     }
     const statusMatch = /^Status:\s*(\S+)/m.exec(stateText);
-    const taskStatus = normalizeTaskStatus(statusMatch === null ? undefined : statusMatch[1]);
+    const taskStatus = normalizeTaskStatus(statusMatch?.[1] ?? '');
     // A-21 / R2-62: nothing is hidden. BLOCKED tasks are their own open-work
     // class (previously skipped and invisible), and a terminal ledger with
     // undispositioned strikes keeps reporting them — the strikes are not
@@ -220,10 +248,13 @@ export const LEGACY_DRAIN_SCHEMA = 'nightwatch.ledger-legacy-drain.v1';
  * The declared per-change ceilings of legacy undispositioned strikes on
  * TERMINAL changes (VA-04 ratchet). An absent file is an empty ceiling set;
  * a malformed one is an error and grants nothing.
+ * @param {string} root
  * @returns {{ ceilings: Map<string, number>, errors: string[] }}
  */
 function loadLegacyDrainCeilings(root) {
+  /** @type {Map<string, number>} */
   const ceilings = new Map();
+  /** @type {string[]} */
   const errors = [];
   const raw = readFileIfPresent(path.join(root, LEGACY_DRAIN_PATH));
   if (raw === null) return { ceilings, errors };
@@ -252,6 +283,9 @@ function loadLegacyDrainCeilings(root) {
  * change stays a warning, because historical task directories are append-only
  * records rather than missing campaigns); a legacy v1 pairing is reported as
  * legacy and never inferred terminal. Read-only: never rewrites a ledger.
+ * @param {string} root
+ * @param {((sha: string, relativePath: string) => string | null) | null} [readBlobAtCommit]
+ * @returns {{ errors: string[], warnings: string[], info: string[] }}
  */
 export function inspectLedgerAgreement(root, readBlobAtCommit = null) {
   const errors = [];
@@ -293,7 +327,7 @@ export function inspectLedgerAgreement(root, readBlobAtCommit = null) {
     const text = readFileIfPresent(path.join(root, 'openspec', 'changes', changeId, 'tasks.md')) ?? '';
     const { open, done, declaredNotInScope, undispositioned } = parseLedgerTasks(text);
     const stateText = readFileIfPresent(path.join(root, '.agent', 'tasks', changeId, 'STATE.md'));
-    const pairedStatus = normalizeTaskStatus((/^Status:\s*(\S+)/m.exec(stateText ?? '') ?? [])[1]);
+    const pairedStatus = normalizeTaskStatus((/^Status:\s*(\S+)/m.exec(stateText ?? '') ?? [])[1] ?? '');
     if (undispositioned.length > 0) {
       // A-21 / VA-04: a strike without a trailing disposition token is not
       // settled. Reported always, so a hidden backlog cannot look closed; at a
@@ -302,7 +336,7 @@ export function inspectLedgerAgreement(root, readBlobAtCommit = null) {
       // drained by the M13 ledger closure.
       const lines = undispositioned.map((entry) => entry.line).join(', ');
       const message = `LEDGER_UNDISPOSITIONED_ITEM: change ${changeId} leaves ${undispositioned.length} struck entr${undispositioned.length === 1 ? 'y' : 'ies'} without a disposition token at line${undispositioned.length === 1 ? '' : 's'} ${lines}`;
-      if (stateText !== null && LEDGER_TERMINAL_STATUSES.includes(pairedStatus)) {
+      if (stateText !== null && pairedStatus !== null && LEDGER_TERMINAL_STATUSES.includes(pairedStatus)) {
         // A terminal paired task is an ERROR — except for the LEGACY population
         // whose drain is the parent's M13 ledger closure: a declared per-change
         // ceiling (config/ledger-legacy-drain.v1.json) that may only turn DOWN.
@@ -322,7 +356,7 @@ export function inspectLedgerAgreement(root, readBlobAtCommit = null) {
       continue;
     }
     const statusMatch = /^Status:\s*(\S+)/m.exec(stateText);
-    const taskStatus = normalizeTaskStatus(statusMatch === null ? undefined : statusMatch[1]);
+    const taskStatus = normalizeTaskStatus(statusMatch?.[1] ?? '');
     const protocolMatch = /^CONTINUITY_PROTOCOL_VERSION:\s*(\S+)/m.exec(stateText);
     if (protocolMatch === null || protocolMatch[1] !== PROTOCOL_V2) {
       warnings.push(
@@ -330,18 +364,19 @@ export function inspectLedgerAgreement(root, readBlobAtCommit = null) {
       );
       continue;
     }
-    if (LEDGER_TERMINAL_STATUSES.includes(taskStatus) && open.length > 0) {
+    if (taskStatus !== null && LEDGER_TERMINAL_STATUSES.includes(taskStatus) && open.length > 0) {
       const lines = open.map((entry) => entry.line).join(', ');
       errors.push(
         `LEDGER_TERMINAL_TASK_HAS_OPEN_ITEMS: change ${changeId} pairs with task ${changeId} (Status: ${taskStatus}) but tasks.md leaves ${open.length} unchecked non-declared entr${open.length === 1 ? 'y' : 'ies'} at line${open.length === 1 ? '' : 's'} ${lines}`,
       );
-    } else if (!LEDGER_TERMINAL_STATUSES.includes(taskStatus)) {
+    } else if (taskStatus === null || !LEDGER_TERMINAL_STATUSES.includes(taskStatus)) {
       info.push(
         `LEDGER_OPEN_ITEMS: change ${changeId} task=${taskStatus ?? 'UNKNOWN'} open=${open.length} declared_not_in_scope=${declaredNotInScope} done=${done}`,
       );
     }
   }
   const tasksRoot = path.join(root, '.agent', 'tasks');
+  /** @type {import('node:fs').Dirent[]} */
   let taskEntries = [];
   try {
     taskEntries = fs.readdirSync(tasksRoot, { withFileTypes: true });
@@ -471,6 +506,10 @@ export function normalizeTaskText(text) {
     .trim();
 }
 
+/**
+ * @param {string} tasksText
+ * @returns {string[]}
+ */
 export function collectTaskIds(tasksText) {
   const ids = [];
   const seen = new Set();
@@ -478,15 +517,19 @@ export function collectTaskIds(tasksText) {
     const match = TASK_LINE_ID_RE.exec(line);
     if (match === null) continue;
     const id = match[1];
-    if (!seen.has(id)) {
-      seen.add(id);
-      ids.push(id);
-    }
+    if (id === undefined || seen.has(id)) continue;
+    seen.add(id);
+    ids.push(id);
   }
   return ids;
 }
 
-/** Baseline IDs that no longer open a task line in the current text. */
+/**
+ * Baseline IDs that no longer open a task line in the current text.
+ * @param {string} baselineText
+ * @param {string} currentText
+ * @returns {string[]}
+ */
 export function taskIdLedgerViolations(baselineText, currentText) {
   const current = new Set(collectTaskIds(currentText));
   return collectTaskIds(baselineText).filter((id) => !current.has(id));
@@ -513,11 +556,16 @@ function isArchivedChange(root, changeId) {
  * archived (no active tasks.md) is skipped as information. An unreadable
  * baseline (a shallow checkout) is a WARNING, never a silent pass and never a
  * false error.
+ * @param {string} root
+ * @param {(sha: string, relativePath: string) => string | null | undefined} readBlobAtCommit
  * @returns {{ errors: string[], warnings: string[], info: string[] }}
  */
 export function inspectTaskIdLedger(root, readBlobAtCommit) {
+  /** @type {string[]} */
   const errors = [];
+  /** @type {string[]} */
   const warnings = [];
+  /** @type {string[]} */
   const info = [];
   const raw = readFileIfPresent(path.join(root, TASK_ID_LEDGER_PATH));
   if (raw === null) {
@@ -594,7 +642,7 @@ export function inspectTaskIdLedger(root, readBlobAtCommit) {
     // changes still in flight — exactly where a reword can hide work.
     const stateText = readFileIfPresent(path.join(root, '.agent', 'tasks', changeId, 'STATE.md'));
     const stateStatus = stateText === null ? null : /^Status:\s*(\S+)/m.exec(stateText)?.[1] ?? null;
-    const terminal = normalizeTaskStatus(stateStatus) === 'COMPLETE';
+    const terminal = normalizeTaskStatus(stateStatus ?? '') === 'COMPLETE';
     if (!terminal) {
       const baselineTexts = taskTextsById(baseline);
       const currentTexts = taskTextsById(current);
@@ -612,7 +660,7 @@ export function inspectTaskIdLedger(root, readBlobAtCommit) {
   }
   // R3-10: EVERY active change must carry a ledger entry, not only the listed
   // ones — an unlisted change's IDs would otherwise be silently unguarded.
-  const listed = new Set(record.changes.map((entry) => (typeof entry?.changeId === 'string' ? entry.changeId : '')).filter((id) => id !== ''));
+  const listed = new Set(record.changes.map((/** @type {{ changeId: string }} */ entry) => (typeof entry?.changeId === 'string' ? entry.changeId : '')).filter((/** @type {string} */ id) => id !== ''));
   for (const changeId of listActiveChangeIds(root)) {
     if (!listed.has(changeId)) {
       errors.push(`LEDGER_TASK_ID_LEDGER_ENTRY_MISSING: active change ${changeId} has no task-ID ledger entry; its stable IDs are unguarded`);

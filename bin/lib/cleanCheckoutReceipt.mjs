@@ -48,7 +48,7 @@ function sha256(value) {
  *
  * @param {readonly string[]} args
  * @param {string} cwd
- * @returns {{ status: number | null, stdout: string, stderr: string, error?: Error }}
+ * @returns {{ status: number | null, stdout: string, stderr: string } & Partial<{ error: Error }>}
  */
 export function gitReadOnly(args, cwd) {
   return spawnSync('git', ['--no-optional-locks', ...args], {

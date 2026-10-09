@@ -32,6 +32,30 @@ const testFilePattern = /tests\/(?:unit|smoke)\/[A-Za-z0-9._/-]+\.test\.ts/g;
 // lastIndex makes repeated `.test()` calls alternate between true and false.
 const exactTestFilePattern = /^tests\/(?:unit|smoke)\/[A-Za-z0-9._/-]+\.test\.ts$/;
 
+/** @typedef {{ identity: string, commandLines: string[], uses: string | null }} WorkflowStep */
+/** @typedef {{ stepIdentity: string, identity: string, command: string, testFiles: string[], approximatePhaseOwnership: string, stillAuthoritative: boolean, duplicatedElsewhere: boolean, newerCompatibilitySubsumes: boolean, requiresGitHubSpecificEnvironment: boolean, canRunOffline: boolean, dependsOnSiblingRepositories: boolean, privacySafetyImplications: boolean }} InventoryStep */
+/** @typedef {{ id: string, commandKey: string, required: boolean, ciCapable: boolean, cleanCheckoutCapable: boolean, requiresSiblingTopology: boolean, preDevRelevant: boolean }} GateManifestGroup */
+/** @typedef {{ groups: GateManifestGroup[] }} GateManifest */
+/** @typedef {{ phaseSuites: { files: string[] }[], supportFiles: string[] }} CompatibilityManifest */
+/** @typedef {{ groupId: string, commandKey: string, required: boolean, testFiles: string[], intentionalDuplicateReasonCodes: string[], ciCapable: boolean, cleanCheckoutCapable: boolean, requiresSiblingTopology: boolean, preDevRelevant: boolean }} InventoryGroup */
+
+/**
+ * Capture group `index` of one match. A `null` match and an absent group both
+ * yield the empty string; every pattern used here carries one
+ * always-participating group, so the caller's existing truthiness test on the
+ * MATCH object is preserved unchanged.
+ * @param {RegExpExecArray | null} match
+ * @param {number} index
+ * @returns {string}
+ */
+function group(match, index) {
+  return match === null ? '' : match[index] ?? '';
+}
+
+/**
+ * @param {string} file
+ * @returns {string}
+ */
 function read(file) {
   return fs.readFileSync(file, 'utf8');
 }
@@ -48,28 +72,38 @@ function readLegacyWorkflow() {
   return result.stdout;
 }
 
+/**
+ * @param {string} name
+ * @returns {string}
+ */
 function phaseOwnership(name) {
-  const match = /Phase\s+([0-9]+(?:\.[0-9A-Za-z]+)?)/i.exec(name);
-  return match ? `PHASE_${match[1].replace(/[^0-9A-Za-z]+/g, '_').toUpperCase()}` : 'CROSS_CUTTING';
+  const phase = group(/Phase\s+([0-9]+(?:\.[0-9A-Za-z]+)?)/i.exec(name), 1);
+  return phase === '' ? 'CROSS_CUTTING' : `PHASE_${phase.replace(/[^0-9A-Za-z]+/g, '_').toUpperCase()}`;
 }
 
+/**
+ * @param {string} text
+ * @returns {InventoryStep[]}
+ */
 function extractSteps(text) {
   const lines = text.split(/\r?\n/);
+  /** @type {WorkflowStep[]} */
   const steps = [];
+  /** @type {WorkflowStep | null} */
   let current = null;
   const flush = () => { if (current) steps.push(current); current = null; };
   for (const line of lines) {
     const name = /^\s{6}- name:\s*(.*)$/.exec(line);
     if (name) {
       flush();
-      current = { identity: name[1].trim(), commandLines: [], uses: null };
+      current = { identity: group(name, 1).trim(), commandLines: [], uses: null };
       continue;
     }
     if (!current) continue;
     const uses = /^\s{8}uses:\s*(.*)$/.exec(line);
-    if (uses) current.uses = uses[1].trim();
+    if (uses) current.uses = group(uses, 1).trim();
     const run = /^\s{8}run:\s?(.*)$/.exec(line);
-    if (run) current.commandLines.push(run[1] === '|' ? '' : run[1].trim());
+    if (run) current.commandLines.push(group(run, 1) === '|' ? '' : group(run, 1).trim());
     else if (current.commandLines.length > 0 && /^\s{10,}\S/.test(line) && !/^\s{8}(?:with|env|if):/.test(line)) current.commandLines.push(line.trim());
   }
   flush();
@@ -95,10 +129,15 @@ function extractSteps(text) {
   });
 }
 
+/**
+ * @returns {InventoryGroup[]}
+ */
 function newGateGroups() {
+  /** @type {GateManifest} */
   const gate = JSON.parse(read(gateFile));
+  /** @type {CompatibilityManifest} */
   const compatibility = JSON.parse(read(compatibilityFile));
-  const semanticFiles = [...compatibility.phaseSuites.flatMap((suite) => suite.files), ...(compatibility.supportFiles ?? [])];
+  const semanticFiles = [...compatibility.phaseSuites.flatMap((suite) => suite.files), ...compatibility.supportFiles];
   // The synthetic file list and its serial/zero-retry policy live in a
   // versioned manifest rather than in a package script string, so the launcher
   // (bin/campaign-synthetic.mjs), this inventory, and the quality gate all read
@@ -134,6 +173,10 @@ function newGateGroups() {
   });
 }
 
+/**
+ * @param {readonly { testFiles: readonly string[] }[]} groups
+ * @returns {Map<string, number>}
+ */
 function countFiles(groups) {
   const counts = new Map();
   for (const group of groups) for (const file of group.testFiles) counts.set(file, (counts.get(file) ?? 0) + 1);

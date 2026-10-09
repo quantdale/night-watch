@@ -7,6 +7,13 @@
 
 import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
 
+/**
+ * @typedef {{ code: string, line: number | null, field: string | null }} HandoffDiagnostic
+ * @typedef {{ key: string, value: string, line: number }} HandoffHeaderRecord
+ * @typedef {{ ok: boolean, fields: Readonly<Record<string, string>>, records: readonly HandoffHeaderRecord[], errors: readonly HandoffDiagnostic[] }} ParsedHandoffHeader
+ * @typedef {{ activeTaskId: string, activeTaskStatus: string, continuityOk: boolean }} HandoffContext
+ */
+
 const CLI_METADATA = {
   schemaVersion: OPERATOR_CLI_SCHEMA,
   name: 'planner-handoff-protocol',
@@ -50,10 +57,20 @@ const SECRET_PATTERNS = [
   /\b(?:password|passwd|secret|api[_-]?key|access[_-]?token|refresh[_-]?token|authorization)\b\s*[:=]\s*["']?[A-Za-z0-9._~+/=-]{8,}/i,
 ];
 
+/**
+ * @param {string} code
+ * @param {number | null} [line]
+ * @param {string | null} [field]
+ * @returns {HandoffDiagnostic}
+ */
 function error(code, line = null, field = null) {
   return Object.freeze({ code, line, field });
 }
 
+/**
+ * @param {unknown} value
+ * @returns {boolean}
+ */
 function valueIsSafe(value) {
   return typeof value === 'string'
     && value.length <= MAX_FIELD_VALUE_CHARS
@@ -61,10 +78,18 @@ function valueIsSafe(value) {
     && !SECRET_PATTERNS.some((pattern) => pattern.test(value));
 }
 
+/**
+ * @param {unknown} value
+ * @returns {boolean}
+ */
 export function isSafeCampaignId(value) {
   return typeof value === 'string' && SAFE_ID_RE.test(value);
 }
 
+/**
+ * @param {unknown} value
+ * @returns {boolean}
+ */
 export function isGitSha(value) {
   return typeof value === 'string' && SHA_RE.test(value);
 }
@@ -72,25 +97,33 @@ export function isGitSha(value) {
 /**
  * Parse only the contiguous machine header immediately following the first
  * Markdown H1. The body is deliberately opaque; no prose fallback exists.
+ *
+ * @param {string | null | undefined} text
+ * @returns {ParsedHandoffHeader}
  */
 export function parseHandoffHeader(text) {
   const source = String(text ?? '');
+  /** @type {HandoffDiagnostic[]} */
   const errors = [];
   if (source.length > MAX_PROMPT_CHARS) errors.push(error('HANDOFF_METADATA_OVERSIZED'));
 
   const lines = source.split(/\r?\n/);
   let first = 0;
-  while (first < lines.length && lines[first].trim() === '') first += 1;
-  if (first >= lines.length || !/^#\s+\S/.test(lines[first].trim()) || /^##/.test(lines[first].trim())) {
+  while (first < lines.length && lines[first]?.trim() === '') first += 1;
+  const heading = lines[first];
+  if (heading === undefined || !/^#\s+\S/.test(heading.trim()) || /^##/.test(heading.trim())) {
     errors.push(error('HANDOFF_HEADER_MISSING', first < lines.length ? first + 1 : null));
     return Object.freeze({ ok: false, fields: Object.freeze({}), records: Object.freeze([]), errors: Object.freeze(errors) });
   }
 
+  /** @type {HandoffHeaderRecord[]} */
   const records = [];
+  /** @type {Map<string, HandoffHeaderRecord[]>} */
   const occurrences = new Map();
   let headerStarted = false;
   for (let index = first + 1; index < lines.length; index += 1) {
     const raw = lines[index];
+    if (raw === undefined) continue;
     const trimmed = raw.trim();
     // Markdown headings conventionally have one blank line after the H1.
     // Permit leading blank lines before the owned header, but once a field has
@@ -109,12 +142,13 @@ export function parseHandoffHeader(text) {
       errors.push(error('HANDOFF_HEADER_MALFORMED', index + 1));
       continue;
     }
-    const key = match[1].trim();
-    const value = match[2].trim();
+    const key = (match[1] ?? '').trim();
+    const value = (match[2] ?? '').trim();
     const record = Object.freeze({ key, value, line: index + 1 });
     records.push(record);
-    if (!occurrences.has(key)) occurrences.set(key, []);
-    occurrences.get(key).push(record);
+    const bucket = occurrences.get(key);
+    if (bucket === undefined) occurrences.set(key, [record]);
+    else bucket.push(record);
     if (!HANDOFF_REQUIRED_FIELDS.includes(key)) errors.push(error('HANDOFF_HEADER_UNKNOWN_FIELD', index + 1, key));
     if (!valueIsSafe(value)) {
       errors.push(error(
@@ -126,8 +160,9 @@ export function parseHandoffHeader(text) {
   }
 
   for (const [key, values] of occurrences) {
-    if (values.length > 1) errors.push(error('HANDOFF_DUPLICATE_FIELD', values[0].line, key));
+    if (values.length > 1) errors.push(error('HANDOFF_DUPLICATE_FIELD', values[0]?.line ?? null, key));
   }
+  /** @type {Record<string, string>} */
   const fields = {};
   for (const record of records) if (fields[record.key] === undefined) fields[record.key] = record.value;
   for (const key of HANDOFF_REQUIRED_FIELDS) {
@@ -141,14 +176,22 @@ export function parseHandoffHeader(text) {
   });
 }
 
+/**
+ * @param {string | ParsedHandoffHeader} parsedOrText
+ * @returns {{ ok: boolean, fields: Readonly<Record<string, string>>, errors: readonly HandoffDiagnostic[] }}
+ */
 export function validateHandoffHeader(parsedOrText) {
   const parsed = typeof parsedOrText === 'string' ? parseHandoffHeader(parsedOrText) : parsedOrText;
   const errors = [...(parsed?.errors ?? [])];
   const fields = parsed?.fields ?? {};
+  /**
+   * @param {string} code
+   * @param {string | null} [field]
+   */
   const add = (code, field = null) => errors.push(error(code, null, field));
 
   if (fields.HANDOFF_PROTOCOL_VERSION !== HANDOFF_PROTOCOL_VERSION) add('HANDOFF_PROTOCOL_UNSUPPORTED', 'HANDOFF_PROTOCOL_VERSION');
-  if (!HANDOFF_STATUSES.has(fields.Status)) add('HANDOFF_STATUS_UNSUPPORTED', 'Status');
+  if (fields.Status === undefined || !HANDOFF_STATUSES.has(fields.Status)) add('HANDOFF_STATUS_UNSUPPORTED', 'Status');
   if (!isSafeCampaignId(fields['Campaign ID'])) add('HANDOFF_CAMPAIGN_ID_INVALID', 'Campaign ID');
   if (!isSafeCampaignId(fields['Predecessor Task ID'])) add('HANDOFF_PREDECESSOR_ID_INVALID', 'Predecessor Task ID');
   if (!isGitSha(fields['Planned-From'])) add('HANDOFF_PLANNED_FROM_INVALID', 'Planned-From');
@@ -171,6 +214,10 @@ export function validateHandoffHeader(parsedOrText) {
  * Apply the state-only handoff rules to a safe active-task projection. The
  * checker supplies continuityOk after delegating milestone/closure semantics
  * to agent-continuity v2.
+ *
+ * @param {string | ParsedHandoffHeader} parsedOrText
+ * @param {Partial<HandoffContext>} [context]
+ * @returns {{ ok: boolean, fields: Readonly<Record<string, string>>, errors: readonly HandoffDiagnostic[] }}
  */
 export function validateHandoffState(parsedOrText, context = {}) {
   const header = validateHandoffHeader(parsedOrText);
@@ -181,7 +228,8 @@ export function validateHandoffState(parsedOrText, context = {}) {
   const activeTaskId = context.activeTaskId;
   const activeTaskStatus = context.activeTaskStatus;
   if (!isSafeCampaignId(activeTaskId)) errors.push(error('HANDOFF_ACTIVE_TASK_INVALID'));
-  if (!HANDOFF_STATUSES.has(activeTaskStatus) && !['NONE'].includes(activeTaskStatus)) errors.push(error('HANDOFF_ACTIVE_STATUS_INVALID'));
+  if (activeTaskStatus === undefined
+    || (!HANDOFF_STATUSES.has(activeTaskStatus) && !['NONE'].includes(activeTaskStatus))) errors.push(error('HANDOFF_ACTIVE_STATUS_INVALID'));
   if (context.continuityOk !== true) errors.push(error('HANDOFF_ACTIVE_CONTINUITY_FAILED'));
 
   if (fields.Status === 'READY_FOR_EXECUTION') {
@@ -195,6 +243,10 @@ export function validateHandoffState(parsedOrText, context = {}) {
   return Object.freeze({ ok: errors.length === 0, fields: header.fields, errors: Object.freeze(errors) });
 }
 
+/**
+ * @param {readonly HandoffDiagnostic[] | null | undefined} errors
+ * @returns {string[]}
+ */
 export function uniqueErrorCodes(errors) {
   return [...new Set((errors ?? []).map((item) => item.code).filter(Boolean))];
 }

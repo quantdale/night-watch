@@ -136,14 +136,7 @@ function canonicalJson(value) {
 }
 
 /**
- * @param {{
- *   files: ReadonlyArray<unknown>,
- *   headSha: string | null,
- *   treeClean: boolean | null,
- *   typesSource: string | null,
- *   harnessSource: string | null,
- *   executedAt: string,
- * }} input
+ * @param {{ files: ReadonlyArray<unknown>, headSha: string | null, treeClean: boolean | null, typesSource: string | null, harnessSource: string | null, executedAt: string }} input
  * @returns {Record<string, unknown> | null} null when the harness file did not run
  */
 export function buildUiHarnessReceipt(input) {
@@ -197,17 +190,8 @@ export function buildUiHarnessReceipt(input) {
  * checkpoint and the ApiErrorKind member list committed AT that checkpoint.
  *
  * @param {unknown} raw
- * @param {{
- *   certifiedCheckpointSha: string | null,
- *   expectedKinds: readonly string[] | null,
- *   harnessSourceAtS?: string | null,
- * }} context
- * @returns {{
- *   ok: boolean,
- *   errors: string[],
- *   relation: 'BOUND' | 'BOUND_TO_OTHER' | 'INVALID',
- *   summary: { sha: string, harnessTests: number, totalTests: number, kinds: number } | null,
- * }}
+ * @param {{ certifiedCheckpointSha: string | null, expectedKinds: readonly string[] | null } & Partial<{ harnessSourceAtS: string | null }>} context
+ * @returns {{ ok: boolean, errors: string[], relation: 'BOUND' | 'BOUND_TO_OTHER' | 'INVALID', summary: { sha: string, harnessTests: number, totalTests: number, kinds: number } | null }}
  */
 export function evaluateUiHarnessReceipt(raw, context) {
   /** @type {string[]} */

@@ -20,6 +20,7 @@ import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
+/** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
 const CLI_METADATA = {
   schemaVersion: OPERATOR_CLI_SCHEMA,
   name: 'selfdev-promote-canonical',
@@ -51,6 +52,14 @@ const CLI_METADATA = {
   artifacts: ['$HOME/.nightwatch private promotion stores'],
 };
 
+/**
+ * Load one runtime TypeScript module. The declared type parameter carries the
+ * literal module path, so the loader's generated module map resolves the
+ * precise module type instead of erasing it to `unknown`.
+ *
+ * @template {keyof import('./lib/typescript-runtime-loader.mjs').TypeScriptRuntimeLoaderModuleMap} File
+ * @param {File} file
+ */
 function loadTypeScriptModule(file) {
   return loadRuntimeTypeScriptModule(file, { root });
 }
@@ -75,20 +84,54 @@ const APPROVAL_ID_RE = /^canonical-promotion-approval:sha256:[0-9a-f]{64}$/;
 const RECEIPT_ID_RE = /^canonical-apply-receipt:sha256:[0-9a-f]{64}$/;
 const VERIFICATION_ID_RE = /^canonical-promotion-verification:sha256:[0-9a-f]{64}$/;
 
+/**
+ * Read the exact `--name value` pairs the bin declared for one subcommand.
+ * The names tuple is carried in the type parameter, so the returned record
+ * carries exactly those keys and each read is a plain string.
+ *
+ * @template {readonly string[]} Names
+ * @param {string[]} rest
+ * @param {readonly [...Names]} names
+ * @returns {{ [Key in Names[number]]: string }}
+ */
 function flagPairs(rest, names) {
   if (rest.length !== names.length * 2) throw new Error('SELFDEV_PROMOTE_CANONICAL_USAGE_INVALID');
+  /** @type {Record<string, string>} */
   const values = {};
   for (let index = 0; index < names.length; index += 1) {
+    const name = names[index];
     const flag = rest[index * 2];
     const value = rest[index * 2 + 1];
-    if (flag !== `--${names[index]}` || value === undefined || value.startsWith('--')) {
+    if (name === undefined || flag !== `--${name}` || value === undefined || value.startsWith('--')) {
       throw new Error('SELFDEV_PROMOTE_CANONICAL_USAGE_INVALID');
     }
-    values[names[index]] = value;
+    values[name] = value;
   }
-  return values;
+  return /** @type {{ [Key in Names[number]]: string }} */ (values);
 }
 
+/**
+ * The parsed subcommand request. Every command rejects a non-exact flag set
+ * before any store is opened, so each variant carries exactly the ids that
+ * command uses.
+ *
+ * @typedef {{ help: boolean, command: 'inspect', artifactId: string, candidateId: string, planId: string, sandboxResultId: string }} SelfDevPromoteInspectArgs
+ *
+ * @typedef {{ help: boolean, command: 'prepare', artifactId: string, candidateId: string, planId: string, sandboxResultId: string }} SelfDevPromotePrepareArgs
+ *
+ * @typedef {{ help: boolean, command: 'approve', promotionId: string, confirm: string }} SelfDevPromoteApproveArgs
+ *
+ * @typedef {{ help: boolean, command: 'apply', promotionId: string, approvalId: string }} SelfDevPromoteApplyArgs
+ *
+ * @typedef {{ help: boolean, command: 'verify', promotionId: string, receiptId: string }} SelfDevPromoteVerifyArgs
+ *
+ * @typedef {{ help: boolean, command: 'status', promotionId: string, verificationId: string }} SelfDevPromoteStatusArgs
+ */
+
+/**
+ * @param {string[]} args
+ * @returns {{ help: true } | SelfDevPromoteInspectArgs | SelfDevPromotePrepareArgs | SelfDevPromoteApproveArgs | SelfDevPromoteApplyArgs | SelfDevPromoteVerifyArgs | SelfDevPromoteStatusArgs}
+ */
 function parseArgs(args) {
   if (args.length === 1 && (args[0] === '--help' || args[0] === '-h')) return { help: true };
   if (args.length === 0) throw new Error('SELFDEV_PROMOTE_CANONICAL_USAGE_INVALID');
@@ -100,11 +143,14 @@ function parseArgs(args) {
     if (!CANDIDATE_ID_RE.test(values['candidate-id'])) throw new Error('SELFDEV_CANDIDATE_ID_INVALID');
     if (!PLAN_ID_RE.test(values['plan-id'])) throw new Error('SELFDEV_PLAN_ID_INVALID');
     if (!RESULT_ID_RE.test(values['sandbox-result-id'])) throw new Error('SELFDEV_SANDBOX_RESULT_ID_INVALID');
-    return {
-      help: false, command,
+    /** @type {Omit<SelfDevPromoteInspectArgs, 'command'>} */
+    const exactIds = {
+      help: false,
       artifactId: values['artifact-id'], candidateId: values['candidate-id'],
       planId: values['plan-id'], sandboxResultId: values['sandbox-result-id'],
     };
+    if (command === 'inspect') return { ...exactIds, command };
+    return { ...exactIds, command };
   }
   if (command === 'approve') {
     const values = flagPairs(rest, ['promotion-id', 'confirm']);
@@ -132,6 +178,10 @@ function parseArgs(args) {
   throw new Error('SELFDEV_PROMOTE_CANONICAL_USAGE_INVALID');
 }
 
+/**
+ * @param {import('../src/core/selfDevPromotion/index')} promotionModule
+ * @param {import('../src/core/selfDevPromotion/index').SelfDevCanonicalPromotionIntent | Omit<import('../src/core/selfDevPromotion/index').SelfDevCanonicalPromotionIntent, 'promotionId'>} draft
+ */
 function safeDraftSummary(promotionModule, draft) {
   return {
     computedPromotionId: promotionModule.promotionIdFor(draft),

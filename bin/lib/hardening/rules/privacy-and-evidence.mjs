@@ -447,7 +447,7 @@ export function checkFindingFrontierBoundary() {
     }
     for (const file of coneFiles) {
       const source = read(file);
-      for (const [pattern, description] of [
+      for (const [pattern, description] of /** @type {[RegExp, string][]} */ ([
         [/from\s+['"]node:(?:net|http|https|dns|child_process|fs|os|path|url|util|events|stream|worker_threads)[^'"]*['"]/, 'a network/process/filesystem runtime import (any subpath)'],
         [/\brequire\s*\(\s*['"]/, 'a require() call'],
         [/\bfetch\s*\(/, 'fetch()'],
@@ -455,7 +455,7 @@ export function checkFindingFrontierBoundary() {
         [/(Slack|Leslie|Pondr)(Client|Webhook|Api|API|Message|Ticket|Issue)|postTo(Slack|Leslie|Pondr)|file(Leslie|Pondr|Slack)Report|create(GitHub|Slack|Pondr)(Issue|Message|Task)/, 'an external submission connector'],
         [/expectedPoints|estimatedReward|rewardTier|bountyPoints|bountyScore|calculateBounty|bountyCalculator/i, 'a bounty-scoring surface'],
         [/from\s+['"][^'"]*core\/(alphausHandoff|c12Readiness|prodObserveP1|prodObserve[^P])/, 'a production-cone import (review/intel bind digests only)'],
-      ]) if (pattern.test(source)) fail(`${file} contains ${description}; the finding-frontier cones must stay local-only`);
+      ])) if (pattern.test(source)) fail(`${file} contains ${description}; the finding-frontier cones must stay local-only`);
     }
   }
   const lifecycle = read('src/core/findingReview/lifecycle.ts');
@@ -495,28 +495,28 @@ export function checkReviewerSurfaceBoundary() {
   const authority = read('src/controlCenter/authorities/reviewerAuthority.ts');
 
   // --- the projection stays pure ---
-  for (const [file, source] of [
+  for (const [file, source] of /** @type {[string, string][]} */ ([
     ['src/controlCenter/adapters/reviewerAdapter.ts', adapter],
     ['src/controlCenter/contracts/reviewer.ts', contract],
     ['src/controlCenter/authorities/reviewerAuthority.ts', authority],
-  ]) {
-    for (const [pattern, description] of [
+  ])) {
+    for (const [pattern, description] of /** @type {[RegExp, string][]} */ ([
       [/from\s+['"]node:(?:net|http|https|dns|child_process|fs|os|worker_threads)[^'"]*['"]/, 'a network/process/filesystem import'],
       [/\brequire\s*\(\s*['"]/, 'a require() call'],
       [/\bfetch\s*\(/, 'fetch()'],
       [/process\.env/, 'an environment read'],
       [/from\s+['"][^'"]*(slack|leslie|pondr)[^'"]*['"]/i, 'an external submission import'],
       [/expectedPoints|estimatedReward|rewardTier|bountyPoints|bountyScore|calculateBounty/i, 'a bounty-scoring surface'],
-    ]) if (pattern.test(source)) fail(`${file} contains ${description}; the reviewer surface must stay a pure local projection`);
+    ])) if (pattern.test(source)) fail(`${file} contains ${description}; the reviewer surface must stay a pure local projection`);
   }
 
   // --- authority literals, occurrence-complete ---
   // A rule satisfied by one safe occurrence is the DEF-FC-04 / M12 trap: every
   // assignment and comparison must carry the local-only value, not just one.
-  for (const [file, source] of [
+  for (const [file, source] of /** @type {[string, string][]} */ ([
     ['src/controlCenter/adapters/reviewerAdapter.ts', adapter],
     ['src/controlCenter/contracts/reviewer.ts', contract],
-  ]) {
+  ])) {
     for (const assignment of source.match(/organizationalAuthority\s*(?::|!==|===)\s*'[^']*'/g) ?? []) {
       if (!assignment.endsWith("'NONE_LOCAL_REVIEW_ONLY'")) {
         fail(`${file} carries ${assignment}; the reviewer surface must always be NONE_LOCAL_REVIEW_ONLY`);
@@ -554,25 +554,27 @@ export function checkReviewerSurfaceBoundary() {
   // A benchmark that can touch the finding store is a benchmark that can
   // corrupt the thing it measures. Synthetic corpora stay in memory.
   const probe = read('tests/unit/findingIntelScaleProbe.ts');
-  for (const [pattern, description] of [
+  for (const [pattern, description] of /** @type {[RegExp, string][]} */ ([
     [/from\s+['"]node:(?:fs|net|http|https|dns|child_process)[^'"]*['"]/, 'a filesystem/network/process import'],
     [/writeFile|appendFile|mkdirSync|createWriteStream|PrivateArtifactStore|ProductionFindingsStore/, 'a persistence capability'],
     [/\bfetch\s*\(/, 'fetch()'],
     [/Math\.random/, 'Math.random (the corpus must be identical in every process)'],
-  ]) if (pattern.test(probe)) fail(`RS-1 the finding-intel scale probe contains ${description}`);
+  ])) if (pattern.test(probe)) fail(`RS-1 the finding-intel scale probe contains ${description}`);
 
   // --- the pinned literal duplicate cannot drift from AH-1 ---
   const ah1 = readIncludingComments('src/core/alphausHandoff/types.ts');
-  for (const [ah1Name, localName] of [
+  for (const [ah1Name, localName] of /** @type {[string, string][]} */ ([
     ['ALPHAUS_SEVERITY_VALUES', 'ALPHAUS_SEVERITY_LITERALS'],
     ['ALPHAUS_CATCH_STAGE_VALUES', 'ALPHAUS_CATCH_STAGE_LITERALS'],
     ['ALPHAUS_SOURCE_VALUES', 'ALPHAUS_SOURCE_LITERALS'],
-  ]) {
-    const source = new RegExp(`${ah1Name}\\s*=\\s*(\\[[^\\]]*\\])`).exec(ah1);
-    const local = new RegExp(`${localName}\\s*=\\s*(\\[[^\\]]*\\])`).exec(authority);
-    if (source === null) fail(`RS-1 could not read ${ah1Name} from the AH-1 vocabulary`);
-    else if (local === null) fail(`RS-1 could not read ${localName} from the reviewer authority`);
-    else if (source[1].replace(/\s+/g, '') !== local[1].replace(/\s+/g, '')) {
+  ])) {
+    const sourceMatch = new RegExp(`${ah1Name}\\s*=\\s*(\\[[^\\]]*\\])`).exec(ah1);
+    const localMatch = new RegExp(`${localName}\\s*=\\s*(\\[[^\\]]*\\])`).exec(authority);
+    const sourceList = sourceMatch === null ? null : sourceMatch[1] ?? null;
+    const localList = localMatch === null ? null : localMatch[1] ?? null;
+    if (sourceList === null) fail(`RS-1 could not read ${ah1Name} from the AH-1 vocabulary`);
+    else if (localList === null) fail(`RS-1 could not read ${localName} from the reviewer authority`);
+    else if (sourceList.replace(/\s+/g, '') !== localList.replace(/\s+/g, '')) {
       fail(`RS-1 ${localName} has drifted from ${ah1Name}; the duplicate is deliberate and must stay exact`);
     }
   }
@@ -605,7 +607,9 @@ export function checkReviewStoreBoundary() {
   // against an allowlist. A single positive `includes` would pass while one
   // unsafe call sat beside it.
   const allowed = new Set(['writeImmutableJson', 'readJson', 'listJson', 'listTemporaries', 'removeTemporary']);
-  const calls = [...storeCode.matchAll(/this\.artifacts\.([A-Za-z0-9_]+)\s*\(/g)].map((match) => match[1]);
+  const calls = [...storeCode.matchAll(/this\.artifacts\.([A-Za-z0-9_]+)\s*\(/g)]
+    .map((match) => match[1])
+    .filter((call) => call !== undefined);
   if (calls.length === 0) fail('review store makes no call on the private artifact store at all');
   for (const call of calls) {
     if (!allowed.has(call)) fail(`review store calls a non-allowlisted private-store method: ${call}`);
@@ -705,7 +709,9 @@ export function checkReviewStoreBoundary() {
   // module-specifier shape into this file and the dependency-resolvability
   // check would read it as an import of its own.
   const importSpecifierPattern = new RegExp(['from', String.raw`\s+'([^']+)'`].join(''), 'g');
-  const imports = [...writeCode.matchAll(importSpecifierPattern)].map((match) => match[1]);
+  const imports = [...writeCode.matchAll(importSpecifierPattern)]
+    .map((match) => match[1])
+    .filter((specifier) => specifier !== undefined);
   for (const specifier of imports) {
     if (!/^\.\.?\//.test(specifier)) fail(`review write authority imports a non-relative module: ${specifier}`);
     if (/prodEvidence|prodObserve|selfDev|alphausHandoff|aiReview|campaign\/|oops|source\/siblingSource/.test(specifier)) {
@@ -716,7 +722,7 @@ export function checkReviewStoreBoundary() {
   if (/PrivateArtifactStore/.test(writeCode)) fail('review write authority bypasses the review store to reach the raw private store');
 
   // --- nothing in the cone can publish externally ---
-  for (const [label, code] of [['review store', storeCode], ['review write authority', writeCode], ['review binding', withoutComments(binding)]]) {
+  for (const [label, code] of /** @type {[string, string][]} */ ([['review store', storeCode], ['review write authority', writeCode], ['review binding', withoutComments(binding)]])) {
     if (/slack|leslie|pondr|notion|webhook|https?:\/\//i.test(code)) fail(`${label} references an external publication destination`);
     if (/\.publish\s*\(/.test(code)) fail(`${label} reaches a publication method`);
   }
@@ -811,12 +817,12 @@ export function checkAuthenticatedEvidenceFirewall() {
   // M8 (9.12): the run-bundle guards the M8 work established must stay in
   // code, each with its own probe (exclusive generation, durable append bound,
   // fail-closed manifest parse and the durable-event assertion).
-  for (const [element, message] of [
+  for (const [element, message] of /** @type {[string, string][]} */ ([
     ['RUN_EVIDENCE_DIRECTORY_EXISTS', 'the run directory must be an exclusive generation identity (EEXIST claim)'],
     ['RUN_EVIDENCE_APPEND_BOUND_EXCEEDED', 'appends must be bounded at append time'],
     ['RUN_EVIDENCE_MANIFEST_INVALID', 'a malformed manifest must fail closed rather than be replaced'],
     ['this.assertDurableEventState();', 'finalize must assert the durable event state before publishing'],
-  ]) {
+  ])) {
     if (!recorder.includes(element)) fail(`run recorder is missing the M8 bundle guard: ${message}`);
   }
   // Shared structural key authority (collapses the parallel denylist).

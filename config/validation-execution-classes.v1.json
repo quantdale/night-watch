@@ -180,6 +180,12 @@
       "class": "PARALLEL_SAFE",
       "signals": []
     },
+    "tests/unit/binTypecheckLaneCompleteness.test.ts": {
+      "class": "PARALLEL_SAFE",
+      "signals": [
+        "isolated-scratch"
+      ]
+    },
     "tests/unit/binTypecheckRatchet.test.ts": {
       "class": "PARALLEL_SAFE",
       "signals": []
@@ -403,13 +409,6 @@
       "class": "PARALLEL_SAFE",
       "signals": []
     },
-    "tests/unit/certifyEvidence.test.ts": {
-      "class": "PROCESS_ISOLATED_ONLY",
-      "signals": [
-        "artifacts-write",
-        "isolated-scratch"
-      ]
-    },
     "tests/unit/certificationEvidence.test.ts": {
       "class": "PROCESS_ISOLATED_ONLY",
       "signals": [
@@ -422,6 +421,13 @@
       "signals": [
         "isolated-scratch",
         "artifacts-write"
+      ]
+    },
+    "tests/unit/certifyEvidence.test.ts": {
+      "class": "PROCESS_ISOLATED_ONLY",
+      "signals": [
+        "artifacts-write",
+        "isolated-scratch"
       ]
     },
     "tests/unit/changeIntelligence.test.ts": {

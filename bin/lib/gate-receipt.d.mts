@@ -52,7 +52,7 @@ export interface GateReceiptTargetOptions {
 /** Either a confined destination, or a categorical refusal. Never both. */
 export interface GateReceiptTarget {
   readonly file?: string;
-  readonly origin?: 'DEFAULT' | 'EXPLICIT';
+  readonly origin?: 'DEFAULT' | 'EXPLICIT' | 'REPOSITORY_IGNORED';
   readonly error?: string;
 }
 

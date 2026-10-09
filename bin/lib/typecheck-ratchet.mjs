@@ -21,11 +21,7 @@
 /**
  * @typedef {{ bin: string, errors: number, maxErrors: number }} CeilingBreach
  * @typedef {{ code: string, detail: string }} RatchetError
- * @typedef {{
- *   perFile: ReadonlyMap<string, number>,
- *   totalCeiling: number | null,
- *   anyAnnotationBudget: number | null,
- * }} RatchetConfig
+ * @typedef {{ perFile: ReadonlyMap<string, number>, totalCeiling: number | null, anyAnnotationBudget: number | null }} RatchetConfig
  */
 
 /**
@@ -91,12 +87,7 @@ export function countDiagnosticSilencingAnnotations(sources) {
  *   - silencing annotations above the budget
  *     (BIN_TYPECHECK_ANY_ANNOTATION_BUDGET_EXCEEDED).
  *
- * @param {{
- *   perFile: ReadonlyMap<string, number>,
- *   total?: number,
- *   annotations: number,
- *   config: RatchetConfig,
- * }} input
+ * @param {{ perFile: ReadonlyMap<string, number>, annotations: number, config: RatchetConfig } & Partial<{ total: number }>} input
  * @returns {RatchetError[]}
  */
 export function judgeRatchet(input) {

@@ -51,7 +51,7 @@ const MAX_BUFFER = 32 * 1024 * 1024;
 const TYPECHECK_TIMEOUT_MS = 600_000;
 
 /**
- * @typedef {{ schemaVersion?: string, mode?: string, exemptions?: { bin?: string, reason?: string }[], perFileCeilings?: { bin?: string, maxErrors?: number }[], totalCeiling?: number, anyAnnotationBudget?: number }} BinTypecheckConfig
+ * @typedef {Partial<{schemaVersion: string, mode: string, exemptions: Partial<{bin: string, reason: string}>[], perFileCeilings: Partial<{bin: string, maxErrors: number}>[], totalCeiling: number, anyAnnotationBudget: number}>} BinTypecheckConfig
  * @typedef {{ code: string, detail: string }} BinTypecheckError
  */
 
@@ -197,6 +197,41 @@ function checkInlineSuppressions() {
   return errors;
 }
 
+/**
+ * The structural completeness probe for this lane.
+ *
+ * A hand-written `x.d.mts` declaration sitting next to its own `x.mjs`
+ * implementation makes TypeScript treat the declaration as that module's
+ * authoritative type and DROP the implementation from the program: with the
+ * project `include` matching both, the `.mjs` is never checked at all, so a bin
+ * carrying hundreds of real diagnostics still reports 0 and the lane silently
+ * passes. Every tracked implementation must therefore be a checked root, which
+ * is why `tsconfig.bin.json` includes only the `.mjs` implementations; this
+ * probe refuses a declaration pattern re-entering the `include` (or any other
+ * shadowing shape) instead of reporting a vacuous clean surface.
+ */
+function checkDeclarationShadowing() {
+  /** @type {BinTypecheckError[]} */
+  const errors = [];
+  const tsconfig = readText('tsconfig.bin.json');
+  const parsed = /** @type {Partial<{ include: unknown }>} */ (JSON.parse(tsconfig));
+  const include = Array.isArray(parsed.include) ? parsed.include : [];
+  for (const pattern of include) {
+    if (typeof pattern !== 'string') continue;
+    if (/\.d\.mts$/.test(pattern) || pattern.endsWith('.d.mts')) {
+      errors.push({ code: 'BIN_TYPECHECK_DECLARATION_SHADOWED', detail: `tsconfig.bin.json include must not match a declaration file: ${pattern}` });
+    }
+    if (pattern === 'bin' || pattern === 'bin/**' || pattern === 'bin/**/*') {
+      errors.push({ code: 'BIN_TYPECHECK_DECLARATION_SHADOWED', detail: `tsconfig.bin.json include must be limited to the .mjs implementations so a sibling declaration cannot shadow one: ${pattern}` });
+    }
+  }
+  const implementations = fs.readdirSync(path.join(ROOT, 'bin'), { withFileTypes: true })
+    .filter((entry) => entry.isFile() && entry.name.endsWith('.mjs'))
+    .map((entry) => `bin/${entry.name}`);
+  if (implementations.length === 0) errors.push({ code: 'BIN_TYPECHECK_VACUOUS', detail: 'zero top-level bin implementations discovered' });
+  return errors;
+}
+
 function checkLoaderDeclaration() {
   /** @type {BinTypecheckError[]} */
   const errors = [];
@@ -239,7 +274,15 @@ function runTsc() {
     stdio: ['ignore', 'pipe', 'pipe'],
   });
   const output = `${result.stdout ?? ''}\n${result.stderr ?? ''}`;
-  if (result.error || output.trim() === '') {
+  // tsc exits 0 for a CLEAN surface and 1 when it reports diagnostics; both are
+  // a real judgement. A clean run prints NOTHING, so an empty output is the
+  // success case and must never be mistaken for an unavailable toolchain.
+  // Exit code 2 means a configuration or usage error (no per-file judgement),
+  // and a spawn error, a kill signal or a timeout kill means no judgement at
+  // all — each of those fails closed as TOOLCHAIN_UNAVAILABLE.
+  const status = result.status;
+  const killed = result.signal !== null && result.signal !== undefined;
+  if (result.error != null || killed || (status !== 0 && status !== 1)) {
     return { ok: false, output, code: 'BIN_TYPECHECK_TOOLCHAIN_UNAVAILABLE' };
   }
   return { ok: true, output, code: null };
@@ -268,6 +311,7 @@ function main() {
     if (!checkedFiles.includes(file)) hardErrors.push({ code: 'BIN_TYPECHECK_CEILING_UNKNOWN', detail: file });
   }
   hardErrors.push(...checkInlineSuppressions());
+  hardErrors.push(...checkDeclarationShadowing());
   hardErrors.push(...checkLoaderDeclaration());
 
   if (write) {

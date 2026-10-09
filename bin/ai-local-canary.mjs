@@ -95,10 +95,12 @@ async function main() {
   }
   // R4-18 / review-4 task 4.5: `--help`/`-h` and `--print-metadata` are answered
   // by the shared parser above, so this branch could never be reached. It is
-  // gone, together with the `usage()` printer it called.
+  // gone, together with the `usage()` printer it called. The remaining result
+  // shape is therefore the parsed option set, never the help result.
+  const options = /** @type {import('../src/core/aiReview/localCanary').LocalCanaryCliOptions} */ (parsed);
 
   try {
-    const result = await service.runSingleLocalCanary(parsed);
+    const result = await service.runSingleLocalCanary(options);
     console.log(service.formatLocalCanaryPass(result));
     process.exitCode = 0;
   } catch (error) {
@@ -108,11 +110,11 @@ async function main() {
       return;
     }
     if (error instanceof service.LocalCanaryFailureError) {
-      console.error(service.formatLocalCanaryFailure(error, parsed.modelIdentifier));
+      console.error(service.formatLocalCanaryFailure(error, options.modelIdentifier));
       process.exitCode = 1;
       return;
     }
-    printUnexpectedFailure(service, parsed.modelIdentifier);
+    printUnexpectedFailure(service, options.modelIdentifier);
     process.exitCode = 1;
   }
 }

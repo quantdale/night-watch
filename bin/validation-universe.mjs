@@ -28,6 +28,7 @@ import {
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DECLARATION = path.join('config', 'validation-universe.v1.json');
 
+/** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
 const CLI_METADATA = {
   schemaVersion: OPERATOR_CLI_SCHEMA,
   name: 'validation-universe',
@@ -50,6 +51,7 @@ const BIN_RE = /^bin\/.*\.mjs$/;
 const BROWSER_RE = /^tests\/browser\/.*\.browser\.ts$/;
 const MANUAL_RE = /^tests\/manual\/.*\.ts$/;
 
+/** @param {string} relative */
 function readJson(relative) {
   return JSON.parse(fs.readFileSync(path.join(ROOT, relative), 'utf8'));
 }
@@ -67,6 +69,10 @@ function trackedFiles() {
 }
 
 /** Every executable test or check that exists, by tracked path. */
+/**
+ * @param {readonly string[]} tracked
+ * @returns {string[]}
+ */
 export function discoverUniverse(tracked) {
   return [
     ...tracked.filter((file) => ROOT_TEST_RE.test(file)),
@@ -84,8 +90,12 @@ export function discoverUniverse(tracked) {
  * the synthetic-campaign file list, the semantic-compatibility phase suites
  * and their support files, and the suites named literally in package.json
  * scripts that required groups invoke.
+ *
+ * @param {{ synthetic: { readonly files: readonly string[] }, semantic: { readonly phaseSuites: readonly (string[] | { readonly files: readonly string[] })[], readonly supportFiles: readonly string[] }, scripts: Readonly<Record<string, string>> }} input
+ * @returns {string[]}
  */
 export function gateSelection({ synthetic, semantic, scripts }) {
+  /** @type {Set<string>} */
   const selected = new Set();
   for (const file of synthetic.files ?? []) selected.add(file);
   for (const suite of Object.values(semantic.phaseSuites ?? {})) {
@@ -104,12 +114,17 @@ function readLastSubstantiveSha() {
     const text = fs.readFileSync(path.join(ROOT, '.agent', 'ACTIVE_TASK.md'), 'utf8');
     const match = /^LAST_SUBSTANTIVE_CHECKPOINT_SHA:\s*([0-9a-f]{40})/m.exec(text)
       ?? /^Last validated implementation SHA:\s*([0-9a-f]{40})/m.exec(text);
-    return match === null ? null : match[1];
+    return match === null ? null : match[1] ?? null;
   } catch {
     return null;
   }
 }
 
+/**
+ * @param {string} left
+ * @param {string} right
+ * @returns {boolean}
+ */
 function isAncestor(left, right) {
   return spawnSync('git', ['merge-base', '--is-ancestor', left, right], {
     cwd: ROOT,
@@ -119,6 +134,24 @@ function isAncestor(left, right) {
   }).status === 0;
 }
 
+/**
+ * The lane-state report the bin publishes alongside the classifier's own
+ * judgement. It is additive: the classifier never learns about lane state, and
+ * the lane state is never persisted (staleness is computed at report time).
+ *
+ * @typedef {{ readonly schemaVersion: string, readonly lastSubstantiveSha: string | null, readonly lanes: readonly import('./lib/validation-lane-state.mjs').LaneStateReportEntry[] }} UniverseLaneStateReport
+ */
+
+/** @typedef {import('./lib/validation-universe.mjs').ValidationUniverseJudgement} UniverseClassifierJudgement */
+
+/**
+ * The classifier's own judgement, and the same judgement after the additive
+ * lane-state publication below. Both members carry the classifier's fields, so
+ * every downstream read is identical.
+ *
+ * @typedef {UniverseClassifierJudgement | (UniverseClassifierJudgement & { readonly laneState: UniverseLaneStateReport | null })} UniverseJudgementWithLaneState
+ */
+
 function main() {
   const cli = defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url });
   if (cli.stop) return;
@@ -127,6 +160,7 @@ function main() {
   const digestOnly = args.includes('--digest');
   const tracked = trackedFiles();
   const declaration = readJson(DECLARATION);
+  /** @type {UniverseJudgementWithLaneState} */
   let judgement = classifyValidationUniverse({
     discovered: discoverUniverse(tracked),
     gateSelected: gateSelection({

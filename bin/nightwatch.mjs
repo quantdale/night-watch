@@ -21,8 +21,10 @@ import { operatorCommandListing } from './lib/operator-command-listing.mjs';
 import { loadTypeScriptModules } from './lib/typescript-runtime-loader.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+/** @type {ReadonlySet<string | undefined>} */
 const operatorCommands = new Set(['status', 'plan', 'coverage', 'campaign', 'contracts', 'gaps', 'differential', 'replay-coverage', 'minimization-coverage', 'mutation-score', 'findings', 'explain']);
 
+/** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
 const CLI_METADATA = {
   schemaVersion: OPERATOR_CLI_SCHEMA,
   name: 'nightwatch',
@@ -170,6 +172,9 @@ function main() {
     // to THIS process only. The campaign absorbs a repeated signal idempotently
     // (6.9), so a duplicated delivery can never escalate or kill work.
     const forwarded = new Set();
+    /**
+     * @param {NodeJS.Signals} signal
+     */
     const forward = (signal) => {
       if (forwarded.has(signal)) return;
       forwarded.add(signal);
@@ -189,7 +194,7 @@ function main() {
       // The child's own exit status is the dispatcher's status. A signal death
       // is reported as the conventional 128+n rather than as a clean exit.
       if (signal !== null) {
-        const numbers = { SIGINT: 2, SIGTERM: 15, SIGHUP: 1 };
+        const numbers = /** @type {Record<string, number>} */ ({ SIGINT: 2, SIGTERM: 15, SIGHUP: 1 });
         process.exitCode = 128 + (numbers[signal] ?? 15);
         return;
       }
@@ -216,6 +221,7 @@ function main() {
     // the Phase 21 gap ledger and made legacy JSON consumers see invalid JSON.
     process.exitCode = result.status ?? 1;
   } else {
+    /** @type {Record<string, string>} */
     const envVars = {};
     let scenario = null;
     const rest = [];
@@ -229,7 +235,8 @@ function main() {
       else rest.push(a);
     }
 
-    if (!envVars.NIGHTWATCH_ENV) {
+    const selectedEnvironment = envVars.NIGHTWATCH_ENV;
+    if (!selectedEnvironment) {
       console.error(
         'NIGHTWATCH: fail-closed — no environment selected.\n' +
           '  Usage: node bin/nightwatch.mjs --env=local|dev|next [--ui-url=...] [--scenario=...]\n' +
@@ -238,8 +245,8 @@ function main() {
       process.exitCode = 2;
       return;
     }
-    if (!SUPPORTED.has(envVars.NIGHTWATCH_ENV)) {
-      console.error(`NIGHTWATCH: fail-closed — environment "${envVars.NIGHTWATCH_ENV}" is not supported (allowed: local, dev, next).`);
+    if (!SUPPORTED.has(selectedEnvironment)) {
+      console.error(`NIGHTWATCH: fail-closed — environment "${selectedEnvironment}" is not supported (allowed: local, dev, next).`);
       process.exitCode = 2;
       return;
     }

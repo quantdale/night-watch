@@ -61,6 +61,33 @@ const SHORT_SHA_RE = /^[0-9a-f]{40}$/i;
  * @property {string} expectedClaim
  */
 
+/**
+ * @typedef {object} TopologyDiagnostic
+ * @property {string} code
+ * @property {string} detail
+ */
+
+/**
+ * One capability observation, exactly as a probe reports it. Every field is
+ * optional because a probe for one absence measures only that absence, and the
+ * absent fields are simply not read for that absence. The optional group is
+ * expressed with the mapped type rather than the `?` property form, which the
+ * lane's annotation budget counts as a widening form.
+ */
+/** @typedef {Partial<{ blockerCode: string | null, pathUsable: boolean, entries: number | null, available: boolean, found: number, home: string, expectedHome: string | null, writable: boolean }>} TopologyProbe */
+
+/**
+ * One dependent-lane outcome. `status` is the lane's own verdict word; the
+ * receipts arrive verbatim from the lane and are only ever probed by field.
+ */
+/** @typedef {Partial<{ status: string, detail: string, receipts: TopologyLaneReceipts | null }>} TopologyLaneOutcome */
+
+/** @typedef {Partial<{ deepContainmentLane: string, sourcePopulation: number, censusAvailable: boolean, chromeAvailable: boolean, browserLane: string, usedInvokingHome: boolean }>} TopologyLaneReceipts */
+
+/** @typedef {{ kind: 'file' | 'directory' | 'other' | 'absent', path: string | null }} ResolvedMaskPath */
+
+/** @typedef {Partial<{ classes: Partial<{ BIN_SYNTAX: Partial<{ files: readonly string[] }> }> }>} ValidationUniverse */
+
 /** @type {readonly TopologyAbsence[]} */
 export const TOPOLOGY_ABSENCES = Object.freeze([
   Object.freeze({
@@ -157,16 +184,7 @@ export function chromeCandidates(environment = process.env) {
  * caller; no shell is involved. A directory is masked with an empty tmpfs (a
  * file cannot be bound over a directory); a file is bound to `/dev/null`.
  *
- * @param {{
- *   absence: string,
- *   worktree: string,
- *   siblingRoot?: string | null,
- *   chrome?: readonly string[],
- *   playwrightBrowsersPath?: string | null,
- *   freshHome?: string | null,
- *   bwrapCandidates?: readonly string[],
- *   resolveMaskPath: (candidate: string) => { kind: 'file' | 'directory' | 'other' | 'absent', path: string | null },
- * }} input
+ * @param {{ absence: string, worktree: string, resolveMaskPath: (candidate: string) => ResolvedMaskPath } & Partial<{ siblingRoot: string | null, chrome: readonly string[], playwrightBrowsersPath: string | null, freshHome: string | null, bwrapCandidates: readonly string[] }>} input
  * @returns {readonly string[]}
  */
 export function describeEnvelopePlan(input) {
@@ -180,7 +198,7 @@ export function describeEnvelopePlan(input) {
     '--bind', input.worktree, input.worktree,
     '--chdir', input.worktree,
   ];
-  const mask = (candidate) => {
+  const mask = /** @param {string} candidate */ (candidate) => {
     const resolved = input.resolveMaskPath(candidate);
     if (resolved.kind === 'directory' && resolved.path !== null) args.push('--tmpfs', resolved.path);
     else if ((resolved.kind === 'file' || resolved.kind === 'other') && resolved.path !== null) args.push('--ro-bind', '/dev/null', resolved.path);
@@ -211,7 +229,7 @@ export function describeEnvelopePlan(input) {
  * Does a capability observation prove the absence took effect?
  *
  * @param {TopologyAbsence} absence
- * @param {any} probe
+ * @param {TopologyProbe | null} probe
  * @returns {{ absent: boolean, detail: string }}
  */
 export function absenceTookEffect(absence, probe) {
@@ -220,14 +238,15 @@ export function absenceTookEffect(absence, probe) {
     const blocker = probe.blockerCode;
     const entriesAbsent = probe.pathUsable === false || probe.entries === 0 || probe.entries === null;
     return {
-      absent: entriesAbsent && (blocker === null || absence.blockerCodes.includes(blocker)),
+      absent: entriesAbsent && (blocker === null || (typeof blocker === 'string' && absence.blockerCodes.includes(blocker))),
       detail: `pathUsable=${String(probe.pathUsable)} entries=${String(probe.entries)} blockerCode=${String(blocker)}`,
     };
   }
   if (absence.id === 'bwrap') {
+    const blocker = probe.blockerCode;
     return {
-      absent: probe.available === false && absence.blockerCodes.includes(probe.blockerCode),
-      detail: `available=${String(probe.available)} blockerCode=${String(probe.blockerCode)}`,
+      absent: probe.available === false && typeof blocker === 'string' && absence.blockerCodes.includes(blocker),
+      detail: `available=${String(probe.available)} blockerCode=${String(blocker)}`,
     };
   }
   if (absence.id === 'chrome') {
@@ -249,11 +268,7 @@ export function absenceTookEffect(absence, probe) {
  * Evaluate one absence against its probe and its lane outcome. Findings name
  * the lane and the absence, so a failure is never anonymous.
  *
- * @param {{
- *   absence: TopologyAbsence,
- *   probe: any,
- *   lane: { status: string, receipts?: Record<string, any> | null } | null,
- * }} input
+ * @param {{ absence: TopologyAbsence, probe: TopologyProbe | null, lane: TopologyLaneOutcome | null }} input
  * @returns {readonly { code: string, detail: string }[]}
  */
 export function evaluateAbsence(input) {
@@ -305,7 +320,7 @@ export function evaluateAbsence(input) {
  *   cannot construct the mask.
  *
  * @param {TopologyAbsence} absence
- * @param {any} probe
+ * @param {TopologyProbe | null} probe
  * @returns {{ constructible: boolean, notExercised: boolean, detail: string, findings: readonly TopologyDiagnostic[] }}
  */
 export function evaluateDirectObservation(absence, probe) {
@@ -351,7 +366,7 @@ export function classifyRunnerTopology({ mode, findings, envelope, unexercisedAb
  * inheritance rather than by proof.
  *
  * @param {TopologyAbsence} absence
- * @param {Record<string, any> | null} receipts
+ * @param {TopologyLaneReceipts | null} receipts
  * @returns {{ lane: string, detail: string } | null}
  */
 export function detectInheritanceClaim(absence, receipts) {
@@ -364,7 +379,7 @@ export function detectInheritanceClaim(absence, receipts) {
   }
   if (absence.id === 'sibling-root') {
     const population = receipts.sourcePopulation;
-    if (Number.isInteger(population) && population > 0) {
+    if (typeof population === 'number' && Number.isInteger(population) && population > 0) {
       return { lane: 'source-intelligence-census', detail: `the census reported a population of ${population} while the sibling root was unreadable` };
     }
     if (receipts.censusAvailable === true) {
@@ -404,6 +419,7 @@ const FUNCTION_RETURN_PATH_RE = /\bfunction\s+([A-Za-z_$][\w$]*)\s*\([^)]*\)\s*\
 const ARROW_RETURN_PATH_RE = /\b(?:const|let)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:\([^)]*\)|[A-Za-z_$][\w$]*)\s*=>\s*(['"])((?:\/(?:home|Users|opt|srv|root|mnt|media|etc)\/[A-Za-z0-9._/-]{3,}))\2/g;
 const PATH_CONSTANT_MAX_DEPTH = 6;
 
+/** @param {string} spec */
 function normalizeModulePath(spec) {
   const segments = [];
   for (const segment of spec.split('/')) {
@@ -414,12 +430,21 @@ function normalizeModulePath(spec) {
   return segments.join('/');
 }
 
+/**
+ * @param {string} fromFile
+ * @param {string} specifier
+ */
 function resolveSpecifier(fromFile, specifier) {
   if (!specifier.startsWith('.')) return null;
   const base = fromFile.split('/').slice(0, -1).join('/');
   return normalizeModulePath(`${base}/${specifier}`);
 }
 
+/**
+ * @param {(modulePath: string) => string | null} readFile
+ * @param {string} modulePath
+ * @returns {string | null}
+ */
 function readModuleSource(readFile, modulePath) {
   const candidates = [`${modulePath}.ts`, `${modulePath}.tsx`, `${modulePath}/index.ts`, `${modulePath}.mjs`, modulePath];
   for (const candidate of candidates) {
@@ -429,6 +454,12 @@ function readModuleSource(readFile, modulePath) {
   return null;
 }
 
+/**
+ * @param {(modulePath: string) => string | null} readFile
+ * @param {Map<string, Map<string, string>>} cache
+ * @param {string} modulePath
+ * @param {number} depth
+ */
 function modulePathConstants(readFile, cache, modulePath, depth = 0) {
   if (depth > PATH_CONSTANT_MAX_DEPTH) return new Map();
   const memo = cache.get(modulePath);
@@ -440,7 +471,7 @@ function modulePathConstants(readFile, cache, modulePath, depth = 0) {
   if (source === null) return symbols;
   for (const line of source.split(/\r?\n/)) {
     const local = CONST_PATH_RE.exec(line);
-    if (local !== null) symbols.set(local[1], local[3]);
+    if (local !== null && local[1] !== undefined && local[3] !== undefined) symbols.set(local[1], local[3]);
   }
   FUNCTION_RETURN_PATH_RE.lastIndex = 0;
   for (const match of source.matchAll(FUNCTION_RETURN_PATH_RE)) {
@@ -451,15 +482,19 @@ function modulePathConstants(readFile, cache, modulePath, depth = 0) {
     if (match[1] !== undefined && match[3] !== undefined) symbols.set(match[1], match[3]);
   }
   for (const match of source.matchAll(NAMED_FROM_CLAUSE_RE)) {
-    const target = resolveSpecifier(modulePath, match[2]);
+    const named = match[1];
+    const specifier = match[2];
+    if (named === undefined || specifier === undefined) continue;
+    const target = resolveSpecifier(modulePath, specifier);
     if (target === null) continue;
     const targetSymbols = modulePathConstants(readFile, cache, target, depth + 1);
     if (targetSymbols.size === 0) continue;
-    for (const part of match[1].split(',')) {
+    for (const part of named.split(',')) {
       const pieces = part.split(/\s+as\s+/).map((piece) => piece.trim()).filter((piece) => piece !== '');
       if (pieces.length === 0) continue;
       const origin = pieces[0];
       const alias = pieces.length > 1 ? pieces[1] : pieces[0];
+      if (origin === undefined || alias === undefined) continue;
       const literal = targetSymbols.get(origin);
       if (literal !== undefined) symbols.set(alias, literal);
     }
@@ -471,6 +506,11 @@ function modulePathConstants(readFile, cache, modulePath, depth = 0) {
  * A path-constant use in a line, or null: the identifier must appear in a
  * path context and never inside a string or regex body (a source-text
  * assertion that merely names the constant is not a path dependency).
+ */
+/**
+ * @param {string} line
+ * @param {string} name
+ * @returns {number | null}
  */
 function pathConstantUse(line, name) {
   const pattern = new RegExp(`\\b${name.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')}\\b`, 'g');
@@ -508,15 +548,19 @@ export function scanExternalAbsolutePathDependence(input) {
     const importedConstants = new Map();
     if (readFile !== null) {
       for (const match of file.text.matchAll(NAMED_FROM_CLAUSE_RE)) {
-        const target = resolveSpecifier(file.path, match[2]);
+        const named = match[1];
+        const specifier = match[2];
+        if (named === undefined || specifier === undefined) continue;
+        const target = resolveSpecifier(file.path, specifier);
         if (target === null) continue;
         const targetSymbols = modulePathConstants(readFile, constantCache, target, 0);
         if (targetSymbols.size === 0) continue;
-        for (const part of match[1].split(',')) {
+        for (const part of named.split(',')) {
           const pieces = part.split(/\s+as\s+/).map((piece) => piece.trim()).filter((piece) => piece !== '');
           if (pieces.length === 0) continue;
           const origin = pieces[0];
           const alias = pieces.length > 1 ? pieces[1] : pieces[0];
+          if (origin === undefined || alias === undefined) continue;
           const literal = targetSymbols.get(origin);
           if (literal !== undefined) importedConstants.set(alias, literal);
         }
@@ -624,14 +668,7 @@ export function scanUndeclaredBinaryInvocation(input) {
  * runner, the gate manifest, the validation universe and the package script
  * must all name it.
  *
- * @param {{
- *   packageScripts: Record<string, string>,
- *   universe: any,
- *   gateManifestFiles: readonly string[],
- *   binFile: string,
- *   suiteFiles: readonly string[],
- *   fileExists: (relative: string) => boolean,
- * }} input
+ * @param {{ packageScripts: Record<string, string>, universe: ValidationUniverse, gateManifestFiles: readonly string[], binFile: string, suiteFiles: readonly string[], fileExists: (relative: string) => boolean }} input
  * @returns {readonly { code: string, detail: string }[]}
  */
 export function validateTopologyRegistration(input) {
@@ -664,7 +701,7 @@ export function validateTopologyRegistration(input) {
  * CI-certified status whose observed SHA is not the certified checkpoint is
  * refused with both SHAs named.
  *
- * @param {{ completionStatus?: string | null, certifiedCheckpointSha?: string | null, ciObservedSha?: string | null, ciExecutedSha?: string | null, ciStatus?: string | null }} block
+ * @param {{ completionStatus: string | null | undefined, certifiedCheckpointSha: string | null | undefined, ciObservedSha: string | null | undefined, ciExecutedSha: string | null | undefined, ciStatus: string | null | undefined }} block
  */
 export function certificationReadsRecord(block) {
   return {
@@ -676,12 +713,21 @@ export function certificationReadsRecord(block) {
   };
 }
 
-/** A safe, bounded receipt digest over a canonical JSON body. */
+/**
+ * A safe, bounded receipt digest over a canonical JSON body.
+ *
+ * @param {unknown} receipt
+ * @param {(value: string) => string} sha256
+ * @returns {string}
+ */
 export function topologyReceiptDigest(receipt, sha256) {
   return `topology-receipt:sha256:${sha256(JSON.stringify(receipt)).slice(0, 24)}`;
 }
 
-/** True when text carries a credential-shaped token (4.8's rule). */
+/**
+ * @param {string} text
+ * @returns {boolean}
+ */
 export function containsCredentialShapedToken(text) {
   return CREDENTIAL_RE.test(text);
 }

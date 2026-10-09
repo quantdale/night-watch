@@ -15,16 +15,18 @@
 
 export const VALIDATION_CLASSIFICATION_VERSION = 'nightwatch.validation-classification.v1';
 
+/** @param {string} character @returns {string} */
 function escapeRegex(character) {
   return character.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-/** Expand one Playwright glob (`**`, `*`, `?`, `{a,b}`) into an anchored RegExp. */
+/** @param {string} glob @returns {RegExp} */
 export function globToRegExp(glob) {
   const source = String(glob ?? '');
   let pattern = '^';
   for (let index = 0; index < source.length; index += 1) {
     const character = source[index];
+    if (character === undefined) continue;
     if (character === '*') {
       if (source[index + 1] === '*') {
         if (source[index + 2] === '/') {
@@ -58,28 +60,49 @@ export function globToRegExp(glob) {
   return new RegExp(`${pattern}$`);
 }
 
-/** The `testMatch` globs declared by the default Playwright config source. */
+/**
+ * The `testMatch` globs declared by the default Playwright config source.
+ *
+ * @param {string} playwrightConfigSource
+ * @returns {string[]}
+ */
 export function extractTestMatchGlobs(playwrightConfigSource) {
   const match = /testMatch\s*:\s*\[([\s\S]*?)\]/.exec(String(playwrightConfigSource ?? ''));
   if (match === null) return [];
-  return [...match[1].matchAll(/'([^']+)'|"([^"]+)"/g)]
-    .map((entry) => entry[1] ?? entry[2])
-    .filter((entry) => typeof entry === 'string' && entry !== '');
+  const body = match[1] ?? '';
+  return [...body.matchAll(/'([^']+)'|"([^"]+)"/g)]
+    .map((entry) => entry[1] ?? entry[2] ?? '')
+    .filter((entry) => entry !== '');
 }
 
-/** True when the repository-relative file matches one of the default globs. */
+/** @param {string} file @param {readonly string[]} globs @returns {boolean} */
 export function matchesDefaultTestMatch(file, globs) {
   return (globs ?? []).some((glob) => globToRegExp(glob).test(file));
 }
 
-/** Every `npm run <script>` token in a stored string. */
+/** @param {string} text @returns {string[]} */
 export function npmRunScripts(text) {
-  return [...String(text ?? '').matchAll(/npm run ([A-Za-z0-9][A-Za-z0-9:_-]*)/g)].map((match) => match[1]);
+  return [...String(text ?? '').matchAll(/npm run ([A-Za-z0-9][A-Za-z0-9:_-]*)/g)].map((match) => match[1] ?? '');
 }
+
+// Every rule input is caller-supplied data. A field the caller omitted is
+// `undefined` and takes the default the rule body declares, so these shapes
+// describe what the body may READ rather than what it must receive.
+
+/**
+ * @typedef {{ evidenceLane: string | undefined, files: readonly string[] | undefined }} ValidationClassificationClass
+ * @typedef {{ laneId: string | undefined, class: string | undefined, command: string | undefined, classes: readonly string[] | undefined }} ValidationClassificationLane
+ * @typedef {{ file: string | undefined, source: string | undefined }} ValidationClassificationSource
+ * @typedef {{ universe: Partial<{ classes: Readonly<Record<string, ValidationClassificationClass>> }> | undefined, laneState: Partial<{ lanes: readonly ValidationClassificationLane[] }> | undefined, packageScripts: Readonly<Record<string, string>> | undefined, testMatchGlobs: readonly string[] | undefined, trackedPlaywrightConfigs: readonly string[] | undefined, packageScriptValues: readonly string[] | undefined, binSources: readonly ValidationClassificationSource[] | undefined, retentionEvidence: string | undefined, fixtureSources: readonly ValidationClassificationSource[] | undefined }} ValidationClassificationInput
+ * @typedef {{ code: string, detail: string }} ValidationClassificationViolation
+ */
 
 /**
  * The four classification-truth rules. Every input is data; the caller reads
  * the repository. Returns `{ errors: [{ code, detail }] }`.
+ *
+ * @param {Partial<ValidationClassificationInput>} input
+ * @returns {{ errors: ValidationClassificationViolation[] }}
  */
 export function classifyValidationTruth(input = {}) {
   const {
@@ -93,9 +116,11 @@ export function classifyValidationTruth(input = {}) {
     retentionEvidence = '',
     fixtureSources = [],
   } = input;
+  /** @type {ValidationClassificationViolation[]} */
   const errors = [];
   const classEntries = universe.classes ?? {};
 
+  /** @type {Map<string, string | undefined>} */
   const laneClassByClass = new Map();
   for (const lane of laneState.lanes ?? []) {
     for (const className of lane.classes ?? []) laneClassByClass.set(className, lane.class);
@@ -116,8 +141,12 @@ export function classifyValidationTruth(input = {}) {
 
   // 2. Every stored `npm run <script>` reference must resolve.
   const knownScripts = new Set(Object.keys(packageScripts));
+  /**
+   * @param {string | undefined} text
+   * @param {string} source
+   */
   const checkScripts = (text, source) => {
-    for (const script of npmRunScripts(text)) {
+    for (const script of npmRunScripts(String(text ?? ''))) {
       if (!knownScripts.has(script)) {
         errors.push({ code: 'VALIDATION_EVIDENCE_SCRIPT_MISSING', detail: `${script} referenced by ${source}` });
       }

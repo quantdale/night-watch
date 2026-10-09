@@ -36,12 +36,14 @@ export function checkHostCapabilityMatrix() {
     }
   }
   // token -> the source that must still probe it
-  for (const [token, source] of [
+  /** @type {Array<[string, string]>} */
+  const capabilityProbes = [
     ['nightwatch.l6-runtime-capability.v1', 'src/core/oops/sandbox.ts'],
     ['TOOLCHAIN_UNAVAILABLE', 'src/core/ownerLocalReproduction/contracts.ts'],
     ['DEFAULT_SIBLING_ROOT', 'src/core/source/siblingSource.ts'],
     ['deepContainmentLane', 'bin/quality-gate.mjs'],
-  ]) {
+  ];
+  for (const [token, source] of capabilityProbes) {
     if (!read(source).includes(token)) {
       fail(`${source} no longer references '${token}'; the host capability matrix row for it is stale`);
       continue;
@@ -170,10 +172,12 @@ export function checkC00WorkspaceIntegrity() {
   }
   // The call form, not the identifier: a rule satisfied by the surviving
   // import line would pass while the actual call site was replaced.
-  for (const [file, errorCode] of [
+  /** @type {Array<[string, string]>} */
+  const rootOwnershipBounds = [
     ['src/core/policy/privateArtifacts.ts', 'PRIVATE_ARTIFACT_ROOT_INSIDE_REPOSITORY'],
     ['src/core/prodEvidence/productionFindingsStore.ts', 'PRODUCTION_ARTIFACT_ROOT_INSIDE_REPOSITORY'],
-  ]) {
+  ];
+  for (const [file, errorCode] of rootOwnershipBounds) {
     const source = read(file);
     const call = new RegExp(`assertOutsideSourceTopology\\(\\s*root\\s*,\\s*'${errorCode}'`);
     if (!call.test(source)) {

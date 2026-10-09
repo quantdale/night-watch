@@ -29,11 +29,59 @@ const STRUCTURED_CHILD_SCHEMAS = new Set([
   'nightwatch.gate-topology-receipt.v1',
 ]);
 
+// The emitted shapes. These mirror `gate-receipt.d.mts` — the declaration this
+// module's importers see — because an implementation cannot import from its own
+// declaration, so the vocabulary is restated here for the code that builds it.
+// `didNotRun` is a distinct bucket on purpose: folding it into `skipped` let
+// five cases disappear from an authoritative receipt while the totals still
+// looked self-consistent.
+
+/**
+ * @typedef {{ total: number | null, passed: number | null, skipped: number | null, didNotRun: number | null, failed: number | null }} GateReceiptCounts
+ * @typedef {'PASS' | 'UNDECLARED_SKIP' | 'SKIP_POLICY_UNCONFIGURED' | 'SKIP_REPORT_MISSING' | 'SKIP_REPORT_INVALID'} GateSkipPolicyResult
+ * @typedef {{ result: GateSkipPolicyResult, skipped: number | null, undeclared: number | null } & Partial<{ declared: number, undeclaredSkips: readonly string[] }>} GateReceiptSkipPolicy
+ * @typedef {Partial<{ failedLocations: readonly string[], deepContainmentLane: string, skipPolicy: GateReceiptSkipPolicy, runnerTopologyClass: string, topologyEnvelope: string, unexercisedAbsences: readonly string[], topologyCertifying: boolean, topologyGitHead: string, topologyReceiptDigest: string }>} GateReceiptSafeDetails
+ * @typedef {{ status: 'READ' | 'FAILED' } & Partial<{ receipt: Record<string, unknown>, bytes: string, code: string }>} GateReceiptReadResult
+ * @typedef {Partial<{ gitHead: string, environmentClass: string }>} GateReceiptReadExpectation
+ * @typedef {{ status: 'WRITTEN' | 'FAILED' } & Partial<{ file: string, code: string }>} GateReceiptWriteResult
+ * @typedef {Partial<{ file: string, origin: 'DEFAULT' | 'EXPLICIT' | 'REPOSITORY_IGNORED', error: string }>} GateReceiptTarget
+ */
+
+/**
+ * @param {unknown} value
+ * @returns {value is Record<string, unknown>}
+ */
+function isRecord(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+/**
+ * Membership in a closed token vocabulary. A candidate of any other type is
+ * simply not a member, which is what `Set.has` already decided at runtime.
+ *
+ * @param {Set<string>} allowed
+ * @param {unknown} candidate
+ * @returns {candidate is string}
+ */
+function hasToken(allowed, candidate) {
+  return typeof candidate === 'string' && allowed.has(candidate);
+}
+
+/**
+ * The last structured child receipt in `output`, or null when the child
+ * printed none. Only a receipt whose `schemaVersion` is in the closed
+ * vocabulary is returned; every other JSON line is ordinary output.
+ *
+ * @param {string} output
+ * @returns {Record<string, unknown> | null}
+ */
 function structuredChildReceipt(output) {
   for (const line of output.split(/\r?\n/).reverse()) {
     try {
       const value = JSON.parse(line);
-      if (STRUCTURED_CHILD_SCHEMAS.has(value?.schemaVersion)) return value;
+      if (!isRecord(value)) continue;
+      const schemaVersion = value.schemaVersion;
+      if (typeof schemaVersion === 'string' && STRUCTURED_CHILD_SCHEMAS.has(schemaVersion)) return value;
     } catch {
       // The child may also emit ordinary Playwright output; the bounded text
       // patterns remain the fallback when no structured summary is present.
@@ -42,22 +90,40 @@ function structuredChildReceipt(output) {
   return null;
 }
 
+/**
+ * @param {number | null} value
+ * @returns {value is number}
+ */
+function isCount(value) {
+  return Number.isInteger(value);
+}
+
+/**
+ * The receipt counts for one group's output.
+ *
+ * @param {string} output
+ * @returns {GateReceiptCounts}
+ */
 export function parseCounts(output) {
   // `didNotRun` is a distinct bucket, not a kind of skip. Playwright reports
   // cases it never reached that way, and a serial suite whose first case fails
   // cascades every remaining case into it. Folding it into `skipped` — or
   // omitting it, as before — let five cases disappear from an authoritative
   // receipt while total/passed/failed still looked self-consistent.
+  /** @type {GateReceiptCounts} */
   const counts = { total: null, passed: null, skipped: null, didNotRun: null, failed: null };
   const structured = structuredChildReceipt(output);
   if (structured !== null) {
-    const source = structured.schemaVersion === 'nightwatch.shard-run-receipt.v1' ? structured.totals : structured;
-    for (const key of ['total', 'passed', 'skipped', 'didNotRun', 'failed']) {
-      const sourceKey = key === 'total' && structured.schemaVersion === 'nightwatch.shard-run-receipt.v1' ? 'planned' : key;
-      if (Number.isInteger(source?.[sourceKey])) counts[key] = source[sourceKey];
+    const shardReceipt = structured.schemaVersion === 'nightwatch.shard-run-receipt.v1';
+    const source = shardReceipt ? structured.totals : structured;
+    const fields = isRecord(source) ? source : {};
+    for (const key of /** @type {Array<keyof GateReceiptCounts>} */ (['total', 'passed', 'skipped', 'didNotRun', 'failed'])) {
+      const sourceKey = key === 'total' && shardReceipt ? 'planned' : key;
+      const counted = fields[sourceKey];
+      if (typeof counted === 'number' && Number.isInteger(counted)) counts[key] = counted;
     }
-    if (counts.total === null && [counts.passed, counts.skipped, counts.failed].every((item) => Number.isInteger(item))) {
-      counts.total = counts.passed + counts.skipped + counts.failed + (Number.isInteger(counts.didNotRun) ? counts.didNotRun : 0);
+    if (counts.total === null && isCount(counts.passed) && isCount(counts.skipped) && isCount(counts.failed)) {
+      counts.total = counts.passed + counts.skipped + counts.failed + (isCount(counts.didNotRun) ? counts.didNotRun : 0);
     }
     return counts;
   }
@@ -68,6 +134,10 @@ export function parseCounts(output) {
   const vitestTests = /^\s*Tests\s+([^\r\n]+)$/m.exec(output);
   if (vitestTests !== null && /^\s*Test Files\s+/m.test(output)) {
     const line = vitestTests[1] ?? '';
+    /**
+     * @param {string} name
+     * @returns {number | null}
+     */
     const token = (name) => {
       const found = new RegExp(`(\\d+)\\s+${name}\\b`).exec(line);
       return found === null ? null : Number(found[1]);
@@ -106,24 +176,79 @@ const SAFE_TOPOLOGY_ENVELOPES = new Set(['BUBBLEWRAP', 'BWRAP_UNAVAILABLE_DEGRAD
 const SAFE_TOPOLOGY_ABSENCES = new Set(['sibling-root', 'bwrap', 'chrome', 'fresh-home']);
 const SAFE_SKIP_POLICY_RESULTS = new Set(['PASS', 'UNDECLARED_SKIP', 'SKIP_POLICY_UNCONFIGURED', 'SKIP_REPORT_MISSING', 'SKIP_REPORT_INVALID']);
 
+/**
+ * @param {unknown} value
+ * @returns {number | null}
+ */
 function nonnegativeCount(value) {
-  return Number.isSafeInteger(value) && value >= 0 ? value : null;
+  return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0 ? value : null;
 }
 
+/**
+ * @param {unknown} candidate
+ * @returns {candidate is GateSkipPolicyResult}
+ */
+function isSkipPolicyResult(candidate) {
+  return typeof candidate === 'string' && SAFE_SKIP_POLICY_RESULTS.has(candidate);
+}
+
+/**
+ * @param {unknown} location
+ * @returns {location is string}
+ */
+function isSafeSkipLocation(location) {
+  return typeof location === 'string'
+    && SAFE_SKIP_LOCATION_PATTERN.test(location)
+    && !location.split('/').includes('..');
+}
+
+/**
+ * @param {unknown} location
+ * @returns {location is string}
+ */
+function isSafeFailureLocation(location) {
+  return typeof location === 'string' && SAFE_LOCATION_PATTERN.test(location);
+}
+
+/**
+ * @param {unknown} entry
+ * @returns {entry is Record<string, unknown>}
+ */
+function isUnexercisedEntry(entry) {
+  return isRecord(entry) && entry.notExercised !== undefined;
+}
+
+/**
+ * @param {unknown} absence
+ * @returns {absence is string}
+ */
+function isTopologyAbsence(absence) {
+  return hasToken(SAFE_TOPOLOGY_ABSENCES, absence);
+}
+
+/**
+ * The bounded skip-policy summary for one child report. `declared` and
+ * `undeclaredSkips` are carried only when the child reported them, so an
+ * absent count can never be mistaken for a zero one.
+ *
+ * @param {unknown} value
+ * @param {unknown} fallbackSkipped
+ * @returns {GateReceiptSkipPolicy}
+ */
 function normalizeSkipPolicy(value, fallbackSkipped) {
   if (value === null || value === undefined) {
     return { result: 'SKIP_REPORT_MISSING', skipped: null, undeclared: null };
   }
-  if (typeof value !== 'object' || Array.isArray(value)) {
+  if (!isRecord(value)) {
     return { result: 'SKIP_REPORT_INVALID', skipped: null, undeclared: null };
   }
-  const result = SAFE_SKIP_POLICY_RESULTS.has(value.result) ? value.result : 'SKIP_REPORT_INVALID';
+  const result = isSkipPolicyResult(value.result) ? value.result : 'SKIP_REPORT_INVALID';
   const skipped = nonnegativeCount(value.skipped) ?? nonnegativeCount(fallbackSkipped);
   const undeclared = nonnegativeCount(value.undeclared);
   const declared = nonnegativeCount(value.declared);
-  const undeclaredSkips = (Array.isArray(value.undeclaredSkips) ? value.undeclaredSkips : [])
-    .filter((location) => typeof location === 'string' && SAFE_SKIP_LOCATION_PATTERN.test(location) && !location.split('/').includes('..'))
-    .slice(0, 16);
+  /** @type {unknown[]} */
+  const reportedLocations = Array.isArray(value.undeclaredSkips) ? /** @type {unknown[]} */ (value.undeclaredSkips) : [];
+  const undeclaredSkips = reportedLocations.filter(isSafeSkipLocation).slice(0, 16);
   return {
     result,
     skipped,
@@ -133,17 +258,24 @@ function normalizeSkipPolicy(value, fallbackSkipped) {
   };
 }
 
+/**
+ * @param {unknown} value
+ * @returns {GateReceiptSkipPolicy}
+ */
 function shardSkipPolicy(value) {
-  if (!Array.isArray(value.shardResults) || value.shardResults.length === 0) {
+  const record = isRecord(value) ? value : {};
+  /** @type {unknown[]} */
+  const shardResults = Array.isArray(record.shardResults) ? /** @type {unknown[]} */ (record.shardResults) : [];
+  if (shardResults.length === 0) {
     return { result: 'SKIP_REPORT_MISSING', skipped: null, undeclared: null };
   }
-  const policies = value.shardResults.map((shard) => normalizeSkipPolicy(
-    shard !== null && typeof shard === 'object' && !Array.isArray(shard) ? shard.skipPolicy : null,
+  const policies = shardResults.map((shard) => normalizeSkipPolicy(
+    isRecord(shard) ? shard.skipPolicy : null,
     null,
   ));
   const failure = policies.find((policy) => policy.result !== 'PASS');
-  const sum = (field) => policies.every((policy) => Number.isSafeInteger(policy[field]))
-    ? policies.reduce((total, policy) => total + policy[field], 0)
+  const sum = (/** @type {'skipped' | 'undeclared'} */ field) => policies.every((policy) => Number.isSafeInteger(policy[field]))
+    ? policies.reduce((total, policy) => total + /** @type {number} */ (policy[field]), 0)
     : null;
   return {
     result: failure?.result ?? 'PASS',
@@ -152,12 +284,21 @@ function shardSkipPolicy(value) {
   };
 }
 
+/**
+ * The bounded per-group detail the gate carries into its receipt. Only
+ * `failedLocations` is always present; every other field is set by its own
+ * guard, so a receipt never claims a classification it did not observe.
+ *
+ * @param {string} output
+ * @returns {GateReceiptSafeDetails | null}
+ */
 export function parseSafeDetails(output) {
   const value = structuredChildReceipt(output);
   if (value === null) return null;
-  const failedLocations = (Array.isArray(value.failedLocations) ? value.failedLocations : [])
-    .filter((location) => typeof location === 'string' && SAFE_LOCATION_PATTERN.test(location))
-    .slice(0, 16);
+  /** @type {unknown[]} */
+  const reportedLocations = Array.isArray(value.failedLocations) ? /** @type {unknown[]} */ (value.failedLocations) : [];
+  const failedLocations = reportedLocations.filter(isSafeFailureLocation).slice(0, 16);
+  /** @type {GateReceiptSafeDetails} */
   const details = { failedLocations };
   // Which containment lane actually ran. A green receipt must never be able to
   // imply deep-containment coverage that the host could not provide.
@@ -165,29 +306,26 @@ export function parseSafeDetails(output) {
     details.deepContainmentLane = value.deepContainmentLane;
   }
   if (value.schemaVersion === 'nightwatch.gate-topology-receipt.v1') {
-    const claim = value.ciClaim !== null && typeof value.ciClaim === 'object' && !Array.isArray(value.ciClaim)
-      ? value.ciClaim
-      : {};
-    const dynamic = value.dynamic !== null && typeof value.dynamic === 'object' && !Array.isArray(value.dynamic)
-      ? value.dynamic
-      : {};
-    const envelope = SAFE_TOPOLOGY_ENVELOPES.has(dynamic.envelope) && dynamic.envelope === claim.runnerTopologyEnvelope
+    const claim = isRecord(value.ciClaim) ? value.ciClaim : {};
+    const dynamic = isRecord(value.dynamic) ? value.dynamic : {};
+    const envelope = hasToken(SAFE_TOPOLOGY_ENVELOPES, dynamic.envelope) && dynamic.envelope === claim.runnerTopologyEnvelope
       ? dynamic.envelope
       : null;
-    const rawUnexercisedAbsences = (Array.isArray(dynamic.entries) ? dynamic.entries : [])
-      .filter((entry) => entry !== null && typeof entry === 'object' && entry.notExercised !== undefined)
-      .map((entry) => entry.absence);
+    /** @type {unknown[]} */
+    const reportedEntries = Array.isArray(dynamic.entries) ? /** @type {unknown[]} */ (dynamic.entries) : [];
+    const rawUnexercisedAbsences = reportedEntries.filter(isUnexercisedEntry).map((entry) => entry.absence);
     const unexercisedAbsences = rawUnexercisedAbsences
-      .filter((absence) => SAFE_TOPOLOGY_ABSENCES.has(absence))
+      .filter(isTopologyAbsence)
       .filter((absence, index, values) => values.indexOf(absence) === index)
       .slice(0, SAFE_TOPOLOGY_ABSENCES.size);
-    const rawClaimedAbsences = Array.isArray(claim.unexercisedAbsences) ? claim.unexercisedAbsences : [];
-    const claimedAbsences = rawClaimedAbsences
-      .filter((absence) => SAFE_TOPOLOGY_ABSENCES.has(absence))
+    /** @type {unknown[]} */
+    const reportedClaimed = Array.isArray(claim.unexercisedAbsences) ? /** @type {unknown[]} */ (claim.unexercisedAbsences) : [];
+    const claimedAbsences = reportedClaimed
+      .filter(isTopologyAbsence)
       .filter((absence, index, values) => values.indexOf(absence) === index)
       .slice(0, SAFE_TOPOLOGY_ABSENCES.size);
     const absenceClaimsMatch = rawUnexercisedAbsences.length === unexercisedAbsences.length
-      && rawClaimedAbsences.length === claimedAbsences.length
+      && reportedClaimed.length === claimedAbsences.length
       && JSON.stringify(unexercisedAbsences) === JSON.stringify(claimedAbsences);
     const topologyClass = value.runnerTopologyClass;
     const classMatchesClaim = topologyClass === claim.runnerTopologyClass;
@@ -266,6 +404,7 @@ function repositoryPathIsIgnored(repositoryRoot, relative) {
   return result.status === 0;
 }
 
+/** @param {string} candidate @returns {string | null} */
 function realPathOrNull(candidate) {
   try {
     return fs.realpathSync(candidate);
@@ -274,6 +413,7 @@ function realPathOrNull(candidate) {
   }
 }
 
+/** @param {string} parent @param {string} child @returns {boolean} */
 function isWithin(parent, child) {
   const relative = path.relative(parent, child);
   return relative !== '' && !relative.startsWith('..') && !path.isAbsolute(relative);
@@ -305,12 +445,16 @@ export function gateReceiptPermittedRoots(environment = process.env) {
  * validation. With no explicit path a safe default is derived, because the
  * failure mode being eliminated is an operator losing the only copy — a
  * mechanism that must be remembered would not have prevented OBS-C105-1.
+ *
+ * @param {{ environment: Record<string, string | undefined> | undefined, repositoryRoot: string, mode: string, gitHead: string | null }} options
+ * @returns {GateReceiptTarget}
  */
 export function resolveGateReceiptTarget(options) {
   const { environment = process.env, repositoryRoot, mode, gitHead } = options;
   const requested = environment[GATE_RECEIPT_PATH_ENV];
   const permittedRoots = gateReceiptPermittedRoots(environment);
-  if (permittedRoots.length === 0) return { error: 'GATE_RECEIPT_NO_PERMITTED_ROOT' };
+  const [primaryRoot] = permittedRoots;
+  if (primaryRoot === undefined) return { error: 'GATE_RECEIPT_NO_PERMITTED_ROOT' };
 
   if (typeof requested !== 'string' || requested.trim() === '') {
     const head = typeof gitHead === 'string' && /^[0-9a-f]{40}$/.test(gitHead) ? gitHead.slice(0, 12) : 'unknown-head';
@@ -332,7 +476,7 @@ export function resolveGateReceiptTarget(options) {
     } catch {
       // Any failure falls through to the confined temp-directory default.
     }
-    const directory = path.join(permittedRoots[0], GATE_RECEIPT_DEFAULT_DIRECTORY);
+    const directory = path.join(primaryRoot, GATE_RECEIPT_DEFAULT_DIRECTORY);
     try {
       fs.mkdirSync(directory, { recursive: true, mode: 0o700 });
     } catch {
@@ -384,12 +528,34 @@ export function resolveGateReceiptTarget(options) {
 }
 
 /**
+ * The `code` of a caught value, or `UNKNOWN`. A catch variable is `unknown`
+ * under `strict`, so this is the only place a thrown value is narrowed before
+ * its `code` is read. Every `fs` failure a persistent write can raise carries a
+ * non-empty string `code`; an absent, empty, zero or NaN code falls back to
+ * `UNKNOWN` exactly as the `|| 'UNKNOWN'` this replaces did.
+ *
+ * @param {unknown} error
+ * @returns {string}
+ */
+function caughtErrorCode(error) {
+  if (!isRecord(error)) return 'UNKNOWN';
+  const code = error.code;
+  if (typeof code === 'string') return code !== '' ? code : 'UNKNOWN';
+  if (typeof code === 'number' && !Number.isNaN(code) && code !== 0) return String(code);
+  return 'UNKNOWN';
+}
+
+/**
  * Write the canonical receipt bytes atomically.
  *
  * `rename` within one directory is atomic, so a reader observes either the
  * previous receipt or the complete new one — never a truncated prefix that
  * happens to parse. The temporary name is created with an exclusive create so
  * two concurrent gates cannot interleave into one partial file.
+ *
+ * @param {string} file
+ * @param {string} canonicalBytes
+ * @returns {GateReceiptWriteResult}
  */
 export function persistGateReceipt(file, canonicalBytes) {
   const directory = path.dirname(file);
@@ -408,7 +574,7 @@ export function persistGateReceipt(file, canonicalBytes) {
       try { fs.closeSync(descriptor); } catch { /* bounded scratch cleanup */ }
     }
     try { fs.unlinkSync(temporary); } catch { /* bounded scratch cleanup */ }
-    return { status: 'FAILED', code: `GATE_RECEIPT_WRITE_FAILED_${(error && error.code) || 'UNKNOWN'}` };
+    return { status: 'FAILED', code: `GATE_RECEIPT_WRITE_FAILED_${caughtErrorCode(error)}` };
   }
 }
 
@@ -419,6 +585,10 @@ export function persistGateReceipt(file, canonicalBytes) {
  * requires the schema, a well-formed receipt digest, and — when the caller
  * knows which commit it asked the gate to run at — an exact `gitHead` match,
  * so a receipt left behind by an earlier run cannot be mistaken for this one.
+ *
+ * @param {string} file
+ * @param {GateReceiptReadExpectation} expected
+ * @returns {GateReceiptReadResult}
  */
 export function readPersistedGateReceipt(file, expected = {}) {
   let raw;

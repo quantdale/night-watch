@@ -22,6 +22,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const CONFIG_PATH = path.join(root, 'config', 'validation-execution-classes.v1.json');
 const TEST_MATCH = [/^tests\/.*\.(?:test|smoke)\.ts$/, /^scenarios\/.*\.smoke\.ts$/];
 
+/** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
 const CLI_METADATA = {
   schemaVersion: OPERATOR_CLI_SCHEMA,
   name: 'validation-execution-classes',
@@ -47,6 +48,10 @@ function discoverTrackedTests() {
     .sort();
 }
 
+/**
+ * @param {readonly string[]} files
+ * @returns {Map<string, string>}
+ */
 function readSources(files) {
   const sources = new Map();
   for (const file of files) {
@@ -61,7 +66,7 @@ function readSources(files) {
 }
 
 const cli = invokedDirectly(import.meta.url) ? defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url }) : { stop: true };
-if (!cli.stop) {
+if (!cli.stop && 'flags' in cli) {
   try {
     const [classes] = loadTypeScriptModules(['src/core/validation/executionClasses.ts'], { root });
     const discovered = discoverTrackedTests();
@@ -69,12 +74,14 @@ if (!cli.stop) {
     if (cli.flags['--write'] === true) {
       const declaration = classes.buildExecutionClassesDeclaration({ discovered, sources });
       fs.writeFileSync(CONFIG_PATH, `${JSON.stringify(declaration, null, 2)}\n`, 'utf8');
+      /** @type {Record<string, number>} */
       const counts = {};
       for (const entry of Object.values(declaration.files)) counts[entry.class] = (counts[entry.class] ?? 0) + 1;
       console.log(JSON.stringify({ schemaVersion: declaration.schemaVersion, result: 'WRITTEN', fileCount: discovered.length, counts }));
     } else {
       const declaration = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
       const judgement = classes.validateExecutionClasses({ discovered, sources, declaration });
+      /** @type {Record<string, number>} */
       const counts = {};
       for (const entry of Object.values(declaration.files ?? {})) counts[entry.class] = (counts[entry.class] ?? 0) + 1;
       if (cli.json) {
@@ -90,4 +97,7 @@ if (!cli.stop) {
     console.error(JSON.stringify({ result: 'CONFIG_INVALID', code: error instanceof Error ? error.message : 'EXECUTION_CLASSES_INVALID' }));
     process.exitCode = 2;
   }
+} else {
+  // The shared parser answered --help/--print-metadata or refused an argument;
+  // no execution class was read or validated.
 }

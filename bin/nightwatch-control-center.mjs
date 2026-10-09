@@ -58,10 +58,22 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DEFAULT_UI_ROOT = path.join(ROOT, 'ui', 'control-center', 'dist');
 const DEFAULT_PORT = 7312;
 
+/**
+ * Load one runtime TypeScript module. The declared type parameter carries the
+ * literal module path, so the loader's generated module map resolves the
+ * precise module type instead of erasing it to `unknown`.
+ *
+ * @template {keyof import('./lib/typescript-runtime-loader.mjs').TypeScriptRuntimeLoaderModuleMap} File
+ * @param {File} file
+ */
 function loadTypeScriptModule(file) {
   return loadRuntimeTypeScriptModule(file, { root: ROOT });
 }
 
+/**
+ * @param {readonly string[]} args
+ * @returns {{ port: number, uiRoot: string, enableLocalReview: boolean }}
+ */
 function parseArgs(args) {
   let port = DEFAULT_PORT;
   let uiRoot = DEFAULT_UI_ROOT;
@@ -121,6 +133,12 @@ function buildLocalReviewAuthority() {
   return authority;
 }
 
+/**
+ * The live server handle once `createControlCenterServer` has returned it;
+ * undefined until then, which is exactly what the failure path below checks.
+ *
+ * @type {import('../src/controlCenter/server/server').ControlCenterServerHandle | undefined}
+ */
 let handle;
 try {
   const { port, uiRoot, enableLocalReview } = parseArgs(process.argv.slice(2));
@@ -161,7 +179,7 @@ try {
     `NIGHTWATCH_CONTROL_CENTER_LOCAL_REVIEW ${services.reviewDecision === null ? 'DISABLED' : 'ENABLED'}\n`
   );
   const shutdown = async () => {
-    await handle.close();
+    await handle?.close();
     process.exit(0);
   };
   process.once('SIGINT', shutdown);

@@ -2,11 +2,11 @@
   "schemaVersion": "nightwatch.validation-universe.v1",
   "definitionName": "Nightwatch validation universe classification (NW-08)",
   "note": "Every discovered executable test or check belongs to exactly one class. AUTHORITATIVE_GATE is DERIVED from what the required gate lanes actually select and is therefore not declarable here; every other discovered file must appear below exactly once, with the reason it is not in the gate and the evidence lane that does cover it. A newly added test that is in no lane and no class fails the gate rather than joining the repository silently.",
-  "inventoryDigest": "sha256:6c15deb00d6fbc21d932384a",
+  "inventoryDigest": "sha256:174444fb9f86d4ae08ad01af",
   "classes": {
     "FULL_REGRESSION": {
       "reason": "Offline, deterministic suites that the full canonical regression executes. They are not in a required gate lane because the authoritative gate is bounded for CI runtime; leaving them unclassified is what made the gap invisible.",
-      "evidenceLane": "npm test \u2014 full canonical regression, run and recorded per checkpoint (not a CI step)",
+      "evidenceLane": "npm test — full canonical regression, run and recorded per checkpoint (not a CI step)",
       "files": [
         "tests/unit/accessibilityAudit.test.ts",
         "tests/unit/adapterUnavailableAndDefaults.test.ts",
@@ -26,6 +26,7 @@
         "tests/unit/authenticatedWriterCensus.test.ts",
         "tests/unit/autonomousFinding.test.ts",
         "tests/unit/benchmark.test.ts",
+        "tests/unit/binTypecheckLaneCompleteness.test.ts",
         "tests/unit/binTypecheckRatchet.test.ts",
         "tests/unit/bootstrapHooks.test.ts",
         "tests/unit/boundedOperatorLaunch.test.ts",
@@ -202,7 +203,7 @@
     },
     "LOCAL_FIXTURE_SMOKE": {
       "reason": "Local fixture smokes that the default Playwright testMatch and `npm test` execute. The G21.8 synthetic-state reason is preserved: these six checks build synthetic local state against loopback fixtures and never read the real owner capture artefact, so the real-artefact authenticated-capability pre-flight does not apply to them. They are not MANUAL_OWNER and they are not UNAVAILABLE: carrying them as never-executed was a classification defect.",
-      "evidenceLane": "npm test \u2014 the default canonical regression executes these fixture smokes",
+      "evidenceLane": "npm test — the default canonical regression executes these fixture smokes",
       "files": [
         "scenarios/ripple/local.smoke.ts",
         "tests/smoke/authenticated.smoke.ts",
@@ -214,7 +215,7 @@
     },
     "BROWSER_WORKFLOW": {
       "reason": "Drives a real browser against the Control Center, so it needs a system Chrome and a built UI that the offline gate does not provide.",
-      "evidenceLane": "browser workflow lane \u2014 npm run control-center:ui:browser on a qualified host",
+      "evidenceLane": "browser workflow lane — npm run control-center:ui:browser on a qualified host",
       "files": [
         "tests/browser/accessibilityCertification.browser.ts",
         "tests/browser/controlCenterBrowser.browser.ts",

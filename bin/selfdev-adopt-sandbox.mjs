@@ -17,6 +17,7 @@ import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
+/** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
 const CLI_METADATA = {
   schemaVersion: OPERATOR_CLI_SCHEMA,
   name: 'selfdev-adopt-sandbox',
@@ -40,10 +41,25 @@ const CLI_METADATA = {
   artifacts: ['$HOME/.nightwatch private adoption plan store', 'disposable private source mirror'],
 };
 
+/**
+ * Load one runtime TypeScript module. The declared type parameter carries the
+ * literal module path, so the loader's generated module map resolves the
+ * precise module type instead of erasing it to `unknown`.
+ *
+ * @template {keyof import('./lib/typescript-runtime-loader.mjs').TypeScriptRuntimeLoaderModuleMap} File
+ * @param {File} file
+ */
 function loadTypeScriptModule(file) {
   return loadRuntimeTypeScriptModule(file, { root });
 }
 
+/**
+ * Bounded pass-through to the shared runtime loader: identical behaviour, one
+ * `root` bound per process instead of a repeated call-site option.
+ *
+ * @template {readonly string[]} const Files
+ * @param {Files} files
+ */
 function loadTypeScriptModules(files) {
   return loadRuntimeTypeScriptModules(files, { root });
 }
@@ -60,6 +76,14 @@ const ARTIFACT_ID_RE = /^session:sha256:[0-9a-f]{64}$/;
 const CANDIDATE_ID_RE = /^candidate:[0-9a-f]{64}$/;
 const PLAN_ID_RE = /^adoption-plan:sha256:[0-9a-f]{64}$/;
 
+/**
+ * @typedef {{ help: true } | { help: false, command: 'inspect', artifactId: string } | { help: false, command: 'plan', artifactId: string, candidateId: string } | { help: false, command: 'run', planId: string }} SelfDevAdoptSandboxArgs
+ */
+
+/**
+ * @param {readonly string[]} args
+ * @returns {SelfDevAdoptSandboxArgs}
+ */
 function parseArgs(args) {
   if (args.length === 1 && (args[0] === '--help' || args[0] === '-h')) return { help: true };
   if (args.length === 0) throw new Error('SELFDEV_ADOPT_SANDBOX_USAGE_INVALID');

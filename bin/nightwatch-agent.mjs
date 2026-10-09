@@ -57,14 +57,15 @@ const CLI_METADATA = {
   artifacts: [],
 };
 const cli = defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url });
-const args = (cli.ok === true && cli.stop !== true)
-  ? [cli.command ?? 'help', ...cli.positionals, ...Object.entries(cli.flags).filter(([, value]) => value !== false && value !== undefined).map(([name, value]) => (value === true ? name : `${name}=${String(value)}`))]
-  : [cli.command ?? 'help'];
 const command = cli.ok === true && cli.stop !== true ? cli.command ?? 'help' : 'help';
+const args = (cli.ok === true && cli.stop !== true)
+  ? [command, ...cli.positionals, ...Object.entries(cli.flags).filter(([, value]) => value !== false && value !== undefined).map(([name, value]) => (value === true ? name : `${name}=${String(value)}`))]
+  : [command];
 const cliStopped = cli.ok !== true || cli.stop === true;
 // R5-07: only `campaign` takes a positional; `status extra` / `help run` are usage errors (exit 2).
 const strayPositional = !cliStopped && command !== 'campaign' && cli.positionals.length > 0;
 
+/** @type {ReadonlyMap<string, import('../src/core/agentProtocol/runtime').AgentBudgetCeilingName>} */
 const DURATIONS = new Map([
   ['1h', 'HOUR_1'],
   ['4h', 'HOUR_4'],
@@ -86,17 +87,21 @@ const DURATIONS = new Map([
  * admission ids. An emission failure is reported and never silently swallowed.
  */
 /**
- * @param {{
- *   root: string,
- *   receiptMod: { emitProductRunReceipt: (input: object) => Promise<{ runId: string, receiptFile: string, receipt: unknown }> },
- *   campaignId: string,
- *   result: unknown,
- *   repositoryIds: readonly string[],
- *   before: readonly unknown[],
- *   nightwatchIdentity: { sha: string, treeClean: boolean } | null,
- *   campaignKind: string,
- *   reasonerIdentity: { kind: string, identityDigest: string | null, printCliDigest: string | null, provider: string | null, model: string | null } | null,
- * }} input
+ * The one receipt-emission input. A resume omits `nightwatchIdentity`, so that
+ * is the optional member; every other member is supplied by both call sites.
+ * @typedef {object} CampaignReceiptInput
+ * @property {string} root
+ * @property {import('../src/core/agentRuntime/productRunReceipt')} receiptMod
+ * @property {string} campaignId
+ * @property {import('../src/core/agentRuntime/localCampaign').LocalCampaignResult} result
+ * @property {readonly string[]} repositoryIds
+ * @property {import('../src/core/agentRuntime/productRunReceipt').ProductRunReceiptInput['before']} before
+ * @property {import('../src/core/agentRuntime/productRunReceipt').ProductRunNightwatchIdentity | null} [nightwatchIdentity]
+ * @property {import('../src/core/agentRuntime/productRunReceipt').CampaignKind} campaignKind
+ * @property {import('../src/core/agentRuntime/productRunReceipt').ProductRunReasonerIdentity | null} reasonerIdentity
+ */
+/**
+ * @param {CampaignReceiptInput} input
  */
 async function emitCampaignReceipt({ root, receiptMod, campaignId, result, repositoryIds, before, nightwatchIdentity, campaignKind, reasonerIdentity = null }) {
   try {
@@ -163,6 +168,9 @@ function bindRunIdentity(before, after) {
 function installCampaignPauseChannel() {
   const controller = new AbortController();
   let received = 0;
+  /**
+   * @param {string} signal
+   */
   const handler = (signal) => {
     received += 1;
     if (received > 1) {
@@ -185,6 +193,10 @@ function installCampaignPauseChannel() {
   };
 }
 
+/**
+ * @param {number} code
+ * @param {string} message
+ */
 function fail(code, message) {
   console.error(`NIGHTWATCH_AGENT: ${message}`);
   process.exitCode = code;
@@ -225,6 +237,9 @@ function assertStartupEnvironment() {
  * refused BEFORE any process exists rather than silently labelling the run.
  * Returns null when the two disagree (the refusal is already recorded).
  */
+/**
+ * @param {Record<string, string>} flags
+ */
 function resolveModelLabel(flags) {
   const declared = typeof flags.model === 'string' && flags.model.length > 0 ? flags.model : null;
   const configured =
@@ -243,12 +258,16 @@ function resolveModelLabel(flags) {
  * adapter, print CLI, PRINT_ARGS, provider, model) and hand the campaign the
  * exact bytes-digest identity its checkpoint records.
  */
-function resolveReasonerIdentity(reasonerMod, configured, options = {}) {
+/**
+ * @param {import('../src/core/config/reasonerExecutable')} reasonerMod
+ * @param {string | undefined} configured
+ * @param {{ adapterPath: string | null | undefined, provider: string | null | undefined, model: string | null | undefined }} [options]
+ */
+function resolveReasonerIdentity(reasonerMod, configured, options = /** @type {{ adapterPath: string | null | undefined, provider: string | null | undefined, model: string | null | undefined }} */ ({})) {
   // F-19: the executable is validated through the shared resolver first, then
   // widened into the full M5 identity.
   const executableIdentity = reasonerMod.resolveReasonerExecutable(configured ?? process.execPath);
   const identity = reasonerMod.resolveReasonerRuntimeIdentity({
-    executable: executableIdentity.path,
     executable: configured ?? process.execPath,
     adapterPath: options.adapterPath ?? null,
     printCli: process.env.NIGHTWATCH_PRINT_CLI ?? null,
@@ -285,6 +304,7 @@ if (strayPositional) {
     ['src/core/agentRuntime/localCampaign.ts', 'src/core/localInvestigation/agentFindingStore.ts'],
     { root },
   );
+  /** @type {readonly import('../src/core/agentRuntime/localCampaign').LocalCampaignListing[]} */
   let campaigns = [];
   let campaignsUnavailable = null;
   try {
@@ -292,6 +312,7 @@ if (strayPositional) {
   } catch (error) {
     campaignsUnavailable = error instanceof Error ? error.message : String(error);
   }
+  /** @type {readonly import('../src/core/localInvestigation/agentFindingRecord').AgentFindingRecord[]} */
   let findings = [];
   let storeRoot = null;
   let storeUnavailable = null;
@@ -377,6 +398,7 @@ if (strayPositional) {
    * read by every forwarded value. `process.env` is never the source of a
    * value this CLI forwards.
    */
+  /** @type {NodeJS.ProcessEnv | null} */
   let campaignEnvCache = null;
   const campaignEnvironment = () => {
     if (campaignEnvCache === null) campaignEnvCache = assertStartupEnvironment();
@@ -385,7 +407,7 @@ if (strayPositional) {
   if (sub === 'run') {
     if (flags.reasoner !== 'cli') {
       fail(2, 'campaign run requires --reasoner=cli');
-    } else if (!DURATIONS.has(flags.duration)) {
+    } else if (flags.duration === undefined || !DURATIONS.has(flags.duration)) {
       fail(2, 'campaign run requires --duration=1h|4h|8h|overnight');
     } else if (modelLabel === null) {
       // Refused above: --model and NIGHTWATCH_REASONER_MODEL disagree.
@@ -422,8 +444,9 @@ if (strayPositional) {
           { root },
         );
         const extraArgs = [];
-        if (typeof campaignEnvironment().NIGHTWATCH_REASONER_SCRIPT === 'string' && campaignEnvironment().NIGHTWATCH_REASONER_SCRIPT.length > 0) {
-          extraArgs.push(campaignEnvironment().NIGHTWATCH_REASONER_SCRIPT);
+        const reasonerScript = campaignEnvironment().NIGHTWATCH_REASONER_SCRIPT;
+        if (typeof reasonerScript === 'string' && reasonerScript.length > 0) {
+          extraArgs.push(reasonerScript);
         } else if (campaignEnvironment().NIGHTWATCH_PRINT_CLI) {
           extraArgs.push(path.join(root, 'bin/nightwatch-reasoner-print.mjs'));
         }
@@ -448,6 +471,7 @@ if (strayPositional) {
           const campaignKind = reasonerIdentity.adapterPath !== null && reasonerIdentity.adapterPath === path.join(root, 'bin/nightwatch-reasoner-print.mjs')
             ? 'PRINT_CLI_PROVIDER'
             : 'CUSTOM_REASONER_SCRIPT';
+          /** @type {import('../src/core/agentRuntime/productRunReceipt').ProductRunReasonerIdentity} */
           const recordedReasonerIdentity = {
             kind: campaignKind,
             identityDigest: reasonerIdentity.identityDigest,
@@ -458,7 +482,7 @@ if (strayPositional) {
           const result = await mod.runLocalCliCampaign({
             pauseSignal: pause.signal,
             campaignId: typeof flags.id === 'string' && flags.id.length > 0 ? flags.id : `local-${Date.now()}`,
-            ceilingName: DURATIONS.get(flags.duration),
+            ceilingName: /** @type {import('../src/core/agentProtocol/runtime').AgentBudgetCeilingName} */ (DURATIONS.get(flags.duration)),
             executable,
             reasonerIdentity,
             args: extraArgs,
@@ -518,6 +542,7 @@ if (strayPositional) {
       { root },
     );
     const campaigns = mod.listLocalCampaigns();
+    /** @type {readonly import('../src/core/localInvestigation/agentFindingRecord').AgentFindingRecord[]} */
     let findings = [];
     let storeRoot = null;
     let storeUnavailable = null;
@@ -606,8 +631,9 @@ if (strayPositional) {
         { root },
       );
       const extraArgs = [];
-      if (typeof campaignEnvironment().NIGHTWATCH_REASONER_SCRIPT === 'string' && campaignEnvironment().NIGHTWATCH_REASONER_SCRIPT.length > 0) {
-        extraArgs.push(campaignEnvironment().NIGHTWATCH_REASONER_SCRIPT);
+      const reasonerScript = campaignEnvironment().NIGHTWATCH_REASONER_SCRIPT;
+      if (typeof reasonerScript === 'string' && reasonerScript.length > 0) {
+        extraArgs.push(reasonerScript);
       } else if (campaignEnvironment().NIGHTWATCH_PRINT_CLI) {
         extraArgs.push(path.join(root, 'bin/nightwatch-reasoner-print.mjs'));
       }
@@ -629,6 +655,7 @@ if (strayPositional) {
         const campaignKind = reasonerIdentity.adapterPath !== null && reasonerIdentity.adapterPath === path.join(root, 'bin/nightwatch-reasoner-print.mjs')
           ? 'PRINT_CLI_PROVIDER'
           : 'CUSTOM_REASONER_SCRIPT';
+        /** @type {import('../src/core/agentRuntime/productRunReceipt').ProductRunReasonerIdentity} */
         const recordedReasonerIdentity = {
           kind: campaignKind,
           identityDigest: reasonerIdentity.identityDigest,

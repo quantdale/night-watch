@@ -61,7 +61,11 @@ export const TRANSPORT_EFFECT_REGISTRY = Object.freeze([
   { root: 'tests/', klass: 'TEST_FIXTURE' },
 ]);
 
-/** Block-aware mask: strips strings/comments so call LOCATION survives. */
+/**
+ * Block-aware mask: strips strings/comments so call LOCATION survives.
+ * @param {string} source the raw source text
+ * @returns {string} the masked text, same length and line structure
+ */
 export function maskSource(source) {
   let out = '';
   let i = 0;
@@ -101,12 +105,20 @@ export function maskSource(source) {
   return out;
 }
 
+/**
+ * 1-based line number of a character offset, found by bisection over the
+ * per-line start offsets. Offsets are always in range, so the offset cursor is
+ * only a defensive fallback for an index the array cannot hold.
+ * @param {number[]} starts offsets at which each line begins
+ * @param {number} index character offset to locate
+ * @returns {number}
+ */
 function lineOf(starts, index) {
   let lo = 0;
   let hi = starts.length - 1;
   while (lo < hi) {
     const mid = (lo + hi + 1) >> 1;
-    if (starts[mid] <= index) lo = mid; else hi = mid - 1;
+    if ((starts[mid] ?? 0) <= index) lo = mid; else hi = mid - 1;
   }
   return lo + 1;
 }
@@ -172,6 +184,13 @@ export function discoverEffectSites(file, source) {
   return sites.filter((site) => (seen.has(site.identity) ? false : (seen.add(site.identity), true)));
 }
 
+/**
+ * A root claims a file when it is a directory prefix (trailing `/`) or the
+ * whole path.
+ * @param {string} file posix repository-relative path
+ * @param {string} root registered claim root
+ * @returns {boolean}
+ */
 function matchesRoot(file, root) {
   return root.endsWith('/') ? file.startsWith(root) : file === root;
 }
@@ -179,7 +198,7 @@ function matchesRoot(file, root) {
 /**
  * Build the total census over provided files against the closed registry.
  * @param {{file: string, source: string}[]} files
- * @param {{root: string, klass: string}[]} [registry]
+ * @param {readonly { root: string, klass: string }[]} [registry]
  */
 export function buildTransportEffectCensus(files, registry = TRANSPORT_EFFECT_REGISTRY) {
   const violations = [];
@@ -199,6 +218,9 @@ export function buildTransportEffectCensus(files, registry = TRANSPORT_EFFECT_RE
       continue;
     }
     const entry = matches[0];
+    // The empty `matches` case is refused just above, so the winning root is
+    // present here; the guard only keeps the index access honest for the type.
+    if (entry === undefined) continue;
     claimed.set(entry.root, (claimed.get(entry.root) ?? 0) + 1);
     writers.push({ ...site, klass: entry.klass, registryRoot: entry.root });
   }

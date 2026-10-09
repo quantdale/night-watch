@@ -26,7 +26,10 @@ import { CERTIFICATION_SCHEMA_SUBJECTS } from './certification-subjects.mjs';
  * @property {(body: Record<string, unknown>) => string[]} [validate] strict structural validation (a closed allowlist); every error refuses the receipt
  */
 
-/** @param {unknown} value */
+/**
+ * @param {unknown} value
+ * @returns {value is Record<string, unknown>}
+ */
 function isRecord(value) {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
@@ -119,6 +122,7 @@ export const RECEIPT_SCHEMAS = Object.freeze({
  * @returns {readonly string[]}
  */
 export function subjectsOfSchemas(schemas) {
+  /** @type {string[]} */
   const union = [];
   for (const schema of schemas) {
     for (const subject of RECEIPT_SCHEMAS[schema]?.subjects ?? []) if (!union.includes(subject)) union.push(subject);

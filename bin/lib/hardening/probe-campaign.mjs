@@ -62,6 +62,9 @@ function resolveProbePath(file) {
  * source, run only the probed rule, and require a detected failure. Bytes are
  * restored in a finally and verified afterwards; `git status --porcelain` must
  * be unchanged from before the run.
+ * @param {ReadonlyArray<{name: string}>} registeredRules
+ * @param {string | undefined} onlyRule
+ * @param {string} entryPoint
  */
 export function runRuleProbeCampaign(registeredRules, onlyRule, entryPoint) {
   let registry;

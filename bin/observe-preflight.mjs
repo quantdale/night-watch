@@ -40,11 +40,20 @@ const CLI_METADATA = {
   artifacts: [],
 };
 
+/**
+ * @param {string} message
+ */
 function fail(message) {
   console.error(`[observe:preflight] FAIL: ${message}`);
   process.exitCode = 2;
 }
 
+/** @typedef {{ name: string, uiBaseUrl: string, allowedHosts: string[], apiHosts: string[], authHosts: string[] }} EnvironmentConfig */
+
+/**
+ * @param {string} env
+ * @returns {EnvironmentConfig}
+ */
 function loadConfig(env) {
   const file = path.join(root, 'config', 'environments', `${env}.json`);
   let parsed;
@@ -64,11 +73,21 @@ function loadConfig(env) {
   return parsed;
 }
 
+/**
+ * @param {string} entry
+ * @returns {string}
+ */
 function hostFromEntry(entry) {
   const withoutWildcard = entry.startsWith('*.') ? entry.slice(2) : entry;
   return withoutWildcard.replace(/:\d+$/, '').toLowerCase();
 }
 
+/**
+ * @param {string} hostname
+ * @param {string} port
+ * @param {readonly string[]} entries
+ * @returns {boolean}
+ */
 function hostIsAllowed(hostname, port, entries) {
   const hostPort = port === '' ? hostname : `${hostname}:${port}`;
   return entries.some((entry) => {
@@ -77,6 +96,10 @@ function hostIsAllowed(hostname, port, entries) {
   });
 }
 
+/**
+ * @param {string} host
+ * @param {string} label
+ */
 function assertNotProduction(host, label) {
   const normalized = host.toLowerCase();
   const knownProduction = new Set([
@@ -92,6 +115,12 @@ function assertNotProduction(host, label) {
   }
 }
 
+/**
+ * @param {string} env
+ * @param {EnvironmentConfig} config
+ * @param {string} candidate
+ * @returns {URL}
+ */
 function validateTarget(env, config, candidate) {
   let base;
   let target;
@@ -101,7 +130,9 @@ function validateTarget(env, config, candidate) {
   } catch (error) {
     throw new Error(`UI URL is invalid: ${error instanceof Error ? error.message : String(error)}`);
   }
-  for (const [label, url] of [['configured UI URL', base], ['selected UI URL', target]]) {
+  /** @type {readonly (readonly [string, URL])[]} */
+  const labelledTargets = [['configured UI URL', base], ['selected UI URL', target]];
+  for (const [label, url] of labelledTargets) {
     if (url.protocol !== 'https:') throw new Error(`${label} must use https for real ${env} observation`);
     if (url.username || url.password) throw new Error(`${label} must not contain embedded credentials`);
     if (url.search || url.hash) throw new Error(`${label} must not contain query parameters or fragments`);
@@ -116,7 +147,9 @@ function validateTarget(env, config, candidate) {
   if (!hostIsAllowed(target.hostname.toLowerCase(), target.port, config.allowedHosts)) {
     throw new Error(`selected UI host ${target.hostname.toLowerCase()} is not explicitly allowlisted for ${env}`);
   }
-  for (const [kind, entries] of [['API', config.apiHosts], ['auth', config.authHosts]]) {
+  /** @type {readonly (readonly [string, string[]])[]} */
+  const hostGroups = [['API', config.apiHosts], ['auth', config.authHosts]];
+  for (const [kind, entries] of hostGroups) {
     if (entries.length === 0) throw new Error(`${env} config has no expected ${kind} hosts`);
     for (const entry of entries) {
       const host = hostFromEntry(entry);
@@ -133,8 +166,10 @@ const cli = defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url });
 if (cli.stop) {
   // --help / --print-metadata / usage already emitted.
 } else try {
-  const envFlag = typeof cli.flags['--env'] === 'string' ? cli.flags['--env'] : process.env.NIGHTWATCH_ENV;
-  const uiUrlFlag = typeof cli.flags['--ui-url'] === 'string' ? cli.flags['--ui-url'] : process.env.NIGHTWATCH_UI_URL;
+  /** @type {Record<string, unknown>} */
+  const flags = cli.ok === true ? cli.flags : {};
+  const envFlag = typeof flags['--env'] === 'string' ? flags['--env'] : process.env.NIGHTWATCH_ENV;
+  const uiUrlFlag = typeof flags['--ui-url'] === 'string' ? flags['--ui-url'] : process.env.NIGHTWATCH_UI_URL;
   if (!envFlag || !SUPPORTED_REAL_ENVS.has(envFlag.trim().toLowerCase())) {
     throw new Error('exactly one supported real environment is required: dev or next; production is forbidden');
   }

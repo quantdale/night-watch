@@ -32,6 +32,7 @@ const MAX_INVENTORY_BYTES = 64 * 1024;
 const GIT_TIMEOUT_MS = 10_000;
 const GIT_MAX_BUFFER = 512 * 1024;
 
+/** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
 const CLI_METADATA = {
   schemaVersion: OPERATOR_CLI_SCHEMA,
   name: 'release-freshness',
@@ -48,12 +49,20 @@ const CLI_METADATA = {
   artifacts: ['artifacts/release-freshness/current.json'],
 };
 
+/**
+ * @param {string} code
+ * @param {string} [detail]
+ */
 function fail(code, detail) {
   process.stderr.write(detail === undefined ? `[release-freshness] ERROR: ${code}\n` : `[release-freshness] ERROR: ${code}: ${detail}\n`);
   process.exitCode = 2;
 }
 
-/** `org/name` under the repositories root, resolved and bounds-checked. */
+/**
+ * @param {string} repositoriesRoot
+ * @param {string} repoId
+ * @returns {string}
+ */
 function repoPathFor(repositoriesRoot, repoId) {
   const [org, name] = String(repoId).split('/');
   if (!org || !name || !/^[a-z0-9._-]+$/i.test(org) || !/^[a-z0-9._-]+$/i.test(name) || org === '..' || name === '..') {
@@ -71,6 +80,11 @@ function repoPathFor(repositoriesRoot, repoId) {
  * executes; the argument list is built by this module and never contains
  * shell text, and the child environment is the explicit allowlist.
  */
+/**
+ * @param {string} repoPath
+ * @param {string[]} args
+ * @returns {{ kind: 'ERROR', status: number, stdout: string, stderr: string } | { kind: 'OK', status: number, stdout: string, stderr: string }}
+ */
 function runGit(repoPath, args) {
   const result = spawnSync('git', args, {
     cwd: repoPath,
@@ -86,8 +100,19 @@ function runGit(repoPath, args) {
   return { kind: 'OK', status: typeof result.status === 'number' ? result.status : -1, stdout: result.stdout ?? '', stderr: result.stderr ?? '' };
 }
 
+/** @typedef {{ state: 'ERROR' } | { state: 'AVAILABLE', sha: string } | { state: 'UNAVAILABLE' }} LocalCommit */
+
+/**
+ * @param {string} repositoriesRoot
+ * @returns {import('../src/core/changeIntelligence/releaseFreshness').ReleaseAncestryOracle}
+ */
 function createOracle(repositoriesRoot) {
+  /** @type {Map<string, string>} */
   const repoPaths = new Map();
+  /**
+   * @param {string} repoId
+   * @returns {string}
+   */
   const repoPath = (repoId) => {
     const cached = repoPaths.get(repoId);
     if (cached !== undefined) return cached;
@@ -96,11 +121,21 @@ function createOracle(repositoriesRoot) {
     return resolved;
   };
   return {
+    /**
+     * @param {string} repoId
+     * @param {string} sha
+     * @returns {LocalCommit}
+     */
     pin(repoId, sha) {
       const result = runGit(repoPath(repoId), ['cat-file', '-e', `${sha}^{commit}`]);
       if (result.kind === 'ERROR') return { state: 'ERROR' };
       return result.status === 0 ? { state: 'AVAILABLE', sha } : { state: 'UNAVAILABLE' };
     },
+    /**
+     * @param {string} repoId
+     * @param {string} ref
+     * @returns {LocalCommit}
+     */
     ref(repoId, ref) {
       const result = runGit(repoPath(repoId), ['rev-parse', '--verify', '--quiet', ref]);
       if (result.kind === 'ERROR') return { state: 'ERROR' };
@@ -108,6 +143,12 @@ function createOracle(repositoriesRoot) {
       const sha = result.stdout.trim();
       return /^[0-9a-f]{40}$/.test(sha) ? { state: 'AVAILABLE', sha } : { state: 'ERROR' };
     },
+    /**
+     * @param {string} repoId
+     * @param {string} fixSha
+     * @param {string} refTipSha
+     * @returns {'CONTAINED' | 'NOT_CONTAINED' | 'ERROR'}
+     */
     ancestor(repoId, fixSha, refTipSha) {
       const result = runGit(repoPath(repoId), ['merge-base', '--is-ancestor', fixSha, refTipSha]);
       if (result.kind === 'ERROR') return 'ERROR';

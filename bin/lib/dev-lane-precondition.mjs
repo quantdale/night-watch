@@ -16,6 +16,9 @@ export const DEV_LANE_REGISTRY_PATH_ENV = 'NIGHTWATCH_DEV_LANE_REGISTRY_PATH';
 /**
  * True when this invocation targets the DEV lane: an explicit `--env=dev` /
  * `--env dev`, or a launcher that is DEV-only by construction (`devOnly`).
+ * @param {string[]} args the raw launcher arguments
+ * @param {Partial<{ devOnly: boolean }>} [options]
+ * @returns {boolean}
  */
 export function isDevInvocation(args, options = {}) {
   // M9 (10.2): a metadata or help query never launches anything, so it is not
@@ -34,6 +37,13 @@ export function isDevInvocation(args, options = {}) {
 /**
  * Refuse the launch while a DEV-lane precondition is OPEN. Returns true when
  * the guard applied (DEV invocation), false when the invocation is not DEV.
+ *
+ * `launcher` names the launcher in every refusal the authority raises, so it
+ * is always supplied; the other four are optional. The second member of the
+ * union is the "nothing supplied" shape, which is what the parameter default
+ * carries — every property is then `never`, so the guard is a no-op.
+ * @param {{ launcher: string } & Partial<{ root: string, args: string[], devOnly: boolean, env: NodeJS.ProcessEnv }> | Record<string, never>} [options]
+ * @returns {boolean}
  */
 export function guardDevLane({ root, launcher, args = [], devOnly = false, env = process.env } = {}) {
   if (!isDevInvocation(args, { devOnly })) return false;

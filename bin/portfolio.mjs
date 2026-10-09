@@ -43,6 +43,10 @@ const COMPILE_FINGERPRINT_FILE = path.join(
   ".compile-fingerprint",
 );
 
+/**
+ * @param {string} message
+ * @returns {never}
+ */
 function fail(message) {
   console.error(`portfolio: ${message}`);
   process.exit(1);
@@ -56,6 +60,9 @@ const FORBIDDEN_DETAIL_RE =
   /(?:SENTINEL|bearer[ :=]|eyJ[A-Za-z0-9_-]{8,}\.|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----|password|secret|cookie|credential|api[-_]?key|authorization)/i;
 const DETAIL_MAX_LENGTH = 160;
 
+/**
+ * @param {string} message
+ */
 function sanitizeDetail(message) {
   const text = String(message ?? "");
   if (FORBIDDEN_DETAIL_RE.test(text)) return "<redacted-detail>";
@@ -98,6 +105,7 @@ function compileFingerprint() {
     const directories = [absoluteRoot];
     while (directories.length > 0) {
       const current = directories.pop();
+      if (current === undefined) continue;
       let children;
       try {
         children = fs.readdirSync(current, { withFileTypes: true });
@@ -126,8 +134,12 @@ function compileFingerprint() {
   return hash.digest("hex");
 }
 
+/** @type {string | null | undefined} */
 let compiledForFingerprint;
 
+/**
+ * @param {string} fingerprint
+ */
 function compileIsFresh(fingerprint) {
   if (compiledForFingerprint === fingerprint) return true;
   try {
@@ -208,7 +220,20 @@ async function loadFixtures() {
   );
 }
 
+/**
+ * The runtime-compiled portfolio core surface this CLI consumes. Each member
+ * is the `core.` import used below, typed against the module that implements
+ * it; the compiled artifact is loaded dynamically, so the shape is declared
+ * here rather than resolved from the import.
+ * @typedef {{ buildPortfolio: (input: { approvedTargets: readonly string[], memberInputs: readonly import('../src/core/portfolio/types').PortfolioMemberInput[] }) => import('../src/core/portfolio/types').CampaignPortfolio, parsePortfolioDocument: (value: unknown) => import('../src/core/portfolio/types').CampaignPortfolio }} PortfolioCoreModule
+ * @typedef {{ P16_APPROVED_EXTENDED: readonly string[], buildDemoPortfolioInput: () => { memberInputs: readonly import('../src/core/portfolio/types').PortfolioMemberInput[] } }} PortfolioFixturesModule
+ */
+
 /** Build the demo portfolio (fixture-derived; synthetic identities only). */
+/**
+ * @param {PortfolioCoreModule} core
+ * @param {PortfolioFixturesModule} fixtures
+ */
 function demoPortfolio(core, fixtures) {
   return core.buildPortfolio({
     approvedTargets: fixtures.P16_APPROVED_EXTENDED,
@@ -217,6 +242,10 @@ function demoPortfolio(core, fixtures) {
 }
 
 /** Portfolio from --input JSON (strict parse, fail closed) or demo. */
+/**
+ * @param {PortfolioCoreModule} core
+ * @param {Map<string, string>} args
+ */
 function inputPortfolio(core, args) {
   const inputPath = args.get("--input");
   if (!inputPath) return null;
@@ -231,12 +260,12 @@ function inputPortfolio(core, args) {
   try {
     raw = JSON.parse(rawText);
   } catch (error) {
-    fail(`malformed portfolio JSON: ${sanitizeDetail(error.message)}`);
+    fail(`malformed portfolio JSON: ${sanitizeDetail(error instanceof Error ? error.message : String(error))}`);
   }
   try {
     return core.parsePortfolioDocument(raw);
   } catch (error) {
-    fail(`invalid portfolio document: ${sanitizeDetail(error.message)}`);
+    fail(`invalid portfolio document: ${sanitizeDetail(error instanceof Error ? error.message : String(error))}`);
   }
   return null;
 }
@@ -379,7 +408,7 @@ async function main() {
       fail(
         "compare-plan requires --previous <plan.json> --current <plan.json>",
       );
-    const readJson = (value) => {
+    const readJson = (/** @type {string} */ value) => {
       let rawText;
       try {
         rawText = fs.readFileSync(path.resolve(value), "utf8");
@@ -390,7 +419,7 @@ async function main() {
         return JSON.parse(rawText);
       } catch (error) {
         return fail(
-          `malformed plan document JSON: ${sanitizeDetail(error.message)}`,
+          `malformed plan document JSON: ${sanitizeDetail(error instanceof Error ? error.message : String(error))}`,
         );
       }
     };
@@ -406,7 +435,7 @@ async function main() {
         readJson(currentPath),
       );
     } catch (error) {
-      return fail(`invalid plan document: ${sanitizeDetail(error.message)}`);
+      return fail(`invalid plan document: ${sanitizeDetail(error instanceof Error ? error.message : String(error))}`);
     }
     const comparison = core.comparePlanManifests(
       previousManifest,
@@ -419,6 +448,7 @@ async function main() {
   // shadow-simulate
   const fixtures = await loadFixtures();
   const portfolio = inputPortfolio(core, args) ?? demoPortfolio(core, fixtures);
+  /** @type {Record<string, import('../src/core/portfolio/simulator').MemberYieldModel>} */
   const yieldModels = {};
   for (const member of portfolio.members) {
     yieldModels[member.memberId] = core.yieldModelFromFacts({

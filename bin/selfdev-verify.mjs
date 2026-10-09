@@ -14,6 +14,7 @@ import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
+/** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
 const CLI_METADATA = {
   schemaVersion: OPERATOR_CLI_SCHEMA,
   name: 'selfdev-verify',
@@ -30,8 +31,33 @@ const CLI_METADATA = {
   artifacts: [],
 };
 
+/**
+ * Load one runtime TypeScript module. The literal module path is kept as a type
+ * parameter constrained to the loader's module map, so that map remains the
+ * type authority for what each path exports, exactly as at a direct call site.
+ *
+ * @template {keyof import('./lib/typescript-runtime-loader.mjs').TypeScriptRuntimeLoaderModuleMap} File
+ * @param {File} file
+ * @returns {import('./lib/typescript-runtime-loader.mjs').TypeScriptRuntimeLoaderModuleMap[File]}
+ */
 function loadTypeScriptModule(file) {
-  return loadRuntimeTypeScriptModule(file, { root });
+  return /** @type {import('./lib/typescript-runtime-loader.mjs').TypeScriptRuntimeLoaderModuleMap[File]} */ (loadRuntimeTypeScriptModule(file, { root }));
+}
+
+/**
+ * The two failure fields a caught value may carry. A thrown value is not
+ * necessarily an `Error`, so both are read defensively rather than asserted.
+ *
+ * @param {unknown} error
+ * @returns {{ code: string | null, message: string | null }}
+ */
+function failureDetail(error) {
+  /** @type {Record<string, unknown>} */
+  const candidate = error !== null && typeof error === 'object' ? /** @type {Record<string, unknown>} */ (error) : {};
+  return {
+    code: typeof candidate.code === 'string' ? candidate.code : null,
+    message: typeof candidate.message === 'string' ? candidate.message : null,
+  };
 }
 
 function usage() {
@@ -39,6 +65,10 @@ function usage() {
   console.log('Reads and replay-verifies one private self-development artifact without writing state.');
 }
 
+/**
+ * @param {readonly string[]} args
+ * @returns {{ help: true } | { help: false, artifactId: string }}
+ */
 function parseArgs(args) {
   if (args.length === 1 && (args[0] === '--help' || args[0] === '-h')) return { help: true };
   if (args.length !== 2 || args[0] !== '--artifact-id' || args[1] === undefined || args[1].startsWith('--')) {
@@ -48,6 +78,9 @@ function parseArgs(args) {
   return { help: false, artifactId: args[1] };
 }
 
+/**
+ * @param {unknown} code
+ */
 function safeFailure(code) {
   const rawCode = typeof code === 'string' ? code : 'SELFDEV_VERIFY_FAILED';
   const trustStatus = rawCode.replace(/^SELFDEV_/, '').split(':')[0] || 'VERIFY_FAILED';
@@ -95,7 +128,8 @@ function main() {
     try {
       current = provenanceService.currentCheckoutState({ repositoryRoot: root });
     } catch (error) {
-      const code = typeof error?.code === 'string' ? error.code : (typeof error?.message === 'string' ? error.message : 'PROVENANCE_UNAVAILABLE');
+      const detail = failureDetail(error);
+      const code = detail.code ?? detail.message ?? 'PROVENANCE_UNAVAILABLE';
       console.log(JSON.stringify({
         ...safeFailure(code),
         artifactId: stored.artifact.artifactId,
@@ -126,7 +160,7 @@ function main() {
       externalCalls: assessment.externalCalls,
     }));
   } catch (error) {
-    const code = typeof error?.message === 'string' ? error.message.split(':')[0] : 'SELFDEV_VERIFY_FAILED';
+    const code = failureDetail(error).message?.split(':')[0] ?? 'SELFDEV_VERIFY_FAILED';
     console.log(JSON.stringify(safeFailure(code)));
     process.exitCode = 1;
   }

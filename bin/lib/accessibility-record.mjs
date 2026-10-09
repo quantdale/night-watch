@@ -24,17 +24,12 @@ export const ACCESSIBILITY_FOCUS_INDICATOR_MINIMUM = 3;
 const SHA_RE = /^[0-9a-f]{40}$/i;
 
 /**
+ * @typedef {{ measured: unknown, minimum: unknown }} AccessibilityFocusIndicatorLike
+ * @typedef {{ status: unknown } & Partial<{ focusIndicator: AccessibilityFocusIndicatorLike }>} AccessibilitySectionLike
+ * @typedef {{ schemaVersion: unknown, nightwatchSha: unknown, treeClean: unknown, updatedAt: unknown, sections: Record<string, AccessibilitySectionLike> }} AccessibilityRecordLike
+ *
  * @param {unknown} raw
- * @returns {{
- *   ok: boolean,
- *   errors: string[],
- *   summary: {
- *     sha: string,
- *     updatedAt: string | null,
- *     measuredFocusIndicators: number,
- *     minimumFocusContrast: number,
- *   } | null,
- * }}
+ * @returns {{ ok: boolean, errors: string[], summary: { sha: string, updatedAt: string | null, measuredFocusIndicators: number, minimumFocusContrast: number } | null }}
  */
 export function parseAccessibilityCertificationRecord(raw) {
   /** @type {string[]} */
@@ -42,7 +37,7 @@ export function parseAccessibilityCertificationRecord(raw) {
   if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) {
     return { ok: false, errors: ['ACCESSIBILITY_RECORD_UNAVAILABLE'], summary: null };
   }
-  const record = /** @type {Record<string, any>} */ (raw);
+  const record = /** @type {AccessibilityRecordLike} */ (raw);
   if (record.schemaVersion !== ACCESSIBILITY_RECORD_SCHEMA) {
     errors.push(`ACCESSIBILITY_RECORD_SCHEMA_UNSUPPORTED:${String(record.schemaVersion)}`);
   }
@@ -86,7 +81,10 @@ export function parseAccessibilityCertificationRecord(raw) {
     }
   }
   if (errors.length > 0) return { ok: false, errors, summary: null };
-  const focusIndicator = sections.keyboard.focusIndicator;
+  // Both checks above already proved the keyboard section and its focus
+  // indicator exist and carry finite numbers at or above their minimum.
+  const keyboard = /** @type {AccessibilitySectionLike} */ (sections.keyboard);
+  const focusIndicator = /** @type {AccessibilityFocusIndicatorLike} */ (keyboard.focusIndicator);
   return {
     ok: true,
     errors: [],

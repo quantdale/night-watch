@@ -14,6 +14,10 @@ import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const WORKSPACE_ROOT = path.resolve(ROOT, '..', '..');
 
+/**
+ * @param {string} code
+ * @returns {never}
+ */
 function fail(code) {
   throw new Error(`PHASE23_PREDEV_BLOCKED:${code}`);
 }
@@ -42,10 +46,22 @@ const CLI_METADATA = {
   artifacts: [],
 };
 
+/**
+ * Load one runtime TypeScript module. The declared type parameter carries the
+ * literal module path, so the loader's generated module map resolves the precise
+ * module type instead of erasing it to `unknown`.
+ *
+ * @template {keyof import('./lib/typescript-runtime-loader.mjs').TypeScriptRuntimeLoaderModuleMap} File
+ * @param {File} file
+ */
 function loadTypeScriptModule(file) {
   return loadRuntimeTypeScriptModule(file, { root: ROOT });
 }
 
+/**
+ * @param {unknown} file
+ * @param {string} label
+ */
 function externalFile(file, label) {
   if (typeof file !== 'string' || !path.isAbsolute(file)) fail(`${label}_MUST_BE_ABSOLUTE`);
   const resolved = path.resolve(file);
@@ -57,6 +73,10 @@ function externalFile(file, label) {
   return resolved;
 }
 
+/**
+ * @param {unknown} file
+ * @param {unknown} value
+ */
 function writeOutput(file, value) {
   if (file === undefined) return;
   const resolved = externalFile(file, 'OUTPUT');

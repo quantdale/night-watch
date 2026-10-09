@@ -56,6 +56,7 @@ const DESTRUCTURE_REQUIRE_RE = /(?:const|let|var)\s*\{([^}]+)\}\s*=\s*require\s*
 const NAMESPACE_REQUIRE_RE = /(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*require\s*\(\s*['"](?:node:)?child_process['"]\s*\)/g;
 const METHOD_ALIAS_RE = /(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*([A-Za-z_$][\w$]*)\.([A-Za-z_$][\w$]*)/g;
 
+const DYNAMIC_IMPORT_RE = /\bimport\s*\(\s*[`'"][^`'"]*child_process/g;
 const AUTHENTICATED_FILE_RE = /(?:^|\/)(?:phase(?:4|5|7|9b|10b|22)-(?:real|dev)|phase2[bc]-real|observe-(?:authenticated|gate|canary)|auth-capture)\.mjs$/;
 const GH_FILE_RE = /(?:^|\/)(?:phase23-(?:ci|dev)|phase22-real)\.mjs$/;
 
@@ -141,10 +142,19 @@ export function parseChildProcessImports(source) {
   //   4. NAMESPACE DESTRUCTURING (`const { spawn } = await import(...)`), which
   //      produces a binding this reader never sees as a child-process binding.
   // The specifier itself lives inside a string literal, which `maskSource`
-  // masks — so these two shapes are read from the RAW source, deliberately
-  // erring toward refusal (a comment that merely names the module is also
-  // reported, and the caller fails closed on a report).
-  if (/\bimport\s*\(\s*[`'"][^`'"]*child_process/.test(source)) unresolved.add('dynamic-import');
+  // masks — so a dynamic `import` is found in the RAW source and then
+  // confirmed against `masked`. maskSource preserves length and line
+  // structure, so an occurrence it blanked sat inside a comment and was never
+  // executable: a JSDoc type reference such as
+  // `@returns {import('node:child_process').X}` is a TYPE, never a runtime
+  // load, and a census that fails on the repository's own annotation
+  // convention loses the ability to refuse a real load. The confirmation is
+  // position-exact, so a real dynamic import still fails closed.
+  for (const match of source.matchAll(DYNAMIC_IMPORT_RE)) {
+    const at = match.index ?? 0;
+    DYNAMIC_IMPORT_RE.lastIndex = 0;
+    if (/\bimport\s*\(/.test(masked.slice(at, at + match[0].length))) unresolved.add('dynamic-import');
+  }
   // Two repository tools legitimately build a second require graph for their
   // OWN module resolution (`c12-preflight`, `project-state-check`); they are
   // declared here so a NEW createRequire site still fails the census. The
@@ -157,8 +167,16 @@ export function parseChildProcessImports(source) {
   return { importsChildProcess, bindings, namespaces, unresolvedIndirections: [...unresolved].sort() };
 }
 
-/** Strip strings and comments so call-site search is not fooled by literals. */
+/**
+ * Strip strings and comments so call-site search is not fooled by literals.
+ * @param {string} source the raw source text
+ * @returns {string} the masked text, same length and line structure
+ */
 export function maskSourceForDebug(source) { return maskSource(source); }
+/**
+ * @param {string} source
+ * @returns {string}
+ */
 function maskSource(source) {
   let out = '';
   let i = 0;
@@ -217,6 +235,12 @@ export function findInvocationSites(source, bindings, namespaces) {
   for (let i = 0; i < source.length; i += 1) {
     if (source[i] === '\n') lineStarts.push(i + 1);
   }
+  /**
+   * 1-based line number of a character offset. Offsets are always in range,
+   * so the cursor fallback is only defensive for an out-of-range index.
+   * @param {number} index character offset to locate
+   * @returns {number}
+   */
   const lineOf = (index) => {
     let lo = 0;
     let hi = lineStarts.length - 1;
@@ -226,6 +250,11 @@ export function findInvocationSites(source, bindings, namespaces) {
     }
     return lo + 1;
   };
+  /**
+   * @param {string} name callee text to search for
+   * @param {number} from offset to resume the search from
+   * @returns {{ index: number, open: number } | null}
+   */
   const callAt = (name, from) => {
     // Require the call paren immediately after the callee (whitespace only),
     // and return both the name index and the open-paren index.
@@ -293,12 +322,20 @@ export function findInvocationSites(source, bindings, namespaces) {
   return sites;
 }
 
+/**
+ * @param {string} text
+ * @returns {string | null}
+ */
 function firstStringLiteral(text) {
   const m = /(['"`])([^'"`\\]*)\1/.exec(text);
   return m === null ? null : (m[2] ?? null);
 }
 
-/** First top-level argument text of a call's argument list. */
+/**
+ * First top-level argument text of a call's argument list.
+ * @param {string} argsText
+ * @returns {string}
+ */
 function firstArgumentText(argsText) {
   let depth = 0;
   let quote = null;
@@ -405,6 +442,10 @@ export function classifyInvocation(input) {
   return null;
 }
 
+/**
+ * @param {string} argsText
+ * @returns {string}
+ */
 function extractOptionsObject(argsText) {
   // Options are the last top-level object literal argument.
   const parts = [];

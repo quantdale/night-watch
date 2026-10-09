@@ -42,12 +42,25 @@ export const VALIDATION_EXCLUSION_CLASSES = Object.freeze([
 
 const CLASS_SET = new Set(VALIDATION_EXCLUSION_CLASSES);
 
+/**
+ * Deterministic JSON rendering: object keys sorted, arrays in order. It reads a
+ * value of unknown shape, so a non-object renders as JSON and an object as a
+ * key-sorted map — never as the value's own insertion order.
+ *
+ * @param {unknown} value
+ * @returns {string}
+ */
 function canonical(value) {
   if (value === null || typeof value !== 'object') return JSON.stringify(value ?? null);
   if (Array.isArray(value)) return `[${value.map(canonical).join(',')}]`;
-  return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${canonical(value[key])}`).join(',')}}`;
+  const record = /** @type {Record<string, unknown>} */ (value);
+  return `{${Object.keys(record).sort().map((key) => `${JSON.stringify(key)}:${canonical(record[key])}`).join(',')}}`;
 }
 
+/**
+ * @param {Iterable<string>} values
+ * @returns {string[]}
+ */
 function sorted(values) {
   return [...new Set(values)].sort((left, right) => left.localeCompare(right));
 }
@@ -56,23 +69,21 @@ function sorted(values) {
  * The digest over the whole judgement: what exists, what the gate selects,
  * and how the remainder is classified. Any of the three changing changes the
  * digest, which is what makes a silent addition impossible.
+ *
+ * @param {{ discovered: readonly string[], gateSelected: readonly string[], byClass: Readonly<Record<string, readonly string[]>> }} input
  */
 export function validationUniverseDigest({ discovered, gateSelected, byClass }) {
   const payload = {
     schemaVersion: VALIDATION_UNIVERSE_SCHEMA,
     discovered: sorted(discovered),
     gateSelected: sorted(gateSelected),
-    byClass: Object.fromEntries(Object.keys(byClass).sort().map((key) => [key, sorted(byClass[key])])),
+    byClass: Object.fromEntries(Object.keys(byClass).sort().map((key) => [key, sorted(byClass[key] ?? [])])),
   };
   return `sha256:${crypto.createHash('sha256').update(canonical(payload), 'utf8').digest('hex').slice(0, 24)}`;
 }
 
 /**
- * @param {{
- *   discovered: readonly string[],
- *   gateSelected: readonly string[],
- *   declaration: { readonly schemaVersion?: string, readonly inventoryDigest?: string, readonly classes?: Record<string, { reason?: string, evidenceLane?: string, files?: readonly string[] }> },
- * }} input
+ * @param {{ discovered: readonly string[], gateSelected: readonly string[], declaration: Partial<{ readonly schemaVersion: string, readonly inventoryDigest: string, readonly classes: Record<string, Partial<{ reason: string, evidenceLane: string, files: readonly string[] }>> }> }} input
  */
 export function classifyValidationUniverse(input) {
   const errors = [];
@@ -156,7 +167,7 @@ export function classifyValidationUniverse(input) {
     authoritativeGate: gateSelected.length,
     classified: owner.size,
     unclassified: unclassified.length,
-    byClass: Object.fromEntries(Object.keys(byClass).sort().map((key) => [key, byClass[key].length])),
+    byClass: Object.fromEntries(Object.keys(byClass).sort().map((key) => [key, (byClass[key] ?? []).length])),
   };
 
   return Object.freeze({

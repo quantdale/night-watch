@@ -43,8 +43,17 @@ if (cli.stop) {
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
+/**
+ * Load one runtime TypeScript module. The literal module path is kept as a type
+ * parameter constrained to the loader's module map, so that map remains the
+ * type authority for what each path exports, exactly as at a direct call site.
+ *
+ * @template {keyof import('./lib/typescript-runtime-loader.mjs').TypeScriptRuntimeLoaderModuleMap} File
+ * @param {File} file
+ * @returns {import('./lib/typescript-runtime-loader.mjs').TypeScriptRuntimeLoaderModuleMap[File]}
+ */
 function loadTypeScriptModule(file) {
-  return loadRuntimeTypeScriptModule(file, { root });
+  return /** @type {import('./lib/typescript-runtime-loader.mjs').TypeScriptRuntimeLoaderModuleMap[File]} */ (loadRuntimeTypeScriptModule(file, { root }));
 }
 
 function usage() {
@@ -53,18 +62,40 @@ function usage() {
   console.log('The decide command requires a TTY and a fixed two-step confirmation.');
 }
 
+/**
+ * @param {string} code
+ * @returns {NodeJS.ErrnoException}
+ */
 function fail(code) {
-  const error = new Error(code);
+  const error = /** @type {NodeJS.ErrnoException} */ (new Error(code));
   error.code = code;
   return error;
 }
 
+/**
+ * The `code` a thrown value carries. A thrown value is not necessarily an
+ * `Error`, so it is read defensively rather than asserted.
+ *
+ * @param {unknown} error
+ * @returns {string | undefined}
+ */
+function thrownCode(error) {
+  if (error === null || typeof error !== 'object') return undefined;
+  const code = /** @type {Record<string, unknown>} */ (error).code;
+  return typeof code === 'string' ? code : undefined;
+}
+
+/**
+ * @param {readonly string[]} args
+ * @returns {{ help: true } | { help: false, command: 'show' | 'status' | 'decide', target: { kind: 'bug' | 'oracle', artifactId: string } }}
+ */
 function parseArgs(args) {
   if (args.length === 1 && (args[0] === '--help' || args[0] === '-h')) return { help: true };
   if (args.length === 0) throw fail('AI_OWNER_REVIEW_USAGE_INVALID');
   const command = args[0];
   if (command !== 'show' && command !== 'status' && command !== 'decide') throw fail('AI_OWNER_REVIEW_USAGE_INVALID');
   let kind;
+  /** @type {string | undefined} */
   let artifactId;
   for (let index = 1; index < args.length; index += 1) {
     const argument = args[index];
@@ -75,7 +106,7 @@ function parseArgs(args) {
     } else if (argument === '--id') {
       if (artifactId !== undefined || index + 1 >= args.length || args[index + 1]?.startsWith('--')) throw fail('AI_OWNER_REVIEW_USAGE_INVALID');
       artifactId = args[++index];
-      if (artifactId.length === 0) throw fail('AI_OWNER_REVIEW_USAGE_INVALID');
+      if (artifactId === undefined || artifactId.length === 0) throw fail('AI_OWNER_REVIEW_USAGE_INVALID');
     } else {
       throw fail('AI_OWNER_REVIEW_USAGE_INVALID');
     }
@@ -84,6 +115,9 @@ function parseArgs(args) {
   return { help: false, command, target: { kind, artifactId } };
 }
 
+/**
+ * @param {typeof import('../src/core/aiReview/ownerReview')} service
+ */
 function createPrompt(service) {
   const input = process.stdin;
   const output = process.stdout;
@@ -97,7 +131,7 @@ function createPrompt(service) {
     input.pause();
   };
 
-  const ask = (question) => new Promise((resolve, reject) => {
+  const ask = /** @param {string} question */ (question) => new Promise((resolve, reject) => {
     if (closed) {
       reject(new service.OwnerReviewError('AI_OWNER_REVIEW_CANCELLED'));
       return;
@@ -124,6 +158,10 @@ function printBoundary() {
   console.log('============================================================');
 }
 
+/**
+ * @param {{ help: true } | { help: false, command: 'show' | 'status' | 'decide', target: { kind: 'bug' | 'oracle', artifactId: string } }} parsed
+ * @param {typeof import('../src/core/aiReview/ownerReview') & typeof import('../src/core/aiReview/ownerDecision') & { AiReviewArtifactStore: typeof import('../src/core/aiReview/storage').AiReviewArtifactStore }} service
+ */
 async function run(parsed, service) {
   if (parsed.help) {
     usage();
@@ -183,7 +221,7 @@ async function main() {
     const storage = loadTypeScriptModule('src/core/aiReview/storage.ts');
     await run(parsed, { ...service, ...decision, AiReviewArtifactStore: storage.AiReviewArtifactStore });
   } catch (error) {
-    const code = typeof error?.code === 'string' ? error.code : 'AI_REVIEW_STATE_INVALID';
+    const code = thrownCode(error) ?? 'AI_REVIEW_STATE_INVALID';
     console.error(`[SYSTEM] error=${code}`);
     process.exitCode = code === 'AI_OWNER_REVIEW_CANCELLED' ? 4 : code === 'AI_OWNER_REVIEW_USAGE_INVALID' || code === 'AI_OWNER_REVIEW_INTERACTIVE_REQUIRED' ? 2 : code === 'AI_REVIEW_ALREADY_REVIEWED' ? 0 : 3;
   }

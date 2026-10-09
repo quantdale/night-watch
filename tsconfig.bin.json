@@ -15,5 +15,5 @@
     "noEmit": true,
     "types": ["node"]
   },
-  "include": ["bin/**/*.mjs", "bin/**/*.d.mts"]
+  "include": ["bin/**/*.mjs"]
 }

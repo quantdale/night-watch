@@ -27,24 +27,37 @@ const LITERAL_TS_PATH_PATTERN = /['"]((?:src|corpus)\/[A-Za-z0-9_./-]+\.ts)['"]/
 /**
  * @typedef {{ file: string, source: string }} ContractSourceFile
  * @typedef {{ path: string, symbols: string[] | null, unsupported: string | null }} LoaderBinding
- * @typedef {{
- *   file: string,
- *   line: number,
- *   callee: string,
- *   kind: 'SINGLE' | 'LIST',
- *   expression: string,
- *   bindings: LoaderBinding[],
- * }} LoaderCallSite
+ * @typedef {{ file: string, line: number, callee: string, kind: 'SINGLE' | 'LIST', expression: string, bindings: LoaderBinding[] }} LoaderCallSite
  * @typedef {{ code: string, detail: string }} ContractFinding
  * @typedef {{ readSource: (relativePath: string) => string | null, fileExists: (relativePath: string) => boolean }} ContractAccess
  */
 
-/** @param {string} value */
+/**
+ * A local wrapper that forwards its path parameter into a loader binding.
+ *
+ * @typedef {{ paramIndex: number, paramName: string, kind: 'SINGLE' | 'LIST' }} LoaderWrapper
+ */
+
+/**
+ * A statement carrying an optional modifier list. `Statement` itself declares
+ * no `modifiers` property in the public surface — the compiler attaches it to
+ * the declaration kinds that accept modifiers — so the shape is stated once
+ * here and asserted at the single point of use.
+ *
+ * @typedef {typescript.Statement & { modifiers: typescript.NodeArray<typescript.ModifierLike> | undefined }} ModifiableStatement
+ */
+
+/**
+ * @param {string} value
+ */
 function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-/** @param {string} value */
+/**
+ * @param {typescript.Node} value
+ * @returns {value is typescript.StringLiteral | typescript.NoSubstitutionTemplateLiteral}
+ */
 function isStringLiteralLike(value) {
   return typescript.isStringLiteral(value) || typescript.isNoSubstitutionTemplateLiteral(value);
 }
@@ -82,16 +95,16 @@ function loaderBindings(sourceFile) {
 /**
  * @param {typescript.SourceFile} sourceFile
  * @param {Set<string>} bindings
- * @returns {Map<string, { paramIndex: number, paramName: string, kind: 'SINGLE' | 'LIST' }>}
+ * @returns {Map<string, LoaderWrapper>}
  */
 function wrapperFunctions(sourceFile, bindings) {
-  /** @type {Map<string, { paramIndex: number, paramName: string, kind: 'SINGLE' | 'LIST' }>} */
+  /** @type {Map<string, LoaderWrapper>} */
   const wrappers = new Map();
   /** @param {typescript.Node} node */
   const visitFunctions = (node) => {
     if (typescript.isFunctionDeclaration(node) && node.name && node.body) {
       const parameters = node.parameters.map((parameter) => (typescript.isIdentifier(parameter.name) ? parameter.name.text : null));
-      /** @type {{ paramIndex: number, paramName: string, kind: 'SINGLE' | 'LIST' } | null} */
+      /** @type {LoaderWrapper | null} */
       let found = null;
       /** @param {typescript.Node} innerNode */
       const inner = (innerNode) => {
@@ -141,6 +154,7 @@ function wrapperFunctions(sourceFile, bindings) {
  * source file. Symbol reads are collected per scope so a reused binding name in
  * a sibling function cannot be attributed to the wrong module.
  * @param {typescript.Node} node
+ * @returns {typescript.Node}
  */
 function scopeOf(node) {
   let current = node;
@@ -169,7 +183,7 @@ function identifierBindingFacts(name, callNode, sourceFile) {
   const symbols = new Set();
   /** @type {string | null} */
   let unsupported = null;
-  const visit = (node) => {
+  const visit = (/** @type {typescript.Node} */ node) => {
     if (unsupported) return;
     if (node.getStart(sourceFile) > callNode.getStart(sourceFile)) {
       if (
@@ -199,17 +213,27 @@ function identifierBindingFacts(name, callNode, sourceFile) {
 }
 
 /**
+ * `isAssignmentExpression` ships in the compiler runtime but is absent from the
+ * public `typescript` declaration surface, so it is declared once here with the
+ * shape the compiler actually narrows to, and asserted at its single point of
+ * use.
+ *
+ * @typedef {{ isAssignmentExpression: (node: typescript.Node) => node is typescript.AssignmentExpression<typescript.AssignmentOperatorToken> }} AssignmentGuardSurface
+ */
+
+/**
  * @param {typescript.Node} node
  * @param {typescript.SourceFile} sourceFile
  * @returns {{ binding: typescript.Node | null, kind: 'NONE' | 'VARIABLE' | 'ASSIGNMENT' }}
  */
 function bindingNodeFor(node, sourceFile) {
+  const isAssignmentExpression = /** @type {typeof typescript & AssignmentGuardSurface} */ (typescript).isAssignmentExpression;
   let current = node;
   while (
     current
     && current.parent
     && !typescript.isVariableDeclaration(current.parent)
-    && !typescript.isAssignmentExpression(current.parent)
+    && !isAssignmentExpression(current.parent)
     && !typescript.isSourceFile(current.parent)
   ) {
     current = current.parent;
@@ -217,7 +241,7 @@ function bindingNodeFor(node, sourceFile) {
   if (current && current.parent && typescript.isVariableDeclaration(current.parent)) {
     return { binding: current.parent.name, kind: 'VARIABLE' };
   }
-  if (current && current.parent && typescript.isAssignmentExpression(current.parent)) {
+  if (current && current.parent && isAssignmentExpression(current.parent)) {
     return { binding: current.parent.left, kind: 'ASSIGNMENT' };
   }
   return { binding: null, kind: 'NONE' };
@@ -235,7 +259,8 @@ function bindingNodeFor(node, sourceFile) {
 function bindingFacts(call, sourceFile, kind, pathCount) {
   const { binding, kind: bindingKind } = bindingNodeFor(call, sourceFile);
   if (binding === null) return [];
-  const unsupported = (/** @type {string} */ code) => ({ path: /** @type {string} */ (null), symbols: null, unsupported: code });
+  /** @param {string} code */
+  const unsupported = (code) => ({ path: null, symbols: null, unsupported: code });
   if (typescript.isObjectBindingPattern(binding)) {
     if (kind === 'LIST') return unsupported('LIST_OBJECT_BINDING_UNSUPPORTED');
     /** @type {string[]} */
@@ -270,7 +295,7 @@ function bindingFacts(call, sourceFile, kind, pathCount) {
     if (kind === 'LIST') {
       const scope = scopeOf(call);
       let used = false;
-      const visit = (node) => {
+      const visit = (/** @type {typescript.Node} */ node) => {
         if (typescript.isIdentifier(node) && node.text === binding.text && node.getStart(sourceFile) > call.getStart(sourceFile) && node !== binding) used = true;
         typescript.forEachChild(node, visit);
       };
@@ -308,8 +333,8 @@ export function extractLoaderCallSites(files) {
     const bindings = loaderBindings(sourceFile);
     if (bindings.size === 0) continue;
     const wrappers = wrapperFunctions(sourceFile, bindings);
-    const lineOf = (node) => sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile)).line + 1;
-    const visit = (node) => {
+    const lineOf = (/** @type {typescript.Node} */ node) => sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile)).line + 1;
+    const visit = (/** @type {typescript.Node} */ node) => {
       if (typescript.isCallExpression(node)) {
         const callee = typescript.isIdentifier(node.expression) ? node.expression.text : null;
         /** @type {typescript.Expression | undefined} */
@@ -340,7 +365,7 @@ export function extractLoaderCallSites(files) {
             kind = 'LIST';
           }
         } else if (callee && wrappers.has(callee)) {
-          const wrapper = wrappers.get(callee);
+          const wrapper = /** @type {LoaderWrapper} */ (wrappers.get(callee));
           pathArgument = node.arguments[wrapper.paramIndex];
           effectiveCallee = callee;
           kind = wrapper.kind;
@@ -390,13 +415,15 @@ export function extractLoaderCallSites(files) {
               /** @type {LoaderBinding[]} */
               const resolvedBindings = [];
               for (let index = 0; index < paths.length; index += 1) {
+                const literal = paths[index];
+                if (literal === undefined) continue;
                 const fact = rawFacts[index] ?? { symbols: null, unsupported: null };
                 if (fact.unsupported) {
-                  findings.push({ code: `CLI_CONTRACT_${fact.unsupported}`, detail: `${file.file}:${line} ${effectiveCallee} ${paths[index]}` });
-                  resolvedBindings.push({ path: paths[index], symbols: null, unsupported: fact.unsupported });
+                  findings.push({ code: `CLI_CONTRACT_${fact.unsupported}`, detail: `${file.file}:${line} ${effectiveCallee} ${literal}` });
+                  resolvedBindings.push({ path: literal, symbols: null, unsupported: fact.unsupported });
                   continue;
                 }
-                resolvedBindings.push({ path: paths[index], symbols: fact.symbols, unsupported: null });
+                resolvedBindings.push({ path: literal, symbols: fact.symbols, unsupported: null });
               }
               callSites.push({ file: file.file, line, callee: effectiveCallee, kind, expression: pathArgument === undefined ? '' : pathArgument.getText(sourceFile), bindings: resolvedBindings });
             }
@@ -462,11 +489,17 @@ export function collectExportedNames(modulePath, access, visited = new Set(), de
   let opaque = false;
   /** @type {string[]} */
   const unresolved = [];
+  /**
+   * @param {{ names: Set<string>, opaque: boolean, unresolved: string[] }} value
+   */
   const merge = (value) => {
     for (const name of value.names) names.add(name);
     if (value.opaque) opaque = true;
     for (const item of value.unresolved) unresolved.push(item);
   };
+  /**
+   * @param {typescript.Statement} statement
+   */
   const declarationNames = (statement) => {
     if ((typescript.isFunctionDeclaration(statement) || typescript.isClassDeclaration(statement) || typescript.isEnumDeclaration(statement)) && statement.name) {
       names.add(statement.name.text);
@@ -485,7 +518,8 @@ export function collectExportedNames(modulePath, access, visited = new Set(), de
     if (typescript.isModuleDeclaration(statement) && statement.name) names.add(statement.name.text);
   };
   for (const statement of sourceFile.statements) {
-    const modifiers = /** @type {typescript.NodeArray<typescript.ModifierLike> | undefined} */ (statement.modifiers);
+    const statementSurface = /** @type {ModifiableStatement} */ (statement);
+    const modifiers = statementSurface.modifiers;
     const exported = modifiers ? modifiers.some((modifier) => modifier.kind === typescript.SyntaxKind.ExportKeyword) : false;
     const isDefault = modifiers ? modifiers.some((modifier) => modifier.kind === typescript.SyntaxKind.DefaultKeyword) : false;
     if (typescript.isExportDeclaration(statement)) {
@@ -496,7 +530,7 @@ export function collectExportedNames(modulePath, access, visited = new Set(), de
         }
         continue;
       }
-      const specifier = statement.moduleSpecifier.text;
+      const specifier = /** @type {typescript.StringLiteral} */ (statement.moduleSpecifier).text;
       if (!specifier.startsWith('.')) { opaque = true; continue; }
       const target = resolveRelativeModule(modulePath, specifier, access.fileExists);
       if (target === null) { unresolved.push(specifier); continue; }
@@ -531,6 +565,7 @@ export function scanTypeScriptPathLiterals(files) {
   for (const file of files) {
     for (const match of file.source.matchAll(LITERAL_TS_PATH_PATTERN)) {
       const literal = match[1];
+      if (literal === undefined) continue;
       const list = byLiteral.get(literal) ?? [];
       list.push(file.file);
       byLiteral.set(literal, list);
@@ -610,11 +645,7 @@ export function renderLoaderTypeMap(paths) {
 /**
  * The complete loader contract judgement: extraction, path resolution, symbol
  * verification, the broad literal-path scan, and generated-map freshness.
- * @param {{
- *   files: ContractSourceFile[],
- *   access: ContractAccess,
- *   readLoaderTypeMap?: (() => string | null) | undefined,
- * }} input
+ * @param {{ files: ContractSourceFile[], access: ContractAccess } & Partial<{ readLoaderTypeMap: () => string | null }>} input
  */
 export function verifyCliImplementationContract(input) {
   /** @type {ContractFinding[]} */
@@ -699,7 +730,7 @@ export function findBinsWithoutExecutingTest(input) {
     const callArguments = [];
     /** @type {Map<string, string>} */
     const variables = new Map();
-    const visit = (node) => {
+    const visit = (/** @type {typescript.Node} */ node) => {
       if (typescript.isCallExpression(node)) {
         const callee = typescript.isIdentifier(node.expression) ? node.expression.text : '';
         if (['spawn', 'spawnSync', 'execFile', 'execFileSync', 'exec'].includes(callee)) {

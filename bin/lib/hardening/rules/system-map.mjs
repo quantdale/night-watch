@@ -41,13 +41,15 @@ export function checkC15bSystemMapBoundary() {
       fail(`C-15b the system map module ${file} is missing`);
       continue;
     }
-    for (const [pattern, description] of [
+    /** @type {Array<[RegExp, string]>} */
+    const forbiddenAuthorities = [
       [/from\s+['"]node:fs['"]|require\(['"](?:node:)?fs['"]\)/, 'filesystem authority'],
       [/from\s+['"]node:child_process['"]/, 'process authority'],
       [/from\s+['"]node:(?:net|http|https|dgram|tls)['"]/, 'network authority'],
       [/\beval\s*\(|new\s+Function\s*\(/, 'dynamic evaluation'],
       [/Date\.now\(\)|new Date\(|Math\.random\(/, 'nondeterminism'],
-    ]) {
+    ];
+    for (const [pattern, description] of forbiddenAuthorities) {
       if (pattern.test(source)) fail(`${file} contains ${description}; the C-15b system map must be deterministic and data-only`);
     }
   }

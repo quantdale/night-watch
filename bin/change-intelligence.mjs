@@ -23,6 +23,14 @@ const outputPath = path.join(nightwatchRoot, 'artifacts', 'change-intelligence-s
 // of the toolchain honours.
 const compileRoot = path.join(nightwatchRoot, '.tmp-nightwatch', 'change-intelligence');
 
+/** @typedef {{ repoId: string, productRole: string, scope: string, checkedOutSha: string, trackingRef: string | null, sourceMapSha: string, readOnlyOnly: boolean }} AuditedRepository */
+/** @typedef {AuditedRepository & { observedBranch: string, observedHeadSha: string, observedTrackingSha: string | null, observedAhead: number | null, observedBehind: number | null, observedDirty: boolean, pinnedSourceSha: string, movedOffPin: boolean }} ObservedAuditedRepository */
+
+/**
+ * @param {string} command
+ * @param {string[]} args
+ * @param {string} [cwd]
+ */
 function run(command, args, cwd = nightwatchRoot) {
   const result = spawnSync(command, args, { cwd, encoding: 'utf8', env: buildChildEnvironment(process.env), timeout: 120_000, maxBuffer: 2 * 1024 * 1024 });
   if (result.error) throw result.error;
@@ -67,12 +75,15 @@ function compileCore() {
   ]);
 }
 
+/**
+ * @param {string} repoId
+ */
 function repoPath(repoId) {
   const [org, name] = repoId.split('/');
   if (!org || !name || !/^[a-z0-9._-]+$/i.test(org) || !/^[a-z0-9._-]+$/i.test(name)) {
     throw new Error(`invalid audited repository id: ${repoId}`);
   }
-  return path.join(repositoriesRoot, org, name);
+  return path.join(/** @type {string} */ (repositoriesRoot), org, name);
 }
 
 /**
@@ -92,6 +103,7 @@ function repoPath(repoId) {
  * `checkedOutSha` on the definition stays a PIN and is not overwritten; the
  * live revision is reported separately, so a checkout that has moved off its
  * pin is visible instead of silently rebinding.
+ * @param {AuditedRepository} repo
  */
 function observedRepo(repo) {
   const root = repoPath(repo.repoId);
@@ -111,8 +123,8 @@ function observedRepo(repo) {
       if (counts.status === 0 && typeof counts.stdout === 'string') {
         const parts = counts.stdout.trim().split(/\s+/);
         if (parts.length === 2) {
-          ahead = Number.parseInt(parts[0], 10);
-          behind = Number.parseInt(parts[1], 10);
+          ahead = Number.parseInt(/** @type {string} */ (parts[0]), 10);
+          behind = Number.parseInt(/** @type {string} */ (parts[1]), 10);
           if (!Number.isSafeInteger(ahead) || !Number.isSafeInteger(behind)) { ahead = null; behind = null; }
         }
       }
@@ -152,6 +164,7 @@ const CLI_METADATA = {
 
 const cli = defineOperatorCli(CLI_METADATA, { entryUrl: import.meta.url });
 
+ /** @type {string | null} */
 let repositoriesRoot = null;
 
 async function main() {
@@ -162,6 +175,7 @@ async function main() {
   const topologyModule = await import(pathToFileURL(path.join(compileRoot, 'core', 'policy', 'sourceTopology.js')).href);
   repositoriesRoot = topologyModule.resolveSiblingRoot();
   const core = await import(pathToFileURL(path.join(compileRoot, 'core', 'changeIntelligence', 'index.js')).href);
+  /** @type {ObservedAuditedRepository[]} */
   const repos = core.RIPPLE_REPOSITORIES.map(observedRepo);
   const changesets = repos.map((repo) => core.collectChangeset({
     repoPath: repoPath(repo.repoId),
@@ -201,7 +215,7 @@ async function main() {
   };
   fs.mkdirSync(path.dirname(outputPath), { recursive: true });
   fs.writeFileSync(outputPath, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
-  process.stdout.write(`${JSON.stringify({ outputPath, changesetId: changeset.changesetId, selectedJourneys: selection.selectedJourneys.map((journey) => journey.journeyId), priorityOrder: selection.priorityOrder, fallbackTriggered: selection.fallbackTriggered, dirtyFiles: changeset.dirtyFiles.length }, null, 2)}\n`);
+  process.stdout.write(`${JSON.stringify({ outputPath, changesetId: changeset.changesetId, selectedJourneys: selection.selectedJourneys.map(/** @param {{ journeyId: string }} journey */ (journey) => journey.journeyId), priorityOrder: selection.priorityOrder, fallbackTriggered: selection.fallbackTriggered, dirtyFiles: changeset.dirtyFiles.length }, null, 2)}\n`);
 }
 
 if (cli.ok !== true || cli.stop === true) {

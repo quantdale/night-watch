@@ -78,8 +78,11 @@ try {
     console.error(`[phase10b] WARNING ${capability.budgetWarning.code}: remaining validity ${capability.budgetWarning.remainingValidityMs} ms is shorter than the declared run budget ${capability.budgetWarning.requiredValidityMs} ms`);
   }
 } catch (error) {
-  if (error && typeof error === 'object' && typeof error.code === 'string' && error.code.startsWith('AUTH_CAPABILITY_')) {
-    console.error(`[phase10b] REFUSED ${error.code}: ${error.message}`);
+  // The auth-capability boundary refuses with a stable code; every other
+  // failure continues to propagate as a launcher defect.
+  const failure = /** @type {{ code: string | undefined, message: string | undefined }} */ (error);
+  if (failure !== null && typeof failure.code === 'string' && failure.code.startsWith('AUTH_CAPABILITY_')) {
+    console.error(`[phase10b] REFUSED ${failure.code}: ${failure.message}`);
     process.exit(3);
   }
   throw error;

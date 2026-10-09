@@ -87,7 +87,9 @@ export function topologyCertificationForCheckpoint(receipts, checkpointSha) {
     return { checked: false, certifying: false, detail: `no admissible topology receipt for ${checkpointSha.slice(0, 8)}${note}` };
   }
   matching.sort((left, right) => String(right.generatedAt ?? '').localeCompare(String(left.generatedAt ?? '')));
-  const receipt = matching[0];
+  // `matching.length !== 0` above proves the head exists; the cast keeps the
+  // `noUncheckedIndexedAccess` footprint out of an invariant the code holds.
+  const receipt = /** @type {Record<string, unknown>} */ (matching[0]);
   const claim = receipt.ciClaim;
   const certifying = claim !== null && typeof claim === 'object' && !Array.isArray(claim)
     && (/** @type {Record<string, unknown>} */ (claim)).certifying === true;
