@@ -6,9 +6,9 @@ Task ID: nightwatch-final-product-completion-v1
 Phase: FINAL_PRODUCT_COMPLETION_V1
 Status: IN_PROGRESS
 TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1
-TASK_GROUPS_COMPLETE: 1,2,3,4,5,6,7,8
-TASK_GROUP_NEXT: 10
-TASK_NEXT_ID: 10.6
+TASK_GROUPS_COMPLETE: 1,2,3,4,5,6,7,8,10
+TASK_GROUP_NEXT: 11
+TASK_NEXT_ID: 11.1
 TASK_GROUP_DEFERRED: 9.5b
 Starting SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
 Last validated implementation SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
@@ -55,9 +55,11 @@ ledger, and end at `PROJECT_COMPLETE_AND_CI_CERTIFIED` under D-129 with a
 
 ## Current Milestone
 
-M9 D-129 CLI contract and bin type-check (group 10, tasks 10.1-10.6): 10.1
-DONE, 10.2 COMPLETE (76/76 declared: 72 operator-CLI + 4 library-retained, 0
-pending), 10.3 COMPLETE. **10.4 and 10.5 are COMPLETE (2026-10-09)**: the bin
+M10 residual dispositions, quality debt and behaviour documentation (group 11,
+tasks 11.1-11.7) is the next group. M9 D-129 CLI contract and bin type-check
+(group 10, tasks 10.1-10.6) is COMPLETE: 10.1 DONE, 10.2 COMPLETE (76/76
+declared: 72 operator-CLI + 4 library-retained, 0 pending), 10.3 COMPLETE, 10.4
+and 10.5 COMPLETE, 10.6 COMPLETE. **10.4 and 10.5 are COMPLETE (2026-10-09)**: the bin
 type-check lane measures **0 diagnostics across all 143 tracked `bin/**/*.mjs`
 implementations**, 77 of 77 entry points conforming, 0 exemptions, 0 per-file
 ceilings, 0 diagnostic-silencing widening annotations, and the lane is
@@ -539,7 +541,7 @@ agent:check PASS (86 warnings).
 
 ## Exact Next Action
 
-M9 task 10.6. Tasks 10.1-10.5 are COMPLETE: 76/76 CLI conformance (10.2), the
+M10 task 11.1. M9 (group 10) is COMPLETE: 76/76 CLI conformance (10.2), the
 shared-parser structural rule with HC-246..HC-250 (10.3), the bin type-check
 lane at **0 diagnostics / 77 of 77 conforming / 0 exemptions / 0 widening
 annotations / BLOCKING** across all 143 tracked implementations (10.4), and the

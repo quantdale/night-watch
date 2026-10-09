@@ -5,9 +5,9 @@ Phase: FINAL_PRODUCT_COMPLETION_V1
 Title: Final product completion (terminal campaign)
 Status: IN_PROGRESS
 TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1
-TASK_GROUPS_COMPLETE: 1,2,3,4,5,6,7,8
-TASK_GROUP_NEXT: 10
-TASK_NEXT_ID: 10.6
+TASK_GROUPS_COMPLETE: 1,2,3,4,5,6,7,8,10
+TASK_GROUP_NEXT: 11
+TASK_NEXT_ID: 11.1
 TASK_GROUP_DEFERRED: 9.5b
 Task directory: .agent/tasks/nightwatch-final-product-completion-v1
 Starting SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
@@ -53,11 +53,13 @@ Previous checkpoint: 2026-09-26 — M4 COMPLETE (5.1-5.7): six release probes wi
 states + the CI block-record single authority (`a784e668`), and the final
 integration `137207b1` after reconciling origin/main `946b52c4` and restoring
 the ledger-governed README status block; gate:dev/gate:milestone 5520/0.
-Current milestone: M9 task 10.6 — `gate:milestone` PASS; commit. Tasks 10.1-10.5 are COMPLETE
-(the bin type-check lane is BLOCKING at 0 diagnostics with 0 exemptions and 0 widening
+Current milestone: M10 — residual dispositions, quality debt and behaviour documentation
+(group 11, tasks 11.1-11.7). M9 (group 10) is COMPLETE: the bin type-check lane is BLOCKING at
+0 diagnostics across all 143 tracked implementations with 0 exemptions and 0 widening
 annotations; the recorded 1402 baseline was a FLOOR because `tsconfig.bin.json` used to include
-`bin/**/*.d.mts` and TypeScript dropped 53 shadowed implementations from the program).
-Next action: run the gate pair and commit the M9 checkpoint; then M10-M14.
+`bin/**/*.d.mts` and TypeScript dropped 53 shadowed implementations from the program.
+Next action: execute the canonical M10 tasks (T3/T4 S-fixes, DECISIONS entries, SAFETY_MODEL
+and behaviour documentation); then M11-M14.
 Authorization class: FINAL_PRODUCT_COMPLETION_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
@@ -90,7 +92,7 @@ reconcile every operator-truth surface, close the ledger, and end with a
 ```text
 CAMPAIGN: nightwatch-final-product-completion-v1
 CHILD TASK: NONE
-SESSION WORKTREE: NONE
+SESSION WORKTREE: session/nightwatch-final-product-complet-bd061869
 
 IMPLEMENTATION AUTHORIZED:
   Nightwatch source, tests, hardening rules/probes, schemas/configuration,
