@@ -460,10 +460,19 @@ try {
   // synthetic fixtures, so a reader must never mistake them for a measured
   // product state; the label also names where measured state lives.
   const labelled = labelSyntheticPreview(output);
+  // The human-readable header names the data origin of the document it
+  // precedes. A MEASURED surface (the owner-local findings store) carries no
+  // synthetic label by design, so interpolating the missing label once printed
+  // the literal word `undefined` in that position — an operator reading a
+  // header whose data origin is "undefined" would read a measured surface as
+  // one whose origin is unknown. It now names the origin it actually has.
+  const dataOrigin = typeof labelled.dataOrigin === "string" && labelled.dataOrigin.length > 0
+    ? labelled.dataOrigin
+    : "OWNER_LOCAL_MEASURED";
   process.stdout.write(
     asJson
       ? `${renderJson(labelled)}\n`
-      : `${command} ${labelled.scope ?? "LOCAL_SYNTHETIC_ONLY"} ${labelled.dataOrigin}\n${renderJson(labelled)}\n`,
+      : `${command} ${labelled.scope ?? "LOCAL_SYNTHETIC_ONLY"} ${dataOrigin}\n${renderJson(labelled)}\n`,
   );
 } catch (error) {
   const detail = error instanceof Error && /^[A-Z0-9_:-]{1,120}$/.test(error.message) ? error.message : "CONFIG_INVALID";

@@ -70,4 +70,25 @@ test.describe('synthetic preview labelling (7.9)', () => {
     expect(result.status).toBe(0);
     expect(result.stdout.split('\n')[0]).toContain('SYNTHETIC_PREVIEW');
   });
+
+  test('the measured findings surface names its data origin, never "undefined"', () => {
+    // The owner-local findings surface deliberately carries NO synthetic label
+    // (the pin above), so the human-readable header once interpolated the
+    // missing label and printed the literal word `undefined` in the data-origin
+    // position — a header claiming an unknown origin for a surface whose origin
+    // is precisely the owner-local store. It now names what it is.
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'nw-preview-label-'));
+    roots.push(root);
+    const result = spawnSync(process.execPath, [CLI, 'findings'], {
+      cwd: REPO_ROOT,
+      encoding: 'utf8',
+      timeout: 120_000,
+      maxBuffer: 8 * 1024 * 1024,
+      env: { ...process.env, NIGHTWATCH_PRIVATE_STATE_DIR: root },
+      shell: false,
+    });
+    expect(result.status, result.stderr).toBe(0);
+    expect(result.stdout.split('\n')[0]).toBe('findings OWNER_ONLY_LOCAL OWNER_LOCAL_MEASURED');
+    expect(result.stdout).not.toContain('undefined');
+  });
 });

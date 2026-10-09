@@ -16,6 +16,7 @@ import {
   AUTHENTICATED_BROWSER_CONTRACT,
   nightwatchChromiumLaunchOptions,
 } from '../browser/contract';
+import { resolveBrowserChannel } from '../browser/channel';
 import {
   prepareStorageStateFileForValidation,
   validateStorageStateFile,
@@ -419,7 +420,11 @@ export async function runDirectAuthCapture(opts: DirectAuthCaptureOptions): Prom
       managed!.state = await requireProxyRuntime(opts.environment.name, managed!.stateFile);
     });
     browser = await runStage(opts, 'BROWSER_LAUNCH', () => chromium.launch({
-      channel: 'chrome',
+      // The declared channel selection (M11/12.1, B-09): a host without
+      // system Chrome selects NIGHTWATCH_BROWSER_CHANNEL=chromium instead of
+      // requiring this tracked source to be edited. An unsupported value
+      // refuses here, before a browser exists.
+      channel: resolveBrowserChannel(process.env).channel,
       headless: opts.headless ?? false,
       ...nightwatchChromiumLaunchOptions(managed!.state.address),
     }));

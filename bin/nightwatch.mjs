@@ -235,6 +235,15 @@ function main() {
       else rest.push(a);
     }
 
+    // B-09 (M11 12.1): the declared browser channel is forwarded verbatim, so
+    // the documented Chromium fallback reaches the Playwright child that
+    // resolves it. The child environment is an explicit allowlist, so an
+    // unforwarded selection would silently fall back to the default channel
+    // instead of the operator's choice.
+    if (mergedEnvironment.NIGHTWATCH_BROWSER_CHANNEL !== undefined) {
+      envVars.NIGHTWATCH_BROWSER_CHANNEL = mergedEnvironment.NIGHTWATCH_BROWSER_CHANNEL;
+    }
+
     const selectedEnvironment = envVars.NIGHTWATCH_ENV;
     if (!selectedEnvironment) {
       console.error(

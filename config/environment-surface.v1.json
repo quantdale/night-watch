@@ -1103,6 +1103,25 @@
         "bin/observe-preflight.mjs",
         "tests/manual/*"
       ]
+    },
+    {
+      "name": "NIGHTWATCH_BROWSER_CHANNEL",
+      "purpose": "Browser channel selection for every browser lane: chrome drives system Google Chrome, chromium drives the Playwright-managed Chromium install. An unset value selects chrome; any other value fails closed.",
+      "requiredIn": [],
+      "shape": {
+        "kind": "enum",
+        "values": [
+          "chrome",
+          "chromium"
+        ]
+      },
+      "default": "chrome",
+      "secretBearing": false,
+      "consumers": [
+        "playwright.config.ts",
+        "src/browser/channel.ts",
+        "src/auth/directRunner.ts"
+      ]
     }
   ],
   "assembledReads": [

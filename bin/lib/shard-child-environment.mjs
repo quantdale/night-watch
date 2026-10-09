@@ -43,6 +43,11 @@ export function buildShardChildEnvironment(parentEnvironment, input) {
   const environment = buildChildEnvironment(parentEnvironment, {
     NIGHTWATCH_ENV: 'local',
     NIGHTWATCH_GATE_ENVIRONMENT: 'SHARDS',
+    // B-09 (M11 12.1): the declared browser channel is forwarded verbatim so
+    // the documented Chromium fallback reaches every shard's Playwright
+    // config. The child environment is an explicit allowlist, so an
+    // unforwarded selection would silently fall back to the default channel.
+    NIGHTWATCH_BROWSER_CHANNEL: parentEnvironment.NIGHTWATCH_BROWSER_CHANNEL,
     NIGHTWATCH_TIMING_LANE: input.lane,
     NIGHTWATCH_SHARD_RECEIPT_PATH: input.receiptPath,
     NIGHTWATCH_SHARD_ID: input.shardId,

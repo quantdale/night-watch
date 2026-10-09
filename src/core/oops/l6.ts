@@ -1046,6 +1046,14 @@ export async function qualifyL6RuntimeCapability(): Promise<L6RuntimeCapability>
 }
 
 export async function qualifyL6BrowserTraffic(): Promise<boolean> {
+  // The browser this lane proves containment for is the lane's OWN synthetic
+  // instrument, deliberately independent of the operator's declared browser
+  // channel (NIGHTWATCH_BROWSER_CHANNEL, M11 12.1/B-09): a containment proof
+  // must not change because an operator selected a channel for their lanes,
+  // and the invariant `state === READY` whenever bwrap is available must hold
+  // for every declared channel. Like bwrap itself, this instrument is a host
+  // capability; a host without it reports the lane unproven rather than
+  // silently substituting a different browser.
   const chrome = '/opt/google/chrome/chrome';
   if (process.platform !== 'linux' || !isRegularNonSymlink(chrome)) return false;
   let directTcpHits = 0;

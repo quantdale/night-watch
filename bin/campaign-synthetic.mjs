@@ -169,6 +169,9 @@ function campaignEnvironment(lane, skipReportPath) {
   const environment = buildChildEnvironment(process.env, {
     NIGHTWATCH_ENV: 'local',
     NIGHTWATCH_GATE_ENVIRONMENT: 'SYNTHETIC_CAMPAIGN',
+    // B-09 (M11 12.1): forward the declared browser channel so the synthetic
+    // campaign's browser lanes honour it instead of silently defaulting.
+    NIGHTWATCH_BROWSER_CHANNEL: process.env.NIGHTWATCH_BROWSER_CHANNEL,
     NIGHTWATCH_TIMING_LANE: lane,
     NIGHTWATCH_SKIP_REPORT_PATH: skipReportPath,
   });

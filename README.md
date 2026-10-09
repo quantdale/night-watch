@@ -60,11 +60,14 @@ remedy `npm run auth:capture -- --env=<env> --output=<path>`.
 `UNKNOWN_AGE` — no lifecycle record, or an artefact whose digest changed since
 its record — refuses rather than proceeding optimistically: an artefact whose
 age cannot be established is exactly the one most likely to be stale.
-`npm run status:local`, `observe:preflight` and `c12:preflight` report each
-environment's state, remaining validity and blocked lanes from metadata only,
-without opening a browser or contacting a host. Expiry is evaluated by the one
-cookie evaluator in `src/browser/fixtures/storageState.ts`; a structural rule
-fails a second implementation.
+`npm run status:local` reports each environment's state, remaining validity
+and blocked lanes from metadata only, without opening a browser or contacting a
+host. The per-environment pre-flights take their target explicitly —
+`node bin/observe-preflight.mjs --env=dev|next` (production is forbidden) and
+`node bin/c12-preflight.mjs --input=<EXTERNAL_DESCRIPTOR_PATH>` — and also
+report from metadata only. Expiry is evaluated by the one cookie evaluator in
+`src/browser/fixtures/storageState.ts`; a structural rule fails a second
+implementation.
 
 **There is no automated renewal, and none is planned.** Renewing a session
 automatically would require Nightwatch to hold credentials, which the safety
@@ -158,12 +161,41 @@ executed rather than omitting it.
 ## Quickstart
 
 ```bash
-npm install
+npm install                                   # root dependencies
+npm ci --ignore-scripts --prefix ui/control-center   # the Control Center UI is its own package
 npx playwright install chromium   # only if system Chrome is unavailable
-                                  # (default config drives system Chrome)
+                                  # (see the browser channel note below)
 npm run typecheck
 npm test                          # unit + smoke tests of Nightwatch itself
+npm run status:local              # local health/readiness (metadata only, no browser)
 ```
+
+The two installs are separate by design: the Control Center is a distinct
+package with its own lockfile, and `npm run control-center:ui:build` fails with
+a missing-dependency error until its own `npm ci` has run. Both installs work
+fully offline from a warm npm cache (`npm ci --ignore-scripts --offline`, and
+`--offline` for the UI install).
+
+### Browser channel
+
+Every browser lane drives the system Google Chrome by default. On a host
+without it, install the Playwright-managed Chromium and declare the channel —
+no tracked file is edited:
+
+```bash
+npx playwright install chromium
+NIGHTWATCH_BROWSER_CHANNEL=chromium npm run scenario -- --env=local
+```
+
+`NIGHTWATCH_BROWSER_CHANNEL` accepts exactly `chrome` or `chromium`; an unset
+variable selects `chrome`, and any other value (including an empty one) is
+refused by name — `BROWSER_CHANNEL_UNSUPPORTED:<value>` — before a browser
+exists, so a typo can never silently launch a different browser. The selection
+reaches every Playwright lane (`playwright.config.ts`, all scenario runs, the
+test lanes, `campaign:synthetic`) and the parent-CLI authentication capture
+lane. The L6 containment qualification is deliberately NOT selected by it: a
+containment proof must not change because an operator picked a channel for
+their lanes.
 
 Run the Phase 1 passive Ripple scenario (local fixture, fully offline):
 
@@ -178,8 +210,15 @@ npm run scenario -- --env=local
 Point at a real local Ripple dev server (still fail-closed against prod):
 
 ```bash
-npm run scenario -- --env=local --ui-url=http://127.0.0.1:8080
+npm run scenario -- --env=local --ui-url=http://127.0.0.1:7311
 ```
+
+The `local` environment verifies exactly one origin — the loopback
+`http://127.0.0.1:7311` declared in `config/environments/local.json` — and the
+startup gate refuses any other host or port (`fail-closed: UI URL does not
+match the verified environment origin`). Serve your dev server on that origin
+and pass it with `--ui-url`; without a server listening, the passive journey
+still completes and records the failure as evidence.
 
 ### Launch a bounded autonomous campaign
 
@@ -202,7 +241,7 @@ npm run agent:campaign -- run --reasoner=cli --duration=1h \
 # inspect stored campaigns, their checkpoints and the persisted findings
 npm run agent:campaign -- status
 npm run agent:campaign -- findings
-npm run findings                                   # operator findings surface
+npm run campaign:findings                         # operator findings surface
 
 # resume a paused campaign (bound to the recorded reasoner identity)
 npm run agent:campaign -- resume --id=<campaign-id>
@@ -211,9 +250,36 @@ npm run agent:campaign -- resume --id=<campaign-id>
 # campaign writes a PAUSED checkpoint and stops its reasoner process group.
 ```
 
-`--wall-clock-minutes` must narrow the selected ceiling; a widening value is
-refused. Campaigns never contact DEV/NEXT/production, never publish, and never
-write to an Alphaus repository.
+The four `NIGHTWATCH_REASONER_*` variables are prerequisites, not options: the
+launch refuses with `REASONER_CLI_NOT_CONFIGURED` before any child exists when
+the CLI is missing. `--wall-clock-minutes` must narrow the selected ceiling; a
+widening value is refused (`WALL_CLOCK_OVERRIDE_INVALID`). Campaigns never
+contact DEV/NEXT/production, never publish, and never write to an Alphaus
+repository.
+
+### What a provider failure means
+
+A hunt whose reasoner never answers is reported as **provider failure, not as
+budget exhaustion and not as zero yield**. The run receipt carries
+`terminationReason: REASONER_FAILURE` with
+`terminationClass: PROVIDER_BLOCKED_BEFORE_SOURCE_ACTION` and its provider
+attribution (`providerFailures`, `completedCalls: 0`, `sourceActions: 0`). A
+provider-blocked run is therefore never evidence that the target repository
+contains no defect, and it is never counted against a zero-yield denominator.
+
+### What can currently be reproduced
+
+Contained reproduction runs one executor class in v1 —
+`GO_VENDORED_PACKAGE_TEST`, a Go package inside a module that vendors its
+dependencies so `go test -mod=vendor` needs no network. Of the eight approved
+repositories (`alphauslabs/blue-sdk-go`, `alphauslabs/blueapi`,
+`alphauslabs/blueinternal`, `alphauslabs/grpc-chunk-parser`,
+`mobingilabs/ouchan`, `mobingilabs/ripple-api`, `mobingilabs/ripple-ui`,
+`mobingilabs/wave-api`) exactly one — `mobingilabs/ouchan` — is a vendored Go
+module, so it is the only repository in which a contained reproduction can be
+attempted today. That structural ceiling is an owner-scope decision (audit
+C-17), not a defect to be worked around, and a hunt that admits nothing has
+not therefore searched nothing.
 
 ## Authoritative local quality and source intelligence
 
@@ -353,11 +419,15 @@ default:
 ```bash
 npm run retention:status              # report only; removes nothing
 npm run retention:plan                # dry run, same guarantees
-node bin/evidence-retention.mjs --apply --keep-recent=100   # owner-gated
+node bin/evidence-retention.mjs plan --apply --confirm=sha256:<token>   # owner-gated
 ```
 
 `status` and `plan` never mutate. `--apply` is the explicit owner flag and is
-deliberately not an `npm run` shortcut. The plan computes what must be
+deliberately not an `npm run` shortcut; it also requires the confirmation token
+its own dry run printed (`--confirm`), so a removal can only ever execute the
+exact plan an operator reviewed, and it is refused inside a CI/gate
+environment even with the right token. `--apply` without `--confirm` is a usage
+error (`USAGE_APPLY_REQUIRES_CONFIRM`). The plan computes what must be
 REFUSED before what may be removed, and refuses:
 
 - any artifact whose name appears in tracked project state (`.agent`, `docs`,
@@ -375,6 +445,41 @@ preserved. Reclaiming nothing is a valid outcome, reported as `PRESERVED`.
 Contract coverage health over an exact source snapshot is available as
 `npm run contract:health -- --snapshot=<dir> --sha=<sha>` (or
 `--inventory=<file.json>`); it is source-only and read-only.
+
+## Where Nightwatch writes
+
+| State | Location | Notes |
+| --- | --- | --- |
+| Run evidence | `artifacts/<run-id>/` | Repository-owned, gitignored, one immutable directory per run; never overwritten |
+| Built Control Center UI | `ui/control-center/dist/` | Build output of `control-center:ui:build` |
+| Agent finding records | `$HOME/.nightwatch/findings/agent-findings/` | Owner-only; a malformed record fails the store closed rather than being skipped |
+| Campaign checkpoints | `$HOME/.nightwatch/campaigns/*.checkpoint.json` | Owner-only; resume and provider-failure receipts live here |
+| Authenticated artefacts | owner-supplied absolute paths, plus the `<artefact>.auth-lifecycle.json` sidecar | Outside the repository, never committed |
+| Owner review decisions | `$HOME/.nightwatch/reviews` (override `NIGHTWATCH_REVIEW_STORE_DIR`) | Owner-only, never deleted automatically |
+| Private-state root override | `NIGHTWATCH_PRIVATE_STATE_DIR` | Moves the owner-local findings root for a disposable proof |
+
+Nothing under `$HOME/.nightwatch/` is ever committed, published, or uploaded.
+Synthetic fixtures and schemas may be versioned; private real evidence is not.
+
+## What requires a human
+
+- **Authentication** is always human-led: `npm run auth:capture` opens a
+  headed browser and the operator completes login and MFA. There is no
+  automated renewal, by design — Nightwatch holding credentials is exactly what
+  the safety model forbids.
+- **Any DEV/NEXT lane execution** needs a fresh authorization plus a `VALID`
+  capture for that environment; a pre-flight refusal is categorical and never
+  worked around.
+- **Evidence removal** (`evidence-retention.mjs … --apply`) needs the
+  confirmation token of the reviewed dry run and a supervised terminal; it is
+  refused inside a gate even with the right token.
+- **Recording a review decision** needs the opt-in `--enable-local-review`
+  launch and the loopback write route; without it the route does not exist.
+- Everything local and read-only — the scenario, `campaign:synthetic`, the
+  status/intelligence/census/plan surfaces, the Control Center read-only
+  surface — runs autonomously. Nightwatch never publishes: no Slack, no
+  GitHub/Jira/Linear items, no email, no shared-drive writes, no PRs, and no
+  cloud, Kubernetes, AWS, or datastore operations (`OWNER_POLICY_BLOCKED`).
 
 ## Layout
 

@@ -1,6 +1,7 @@
 import { defineConfig } from '@playwright/test';
 import { proxyServerUrl } from './src/proxy/server';
 import { nightwatchChromiumLaunchOptions } from './src/browser/contract';
+import { resolveBrowserChannel } from './src/browser/channel';
 import { resolvePlaywrightOutputDir } from './src/core/workspace/ephemeralLayout';
 
 // ---------------------------------------------------------------------------
@@ -8,16 +9,25 @@ import { resolvePlaywrightOutputDir } from './src/core/workspace/ephemeralLayout
 //
 // - Nightwatch manages its own evidence in artifacts/<run-id>; Playwright's
 //   own trace/screenshot/video capture is disabled to avoid double capture.
-// - The 'nightwatch' project drives the system Google Chrome via channel:
-//   'chrome'. If Chrome is unavailable on a machine, install the bundled
-//   browser instead:  npx playwright install chromium   and remove the
-//   `channel` line below.
+// - The 'nightwatch' project drives the system Google Chrome by default via
+//   channel: 'chrome'. A host without system Chrome selects the installed
+//   Chromium instead:  npx playwright install chromium   and set
+//   NIGHTWATCH_BROWSER_CHANNEL=chromium. The channel is a declared,
+//   fail-closed-selected environment variable (src/browser/channel.ts), so
+//   the fallback never requires editing this tracked file.
 // - Test-suite convenience default: the self-tests may run without an
 //   explicit NIGHTWATCH_ENV and fall back to 'local'. Real scenario runs via
 //   `bin/nightwatch.mjs` REQUIRE --env (fail-closed).
 // ---------------------------------------------------------------------------
 
 process.env.NIGHTWATCH_ENV ??= 'local';
+
+// The channel is resolved once, here, so every lane that spreads this config
+// (all scenario runs, every gate/synthetic lane, the authentication capture
+// suite and the Control Center browser lane) selects the SAME browser. An
+// unsupported value aborts config loading — a lane can never launch an
+// undeclared browser.
+const browserChannel = resolveBrowserChannel();
 
 // F-PERF-1: a second, silent timing reporter writes one bounded timing
 // document per invocation under the owned `test-results/timings/` directory.
@@ -41,7 +51,7 @@ export default defineConfig({
       name: 'nightwatch',
       use: {
         browserName: 'chromium',
-        channel: 'chrome',
+        channel: browserChannel.channel,
         headless: process.env.NIGHTWATCH_HEADED !== '1',
         // Explicit browser launch proxy. HTTP_PROXY/HTTPS_PROXY are not part
         // of the containment contract and are intentionally ignored.
