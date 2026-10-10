@@ -14,7 +14,7 @@ Last validated implementation SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
 Last substantive checkpoint SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
-Branch: main
+Branch: session/nightwatch-final-product-complet-6a12235a
 Last checkpoint: 2026-10-09 — M10 (group 11) DOCUMENTATION OF RECORD WRITTEN; 11.1-11.6 COMPLETE
 (`b7afa9e9` for the S-fixes/ratchets; DECISIONS D-153..D-167, SAFETY_MODEL §25-§32 and the
 ARCHITECTURE M10 record for the documentation of record). The T3/T4 S-fixes and the wired shared
