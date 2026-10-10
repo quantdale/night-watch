@@ -2844,7 +2844,12 @@ test.describe('release probe wiring (M4 task 5.1, corrected by VD-01..VD-05)', (
         const state = states.get(id);
         // Only a receipt bound to S may certify away from S; on this host the
         // receipts, when present, are bound to the working copy's own HEAD.
-        if (check === 'ui-error-taxonomy-check' || check === 'yield-campaign-result' || check === 'accessibility-certification') continue;
+        // R5-13 / review-5 B3.1: the four HOST-BOUND checks may legitimately
+        // report MET away from the checkpoint, because a committed receipt of S
+        // is consumed for them where the live host cannot measure (`consumeCommittedMeasurement`).
+        // Exact-head CI authority is not one of them: its topology half has no
+        // receipt route, so it still fails closed here.
+        if (check === 'ui-error-taxonomy-check' || check === 'yield-campaign-result' || check === 'accessibility-certification' || check === 'dependency-advisory-lane') continue;
         expect(state, `${check} must not be MET at HEAD ${head} for checkpoint ${checkpoint}`).not.toBe('MET');
         // R3-07 / corrections task 8.6: assert the CHECK state, not only the
         // effective state (which is EVIDENCE_ABSENT regardless): the demotion
