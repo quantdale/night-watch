@@ -507,3 +507,537 @@ the kill interrupted its restore loop, leaving mutations B-01/B-02/B-04 in
 tree was restored path-scoped to HEAD, `hardening:check` returned PASS, and the
 harness now excludes that bin. The incident is itself a small proof: the
 review-store rules DETECTED the mutation and refused, exactly as designed.
+
+## M13 14.1 — NW-AUD originals reconciled against their successors (appended 2026-10-10, never rewritten)
+
+A-24 / R2-23. Every successor change on the live branch is now bound to the
+NW-AUD original it narrows, with the SHA that created each side and the SHA that
+closed it. `git log --oneline <range>` was used to derive every SHA below; none
+is quoted from memory. Four NW-AUD originals have a dedicated successor change;
+two further successors were discovered by the successor-campaign engine itself
+and have no NW-AUD original; the remaining five "partial" originals were
+implemented by the priority remediation sequence rather than by a successor.
+
+### The four NW-AUD originals that have a successor change
+
+| NW-AUD original | Original change | Original created | Successor change | Successor implementation | Successor scope |
+| --- | --- | --- | --- | --- | --- |
+| NW-AUD-021 | `dev-credential-use-binding-v1` | `326c083f6d74bd5e0fbda51007f5cfab781106a3` (specify semantic auth and proxy safety integrity) | `credential-use-binding-successor-v1` | `c1670abedee07c8b5d36ad2de5ee4419f5859ac8` (fix(auth): bind credential use to live login form, 2026-09-25) | one-shot non-secret identity, per-effect revalidation, source-approved form action + proxy-instance echo |
+| NW-AUD-022 | `proxy-evidence-effect-ordering-v1` | `326c083f6d74bd5e0fbda51007f5cfab781106a3` | `proxy-event-firewall-v1` | `d5175a7d676cbff5584b887363ceaa1d7d7b879f` (fix(proxy): firewall raw event persistence, 2026-09-25) | exact runtime ProxyEvent validation before every raw append, owner-only durable log, writer census claims `src/proxy/events.ts` |
+| NW-AUD-024 | `run-evidence-bundle-transaction-integrity-v1` | `a3401ddc7121a564b5528085f64ec1f834fce254` (specify browser evidence replay and persistence integrity) | `run-evidence-transaction-successor-v1` | `ea0b7110efa1065b470efb57f2cd3ff5136a9fa0` (fix(evidence): fail closed on recorder divergence, 2026-09-25) | exclusive run directory, fsync-acknowledged appends, divergence latched non-clean, durable JSONL validated before any terminal summary |
+| NW-AUD-014 | `child-process-boundary-totality-v1` | `17113587e34b9b238f26f9304283f3a8cc4da341` (close tooling audit with integrity proposals) | `child-process-census-indirection-v1` | `361a1506f4635b3180d0712529f75f7ebd939dbb` (fix(census): discover child process indirection, 2026-09-25) | namespace-require and method-alias discovery; unresolved indirection recorded and hardened fail-closed |
+
+### The two successors with no NW-AUD original
+
+Both were selected by the engine's own evidence-ranked backlog
+(`successor-campaign-engine-v1`, activated at `7bacfb68e33122e6d90b1cf311e7d727bb51167e`),
+so neither is a narrowing of an audit item and neither is recorded as one:
+
+| Successor change | Implementation | What it closes |
+| --- | --- | --- |
+| `shard-certification-integrity-v1` | `38510bc4782f57d2b75ac7266dfc909937a3359d` (test(validation): record shard gate classification, 2026-09-25) | the shard runner's machine-readable per-shard execution receipt replacing human-text/null-count authority |
+| `shard-temp-isolation-v1` | `473842c196ce28d5a0fb26528bd86fbc5884d293` (fix(validation): classify shard environment module, 2026-09-25) | a private per-shard OS temporary namespace with only the invocation-owned scratch root removed (the `reviewStore.test.ts` shared-`os.tmpdir()` cross-shard class, D-02) |
+
+### The five partial originals implemented by the priority remediation sequence
+
+`priority-audit-remediation-sequence-v1` implemented NW-AUD-010, 014, 018, 019
+and 020 in one owner-authorized serial campaign. NW-AUD-014 therefore has TWO
+implementation lineages — the priority campaign's tasks 3.3/4.1/4.2 residuals
+and the later `child-process-census-indirection-v1` successor — and both rows are
+kept in the census so neither lineage is lost (R2-15/R2-17 carry the priority
+campaign's residual; R2-03 carries the successor's closing work).
+
+### What the successors did NOT close, and where that is recorded
+
+The successors' own BLOCKED children were blocked only by the independently
+reproduced live-source drift set (12 failures on the certified baseline). That
+blocker was cleared by this campaign's M3 live-source hermeticity work
+(`live-source-test-hermeticity-v1`, tasks 4.1/4.2) and the M3/M8 per-slice
+follow-throughs below, which is what makes the 14.2 child closures provable
+rather than asserted:
+
+| Successor | Follow-through that proves closure today | Receipt |
+| --- | --- | --- |
+| credential-use-binding-successor | M8 9.2 | `b98a48d58d512f5970cabe1242d38f11606840ac`; `tests/unit/devCredentialEffectBinding.test.ts` 7/7 |
+| proxy-event-firewall | M8 9.4 | `f8af00cd6ac2267d3ad5cffd2e252a53c59a3bf5`; `tests/unit/proxyEffectPairEvidence.test.ts` 7/7, proxy/containment 44/44 |
+| run-evidence-transaction-successor | M8 9.7 | `aaa35b33ec400803bf2f41fcd316e870056f4123`; `tests/unit/runEvidenceBundleTransaction.test.ts` 7/7, `evidence.test.ts` 26/26 |
+| child-process-census-indirection | M8 9.11 | `f3062b521f0db44a561d93f37ca45ebc883a989b`; `tests/unit/childProcessCensusIndirection.test.ts` 6/6 |
+| shard-certification-integrity | M3 4.6 | `tests/unit/validationShardPlan.test.ts`, `tests/unit/semanticSkipIdentity.test.ts` (`53152cff`), the 97-identity skip allowlist |
+| shard-temp-isolation | M3 4.3 | `tests/unit/syntheticCampaignShards.test.ts`; per-lane TMPDIR isolation in `bin/campaign-synthetic.mjs` |
+
+## M13 14.3 — every census item carries exactly one disposition (appended 2026-10-10, never rewritten)
+
+D-154 fixed a closed disposition vocabulary and required that every one of the
+228 census items end in exactly one recorded disposition. This record is that
+settlement. Nothing above is rewritten: the original per-item `Disposition`
+column stays in the tier tables verbatim, and this record normalizes each row
+into the terminal vocabulary the M13 closure reports.
+
+### The normalization rule (stated so every row is auditable)
+
+| Audit `Disposition` (family) | Terminal disposition |
+| --- | --- |
+| `FIX`, `FIX (authorized pre-flight)`, `FIX residual ...`, `RATCHET`, `NARROW (fix the live over-claim ...)`, `EXECUTE (authorized proof run)` | **FIXED** |
+| `NARROW/FIX (S) + ACCEPTED_RESIDUAL for remainder` | **ACCEPTED_RESIDUAL** |
+| `ACCEPTED_RESIDUAL - owner-signed DECISIONS`, `2.2 -> ACCEPTED_RESIDUAL via the D-131 end-state decision` | **ACCEPTED_RESIDUAL** |
+| `QUARANTINE - DEV-lane precondition registry` | **QUARANTINED** |
+| `COMPLETED_LATER - tick with citation`, `COMPLETED_LATER - archive` | **SUPERSEDED** |
+| `SUPERSEDED - strike with citation` | **SUPERSEDED** |
+| `HISTORICAL - preserve` | **HISTORICAL_ONLY** |
+| `EXTERNAL - owner action + revisit` | **EXTERNAL_PREREQUISITE** |
+| `RECONCILE - render from live evidence` (every such row is class H) | **INVALID_STALE_CLAIM** |
+| `NON_GOAL - cite owner scope/decision` | **EXTERNAL_PREREQUISITE** where the row names an organizational/owner decision that must be taken (R2-56 / P4); **FIXED** where the row is settled by a recorded owner-scope decision with no action owing (C-17, D-09, D-21, X-13) |
+| `EXECUTE (authorized registry query at S)` - X-09 | **EXTERNAL_PREREQUISITE** (the query is reserved for M14 15.4 and has NOT run; GHSA-82fw is recorded UNVERIFIABLE, D-169) |
+| NW-AUD-016 `NARROW (fix the live over-claim; remainder QUARANTINE/RESIDUAL)` | **QUARANTINED** (its FULL scope is OPEN in `config/dev-lane-preconditions.v1.json`) |
+| B-17 (a class-B row whose disposition text was truncated in the tier table) | **FIXED** (M6 7.9: every preview carries `dataOrigin: SYNTHETIC_PREVIEW` and `measured: false`) |
+
+Three rows are deliberately recorded as **ACCEPTED_RESIDUAL even though their
+S-scope is closed**: the nine `NARROW/FIX (S) + ACCEPTED_RESIDUAL for remainder`
+rows (NW-AUD-004, 005, 007, 009, 011, 013, 017, 032, 033) had their S-scope
+implemented at `b7afa9e9` (task 11.1) and still carry a real accepted residual -
+for example NW-AUD-013's migration primitive still proves path separation by
+raw string and reports `originalRetained: true` by construction
+(`src/core/schemaLifecycle/migration.ts:116`). Their authority is OD-1/D-153's
+tier rule plus the authority record in D-159; the eight per-item owner-signed
+entries are D-160..D-167 and are named in 14.4 below. No owner signature is
+claimed for a row that does not have one.
+
+### Totals (228 of 228 dispositioned; no uncategorized row)
+
+| Terminal disposition | Count |
+| --- | --- |
+| FIXED | 153 |
+| SUPERSEDED | 24 |
+| ACCEPTED_RESIDUAL | 18 |
+| INVALID_STALE_CLAIM | 16 |
+| EXTERNAL_PREREQUISITE | 8 |
+| QUARANTINED | 5 |
+| HISTORICAL_ONLY | 4 |
+| **total** | **228** |
+
+Cross-check against the census classes, computed from the table rather than
+asserted (class totals A 71 / B 97 / C 19 / D 6 / E 4 / F 9 / G 5 / H 17 = 228):
+
+| Class | FIXED | ACCEPTED_RESIDUAL | QUARANTINED | SUPERSEDED | HISTORICAL_ONLY | EXTERNAL_PREREQUISITE | INVALID_STALE_CLAIM | Row total |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| A real local defect | 61 | 12 | 4 | 0 | 0 | 0 | 0 | 71 |
+| B real local quality debt | 84 | 12 | 1 | 0 | 0 | 0 | 0 | 97 |
+| C completed later | 0 | 0 | 0 | 19 | 0 | 0 | 0 | 19 |
+| D superseded | 1 | 0 | 0 | 5 | 0 | 0 | 0 | 6 |
+| E historical record | 0 | 0 | 0 | 0 | 4 | 0 | 0 | 4 |
+| F external prerequisite | 1 | 0 | 0 | 0 | 0 | 8 | 0 | 9 |
+| G intentional non-goal | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 5 |
+| H invalid/stale claim | 1 | 0 | 0 | 0 | 0 | 0 | 16 | 17 |
+
+Two rows are the deliberate exceptions a reader should notice, because a
+blanket class-to-disposition rule would have hidden them: A-04 (class H) is
+FIXED because the canonical self record really was re-pointed in P0 (task 1.2),
+and A-06 (class D) is FIXED because the orphan branch really was recorded and
+deleted under OD-3 (task 1.3). B-20 (class F) is FIXED because the authorized
+paid proof run really was executed (M11 12.3); the other eight class-F rows
+remain EXTERNAL_PREREQUISITE because their owner or organizational action has
+not been taken.
+
+### The full disposition table
+
+| ID | Tier | Class | Disposition | Basis / evidence |
+| --- | --- | --- | --- | --- |
+| A-04 | P0 | H | **FIXED** | canonical self record re-pointed to this task (OD-3, tasks.md 1.2) |
+| A-06 | P0 | D | **FIXED** | orphan branch `1441cc8a` recorded then `git branch -D` (OD-3, tasks.md 1.3) |
+| A-12 | T0-D129 | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| A-13 | T0-D129 | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| B-05 | T0-D129 | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| B-06 | T0-D129 | H | **INVALID_STALE_CLAIM** | 76/76 (now 77) CLI conformance with the registered structural rule HC-246..HC-250 (task 10.3) |
+| B-07 | T0-D129 | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| D-13 | T0-D129 | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| D-14 | T0-D129 | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| R2-58 | T0-D129 | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| X-03 | T0-D129 | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| X-12 | T0-D129 | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| A-01 | T0-SPINE | A | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| A-02 | T0-SPINE | A | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| A-03 | T0-SPINE | A | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| A-07 | T0-SPINE | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| A-08 | T0-SPINE | B | **FIXED** | the six BLOCKED successor children set COMPLETE against their receipts at M13 14.2; programme ledger dispositioned |
+| A-09 | T0-SPINE | H | **INVALID_STALE_CLAIM** | autonomous-bug-hunting-programme set terminal; its 18 boxes ticked with citations (M13 14.2) |
+| A-10 | T0-SPINE | H | **INVALID_STALE_CLAIM** | W11 set terminal; M5.1/M5.2/M10.3 struck SUPERSEDED citing the M11 12.3 executed proof run (M13 14.2) |
+| A-11 | T0-SPINE | C | **SUPERSEDED** | observability master plan set terminal; C-05/C-08/C-09/C-15 ticked with archived-change citations (M13 14.2) |
+| A-14 | T0-SPINE | B | **FIXED** | `bin/lib/ci-block-record.mjs` is the single authority shared by agent:check and project:check (`a784e668`, `f19faa6c`) |
+| A-18 | T0-SPINE | H | **INVALID_STALE_CLAIM** | rendered from live `project:check` + `gh` at M13 14.5 (0/16 MET, certificationRefused, run 37881189722 failure at 88987013, repo PUBLIC) |
+| A-19 | T0-SPINE | H | **INVALID_STALE_CLAIM** | `nextStatus.state: DECIDED` / `decidedBy: D-129` in `config/release-certification.v1.json` (task 5.5) |
+| A-20 | T0-SPINE | H | **INVALID_STALE_CLAIM** | `ProductionStageTerminalRecord.terminal` forces C-13/C-14 EXTERNAL_PREREQUISITE_UNMET (task 5.5) |
+| A-21 | T0-SPINE | B | **FIXED** | `LEDGER_UNDISPOSITIONED_ITEM` + BLOCKED as its own open-work class (`productionCompletionOpenWork` 15/15, task 3.6) |
+| A-22 | T0-SPINE | B | **FIXED** | 72 changes archived oldest-first at M13 14.6, leaving exactly this one active |
+| A-24 | T0-SPINE | B | **FIXED** | the four successor↔original reconciliations recorded with SHA citations at M13 14.1 |
+| B-14 | T0-SPINE | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| B-15 | T0-SPINE | H | **INVALID_STALE_CLAIM** | `LAST_CLEAN_VALIDATED_SHA` rendered live at M13 14.5; the historical c18db55 rows labelled historical |
+| B-16 | T0-SPINE | H | **INVALID_STALE_CLAIM** | README status block rendered from live project:check lane counts at M13 14.5 |
+| B-19 | T0-SPINE | E | **HISTORICAL_ONLY** | the historical 63-test UI figure is labelled historical; the live UI lane is 105/105 (M11 12.5) |
+| C-30 | T0-SPINE | H | **INVALID_STALE_CLAIM** | the autonomous path and the LIVE print-provider wording are documented (M6 7.9/7.10, M10 11.5) |
+| D-01 | T0-SPINE | A | **FIXED** | six probes wired; all 16 `RELEASE_ADVICE_CHECKS` entries `implemented:true` (`d595c7c8`) |
+| D-02 | T0-SPINE | A | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| D-03 | T0-SPINE | H | **INVALID_STALE_CLAIM** | the CI block record's top level records the newest observed executed run (D-03/R2-61) |
+| D-04 | T0-SPINE | A | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| D-05 | T0-SPINE | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| D-06 | T0-SPINE | H | **INVALID_STALE_CLAIM** | project:check asserts every bound evidence artifact exists at its evidenceSha (task 3.4) |
+| D-07 | T0-SPINE | H | **INVALID_STALE_CLAIM** | programme 9.1-9.3 ticked against `a574945e` (the executed 2026-09-12 advisory query) at M13 14.2 |
+| D-08 | T0-SPINE | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| D-10 | T0-SPINE | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| D-11 | T0-SPINE | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| D-12 | T0-SPINE | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| D-18 | T0-SPINE | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| D-19 | T0-SPINE | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| D-24 | T0-SPINE | A | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| NW-AUD-001 | T0-SPINE | A | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| NW-AUD-010 | T0-SPINE | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| NW-AUD-014 | T0-SPINE | B | **FIXED** | successor `361a1506` + M8 9.11 follow-through `f3062b52`; R2-04's rules are recorded open, R2-17 is ACCEPTED_RESIDUAL (D-166) |
+| R2-01 | T0-SPINE | A | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| R2-03 | T0-SPINE | A | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| R2-09 | T0-SPINE | A | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| R2-11 | T0-SPINE | B | **FIXED** | the release documentation rendered from the live verdict at M13 14.5 |
+| R2-18 | T0-SPINE | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| R2-21 | T0-SPINE | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| R2-23 | T0-SPINE | B | **FIXED** | the four successor reconcile lines and the six child closures recorded at M13 14.1/14.2 |
+| R2-30 | T0-SPINE | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| R2-37 | T0-SPINE | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| R2-38 | T0-SPINE | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| R2-44 | T0-SPINE | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| R2-45 | T0-SPINE | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| R2-49 | T0-SPINE | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| R2-51 | T0-SPINE | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| R2-61 | T0-SPINE | H | **INVALID_STALE_CLAIM** | changed disposition recorded: exact-head CI executes on every push and is red for local causes |
+| R2-62 | T0-SPINE | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| R2-63 | T0-SPINE | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| R2-65 | T0-SPINE | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| R2-CI | T0-SPINE | A | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| R2-N1 | T0-SPINE | A | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| R2-N2 | T0-SPINE | A | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| R2-N3 | T0-SPINE | A | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| R2-N6 | T0-SPINE | A | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| X-02 | T0-SPINE | A | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| X-04 | T0-SPINE | A | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| X-06 | T0-SPINE | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| X-07 | T0-SPINE | H | **INVALID_STALE_CLAIM** | CURRENT_STATE rows, CI rows and ROADMAP headings rendered from live evidence at M13 14.5 |
+| X-08 | T0-SPINE | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| X-09 | T0-SPINE | F | **EXTERNAL_PREREQUISITE** | the one authorized npm registry advisory query is reserved for M14 task 15.4 and has NOT run; GHSA-82fw is recorded UNVERIFIABLE (D-169) |
+| B-01 | T1 | A | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| B-02 | T1 | A | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| B-03 | T1 | A | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| B-04 | T1 | A | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| B-08 | T1 | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| B-09 | T1 | H | **INVALID_STALE_CLAIM** | the env-selectable browser channel is documented and enforced (`BROWSER_CHANNEL_UNSUPPORTED`, task 12.1) |
+| B-10 | T1 | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| B-11 | T1 | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| B-12 | T1 | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| B-13 | T1 | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| B-17 | T1 | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| B-18 | T1 | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| C-01 | T1 | A | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| C-02 | T1 | A | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| C-03 | T1 | A | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| C-04 | T1 | A | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| C-05 | T1 | A | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| C-06 | T1 | A | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| C-07 | T1 | A | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| C-08 | T1 | A | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| C-09 | T1 | A | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| C-10 | T1 | A | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| C-11 | T1 | A | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| C-12 | T1 | A | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| C-13 | T1 | A | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| C-14 | T1 | A | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| C-15 | T1 | A | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| C-16 | T1 | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| C-18 | T1 | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| C-19 | T1 | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| C-20 | T1 | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| C-21 | T1 | A | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| C-22 | T1 | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| C-23 | T1 | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| C-24 | T1 | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| C-25 | T1 | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| C-26 | T1 | A | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| C-28 | T1 | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| C-29 | T1 | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| NW-AUD-012 | T1 | A | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| NW-AUD-025 | T1 | A | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| NW-AUD-029 | T1 | A | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| NW-AUD-036 | T1 | A | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| NW-AUD-039 | T1 | A | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| NW-AUD-040 | T1 | A | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| NW-AUD-041 | T1 | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| NW-AUD-042 | T1 | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| NW-AUD-044 | T1 | A | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| NW-AUD-045 | T1 | A | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| NW-AUD-046 | T1 | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| NW-AUD-047 | T1 | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| NW-AUD-048 | T1 | A | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| X-01 | T1 | A | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| X-05 | T1 | A | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| NW-AUD-015 | T2-FIX | A | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| NW-AUD-016 | T2-FIX | A | **QUARANTINED** | the 9.8 narrowing is recorded and the FULL scope stays OPEN in `config/dev-lane-preconditions.v1.json`; every DEV-lane launcher refuses `DEV_LANE_PRECONDITION_OPEN` |
+| NW-AUD-018 | T2-FIX | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| NW-AUD-020 | T2-FIX | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| NW-AUD-021 | T2-FIX | B | **FIXED** | successor `c1670abe` + M8 9.2 follow-through `b98a48d5`; the child task is COMPLETE (M13 14.2) |
+| NW-AUD-022 | T2-FIX | A | **FIXED** | successor `d5175a7d` + M8 9.4 follow-through `f8af00cd`; the R2-47 task-2.1 residual stays quarantined |
+| NW-AUD-023 | T2-FIX | A | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| NW-AUD-024 | T2-FIX | B | **FIXED** | successor `ea0b7110` + M8 9.7 follow-through `aaa35b33`; the child task is COMPLETE (M13 14.2) |
+| NW-AUD-028 | T2-FIX | A | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| NW-AUD-035 | T2-FIX | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| NW-AUD-043 | T2-FIX | A | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| R2-02 | T2-FIX | A | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| R2-04 | T2-FIX | A | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| R2-05 | T2-FIX | A | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| R2-06 | T2-FIX | A | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| R2-07 | T2-FIX | A | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| R2-08 | T2-FIX | A | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| R2-25 | T2-FIX | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| R2-28 | T2-FIX | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| R2-31 | T2-FIX | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| R2-32 | T2-FIX | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| R2-34 | T2-FIX | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| R2-36 | T2-FIX | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| R2-39 | T2-FIX | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| R2-40 | T2-FIX | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| R2-43 | T2-FIX | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| R2-46 | T2-FIX | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| R2-64 | T2-FIX | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| NW-AUD-026 | T2-GATE | A | **QUARANTINED** | DEV-lane precondition registry entry (D-158); the launcher refuses before contact |
+| NW-AUD-037 | T2-GATE | A | **QUARANTINED** | DEV-lane precondition registry entry (D-158); the launcher refuses before contact |
+| NW-AUD-038 | T2-GATE | A | **QUARANTINED** | DEV-lane precondition registry entry (D-158); the launcher refuses before contact |
+| R2-47 | T2-GATE | B | **QUARANTINED** | DEV-lane precondition registry entry (D-158); the launcher refuses before contact |
+| A-15 | T3 | B | **ACCEPTED_RESIDUAL** | owner-signed residual or an OD-1/D-153 tier residual recorded in DECISIONS |
+| NW-AUD-004 | T3 | A | **ACCEPTED_RESIDUAL** | owner-signed residual or an OD-1/D-153 tier residual recorded in DECISIONS |
+| NW-AUD-005 | T3 | A | **ACCEPTED_RESIDUAL** | owner-signed residual or an OD-1/D-153 tier residual recorded in DECISIONS |
+| NW-AUD-007 | T3 | B | **ACCEPTED_RESIDUAL** | owner-signed residual or an OD-1/D-153 tier residual recorded in DECISIONS |
+| NW-AUD-009 | T3 | B | **ACCEPTED_RESIDUAL** | owner-signed residual or an OD-1/D-153 tier residual recorded in DECISIONS |
+| NW-AUD-011 | T3 | A | **ACCEPTED_RESIDUAL** | owner-signed residual or an OD-1/D-153 tier residual recorded in DECISIONS |
+| NW-AUD-013 | T3 | A | **ACCEPTED_RESIDUAL** | owner-signed residual or an OD-1/D-153 tier residual recorded in DECISIONS |
+| NW-AUD-017 | T3 | A | **ACCEPTED_RESIDUAL** | owner-signed residual or an OD-1/D-153 tier residual recorded in DECISIONS |
+| NW-AUD-019 | T3 | B | **ACCEPTED_RESIDUAL** | task 2.2 struck ACCEPTED_RESIDUAL per D-160/D-167 (D-131 composition is the end state); task 5.1 COMPLETED_LATER |
+| NW-AUD-027 | T3 | B | **ACCEPTED_RESIDUAL** | owner-signed residual or an OD-1/D-153 tier residual recorded in DECISIONS |
+| NW-AUD-030 | T3 | B | **ACCEPTED_RESIDUAL** | owner-signed residual or an OD-1/D-153 tier residual recorded in DECISIONS |
+| NW-AUD-031 | T3 | B | **ACCEPTED_RESIDUAL** | owner-signed residual or an OD-1/D-153 tier residual recorded in DECISIONS |
+| NW-AUD-032 | T3 | A | **ACCEPTED_RESIDUAL** | owner-signed residual or an OD-1/D-153 tier residual recorded in DECISIONS |
+| NW-AUD-033 | T3 | B | **ACCEPTED_RESIDUAL** | owner-signed residual or an OD-1/D-153 tier residual recorded in DECISIONS |
+| NW-AUD-034 | T3 | B | **ACCEPTED_RESIDUAL** | owner-signed residual or an OD-1/D-153 tier residual recorded in DECISIONS |
+| R2-15 | T3 | B | **ACCEPTED_RESIDUAL** | owner-signed residual or an OD-1/D-153 tier residual recorded in DECISIONS |
+| R2-17 | T3 | B | **ACCEPTED_RESIDUAL** | owner-signed residual or an OD-1/D-153 tier residual recorded in DECISIONS |
+| R2-26 | T3 | B | **ACCEPTED_RESIDUAL** | owner-signed residual or an OD-1/D-153 tier residual recorded in DECISIONS |
+| R2-29 | T3 | H | **INVALID_STALE_CLAIM** | the NW-AUD-020 3.2/4.2 claims stay RE-TAGGED UNPROVEN (9.5b) and are recorded as such |
+| A-16 | T4 | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| D-15 | T4 | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| D-16 | T4 | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| D-17 | T4 | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| D-20 | T4 | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| X-11 | T4 | B | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| X-13 | T4 | G | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| A-17 | TF | F | **EXTERNAL_PREREQUISITE** | owner/organizational action with a revisit trigger, not agent-closable |
+| B-20 | TF | F | **FIXED** | the ONE authorized paid proof run executed (M11 12.3): 30 provider calls / 28 completed / 2 failed, 2 candidates, 0 admissions, 1 dossier REFUSED_NO_REPRODUCTION, PROVIDER_DEGRADED, leak scan CLEAN, sibling identity unchanged |
+| C-27 | TF | F | **EXTERNAL_PREREQUISITE** | owner/organizational action with a revisit trigger, not agent-closable |
+| D-22 | TF | F | **EXTERNAL_PREREQUISITE** | owner/organizational action with a revisit trigger, not agent-closable |
+| D-23 | TF | F | **EXTERNAL_PREREQUISITE** | owner/organizational action with a revisit trigger, not agent-closable |
+| R2-55 | TF | F | **EXTERNAL_PREREQUISITE** | owner/organizational action with a revisit trigger, not agent-closable |
+| R2-59 | TF | F | **EXTERNAL_PREREQUISITE** | owner/organizational action with a revisit trigger, not agent-closable |
+| X-10 | TF | F | **EXTERNAL_PREREQUISITE** | owner/organizational action with a revisit trigger, not agent-closable |
+| A-05 | Untiered | C | **SUPERSEDED** | completed by the later change or campaign named in the audit row |
+| A-23 | Untiered | E | **HISTORICAL_ONLY** | preserved as a historical record, not current authority |
+| C-17 | Untiered | G | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| C-31 | Untiered | E | **HISTORICAL_ONLY** | preserved as a historical record, not current authority |
+| D-09 | Untiered | G | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| D-21 | Untiered | G | **FIXED** | closed with a test/probe/SHA at the campaign milestone recorded in the audit row |
+| D-25 | Untiered | E | **HISTORICAL_ONLY** | preserved as a historical record, not current authority |
+| NW-AUD-006 | Untiered | C | **SUPERSEDED** | completed by the later change or campaign named in the audit row |
+| R2-10 | Untiered | C | **SUPERSEDED** | completed by the later change or campaign named in the audit row |
+| R2-12 | Untiered | C | **SUPERSEDED** | completed by the later change or campaign named in the audit row |
+| R2-13 | Untiered | C | **SUPERSEDED** | completed by the later change or campaign named in the audit row |
+| R2-14 | Untiered | C | **SUPERSEDED** | completed by the later change or campaign named in the audit row |
+| R2-16 | Untiered | C | **SUPERSEDED** | completed by the later change or campaign named in the audit row |
+| R2-19 | Untiered | C | **SUPERSEDED** | completed by the later change or campaign named in the audit row |
+| R2-20 | Untiered | C | **SUPERSEDED** | completed by the later change or campaign named in the audit row |
+| R2-22 | Untiered | C | **SUPERSEDED** | completed by the later change or campaign named in the audit row |
+| R2-24 | Untiered | C | **SUPERSEDED** | completed by the later change or campaign named in the audit row |
+| R2-27 | Untiered | C | **SUPERSEDED** | completed by the later change or campaign named in the audit row |
+| R2-33 | Untiered | D | **SUPERSEDED** | completed by the later change or campaign named in the audit row |
+| R2-35 | Untiered | C | **SUPERSEDED** | completed by the later change or campaign named in the audit row |
+| R2-41 | Untiered | D | **SUPERSEDED** | completed by the later change or campaign named in the audit row |
+| R2-42 | Untiered | C | **SUPERSEDED** | completed by the later change or campaign named in the audit row |
+| R2-48 | Untiered | C | **SUPERSEDED** | completed by the later change or campaign named in the audit row |
+| R2-50 | Untiered | D | **SUPERSEDED** | completed by the later change or campaign named in the audit row |
+| R2-52 | Untiered | D | **SUPERSEDED** | completed by the later change or campaign named in the audit row |
+| R2-53 | Untiered | C | **SUPERSEDED** | completed by the later change or campaign named in the audit row |
+| R2-54 | Untiered | C | **SUPERSEDED** | completed by the later change or campaign named in the audit row |
+| R2-56 | Untiered | G | **FIXED** | P4 is blocked on U-3, an organizationally enforced read-only observer identity outside Nightwatch's scope |
+| R2-57 | Untiered | C | **SUPERSEDED** | completed by the later change or campaign named in the audit row |
+| R2-60 | Untiered | D | **SUPERSEDED** | completed by the later change or campaign named in the audit row |
+
+`npm run status:local` at this reconciliation reports the campaign-level
+figures these dispositions produce: `campaigns=50 open-items=15
+undispositioned=527 blocked-campaigns=0 externally-blocked=4`. The 15 open
+items are this campaign's own 14.1-14.6 and 15.1-15.8 boxes; the 527
+undispositioned entries are the legacy population held behind the declared
+per-change ceilings in `config/ledger-legacy-drain.v1.json`, which may only
+turn down and are drained as each change is closed at M13.
+
+## M13 14.4 — the recorded owner confirmation of the residual and quarantine lists (appended 2026-10-10, never rewritten)
+
+D-154 Decision 4 requires that the owner confirm the ACCEPTED_RESIDUAL and
+QUARANTINE lists once, before the final substantive commit, and that until that
+confirmation the residuals are proposed rather than final. This record states
+exactly what owner authority exists in the repository today, and nothing more.
+No owner statement is invented, paraphrased into a stronger form, or dated
+earlier than it is.
+
+### What exists, and its exact authority
+
+1. **D-152 — the owner decision of 2026-10-02, recorded verbatim.** The
+   owner-reviewed corrective prompt `RESUME_PROMPT_5.md` decided "both": keep
+   OD-2 (`PROJECT_COMPLETE_AND_CI_CERTIFIED` under D-129, all 16 conditions) AND
+   run Track A (integrity and product fixes, first) together with Track B (make
+   certification reachable, honestly, with every one of the 16 conditions
+   getting a real producer verifiable from a clean clone). Its binding rules
+   include: design certification before coding it; a Producer Matrix row that
+   cannot be completed honestly is an owner question (STOP), never a guess;
+   receipts must be verifiable from a clean clone; every guard gets a
+   behavioural, committed mutation proof; and the exit rule "no review-6 by
+   default — if Track B cannot make all 16 conditions reachable honestly, STOP
+   and report which ones and why". D-152 also records the evidence persistence
+   mechanism adopted at review-5 task B1.1 (committed, tracked receipts under
+   `evidence/certification/<S>/<subject>.json` in a documentary descendant of S,
+   tamper-evident and not tamper-proof, OD-5).
+2. **D-160..D-167 — eight owner-signed ACCEPTED_RESIDUAL entries.** Each names
+   the item and what remains, the RATIONALE, the RISK, the REVISIT TRIGGER
+   (which names this 14.4 residual-list review) and the OWNER AUTHORITY as
+   OD-1..OD-4 via D-153. They cover exactly these census rows:
+   D-160 A-15, D-161 NW-AUD-027, D-162 NW-AUD-030, D-163 NW-AUD-031,
+   D-164 NW-AUD-034, D-165 R2-15, D-166 R2-17, D-167 R2-26.
+   D-160 additionally records D-131 composition as the adopted END STATE for
+   A-15 and R2-26, and preserves the verbatim strike records for NW-AUD-019
+   task 2.2 and production-completion-programme task 14.7.
+3. **D-153 — the OD-1 tier rule as owner authority for the remaining
+   residuals.** OD-1 ("T0/T1/T2-FIX fixed; T2-GATE quarantined; T3
+   accepted-residual unless S; no discovery loop") is the owner decision that
+   authorizes every T3 row to end as an accepted residual. The nine
+   `NARROW/FIX (S) + ACCEPTED_RESIDUAL for remainder` rows and the
+   `2.2 -> ACCEPTED_RESIDUAL` row of 14.3 therefore rest on D-153 plus the
+   authority record in D-159, NOT on a per-item owner signature.
+4. **D-158 — the QUARANTINE list.** The five QUARANTINED rows of 14.3 (NW-AUD-016
+   full, NW-AUD-022 task 2.1 / R2-47, NW-AUD-025 full, NW-AUD-026, NW-AUD-037,
+   NW-AUD-038 — six registry entries covering five census rows) are recorded in
+   `config/dev-lane-preconditions.v1.json` as OPEN with **no standing owner
+   authorization** and an empty `ownerAuthorizations` list. Clearing any entry
+   requires the work itself; clearing the refusal requires an owner token citing
+   a DECISIONS entry listed in `ownerAuthorizations`, and none is listed.
+
+### What does NOT exist, stated so it is never read as existing
+
+- **No owner statement confirms the residual list as a whole.** The eight
+  per-item owner-signed entries exist; a single whole-list confirmation does
+  not. 14.3 therefore records the non-signed residual rows as resting on
+  D-153's tier rule and labels them as such, rather than presenting them as
+  owner-signed.
+- **No owner token has cleared any DEV-lane precondition.**
+  `ownerAuthorizations` is empty, so every DEV-lane launcher still refuses with
+  `DEV_LANE_PRECONDITION_OPEN`; the quarantine is live, not nominal.
+- **No owner decision unblocked Phase 9B/10B.** D-135 records the prerequisites
+  as unavailable and the acceptance class as `COMPLETE_LOCAL_SYNTHETIC` /
+  `NOT_PROVEN`; that is neither an unblock nor a permanent closure, and the
+  programme's box 11.3 is recorded EXTERNAL rather than ticked.
+- **No owner confirmation exists for the owner-gated retention apply (5.3/5.4),
+  `mochi` access (10.6), or the npm registry advisory query at S (X-09 /
+  M14 15.4).** Each stays EXTERNAL_PREREQUISITE.
+- **D-152 is a review-5 owner decision, not a terminal-confirmation
+  statement.** It authorizes the review-5 scope and its binding rules; it does
+  not confirm the final residual list, and it is not cited as if it did.
+
+### Revisit trigger
+
+The residual list is re-confirmed by a NEW owner statement recorded as a new
+DECISIONS entry, which must name each residual it confirms. Any change to a
+residual's underlying code, or an owner decision to schedule one of them as its
+own task, supersedes its entry rather than editing it.
+
+## M13 14.6 — the archive wave (appended 2026-10-10, never rewritten)
+
+A-22 / X-06. `npx openspec validate --all --strict` now reports
+**80 passed, 0 failed (80 items)** and `openspec list` shows **exactly one active
+change: `nightwatch-final-product-completion-v1`** — this one, deliberately not
+archived (its archive is M14 task 15.5, after the final substantive commit S and
+its CI observation).
+
+**Sixty-six active changes were archived oldest-first.** Their archive order was
+derived from `git log --diff-filter=A --format=%ad -- openspec/changes/<id>/proposal.md`
+(oldest first), not assumed. No strict-validation failure stopped the wave.
+
+| Outcome | Count | Notes |
+| --- | --- | --- |
+| archived with spec sync | 17 | the capability delta describes behaviour that is delivered and proven at HEAD |
+| archived with `--skip-specs` | 49 | the delta describes narrowed, quarantined, residual, superseded or planning-only behaviour |
+| **total archived** | **66** | `openspec/changes/archive/` now holds 125 directories and the `ARCHIVE-INDEX.md` holds 124 data rows |
+| published specs | 79 | up from 59; 20 new capability specs were published, each with a real Purpose written in place of the archive CLI's `TBD` stub |
+
+### The rule applied, so every choice is auditable
+
+A change was archived WITH spec sync only when every box in its own `tasks.md` is
+ticked with a completion citation AND its capability delta describes behaviour
+that is currently implemented and proven at HEAD. Every other change was
+archived with `--skip-specs` and a per-change reason recorded in
+`openspec/changes/archive/ARCHIVE-INDEX.md`. Each of the 39 NW-AUD originals was
+treated this way, exactly as X-06 demands: only
+`nightwatch-semantic-request-admission-integrity-v1` was fully implemented as
+written and therefore spec-synced; the other 38 were `--skip-specs`, because
+archiving them the default way would have written requirements that were never
+implemented into the published baseline.
+
+The four legacy ledgers were archived as follows: the observability master plan
+and the production-observability tracks with `--skip-specs` (six EXTERNAL boxes);
+`production-completion-programme` with `--skip-specs` because its 22 capability
+deltas ARE the ordered advance conditions and none of the sixteen is MET at HEAD;
+`autonomous-yield-proof-w11` with `--skip-specs` because its unknown-yield arm is
+frozen and never validly executed; `autonomous-bug-hunting-programme` with spec
+sync (`agent-protocol`).
+
+### One spec-merge fallback, recorded rather than forced
+
+`nightwatch-provider-resilient-current-yield-w13-v1` is strict-valid on its own
+(`npx openspec validate nightwatch-provider-resilient-current-yield-w13-v1 --strict`
+→ "Change ... is valid"), but its spec delta cannot merge into the
+already-published `current-source-yield-measurement` baseline: the delta names
+MODIFIED requirement headers ("Provider selection SHALL follow the frozen
+provider-resilience policy") that do not exist in the published capability (whose
+header is "Provider selection SHALL be declared before probing"). The archive
+CLI aborted with "Aborted. No files were changed." rather than applying a
+partial merge. This is a spec-merge conflict, not a strict-validation failure of
+the change, so the canonical handling was applied: archive with `--skip-specs`
+plus the disposition record in `ARCHIVE-INDEX.md`. The alternative — editing the
+delta to match the published header — would have rewritten a published
+requirement's identity to fit the archive, which is the class of act X-06
+exists to prevent. W13's behaviour stays recorded in its tasks ledger, the
+README governed status block and `STATE`.
+
+### The mechanical consequences, closed in the same change
+
+- **`config/task-id-ledger.v1.json`** went from 67 entries to 1
+  (`nightwatch-final-product-completion-v1`). The checker's own message names the
+  required action — `LEDGER_TASK_ID_ARCHIVED_ENTRY: ... remove its entry from
+  config/task-id-ledger.v1.json (an archived change's IDs are no longer
+  enforced)` — and the review-5 archive commit (`3362bdb0`) is the precedent
+  ("archive the child change with spec sync, remove its ledger entry"). Leaving
+  the entries would have failed `agent:check`.
+- **`.agent/tasks/nightwatch-final-product-completion-v1/SPEC.md`** gained a
+  `## Declared Deletions` block listing all 368 pre-move tracked paths of the 66
+  changes (271 in the primary block plus the remainder), because the declared
+  -deletion gate measures every tracked-file deletion against the session base
+  and fails closed on an undeclared one (`WORKSPACE_UNDECLARED_TRACKED_DELETION`).
+  The SPEC is an append-only declaration surface and already carried two
+  precedent blocks for earlier archive moves.
+- Every archived change's task record remains a terminal continuity record under
+  `.agent/tasks/`; `npm run agent:check` PASSES with 35 warnings (down from 85,
+  because the archived changes' LEDGER_TASK_WITHOUT_CHANGE warnings resolved).
+
+### What this archive does NOT do
+
+It does not archive this campaign's own change, it does not publish the
+programme's advance-condition capabilities, and it does not convert any struck
+box into a published requirement. The single remaining active change is the one
+that still has open work (M14, tasks 15.1-15.8).

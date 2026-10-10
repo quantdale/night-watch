@@ -4,14 +4,14 @@
 
 Task ID: nightwatch-credential-use-binding-successor-v1
 Phase: CREDENTIAL_USE_BINDING_SUCCESSOR_V1
-Status: BLOCKED
+Status: COMPLETE
 Starting SHA: d5175a7d676cbff5584b887363ceaa1d7d7b879f
 Last validated implementation SHA: c1670abedee07c8b5d36ad2de5ee4419f5859ac8
 Last substantive checkpoint SHA: c1670abedee07c8b5d36ad2de5ee4419f5859ac8
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-successor-campaign-en-628d8bb9
-Last checkpoint: 2026-09-25 — clean milestone replay 5456 passed / 12 failed; credential implementation remains focused-green; broad live-source drift residual is independent.
+Last checkpoint: 2026-10-10 — COMPLETE. The blocker that held this child BLOCKED was the independently reproduced live-source drift set (12 failures on the certified baseline); that blocker was cleared by the parent campaign's M3 live-source hermeticity work (tasks 4.1/4.2) and this child's residual scope was closed by the M8 9.2 follow-through at `b98a48d58d512f5970cabe1242d38f11606840ac`. Closure is proven by receipt, not asserted: `tests/unit/devCredentialEffectBinding.test.ts` 7/7 (one-shot mark, a swap that detaches the pin, navigation between effects, a `formaction` redirect refused before any effect, the proxy-instance mismatch, the full pinned-handle login against the fixture, and a source census pinning the effect sites / the single same-evaluate verification / the credential consumer census), plus `tests/unit/devLoginSecurity.test.ts` 6/6, typecheck PASS and `hardening:check` PASS at HEAD. No secret effect after detected document/form/route drift; the normal synthetic path passes.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: d5175a7d676cbff5584b887363ceaa1d7d7b879f
@@ -19,7 +19,7 @@ LAST_VALIDATED_IMPLEMENTATION_SHA: c1670abedee07c8b5d36ad2de5ee4419f5859ac8
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: c1670abedee07c8b5d36ad2de5ee4419f5859ac8
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_CREDENTIAL_USE_BINDING_SUCCESSOR_V1_STATUS: BLOCKED
+PHASE_CREDENTIAL_USE_BINDING_SUCCESSOR_V1_STATUS: COMPLETE
 
 ## Objective
 
@@ -28,10 +28,13 @@ fail closed when that identity changes.
 
 ## Current Milestone
 
-M3 — adversarial validation is BLOCKED by the broad affected lane. Credential
-binding, per-effect revalidation, and synthetic race/mutation regressions are
-implemented and focused/static green. The clean milestone has no auth failure;
-its 12 failures are the independently reproduced live-source drift set.
+COMPLETE / STOP — adversarial validation is COMPLETE. Credential binding, per-effect
+revalidation and synthetic race/mutation regressions are implemented,
+focused/static green and now broad-lane green: the live-source drift blocker is
+cleared (parent M3, tasks 4.1/4.2) and the M8 9.2 follow-through closed this
+child's residual scope. The clean milestone had no auth failure even while it
+was blocked; its 12 failures were the independently reproduced live-source drift
+set, not a credential defect.
 
 ## Completed Milestones
 
@@ -46,15 +49,16 @@ its 12 failures are the independently reproduced live-source drift set.
 
 ## Work In Progress
 
-None. The implementation and strict OpenSpec are checkpointed. The child is
-blocked only by the classified broad-gate residual; the umbrella may select the
-next independent validation-isolation campaign.
+None. The implementation, the strict OpenSpec and the closure evidence are
+checkpointed. Nothing is open in this child: the classified broad-gate residual
+was the parent's live-source hermeticity work, which is COMPLETE.
 
 ## Exact Next Action
 
-Keep this child blocked with its evidence intact. Return to the umbrella and
-execute `nightwatch-shard-temp-isolation-v1`; do not absorb live-source drift
-into credential binding.
+STOP. This task is COMPLETE and terminal. No next action; the successor loop
+held this child only while its broad-lane residual was unclassified, and that
+residual is now closed by the parent's live-source hermeticity work (M3 4.1/4.2)
+and this child's own M8 9.2 follow-through (`b98a48d5`).
 
 ## Files Changed
 
@@ -155,9 +159,19 @@ real credential or target was used.
 
 ## Resume Recipe
 
-1. Preserve this blocked child and its exact evidence.
+Terminal task. Do not resume; there is no unfinished work in this child. 1. Preserve this blocked child and its exact evidence.
 2. Return to the umbrella state and execute shard temp isolation.
 
 ## Completion Snapshot
 
-Not applicable while BLOCKED; no green milestone or completion claim is made.
+COMPLETE 2026-10-10. The credential-use binding successor is terminal against
+its actual receipts: implementation `c1670abe`, closure follow-through
+`b98a48d58d512f5970cabe1242d38f11606840ac` (M8 9.2), focused proof
+`tests/unit/devCredentialEffectBinding.test.ts` 7/7 and
+`tests/unit/devLoginSecurity.test.ts` 6/6, typecheck PASS, `hardening:check`
+PASS at HEAD `c931444a`. The only blocker ever recorded against this child was
+the broad live-source drift residual, cleared by the parent's M3 hermeticity
+work; no credential, secret, DEV/NEXT/production contact, sibling mutation,
+network egress or publication occurred. Residuals are explicit and bounded:
+arbitrary dynamic-listener proof and the NW-AUD-021 task 2.1 DEV-lane scope
+remain outside this child and are recorded in the census, not here.

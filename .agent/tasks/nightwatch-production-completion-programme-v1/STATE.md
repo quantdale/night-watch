@@ -6,7 +6,7 @@ STATE — nightwatch-production-completion-programme-v1
 
 Task ID: nightwatch-production-completion-programme-v1
 Phase: PRODUCTION_COMPLETION_PROGRAMME_V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 36bd4930db978423f97e16f35250c2e66bfa112c
 Last validated implementation SHA: b1f1aa684fa1543b588f6af9095ad5393bbcb152
 Last substantive checkpoint SHA: b1f1aa684fa1543b588f6af9095ad5393bbcb152
@@ -34,7 +34,7 @@ LAST_VALIDATED_IMPLEMENTATION_SHA: b1f1aa684fa1543b588f6af9095ad5393bbcb152
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: b1f1aa684fa1543b588f6af9095ad5393bbcb152
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_PRODUCTION_COMPLETION_PROGRAMME_V1_STATUS: IN_PROGRESS
+PHASE_PRODUCTION_COMPLETION_PROGRAMME_V1_STATUS: COMPLETE
 
 ## Objective
 
@@ -45,16 +45,19 @@ external dependency with its blocking class and next action.
 
 ## Current Milestone
 
-Milestone ID: G16.9/G16.10/G16.11 hardening rule-engine decomposition
-Milestone status: COMPLETE_LOCAL
-What is being attempted: nothing further in this milestone. The rule engine is
-decomposed into 11 invariant-family modules plus a mechanically authoritative
-registry; behaviour preservation is measured against `9fc763b3`, not asserted;
-and the new enumeration failure modes each carry a recorded probe verified to
-raise its own error code. G16.12 stays OPEN behind a pre-existing
-environment-caused block (see `## Blockers`). Continuation returns to the
-remaining owner-gated programme groups (G16.5, G8, G9, G12, G18, G19, G21).
-The preceding consolidation remains integrated at `f3a31ed9`.
+COMPLETE / STOP — every one of the 21 programme groups plus the CF-1/CF-2
+carried entries is now closed: each box is either ticked with a citation or
+struck with an explicit disposition token (36 ticked with citation, 11 struck
+with disposition; `status:local` reports open=0 undispositioned=0 done=242
+declared_not_in_scope=11 at this reconciliation). The groups that needed an
+owner or organizational decision record their decision where it was taken
+(3.11 route, 9.1-9.3 the executed advisory query, 10.13/D-134 C-13/C-14
+terminal, 11.3/D-135 acceptance class, 13.8/D-129 status, 14.6/D-131
+dtoFramework, 17.4/D-130 schema-default policy) and the ones that did not get
+one stay EXTERNAL rather than being closed falsely (5.3/5.4 the owner-gated
+retention apply, 10.6 mochi access). Reconciled 2026-10-10 by the parent
+campaign's M13 task 14.2; the earlier G16.12 blocker was the sibling-source
+drift set, cleared by the parent's M3 live-source hermeticity work (4.1/4.2).
 
 ## Completed Milestones
 
@@ -140,111 +143,25 @@ The preceding consolidation remains integrated at `f3a31ed9`.
 
 ## Work In Progress
 
-G21 local closeout is integrated at `4de61d41`. This wave ticks G5.8, G5.9
-and G17.2 from live evidence, records the 2026-09-14 disk re-measurement in
-the census ledger and matrix §1, and migrates observe-canary,
-observe-preflight, observe-gate and observe-authenticated onto
-`defineOperatorCli` (sweep 38 conforming / 27 undeclared). Owner decisions
-remain OPEN. `lanes:manual` stays unauthorized. Parked campaigns stay parked.
-
-The owner-approved single-branch consolidation is integrated at `f3a31ed9`
-(tree `3f8a1b3b`, identical to `b14f9d74`). All session branches, the live
-session worktree, the stale checkpoint refs and the retired isolated clone
-are consolidated into `main` with every retired commit an ancestor; the
-canonical maintenance claim is re-pointed. See the G6.10/G6.11 milestone
-above and the programme `tasks.md` 2026-09-14 addendum.
-
-### G16.9/G16.10/G16.11 hardening rule-engine decomposition
-
-`bin/hardening-check.mjs` held 83 rules, the registry, the probe campaign and
-the entry point in 6045 lines. It is now 85 lines of orchestration over
-`bin/lib/hardening/`: `kernel.mjs` (accessors, findings, helpers),
-`rules/*.mjs` (83 rules in 11 invariant-family modules), `registry.mjs` (the
-enumeration authority) and `probe-campaign.mjs`.
-
-Decisions taken here, with their reasons:
-
-- ONE MODULE PER DECLARED FAMILY WAS REJECTED. The 83 rules carry 61 distinct
-  `family` values; a file each would have fragmented the engine past reading.
-  The rule-level `family` metadata is untouched and still what `--list-rules`
-  reports — the modules group those families by domain.
-- THE GRAPH IS ACYCLIC BY CONSTRUCTION. `registry.mjs` imports every family
-  module and no family module imports it. `checkRuleEngineSoundness` needs the
-  registry to check it, so it RECEIVES it: `injectRegistry` marks that one
-  entry and `implementation` keeps the raw module export addressable, so the
-  identity check stays exact for every rule including that one.
-- THE ENGINE SELF-EXCLUSION HAD TO WIDEN, AND THAT IS THE ONLY SUBJECT CHANGE.
-  A rule that scans `src/` and `bin/` for a forbidden literal necessarily
-  CONTAINS that literal, so eight rules each excluded `bin/hardening-check.mjs`
-  by name. The bodies now live beside the kernel, so the exclusion has to name
-  the engine rather than one of its files. `isRuleEngineSource()` is the single
-  owner, and `RULE_ENGINE_OPEN_CODED_SELF_EXCLUSION` fails a path literal so
-  the exclusion cannot go stale the next time the engine gains a module.
-
-Behaviour preservation was MEASURED against `9fc763b3`, not asserted:
-`--list-rules` byte-identical, plain run byte-identical, documentation-currency
-report byte-identical, exit codes identical; 104 of 113 moved declarations
-byte-identical with the 9 differences individually accounted for; reachability
-1142 -> 1155 files and 6607 -> 6655 edges, which is exactly the 13 new modules,
-findings=0 both. Base and decomposed `gate:local` receipts match in group
-status, counts and failed locations under the same `gateDefinitionDigest`.
-
-Probe campaign: 83 rules, 90 probes, 90 detected, 0 undetected,
-`statusUnchanged=true`. HC-073/HC-074 were retargeted to where the code now
-lives; HC-085..HC-089 are new and each was verified to raise its OWN error code
-rather than merely a non-zero exit. A `create` op was added to the probe
-vocabulary because a guard whose subject is a file's EXISTENCE cannot be
-expressed as a byte edit; it refuses an existing target and restores by
-deletion.
-
-Repaired en route: probe HC-059 was anchored to the literal calendar date in
-the `CURRENT_STATE` header, so it went stale the moment the document was
-updated, and the campaign had been failing at head (84/85) unnoticed because
-NO gate lane runs `hardening:rules`. It now anchors to the century. The
-unwired campaign is recorded under `## Deferred / Follow-Up`.
-
-### Delegated closure addendum (G21 owner items, G14.1–14.5, 14.9–14.11)
-
-G21's remaining owner-held items are locally closed: the three documentation
-surfaces state the capture sidecar fields and no-secret redaction rule, the
-pre-flight before any browser/subprocess/socket/file, the six lifecycle states
-with the single re-capture remedy, that `UNKNOWN_AGE` refuses, that no
-automated renewal exists or is planned, and that no renewal cadence is claimed
-as of the 2026-09-12 measurement because the owner-local store has an artefact
-but no lifecycle record. `checkAuthenticatedCapabilitySingleEvaluator` is
-implemented and probe HC-078 detects a second expiry evaluator while a
-`expires:` write does not match.
-
-G14.1–14.5 and 14.9–14.11 are locally closed: `buildReferenceGraph`,
-`checkSourceReachability` and `checkModuleBarrierEnforcement` run against
-`config/reference-graph.v1.json`; measured `--report-reachability` is
-files=1072, edges=6238, findings=0; the retention list is probed in both
-directions (HC-079/HC-080); `src/core/provenance/index.ts` is enforced
-(HC-081); and nine zero-importer barrels are removed with deletions declared
-under `## Declared Deletions` in `SPEC.md`. `selfDevSandbox/index.ts` is
-removed rather than enforced because its test-only base override must not be
-re-exported; `checkPhase8BSandboxBoundary` and `checkPhase8B01CloseoutIntegrity`
-were updated accordingly and `checkC105ProvenanceAuthorityBoundary` no longer
-reads the removed `prodProvenance/index.ts`. G14.12 is partial (rules and
-probes registered; integration/release remain owner actions). G14.6–14.8 stay
-OPEN: `src/core/dtoFramework/` and `src/core/adversarialCorpus/` are retained
-with reason `G14.6 owner decision OPEN` and neither adoption nor removal is
-claimed.
-
-The `checkBinExecutionCoverage` probe HC-021 was repaired to mutate both
-coverage sites (`all:true`) after concurrent group-21 test work made the
-single-site mutation insufficient. Concurrent writers remained active in this
-worktree throughout; one probe-campaign run raced a `.gitignore` write, and a
-clean rerun passed 81/81.
+None. No work is in progress. The 2026-10-10 ledger reconciliation
+ticked or struck every remaining box with its citation or disposition token, and
+the only blocker this programme ever carried (G16.12, the pre-existing
+sibling-source drift) is closed by the parent campaign's M3 live-source
+hermeticity work. Five boxes remain struck with an explicit EXTERNAL or
+ACCEPTED_RESIDUAL disposition because they cannot be proven closed: 5.3 and 5.4
+(the owner-gated retention apply was never executed), 6.5 (the foreign session
+worktree is gone and nothing was released or deleted), 11.3 (the Phase 9B/10B
+unblock-or-close decision was recorded as D-135, which is neither branch), and
+14.7 (the dtoFramework migration is the adopted end state's unfinished tail,
+owner-signed as D-160). Nothing is parked for a later session to finish.
 
 ## Exact Next Action
 
-The G16.9/16.10/16.11 decomposition is integrated. G16.12 stays OPEN behind
-the pre-existing sibling-source drift recorded under `## Blockers`; it is an
-owner re-admission action, not agent-closable, and the gate must not be
-weakened to clear it. Next agent-closable work: G16.5 (rule quantifier audit),
-and the remaining G8.11, G18.13 and G19.14 items. Owner decisions stay OPEN
-unless explicitly granted.
+STOP. This task is COMPLETE and terminal. There is no next action: the
+programme's own ledger is fully dispositioned and every owner-gated item is
+recorded as EXTERNAL with its decision or its absence, never as done. The
+terminal campaign `nightwatch-final-product-completion-v1` carries any
+remaining certification work at its final checkpoint S.
 
 ## Files Changed
 
@@ -848,19 +765,23 @@ NONE
 
 ## Resume Recipe
 
-1. Read `SPEC.md` and `PLAN.md`.
-2. Inspect `git status`, `git log`, and `npm run session:status`; this
-   session is `nightwatch-production-completion-262d9dad`. Adopt it if
-   stale (`claim --task nightwatch-production-completion-programme-v1 --adopt`).
-3. If the G21 local closeout is uncommitted, finish its validation and
-   integrate. Then continue agent-closable tails. Owner decisions stay OPEN
-   unless the owner states a choice.
-4. Never weaken a gate to make a group executable. Never self-authorize
-   CI, reclaim, branch deletion, egress, mochi access, 9B/10B, yield wave,
-   status naming, dtoFramework, or schema-default policy.
+Terminal task. Do not resume; there is no unfinished work in this programme and
+no owner decision is pending inside it. The rule that still binds any reader:
+never weaken a gate to make a group executable, and never self-authorize CI,
+reclaim, branch deletion, egress, mochi access, Phase 9B/10B, a yield wave,
+status naming, dtoFramework removal, or schema-default policy.
 
 ## Completion Snapshot
 
-The task is IN_PROGRESS; W1 is complete and recorded, and the remaining
-groups await owner decisions. Nothing in this record claims task completion,
-and no live HEAD or CI value is stored here.
+COMPLETE 2026-10-10 (reconciled by the parent campaign's M13 task 14.2).
+Every box in `openspec/changes/nightwatch-production-completion-programme-v1/tasks.md`
+carries exactly one outcome: 36 ticked with a citation, 11 struck with an
+explicit disposition token (EXTERNAL 6, SUPERSEDED 3, ACCEPTED_RESIDUAL 1 per
+D-160, and 17.4 EXTERNAL per D-130). The programme's groups were delivered by
+this change's M2-M12 milestones and by the priority remediation, live-source
+hermeticity and successor campaigns; the owner decisions are recorded as
+D-129, D-130, D-131, D-133, D-134, D-135, D-152 and D-160. No live HEAD or CI
+value is stored in this record; both are Git- and GitHub-discovered. What is
+NOT claimed: the owner-gated retention apply (5.3/5.4), organizational `mochi`
+access (10.6), and the Phase 9B/10B unblock (11.3) remain EXTERNAL owner
+actions with revisit triggers, exactly as OD-1 requires.

@@ -4,14 +4,14 @@
 
 Task ID: nightwatch-shard-temp-isolation-v1
 Phase: SHARD_TEMP_ISOLATION_V1
-Status: BLOCKED
+Status: COMPLETE
 Starting SHA: f41c6cc3c9e9e6a50f271acbd58ddb19b5afd6aa
 Last validated implementation SHA: 473842c196ce28d5a0fb26528bd86fbc5884d293
 Last substantive checkpoint SHA: 473842c196ce28d5a0fb26528bd86fbc5884d293
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-successor-campaign-en-628d8bb9
-Last checkpoint: 2026-09-25 — clean milestone 5459 passed / only the 12 independent source-drift failures; isolation race and integration defects absent.
+Last checkpoint: 2026-10-10 — COMPLETE. The blocker that held this child BLOCKED was the independently reproduced 12-failure live-source drift set; it was cleared by the parent campaign's M3 live-source hermeticity work (tasks 4.1/4.2), which is the successor this child's own Exact Next Action named. This child's own scope is complete: per-shard private OS temporary namespaces with only the invocation-owned scratch root removed, the shared absolute proxy lease directory, bounded cleanup, process-level proof and malformed-input refusal (`tests/unit/validationShardPlan.test.ts`, `tests/unit/syntheticCampaignShards.test.ts`).
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: f41c6cc3c9e9e6a50f271acbd58ddb19b5afd6aa
@@ -19,7 +19,7 @@ LAST_VALIDATED_IMPLEMENTATION_SHA: 473842c196ce28d5a0fb26528bd86fbc5884d293
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: 473842c196ce28d5a0fb26528bd86fbc5884d293
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_SHARD_TEMP_ISOLATION_V1_STATUS: BLOCKED
+PHASE_SHARD_TEMP_ISOLATION_V1_STATUS: COMPLETE
 
 ## Objective
 
@@ -27,8 +27,7 @@ Give every validation shard a private operating-system temporary namespace and r
 
 ## Current Milestone
 
-M3 — broad validation is BLOCKED only by the independent live-source drift residual; isolation implementation and adversarial proof are complete.
-
+COMPLETE / STOP — broad validation is COMPLETE. The independent live-source drift residual that blocked this child was cleared by the parent's M3 hermeticity work (tasks 4.1/4.2) — the very successor this child named as its next action — and the isolation implementation plus its process-level adversarial proof are complete.
 ## Completed Milestones
 
 - M0 complete: exact cross-shard failure, isolated-pass control, scope, and OpenSpec contract recorded.
@@ -36,13 +35,10 @@ M3 — broad validation is BLOCKED only by the independent live-source drift res
 
 ## Work In Progress
 
-None. The implementation is checkpointed and both broad lanes contain no isolation failure. The child is honestly BLOCKED by the 12 separate source-test hermeticity failures.
-
+None. The implementation and its closure evidence are checkpointed. This child is no longer blocked: the 12 source-test hermeticity failures are closed by the parent's M3 work, and per-lane TMPDIR isolation in `bin/campaign-synthetic.mjs` (task 4.3) plus `tests/unit/syntheticCampaignShards.test.ts` prove the isolation.
 ## Exact Next Action
 
-Preserve this blocked child and execute the selected live-source test
-hermeticity/currentness successor; do not rewrite source intelligence here.
-
+STOP. This task is COMPLETE and terminal. No next action; the live-source test hermeticity successor this child named was executed by the parent as `live-source-test-hermeticity-v1` (M3 tasks 4.1/4.2) and the 12 drift failures are closed.
 ## Files Changed
 
 | Path | Reason | Status |
@@ -144,10 +140,10 @@ NONE. System-temp validation scratch and loopback lease files only; no external 
 
 ## Resume Recipe
 
-1. Preserve this blocked child and exact evidence.
+Terminal task. Do not resume; there is no unfinished work in this child. 1. Preserve this blocked child and exact evidence.
 2. Execute the selected source-test hermeticity/currentness child.
 3. Keep popup L0 deferred pending lower-level target admission design.
 
 ## Completion Snapshot
 
-Not applicable while BLOCKED; no green milestone or completion claim is made.
+COMPLETE 2026-10-10. The shard temp isolation successor is terminal against its receipts: implementation `473842c196ce28d5a0fb26528bd86fbc5884d293`, private per-shard OS temporary namespaces derived from a `mkdtemp` run root and a closed shard identity, one shared absolute proxy lease directory so port coordination survives isolation, bounded removal of only the invocation-owned root, process-level proof that fresh Node subprocesses observe distinct `os.tmpdir()` values, and malformed-identity refusal. The only blocker recorded here was the independent live-source drift residual, cleared by the parent's M3 hermeticity work (4.1/4.2). No credential, DEV/NEXT/production contact, sibling mutation or network egress occurred. This successor has no NW-AUD original: the engine's own reproduced cross-shard `reviewStore.test.ts` failure selected it (`successor-campaign-engine-v1`, activated `7bacfb68`).

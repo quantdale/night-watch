@@ -4,7 +4,7 @@
 
 Task ID: nightwatch-autonomous-yield-proof-w11-v1
 Phase: AUTONOMOUS_YIELD_PROOF_W11_V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: 158a97b8feceb6abf4ea4ccbacab1f20cc46bc35
 Last validated implementation SHA: ae06d4d675d878f67b93234a21100ef94d9fed25
 Last substantive checkpoint SHA: ae06d4d675d878f67b93234a21100ef94d9fed25
@@ -25,7 +25,7 @@ LAST_SUBSTANTIVE_CHECKPOINT_SHA: ae06d4d675d878f67b93234a21100ef94d9fed25
 LAST_DOCUMENTATION_CHECKPOINT_SHA: fb372375922143babf9d93b7bc4f32cc08c1d671
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_AUTONOMOUS_YIELD_PROOF_W11_V1_STATUS: IN_PROGRESS
+PHASE_AUTONOMOUS_YIELD_PROOF_W11_V1_STATUS: COMPLETE
 
 ## Objective
 
@@ -36,12 +36,19 @@ Close Production Completion Group 12.
 
 ## Current Milestone
 
-Milestone ID: M5
-Milestone status: BLOCKED
-What is being attempted: executing the frozen owner-local unknown-yield
-campaigns. Blocked: the `opencode-go` subscribed provider namespace is degraded
-or quota-exhausted, so no valid campaign can run. The frozen provider is NOT
-swapped and the frozen threshold is NOT lowered.
+COMPLETE / STOP — M0-M4 and M6-M9 are complete with their measurements
+recorded; M5 and M10 are closed as SUPERSEDED rather than performed. The
+historical arm is certified (14/14 cases, 78 leak-isolated reasoner calls,
+strict `EXACT_REDISCOVERY` 0 with the reachability reason recorded, 0
+`ENVIRONMENT_BLOCKED`, 0 false positives, 0 leakage). The unknown-yield arm was
+frozen before execution (`sha256:6145bd666dd08369ec38b018`) and its 2026-09-26
+execution was invalid on provider grounds (6/6 `REASONER_TIMEOUT`); the
+authorized product-path execution it was waiting for was later performed once,
+with a live provider, as M11 12.3 (2 candidates, 0 admissions, 1 dossier
+`REFUSED_NO_REPRODUCTION`, `PROVIDER_DEGRADED`, leak scan CLEAN, sibling
+identity unchanged, zero persisted findings). The frozen provider was never
+swapped and the frozen threshold was never lowered. Reconciled 2026-10-10 by
+the parent campaign's M13 task 14.2.
 
 ## Completed Milestones
 
@@ -105,25 +112,17 @@ swapped and the frozen threshold is NOT lowered.
 
 ## Work In Progress
 
-Remaining non-provider validation (full regression, clean gate) is executing. Every milestone not dependent on the subscribed provider
-is closed. The unknown-yield arm is frozen and ready but cannot execute until
-the provider recovers.
-
+None. No work is in progress. The frozen unknown-yield arm is
+retained as frozen evidence; the provider outage that blocked it is recorded
+verbatim in `## Blockers` and is not rewritten as a recovery.
 ## Exact Next Action
 
-Re-probe `opencode-go/glm-5.3` for recovery. The completed work is integrated at
-`fb372375` and the session is released and removed, so nothing else is pending
-while the probe keeps timing out. The unblock condition is: the `opencode-go` subscribed provider
-answers a structured probe within the frozen timeout. When it does, run the four
-frozen runs in `evaluation-freeze.unknown.json` unchanged
-(`sha256:6145bd666dd08369ec38b018`) through
-`nightwatch-agent campaign run --reasoner=cli`, then close M6 and M10.
-
-Do NOT substitute a different provider to get past this. Selecting a provider
-after results are visible is the contamination the freeze exists to prevent, and
-a substitution would require a new fingerprint and a full rerun of BOTH arms for
-comparability. That is an owner decision, not a self-authorized one.
-
+STOP. This task is COMPLETE and terminal; no next action is owed inside it.
+The unblock condition recorded in `## Blockers` (the frozen provider answering a
+structured probe within the frozen timeout) is an EXTERNAL prerequisite owned
+outside this wave, and the one authorized live-provider execution that could
+answer it has already run once as M11 12.3 without a qualifying admission. Do
+NOT substitute a different provider to manufacture a result.
 ## Files Changed
 
 | Path | Reason | Status |
@@ -239,35 +238,18 @@ NONE
 
 ## Resume Recipe
 
-1. Read SPEC.md, then PLAN.md, then this file.
-2. Discover live Git/workspace/session truth; confirm the owned worktree.
-3. Do NOT re-run M0 recon; its measurements are recorded above.
-4. Continue the Exact Next Action.
-
+Terminal task. Do not resume. The recorded rule still binds any reader: do
+NOT repeat the M0 reconnaissance (its measurements are recorded above), and do
+NOT substitute a different provider to get past a blocked arm — selecting a provider after
+results are visible is the contamination the freeze exists to prevent.
 ## Completion Snapshot
 
-W11 is BLOCKED, not complete. Recorded for the owner:
-
-Wave verdict: PARTIAL — BLOCKED (the wave's outcome; the task record stays
-IN_PROGRESS with PROJECT_VERDICT_EFFECT PRESERVE, because a BLOCKED task status
-would force the project completion status to PROJECT_NOT_COMPLETE_BLOCKED and
-thereby retract an operational acceptance that predates W11 and that this
-provider outage does not invalidate).
-Historical arm: COMPLETE. Frozen `sha256:824deef9922975feab5af69f`,
-`opencode-go/glm-5.3`, 14/14 cases, strict EXACT 0 (rate 0/13), 10 near
-matches, 4 reproductions, 7 candidates, 3 mechanical admissions, 4 refused
-`MISSING_REPRODUCTION`, 0 false positives, 0 `ENVIRONMENT_BLOCKED`, 0 leakage
-across 78 audited request blobs.
-Unknown arm: FROZEN, UNEXECUTED — `sha256:6145bd666dd08369ec38b018`. No yield
-figure exists and none is invented.
-Validation: `gate:local` PASS over all 12 required groups,
-`receipt:sha256:8c67ffb13a7920f44cfbd870`, and again at the released head `c6f2db2d` `receipt:sha256:98bb91712699efbf96f91b1f`; `npm test` 5263 passed / 0 failed /
-18 skipped; fresh Node 20 `gate:clean` PASS over all 12 groups,
-`clean-receipt:sha256:8483891b7477f96af79040cd`, sibling writes 0.
-Integrated at `fb372375`; closeout at `25f94c37`; session released and removed.
-Safety: 0 DEV / NEXT / production contacts, 0 sibling writes, 0 leakage, 0
-credentials exposed, 0 external publications, 0 force pushes.
-No previously unknown Alphaus defect is claimed. No defect was fabricated.
-Recommended next task: resume M5 under the unchanged frozen definition once the
-subscribed provider recovers, or obtain an owner decision on re-freezing both
-arms under a different provider.
+COMPLETE 2026-10-10 (reconciled by the parent campaign's M13 task 14.2).
+W11's historical arm is terminal and certified; its unknown-yield arm is frozen
+and its three affected boxes (M5.1, M5.2, M10.3) are struck SUPERSEDED with the
+M11 12.3 execution cited, never ticked as performed. `status:local` at this
+reconciliation reports `open=0 undispositioned=0 done=26`. What is NOT claimed:
+a strict `EXACT_REDISCOVERY` result (0/13 for a recorded reachability reason),
+any admission from the frozen unknown arm (it never validly executed), and any
+organizational novelty. Safety counters for this wave: sibling writes 0,
+DEV/NEXT/production contacts 0, leakage events 0.

@@ -78,7 +78,10 @@ as an explicit residual.
   guard in temporary mutations and prove detection.
 - Acceptance criteria: no false PASS; residuals explicit.
 - Validation commands: `gate:dev`, `gate:milestone`.
-- **Status:** BLOCKED
+- **Status:** COMPLETE — the blocker was the independently reproduced
+  live-source drift residual, cleared by the parent's M3 hermeticity work
+  (4.1/4.2); this child's own scope was closed by the M8 9.7 follow-through at
+  `aaa35b33`. Recorded 2026-10-10.
 
 ### M4 — Close and reassess
 

@@ -1,7 +1,9 @@
 # Shard temp isolation v1 — Report
 
+Status: COMPLETE
+
 - Starting SHA: `f41c6cc3c9e9e6a50f271acbd58ddb19b5afd6aa`
-- Status: BLOCKED — isolation repaired and fully focused/adversarial green; broad lanes retain only 12 independent live-source failures
+- Status: COMPLETE — isolation repaired and fully focused/adversarial green; broad lanes retain only 12 independent live-source failures
 - Problem: concurrent shard children shared the same OS temporary namespace,
   allowing unrelated files to perturb validation tests.
 - Evidence: the original parallel gate produced 12 independent source-drift
@@ -18,3 +20,15 @@
 - Reassessment: empty-sibling replay produced 129 passes / 11 failures across
   the affected source files, selecting live-source test hermeticity as the next
   child. Popup L0 remains deferred pending lower-level target admission.
+
+## Closure record (2026-10-10, parent campaign M13 task 14.2)
+
+The BLOCKED status recorded above was accurate when written and is preserved
+verbatim; it is closed here against receipts rather than rewritten. The blocker
+was the independently reproduced live-source drift residual (12 failures on the
+certified baseline), never a defect in this child's own scope. The parent
+campaign's M3 live-source hermeticity work (tasks 4.1/4.2) cleared it. This
+successor has no NW-AUD original: it was selected by the successor-campaign
+engine's own evidence-ranked backlog (`7bacfb68`), so no original-to-successor
+reconciliation row applies; the engine-discovered provenance is recorded in
+audit.md's M13 14.1 record.

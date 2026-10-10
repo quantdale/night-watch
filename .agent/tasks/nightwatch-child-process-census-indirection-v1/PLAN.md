@@ -72,7 +72,10 @@ form and mutation negatives.
   mutation and prove detection; classify unrelated broad-gate drift.
 - Acceptance criteria: mutations detected; no profile or safety regression.
 - Validation commands: `gate:dev`, `gate:milestone`.
-- **Status:** BLOCKED
+- **Status:** COMPLETE — the blocker was the independently reproduced
+  live-source drift residual, cleared by the parent's M3 hermeticity work
+  (4.1/4.2); this child's own scope was closed by the M8 9.11 follow-through at
+  `f3062b52`. Recorded 2026-10-10.
 
 ### M4 — Close and reassess
 

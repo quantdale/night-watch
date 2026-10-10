@@ -5,15 +5,23 @@ Phase: FINAL_PRODUCT_COMPLETION_V1
 Title: Final product completion (terminal campaign)
 Status: IN_PROGRESS
 TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1
-TASK_GROUPS_COMPLETE: 1,2,3,4,5,6,7,8,10,11,12,13
-TASK_GROUP_NEXT: 14
-TASK_NEXT_ID: 14.1
-TASK_GROUP_DEFERRED: 9.5b
+TASK_GROUPS_COMPLETE: 1,2,3,4,5,6,7,8,9,10,11,12,13,14
+TASK_GROUP_NEXT: 15
+TASK_NEXT_ID: 15.1
 Task directory: .agent/tasks/nightwatch-final-product-completion-v1
 Starting SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
 Last validated implementation SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
-Last checkpoint: 2026-10-09 — M10 (group 11) DOCUMENTATION OF RECORD IS WRITTEN; 11.1-11.6
-COMPLETE. The T3/T4 S-fixes, ratchets and wired shared authorities landed at `b7afa9e9`
+Last checkpoint: 2026-10-10 — M13 (group 14) LEDGER CLOSURE AND LIVE-RENDERED DOCUMENTATION.
+14.1 reconciles the NW-AUD originals against their successors with SHA citations; 14.2 sets the six
+BLOCKED successor children COMPLETE against their receipts and sets production-completion-programme,
+the autonomous bug-hunting programme, W11 and the observability master plan terminal (every box
+ticked-with-citation or struck-with-disposition); 14.3 records one disposition for each of the 228
+census items; 14.4 records the owner-confirmation evidence that exists (D-152 plus D-160..D-167)
+without inventing any; 14.5 renders the operator truth from live `project:check` / `gh` /
+`status:local` / `bin-typecheck` / `typecheck` output into README, CURRENT_STATE,
+RELEASE-ADVANCE-CONDITIONS, ROADMAP, SAFETY_MODEL §33 and AGENTS.md, and resolves the repository
+visibility mismatch (the repository is PUBLIC; the owner action to make it private is PENDING);
+14.6 archives every other active change oldest-first leaving exactly this one. The T3/T4 S-fixes, ratchets and wired shared authorities landed at `b7afa9e9`
 (`assertGatedReadAllowed`, the retention journal, `publishLocalReport`,
 `admitLocalTypeScriptCompiler`, the 635 unused-export ratchet, the private retention
 scopes, the CF-1 40-case census). DECISIONS D-153..D-167 now record OD-1..OD-4, the
@@ -57,8 +65,7 @@ Previous checkpoint: 2026-09-26 — M4 COMPLETE (5.1-5.7): six release probes wi
 states + the CI block-record single authority (`a784e668`), and the final
 integration `137207b1` after reconciling origin/main `946b52c4` and restoring
 the ledger-governed README status block; gate:dev/gate:milestone 5520/0.
-Current milestone: M13 — ledger closure and live-rendered documentation (group 14,
-tasks 14.1-14.6). M9 (group 10) is COMPLETE: the bin type-check lane is BLOCKING at
+Current milestone: M14 — close-out choreography and certification (group 15, tasks 15.1-15.8). M9 (group 10) is COMPLETE: the bin type-check lane is BLOCKING at
 0 diagnostics across all 143 tracked implementations with 0 exemptions and 0 widening
 annotations; the recorded 1402 baseline was a FLOOR because `tsconfig.bin.json` used to include
 `bin/**/*.d.mts` and TypeScript dropped 53 shadowed implementations from the program.
@@ -70,9 +77,12 @@ autonomous hunt (12.3), and the adversarial completion audit that found and repa
 refusals-delivered-as-uncaught-throws (the DEV-lane guard across 13 launchers, the phase*-real
 argv validation across 7 launchers, `nightwatch-agent status`, and the `.env` layer in three
 launchers plus the Control Center) with permanent regressions.
-Next action: M13 task 14.1 - reconcile the NW-AUD originals against their successors with SHA
-citations - then 14.2-14.6, M14 (the certified paid proof at S, the exact-head CI observation, the
-canonical gate trio and the topology proof) and the 13-section final report. The deferred `9.5b`
+Next action: M14 task 15.1 (the full authoritative validation set in this session), then 15.2
+(the final substantive commit S, canonical-routed), 15.3 (observe CI EXECUTED_PASS at S, re-bind
+every lane and condition at S through `npm run certify:evidence`), 15.4 (the canonical gate trio and
+the authorized npm registry advisory query), 15.5 (the documentary receipt commit, archive this
+change, push), 15.6 (the topology proof), 15.7 (the 13-section final report) and 15.8 (the OWNER
+STEP: revert the repository to private and confirm Actions still executes). The deferred `9.5b`
 (NW-AUD-020 tasks 3.2/4.2) continues to be carried by 14.1/14.2. Sequencing constraint recorded in
 D-148: the certified paid proof (12.3) runs at the final substantive SHA S on a clean tree.
 Authorization class: FINAL_PRODUCT_COMPLETION_V1

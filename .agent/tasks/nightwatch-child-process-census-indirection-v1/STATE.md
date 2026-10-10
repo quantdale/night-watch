@@ -4,14 +4,14 @@
 
 Task ID: nightwatch-child-process-census-indirection-v1
 Phase: CHILD_PROCESS_CENSUS_INDIRECTION_V1
-Status: BLOCKED
+Status: COMPLETE
 Starting SHA: 5619aeaf77e22862cc87c6da6ad6e022fa60b774
 Last validated implementation SHA: 361a1506f4635b3180d0712529f75f7ebd939dbb
 Last substantive checkpoint SHA: 361a1506f4635b3180d0712529f75f7ebd939dbb
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-successor-campaign-en-628d8bb9
-Last checkpoint: 2026-09-24 — child-process census implementation checkpoint 361a1506f4635b3180d0712529f75f7ebd939dbb; focused/static/mutation green; broad gate residual classified.
+Last checkpoint: 2026-09-24 — COMPLETE 2026-10-10 (see the closure record in the Completion Snapshot): child-process census implementation checkpoint 361a1506f4635b3180d0712529f75f7ebd939dbb; focused/static/mutation green; broad gate residual classified.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 5619aeaf77e22862cc87c6da6ad6e022fa60b774
@@ -19,7 +19,7 @@ LAST_VALIDATED_IMPLEMENTATION_SHA: 361a1506f4635b3180d0712529f75f7ebd939dbb
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: 361a1506f4635b3180d0712529f75f7ebd939dbb
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_CHILD_PROCESS_CENSUS_INDIRECTION_V1_STATUS: BLOCKED
+PHASE_CHILD_PROCESS_CENSUS_INDIRECTION_V1_STATUS: COMPLETE
 
 ## Objective
 
@@ -28,9 +28,10 @@ bypass without evaluating or executing any child process.
 
 ## Current Milestone
 
-M3 — adversarial validation is BLOCKED by the broad affected lane. The census
-implementation and its focused/static/mutation proofs are green; the broad
-lane's residual is outside this child.
+COMPLETE / STOP — adversarial validation is COMPLETE. The census implementation, its
+focused/static/mutation proofs and the M8 9.11 four-shape indirection
+follow-through are all green; the broad lane residual that blocked this child is
+the parent's live-source drift set and is now cleared.
 
 ## Completed Milestones
 
@@ -52,15 +53,16 @@ lane's residual is outside this child.
 
 ## Work In Progress
 
-None. The implementation is checkpointed; this child is blocked only by the
-classified broad-gate residual. The umbrella may select the next independent
-campaign.
+None. The implementation and its closure evidence are checkpointed. The
+classified broad-gate residual was the parent's live-source hermeticity work,
+which is COMPLETE.
 
 ## Exact Next Action
 
-Keep this child blocked with its evidence. Return to the umbrella state and
-select the run-evidence transaction integrity child; do not absorb unrelated
-source-intelligence or timing-flake failures into this census change.
+STOP. This task is COMPLETE and terminal. No next action; the source-drift and
+timing-flake failures that held this child are closed by the parent's M3 work
+(4.1/4.2 hermeticity, 4.4 event-driven ledger waits) and this child's own M8
+9.11 follow-through (`f3062b52`).
 
 ## Files Changed
 
@@ -149,11 +151,25 @@ customer data, or sibling write.
 
 ## Resume Recipe
 
-1. Read SPEC, PLAN, and STATE.
+Terminal task. Do not resume; there is no unfinished work in this child. 1. Read SPEC, PLAN, and STATE.
 2. Preserve this blocked child and its evidence.
 3. Return to the umbrella STATE and select the next child.
 4. Require a clean owned session and current reproduction before implementation.
 
 ## Completion Snapshot
 
-Not applicable while BLOCKED; no green milestone or completion claim is made.
+COMPLETE 2026-10-10. The child-process census indirection successor is terminal
+against its receipts: implementation `361a1506f4635b3180d0712529f75f7ebd939dbb`,
+closure follow-through `f3062b521f0db44a561d93f37ca45ebc883a989b` (M8 9.11),
+`tests/unit/childProcessCensusIndirection.test.ts` 6/6 covering all four
+indirection shapes, the declared `KNOWN_CREATE_REQUIRE_SITES` exemption, the
+clean literal case and the rule/test honesty pins; `hardening:check` PASS with
+the census totality guard (probe HC-154). The only blocker recorded here was the
+broad live-source drift residual, cleared by the parent's M3 hermeticity work;
+the separate `observerSemanticLedger` timing flake was made event-driven in M3
+4.4 and re-proved under load. No child process was evaluated or executed, no
+DEV/NEXT/production contact, no sibling mutation, no network egress. NW-AUD-014
+reconciliation: this successor narrows the original
+`child-process-boundary-totality-v1` (created `17113587`); R2-04's
+explicit-env-allowlist / sync-bound rules remain recorded open and are
+ACCEPTED_RESIDUAL per R2-17 (D-166), not closed here.

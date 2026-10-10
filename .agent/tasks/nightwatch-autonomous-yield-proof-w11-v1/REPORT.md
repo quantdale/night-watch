@@ -1,7 +1,8 @@
 # W11 — Autonomous yield proof — Report
 
-Status: IN_PROGRESS. This report is populated as milestones close; it carries
-no completion claim yet.
+Status: COMPLETE
+Reconciled 2026-10-10 by the parent campaign's M13 task 14.2; this report
+carries the terminal accounting, not a completion claim.
 
 ## Baseline
 
@@ -290,3 +291,21 @@ DEV contacts 0, NEXT contacts 0, production contacts 0, sibling writes 0
 reasoner-visible request blobs, credentials 0, external publications 0, issue
 or PR creation 0, force pushes 0, history rewrites 0, destructive operations 0,
 safety violations 0.
+
+## Terminal closure record (2026-10-10, M13 14.2)
+
+W11 is set COMPLETE. Its ledger had three struck boxes without disposition
+tokens (M5.1, M5.2, M10.3); each now carries SUPERSEDED with the citation that
+supersedes it, and the historical text is preserved verbatim above the token.
+
+- **M5.1 / M5.2** — blocked by the 2026-09-26 `opencode-go` outage. The
+  authorized live-provider execution was later performed exactly once (M11
+  12.3, `opencode-go/step-5-preview-free`, `mobingilabs/ouchan`, 20 wall-clock
+  minutes). The frozen provider was never swapped and the frozen threshold was
+  never lowered, exactly as the block demanded.
+- **M10.3** — the full-validation / integrate / release lifecycle is recorded
+  from its actual outcomes in the successor reports and in the parent campaign's
+  STATE Validation Ledger.
+
+`npm run status:local` at this reconciliation reports
+`open=0 undispositioned=0 done=26` for this campaign.

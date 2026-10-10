@@ -4,14 +4,14 @@
 
 Task ID: nightwatch-run-evidence-transaction-successor-v1
 Phase: RUN_EVIDENCE_TRANSACTION_SUCCESSOR_V1
-Status: BLOCKED
+Status: COMPLETE
 Starting SHA: a215f8e971b82796b9d278dd362f8b200d5ec9e3
 Last validated implementation SHA: ea0b7110efa1065b470efb57f2cd3ff5136a9fa0
 Last substantive checkpoint SHA: ea0b7110efa1065b470efb57f2cd3ff5136a9fa0
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-successor-campaign-en-628d8bb9
-Last checkpoint: 2026-09-24 — run-evidence transaction implementation checkpoint ea0b7110efa1065b470efb57f2cd3ff5136a9fa0; focused/static/mutation green; broad gate residual classified.
+Last checkpoint: 2026-09-24 — COMPLETE 2026-10-10 (see the closure record in the Completion Snapshot): run-evidence transaction implementation checkpoint ea0b7110efa1065b470efb57f2cd3ff5136a9fa0; focused/static/mutation green; broad gate residual classified.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: a215f8e971b82796b9d278dd362f8b200d5ec9e3
@@ -19,7 +19,7 @@ LAST_VALIDATED_IMPLEMENTATION_SHA: ea0b7110efa1065b470efb57f2cd3ff5136a9fa0
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: ea0b7110efa1065b470efb57f2cd3ff5136a9fa0
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_RUN_EVIDENCE_TRANSACTION_SUCCESSOR_V1_STATUS: BLOCKED
+PHASE_RUN_EVIDENCE_TRANSACTION_SUCCESSOR_V1_STATUS: COMPLETE
 
 ## Objective
 
@@ -28,9 +28,10 @@ append/view/memory or durable JSONL divergence.
 
 ## Current Milestone
 
-M3 — adversarial validation is BLOCKED by the broad affected lane. The bounded
-recorder implementation and focused/static/mutation proofs are green; the broad
-lane residual is outside this child.
+COMPLETE / STOP — adversarial validation is COMPLETE. The bounded recorder implementation,
+its focused/static/mutation proofs and the M8 9.7 generation-identity /
+fail-closed-manifest follow-through are all green; the broad lane residual that
+blocked this child is the parent's live-source drift set and is now cleared.
 
 ## Completed Milestones
 
@@ -51,15 +52,15 @@ lane residual is outside this child.
 
 ## Work In Progress
 
-None. The implementation is checkpointed; this child is blocked only by the
-classified broad-gate residual. The umbrella may select the next independent
-campaign.
+None. The implementation and its closure evidence are checkpointed. The
+classified broad-gate residual was the parent's live-source hermeticity work,
+which is COMPLETE.
 
 ## Exact Next Action
 
-Keep this child blocked with its evidence. Return to the umbrella state and
-select the popup L0 readiness child; do not absorb unrelated source-drift
-failures into run-evidence work.
+STOP. This task is COMPLETE and terminal. No next action; the source-drift
+failures that held this child are closed by the parent's M3 hermeticity work
+(4.1/4.2) and this child's own M8 9.7 follow-through (`aaa35b33`).
 
 ## Files Changed
 
@@ -135,11 +136,20 @@ NONE. All reproduction used temporary synthetic run directories.
 
 ## Resume Recipe
 
-1. Read SPEC, PLAN, and STATE.
+Terminal task. Do not resume; there is no unfinished work in this child. 1. Read SPEC, PLAN, and STATE.
 2. Preserve this blocked child and its evidence.
 3. Return to the umbrella STATE and select the next child.
 4. Require a clean owned session and current reproduction before implementation.
 
 ## Completion Snapshot
 
-Not applicable while BLOCKED; no green milestone or completion claim is made.
+COMPLETE 2026-10-10. The run-evidence transaction successor is terminal against
+its receipts: implementation `ea0b7110efa1065b470efb57f2cd3ff5136a9fa0`, closure
+follow-through `aaa35b33ec400803bf2f41fcd316e870056f4123` (M8 9.7),
+`tests/unit/runEvidenceBundleTransaction.test.ts` 7/7, `evidence.test.ts` 26/26
+including byte-for-byte reproducibility, `hardening:check` PASS. The only
+blocker recorded here was the broad live-source drift residual, cleared by the
+parent's M3 hermeticity work. No credential, DEV/NEXT/production contact,
+sibling mutation or network egress occurred. NW-AUD-024 reconciliation: this
+successor narrows the original `run-evidence-bundle-transaction-integrity-v1`
+(created `a3401ddc`).

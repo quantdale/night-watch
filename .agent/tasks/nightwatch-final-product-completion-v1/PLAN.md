@@ -304,7 +304,15 @@ approved paths.
   records terminal; every change archived with its disposition; documentation
   rendered from live `project:check` and `gh` output; `openspec validate
   --all --strict` PASS with exactly one active change remaining (this one).
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE (2026-10-10) — 14.1 the successor reconciliation with
+  SHA citations; 14.2 the six BLOCKED successor children COMPLETE against their
+  receipts plus production-completion-programme, the autonomous bug-hunting
+  programme, W11 and the observability master plan terminal, programme 9.1-9.3
+  ticked against `a574945e`; 14.3 the 228-item disposition table; 14.4 the
+  recorded owner-confirmation evidence; 14.5 the live-rendered operator truth
+  and the repository-visibility resolution; 14.6 `openspec validate --all
+  --strict` PASS with exactly one active change. The archive of the changes
+  themselves is executed under 14.6; this change's own archive is M14 15.5.
 
 ### M14 — Close-out choreography and certification (tasks 15.1-15.7)
 

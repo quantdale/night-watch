@@ -3245,3 +3245,75 @@ prerequisites unavailable with acceptance staying `COMPLETE_LOCAL_SYNTHETIC` /
 status held at `OPERATIONALLY_ACCEPTED` until all conditions and exact-head CI
 (D-129); G14.6 `dtoFramework` ADOPTED and `adversarialCorpus` removable on the
 measured graph (D-131); and G17.4 no presumed migration disposition (D-130).
+
+---
+
+## Live heading rendering and historical labelling (appended 2026-10-10, M13 task 14.5)
+
+This is a dated APPEND to an `APPEND_ONLY_ARCHIVE` document: no heading above is
+renamed and no line above is modified. X-07 asked for the CURRENT_STATE status
+rows and the ROADMAP headings that still say CI is externally blocked and name
+superseded provider blockers. They are labelled here, and the live state is
+stated beside them.
+
+### What is live, measured 2026-10-10
+
+| Surface | Command | Live result |
+| --- | --- | --- |
+| Local readiness | `npm run status:local` | `READY_LOCAL_SYNTHETIC` (ready claim `LOCAL_SYNTHETIC_ONLY`; never DEV/production); `owner-scope: FROZEN_BY_OWNER / INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE (frozen=22 markers-match=true)`; `blockers: 0`; open work `campaigns=50 open-items=15 undispositioned=527 blocked-campaigns=0 externally-blocked=4` |
+| Release certification | `npm run project:check` | `status: PASS`, `projectCompletionStatus: OPERATIONALLY_ACCEPTED`, certified checkpoint `027367d9da22ea1198c0a60fb1b11805f6719d40`, live head `c931444ae680780291a70e77edf08c59fe15360a`, lane counts `proven=0 externallyBlocked=0 neverAttempted=1 staleEvidence=10`, **`conditionsMet: 0/16`, `certificationRefused: true`, `advanceClaimed: false`**, external track `EXTERNAL_PREREQUISITE_UNMET` |
+| Exact-head CI | `gh run list --limit 1 --json databaseId,headSha,conclusion,status` | `{"conclusion":"failure","databaseId":37881189722,"headSha":"88987013e93f9f4d147db6e2982f70529e9d72a4","status":"completed"}` — the newest run, at `origin/main`, RED on `HANDOFF_TRUTH` |
+| Bin type-check | `node bin/bin-typecheck.mjs` | `PASS: conformance=77/77 mode=BLOCKING errors=0 exemptions=0 ceilings=0` |
+| Root typecheck | `npm run typecheck` | exit 0, no diagnostics |
+| Repository visibility | `gh repo view quantdale/night-watch --json visibility,isPrivate` | `{"isPrivate":false,"visibility":"PUBLIC"}` — **PUBLIC** |
+
+### The headings above, labelled (X-07)
+
+The following headings are HISTORICAL. Each was accurate when written; none
+describes the present.
+
+- **"Phase 12 — Semantic Yield & High-Confidence Triage (Phase 12A complete-local,
+  CI-blocked)"** and the **`PHASE_12A_STATUS: BLOCKED_EXTERNAL_CI` /
+  `PHASE_13I_STATUS` / `PHASE_14A_STATUS` / `PHASE_15P_MASS_IMPLEMENTATION` /
+  `PHASE_15H_STATUS` / `PHASE_16H_STATUS` / `PHASE_16CH_STATUS` /
+  `PHASE_17_STATUS` / `PHASE_23_STATUS` / `PHASE_24_STATUS` /
+  `PHASE_27_STATUS` / `PHASE_28_STATUS`** rows are historical. The external
+  billing/spending block they name is RETIRED (D-03 / R2-61): GitHub Actions now
+  executes the hardening workflow on every push, and the newest run
+  (`37881189722`) executed and failed on a LOCAL cause. A CI-blocked heading is
+  therefore no longer the current reason a phase is not CI-verified; the current
+  reason is that no run exists at the terminal checkpoint S yet.
+- **"Autonomous yield preflight — EXTERNAL_PREREQUISITE_UNMET; wave not opened
+  (G12.1–G12.3)"** is historical as a description of the present: the wave WAS
+  opened. W11 ran the historical arm (14/14 cases, 78 leak-isolated reasoner
+  calls, strict `EXACT_REDISCOVERY` 0/13 with the reachability reason recorded,
+  0 `ENVIRONMENT_BLOCKED`, 0 false positives, 0 leakage), W12 ran its frozen
+  broad-plus-eight-scoped matrix, W13 ran all nine frozen runs validly under the
+  deterministic failover policy (1 mechanical admission, 0 leakage, all eight
+  sibling SHAs unchanged), and M11 12.3 executed the ONE authorized paid proof
+  run (30 provider calls / 28 completed / 2 failed, 33 campaign actions, 16
+  tool/source actions, 2 candidates, 0 admissions, 1 dossier
+  `REFUSED_NO_REPRODUCTION`, `PROVIDER_DEGRADED`, leak scan CLEAN, sibling
+  identity unchanged, zero persisted findings).
+- **"W12 current-source unknown yield — PARTIAL — BLOCKED"** stays TRUE and is
+  not relabelled: W12's eight scoped runs were provider-blocked before source
+  actions, and provider-invalid runs stay out of zero-yield denominators.
+- **"Production track — deployment fact acquisition (G10)"** and
+  **"Production track — refusal and terminal closure (G10.6/G10.13)"** remain the
+  current production-track position: `POSITIVE_DEPLOYMENT_FACTS` is 0, C-13 and
+  C-14 are terminal with that reason (D-134), and the machine external track
+  reports `EXTERNAL_PREREQUISITE_UNMET` for C-12, C-13, C-14 and P4.
+
+### The repository-visibility heading (mandatory resolution)
+
+No heading above states the repository's visibility, and none is edited here.
+The live fact is authoritative: the repository is **PUBLIC**
+(`gh repo view quantdale/night-watch --json visibility,isPrivate`). D-149's
+owner decision (TEMPORARILY PUBLIC so GitHub Actions could run; returns to
+private at the final close-out where the owner confirms Actions still runs) is
+preserved as history. **The owner action that returns the repository to private
+is PENDING and is an owner/admin action** — no agent may change the visibility.
+Campaign task 15.8 tracks it and records the evidence when it happens. No safety
+invariant depends on the repository being private; `docs/SAFETY_MODEL.md` §33
+records that reading in full, and `AGENTS.md`'s two false "private repository"
+current claims are corrected there.

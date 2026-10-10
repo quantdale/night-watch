@@ -4,14 +4,14 @@
 
 Task ID: nightwatch-proxy-event-firewall-v1
 Phase: PROXY_EVENT_FIREWALL_V1
-Status: BLOCKED
+Status: COMPLETE
 Starting SHA: ea0b7110efa1065b470efb57f2cd3ff5136a9fa0
 Last validated implementation SHA: d5175a7d676cbff5584b887363ceaa1d7d7b879f
 Last substantive checkpoint SHA: d5175a7d676cbff5584b887363ceaa1d7d7b879f
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-successor-campaign-en-628d8bb9
-Last checkpoint: 2026-09-24 — proxy event firewall implementation checkpoint d5175a7d676cbff5584b887363ceaa1d7d7b879f; focused/static/mutation green; broad gate residual classified.
+Last checkpoint: 2026-09-24 — COMPLETE 2026-10-10 (see the closure record in the Completion Snapshot): proxy event firewall implementation checkpoint d5175a7d676cbff5584b887363ceaa1d7d7b879f; focused/static/mutation green; broad gate residual classified.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: ea0b7110efa1065b470efb57f2cd3ff5136a9fa0
@@ -19,7 +19,7 @@ LAST_VALIDATED_IMPLEMENTATION_SHA: d5175a7d676cbff5584b887363ceaa1d7d7b879f
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: d5175a7d676cbff5584b887363ceaa1d7d7b879f
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_PROXY_EVENT_FIREWALL_V1_STATUS: BLOCKED
+PHASE_PROXY_EVENT_FIREWALL_V1_STATUS: COMPLETE
 
 ## Objective
 
@@ -28,9 +28,10 @@ boundary, and make the writer census claim that boundary explicitly.
 
 ## Current Milestone
 
-M3 — adversarial validation is BLOCKED by the broad affected lane. The raw
-firewall implementation and focused/static/mutation proofs are green; the broad
-residual is outside this child.
+COMPLETE / STOP — adversarial validation is COMPLETE. The raw firewall implementation, its
+focused/static/mutation proofs and the M8 9.4 PREPARED/TERMINAL effect-pair
+follow-through are all green; the broad residual that blocked this child was the
+parent's live-source drift set and is now cleared.
 
 ## Completed Milestones
 
@@ -47,15 +48,16 @@ residual is outside this child.
 
 ## Work In Progress
 
-None. The implementation is checkpointed; this child is blocked only by the
-classified broad-gate residual. The umbrella may select the next independent
-campaign.
+None. The implementation and its closure evidence are checkpointed. The
+classified broad-gate residual was the parent's live-source hermeticity work,
+which is COMPLETE.
 
 ## Exact Next Action
 
-Keep this child blocked with its evidence. Return to the umbrella state and
-select the credential-use binding child; do not absorb broad source-drift
-failures into proxy-event work.
+STOP. This task is COMPLETE and terminal. No next action; the broad
+source-drift failures that held this child are closed by the parent's M3
+hermeticity work (4.1/4.2) and this child's own M8 9.4 follow-through
+(`f8af00cd`).
 
 ## Files Changed
 
@@ -130,11 +132,21 @@ NONE. No proxy target or authenticated run was contacted.
 
 ## Resume Recipe
 
-1. Read SPEC, PLAN, and STATE.
+Terminal task. Do not resume; there is no unfinished work in this child. 1. Read SPEC, PLAN, and STATE.
 2. Preserve this blocked child and its evidence.
 3. Return to the umbrella STATE and select the next child.
 4. Require a clean owned session and current reproduction before implementation.
 
 ## Completion Snapshot
 
-Not applicable while BLOCKED; no green milestone or completion claim is made.
+COMPLETE 2026-10-10. The proxy event firewall successor is terminal against
+its receipts: implementation `d5175a7d676cbff5584b887363ceaa1d7d7b879f`, closure
+follow-through `f8af00cd6ac2267d3ad5cffd2e252a53c59a3bf5` (M8 9.4),
+`tests/unit/proxyEffectPairEvidence.test.ts` 7/7, proxy/containment suites 44/44,
+`hardening:check` PASS. The only blocker ever recorded here was the broad
+live-source drift residual, cleared by the parent's M3 hermeticity work. No
+credential, DEV/NEXT/production contact, sibling mutation or network egress
+occurred. NW-AUD-022 reconciliation: this successor narrows the original
+`proxy-evidence-effect-ordering-v1` (created `326c083f`); the residual
+R2-47 / task 2.1 scope is quarantined behind the DEV-lane precondition registry
+(D-158), not closed here.

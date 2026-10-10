@@ -68,7 +68,11 @@ exit. Map stale binding to a dedicated DevAuthFailure code.
   mutations; classify broad source-intelligence residual.
 - Acceptance criteria: mutations detected; no secret leakage.
 - Validation commands: `gate:dev`, `gate:milestone`.
-- **Status:** BLOCKED
+- **Status:** COMPLETE — the blockers recorded here were (a) the independently
+  reproduced live-source drift set, cleared by the parent's M3 hermeticity work
+  (tasks 4.1/4.2), and (b) this child's own residual scope, closed by the M8 9.2
+  follow-through at `b98a48d5`. Mutation guards detected in disposable archives;
+  no secret leakage on any path. Recorded 2026-10-10.
 
 ### M4 — Close and reassess
 

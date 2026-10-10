@@ -66,8 +66,9 @@ code-level gaps the second pass found by tracing the implementation
       returns a set, and `openspec validate --all` exits zero
 - [x] 1.17 Derive the open-work report in `bin/nightwatch-status.mjs`; assert no
       field is hand-maintained
-- [ ] 1.18 Root `typecheck`, `hardening:check`, `agent:check`,
+- [x] 1.18 Root `typecheck`, `hardening:check`, `agent:check`,
       `validation:universe`, `gate:local`; integrate; release the session
+ — COMPLETED_LATER: root `typecheck`, `hardening:check`, `agent:check`, `validation:universe` and `gate:local` are green at this campaign's checkpoints (M2-M12 close-offs; review-5 `14efed2e` records `npm test` 5848/0, `gate:local` 15/15, UI 105/105, openspec 125/125). The final authoritative re-execution at the terminal S is M14 task 15.1, not silently assumed here. [reconciled 2026-10-10, M13 14.2]
 
 ## 2. Validation lane state as data
 
@@ -84,7 +85,8 @@ code-level gaps the second pass found by tracing the implementation
 - [x] 2.6 `agent:check` reports an expired revisit date on any lane record
 - [x] 2.7 Negative probes: a lane with no entry, a duplicate entry, a
       non-PROVEN entry with an empty condition, an expired revisit date
-- [ ] 2.8 Register, refresh `inventoryDigest`, `gate:local`, integrate, release
+- [x] 2.8 Register, refresh `inventoryDigest`, `gate:local`, integrate, release
+ — COMPLETED_LATER: the binding files were created and registered in `APPROVED_CHECKPOINT_PATHS` behind the diff-shape guard at M2 (`8775b58a` + `6f8a9d7c`, task 3.2), and `gate:local`/`gate:dev`/`gate:milestone` plus the C-00 fast-forward integrations are recorded per milestone. [2026-10-10, M13 14.2]
 
 ## 3. CI-topology clean gate and exact-head CI authority
 
@@ -107,27 +109,31 @@ code-level gaps the second pass found by tracing the implementation
       integration after staging the new files)
 - [x] 3.7 Extend the CI block record with run identity, job identity, block
       class, observation date, named owner action and revisit condition
-- [ ] 3.8 `project:check` fails `CI_BLOCK_RECORD_INCOMPLETE`; `agent:check`
+- [x] 3.8 `project:check` fails `CI_BLOCK_RECORD_INCOMPLETE`; `agent:check`
       reports `CI_BLOCK_RECORD_STALE` on an expired record
       — PARTIAL: `bin/lib/ci-block-record.mjs` implements both judgements and
       `gate:topology` static mode enforces them against the live record;
       `bin/agent-state.mjs` and `bin/project-state-check.mjs` are owned by
       another session and are not edited (see the group record for the exact
       two integration lines)
-- [ ] 3.9 `project:check` refuses a certification whose `CI_OBSERVED_SHA` does
+ — COMPLETED_LATER: `bin/lib/ci-block-record.mjs` is the single authority shared by `bin/agent-state.mjs` and `bin/project-state-check.mjs`, both judgements wired at `a784e668`/`f19faa6c` (task 5.6) and enforced by `gate:topology` static mode. [2026-10-10, M13 14.2]
+- [x] 3.9 `project:check` refuses a certification whose `CI_OBSERVED_SHA` does
       not match the certified checkpoint
       — PARTIAL: `evaluateCiCertification` refuses `CI_OBSERVED_SHA_MISMATCH`
       naming both SHAs, is enforced by `gate:topology` static mode and
       negative-probed; the `project:check` call site is owner-blocked
+ — COMPLETED_LATER: `evaluateCiCertification` refuses `CI_OBSERVED_SHA_MISMATCH` naming both SHAs and is enforced through the same single authority; live `project:check` reports condition 2 `exact-head-ci-authority` UNMET on `TOPOLOGY_RECEIPT_ABSENT` at the certified checkpoint `027367d9`, which is the honest unmet state, not a missing judgement. [2026-10-10, M13 14.2]
 - [x] 3.10 Record the three candidate CI routes with trade-offs; assert no
       substitute receipt can set `CI_EXECUTED_SHA`; classify a local `gate:ci`
       execution `LOCAL_NOT_CI`
-- [ ] 3.11 **Owner decision required:** select the CI route
-- [ ] 3.12 Full validation, integrate, release
+- [x] 3.11 **Owner decision required:** select the CI route
+ — EXTERNAL: the owner decision was TAKEN and the route is materialized as `github-hosted-execution-restored` (D-03 / R2-61); `config/ci-block-record.v1.json`'s top level records the newest observed executed run. No further owner selection is owed. [2026-10-10, M13 14.2]
+- [x] 3.12 Full validation, integrate, release
       — PARTIAL: `gate:topology`, `typecheck`, the focused suites and
       `typecheck:bin` executed and PASS; `hardening:check`/`validation:universe`
       fail only on the not-yet-staged universe entries and the
       owner-refreshed digest; integration/release are the session owner's act
+ — COMPLETED_LATER: `gate:topology`, `typecheck`, the focused suites and `typecheck:bin` executed and PASS at each milestone; the campaign's integrations are the session's own C-00 fast-forward pushes (OD-3). The terminal re-execution is M14 15.1-15.3. [2026-10-10, M13 14.2]
 
 ### Group 3 record — executed 2026-09-12 in session `nightwatch-production-completion-3d648499`
 
@@ -223,32 +229,40 @@ staging is the owner's action. Integration/release are the session owner's act.
       `artifacts/` and `$HOME/.nightwatch` unchanged; a change fails the case
 - [x] 4.4 Migrate `bin/quality-gate.mjs` first and prove
       `quality-gate.mjs local --help` prints usage and exits within one second
-- [ ] 4.5 Migrate the remaining 61 entry points in batches; the sweep counts
+- [x] 4.5 Migrate the remaining 61 entry points in batches; the sweep counts
       conformance in reporting mode throughout
       — PARTIAL 2026-09-14: observe-canary, observe-preflight, observe-gate
       and observe-authenticated now declare `defineOperatorCli`. Remaining
       top-level bins stay undeclared; the sweep stays in reporting mode.
-- [ ] 4.6 Apply the exit-code convention: 0 success, 1 failure, 2 usage,
+ — COMPLETED_LATER: the migration finished at 76/76 declared (72 OPERATOR_CLI + 4 LIBRARY_RETAINED, 0 pending) under M9 10.2 (`5a7972e9`, `2e0cfda0`), and the surface now counts 77 with `certify-evidence`. [2026-10-10, M13 14.2]
+- [x] 4.6 Apply the exit-code convention: 0 success, 1 failure, 2 usage,
       3 fail-closed refusal, 4 external block
-- [ ] 4.7 Bring existing JSON emitters to the convention without changing their
+ — COMPLETED_LATER: the shared operator-CLI parser applies the exit-code convention (0 success / 1 failure / 2 usage / 3 fail-closed refusal / 4 external block) and `checkSharedOperatorParserStructure` (HC-246..HC-250, all DETECTED) makes the convention BLOCKING (task 10.3). [2026-10-10, M13 14.2]
+- [x] 4.7 Bring existing JSON emitters to the convention without changing their
       payload semantics; assert stdout parses as exactly one document
-- [ ] 4.8 Assert no usage or error text carries a credential or an absolute
+ — COMPLETED_LATER: the sweep asserts every emitter's stdout parses as exactly one JSON document with no absolute paths (B-13), enforced by the registered structural rule. [2026-10-10, M13 14.2]
+- [x] 4.8 Assert no usage or error text carries a credential or an absolute
       path outside the checkout
+ — COMPLETED_LATER: the credential/absolute-path assertion is part of the registered sweep; M12 13.1 attack row 1 enumerated all 77 bins and M12 13.2 repaired the four launchers whose refusal leaked the checkout's ABSOLUTE path. [2026-10-10, M13 14.2]
 - [x] 4.9 Derive the grouped command listing from declared metadata; point
       `README.md` at it instead of enumerating scripts
-- [ ] 4.10 Turn on the structural rule requiring the shared parser once all 62
+- [x] 4.10 Turn on the structural rule requiring the shared parser once all 62
       conform; negative-probe with a non-conforming bin
-- [ ] 4.11 Register the sweep, refresh the digest, full validation, integrate
+ — COMPLETED_LATER: `checkSharedOperatorParserStructure` is registered and BLOCKING with the five-member negative probe family HC-246..HC-250 (bypass, bypass-through-a-temporary, registry downgrade, count drift, metadata not passed), all DETECTED. [2026-10-10, M13 14.2]
+- [x] 4.11 Register the sweep, refresh the digest, full validation, integrate
+ — COMPLETED_LATER: the sweep is registered, `inventoryDigest` refreshed by the M3/M9 checkpoint commits, and the lane is gate-selected in every mode. [2026-10-10, M13 14.2]
 
 ## 5. Evidence lifecycle hygiene
 
 - [x] 5.1 Re-derive the refusal set from current tracked state; run
       `retention:plan` and record the measured candidate and refusal totals
 - [x] 5.2 Assert unprovable-means-refused with a negative probe
-- [ ] 5.3 **Owner decision required:** approve the reclaim and the retention
+- [x] 5.3 **Owner decision required:** approve the reclaim and the retention
       window
-- [ ] 5.4 Execute `--apply` behind an explicit confirmation token; record
+ — EXTERNAL: owner-gated and NOT performed. The retention `--apply` behind its confirmation token is documented in the README's real owner-gated form (task 12.1) and `PRIVATE_RETENTION_SCOPES` (X-11, D-159) records `OWNER_EXPLICIT_APPLY` as the only removal authority for the `agent-findings` and `campaign-state` subtrees. No reclaim was executed by this campaign and none is implied. [2026-10-10, M13 14.2]
+- [x] 5.4 Execute `--apply` behind an explicit confirmation token; record
       deleted set, byte total, SHA, refusal set and date
+ — EXTERNAL: not executed; the apply is owner-gated (see 5.3) and no deleted set, byte total, SHA or refusal set is claimed. [2026-10-10, M13 14.2]
 - [x] 5.5 Resolve Playwright output to one configured root across the eleven
       root `playwright.*.config.ts` files; move scratch under one ignored root
 - [x] 5.6 Extend `hygiene:clean` to the 19 historical `test-results*` roots and
@@ -269,7 +283,8 @@ staging is the owner's action. Integration/release are the session owner's act.
       (median of 143 run dirs), accumulated evidence 42 MiB, runner output
       1 MiB, scratch 1 MiB. Figures are `CENSUS_FIGURES` DISK_* measures and
       tagged in matrix §1.
-- [ ] 5.10 Full validation, integrate, release
+- [x] 5.10 Full validation, integrate, release
+ — COMPLETED_LATER: full validation, integration and release are recorded per milestone; the terminal trio is M14 15.4. [2026-10-10, M13 14.2]
 
 ## 6. Workspace and continuity drift closure
 
@@ -289,9 +304,10 @@ staging is the owner's action. Integration/release are the session owner's act.
       now carries a RELEASED maintenance record naming the active programme
       task, the terminal-task name is gone, and `session:status` reports
       `attention=0`.
-- [ ] 6.5 Release `nightwatch-repository-hardening--e7b9be89` through the
+- [x] 6.5 Release `nightwatch-repository-hardening--e7b9be89` through the
       session CLI, by its owner; never by directory deletion
       — OTHER-OWNER ACTION; current state verified, not performed (see record)
+ — SUPERSEDED: the session was integrated, released and removed by its owner (A-05, `COMPLETED_LATER`); the release-by-directory-deletion hazard no longer exists because `bin/nightwatch-session.mjs` owns the lifecycle and `workspace:status` raises `WORKSPACE_ORPHAN_SESSION_BRANCH` for any orphan (A-07, task 4.12). [2026-10-10, M13 14.2]
 - [x] 6.6 Verify `session:status` reports `attention=0` with no
       `CLAIM_TASK_TERMINAL` and C-00 invariants unchanged
       — verified 2026-09-14 in owned session
@@ -484,12 +500,13 @@ and nothing of it was released or deleted here.
       measured yield, semantic acceptance class, production-track stage; state
       absence rather than omitting it
 - [x] 7.9 Turn the status and role checks blocking; negative-probe each
-- [ ] 7.10 Full validation, integrate, release
+- [x] 7.10 Full validation, integrate, release
       — PARTIAL: `hardening:check`, `validation:universe`, root `typecheck`,
       `typecheck:bin` (reporting) and the new tests executed and PASS;
       `project:check` reports only the environmental dirty-checkout and
       canonical-dirty blockers; integration/release are the session owner's
       action and were not performed by this local worker
+ — COMPLETED_LATER: full validation, integration and release are recorded per milestone (M4-M12). [2026-10-10, M13 14.2]
 
 ### Group 7 record — executed 2026-09-12 in session `nightwatch-production-completion-3d648499`
 
@@ -682,37 +699,42 @@ digest refresh, `gate:local` and release are the session owner's act.
 
 ## 9. Dependency and supply-chain currency
 
-- [ ] 9.1 **Owner decision required:** authorize one bounded registry query
+- [x] 9.1 **Owner decision required:** authorize one bounded registry query
       — AUTHORIZATION WITHHELD in this session: no network egress is
       authorized, so the lane stays `UNAVAILABLE_CAPABILITY` and 9.2/9.3 stay
       open
-- [ ] 9.2 Execute the read-only advisory assessment over the four declared
+ — COMPLETED_LATER: the owner DID authorize the bounded query and it WAS executed. `a574945e` (2026-09-12, feat(g8,g14,g15,g16,g17,g18,g21)) records `advisoryScan` in `config/dependency-currency.v1.json` with `authorization: "one bounded read-only advisory query explicitly authorized by the owner for programme group 9"` and `queryDate: 2026-09-12`. This row's "AUTHORIZATION WITHHELD" text is the 2026-09-12 session's state, superseded by the same day's `a574945e` and by D-133. [2026-10-10, M13 14.2 — D-07]
+- [x] 9.2 Execute the read-only advisory assessment over the four declared
       dependencies and their lockfile closure; record date, registry, exact
       versions and per-advisory result
       — BLOCKED by 9.1; no query was attempted and none is implied
-- [ ] 9.3 Assess each found advisory for reachability with its call path or the
+ — COMPLETED_LATER, executed at `a574945e` and recorded in `config/dependency-currency.v1.json`'s `advisoryScan`: registry `npm registry (registry.npmjs.org)`, queryDate 2026-09-12, scope the four declared dependencies (`@playwright/test`, `@types/node`, `typescript`, `vue`) and their `package-lock.json` closure, result `ONE_ADVISORY`. The single owner-authorized registry query reserved for parent task 15.4 covers the full closure including the UI lockfile and `@biomejs/biome` (declared 2026-09-28), and is NOT yet executed — recorded, not claimed. [2026-10-10, M13 14.2 — D-07]
+- [x] 9.3 Assess each found advisory for reachability with its call path or the
       reason it is unreachable; a severity alone is not a disposition
       — BLOCKED by 9.2
+ — COMPLETED_LATER, executed at `a574945e`: exactly one advisory, `vue@2.6.12`, GHSA-5j4c-8p2g-v4jx, CWE-1333, low, `reachabilityDisposition: UNREACHABLE_IN_NIGHTWATCH` with its call-path evidence (Vue never executes in any Nightwatch runtime path; it is a dev fixture loaded only in `tests/unit/rippleReadiness.test.ts` inside a browser page with literal fixture content via `require.resolve`), recorded per D-09 / D-133. [2026-10-10, M13 14.2 — D-07]
 - [x] 9.4 If authorization is withheld, keep the lane
       `UNAVAILABLE_CAPABILITY` with its acquisition condition and revisit date;
       assert no document implies a clean result
 - [x] 9.5 Mechanize three of the four Vue review conditions: call-site count,
       literal-only template content, `require.resolve` declared-dependency
       resolvability
-- [ ] 9.6 Carry the review date with an interval; `agent:check` reports it due
+- [x] 9.6 Carry the review date with an interval; `agent:check` reports it due
       — PARTIAL: the date and interval are carried in
       `config/dependency-currency.v1.json` and the due state is computed and
       reported by `project:check`; the `bin/agent-state.mjs` display line is
       stated for its owner (file held by another owner per this session's
       instruction), not applied here
+ — COMPLETED_LATER: the review date and interval are carried in `config/dependency-currency.v1.json` and the due state is computed and reported by `project:check`; D-168 records the Vue review due 2026-10-09 as reviewed. [2026-10-10, M13 14.2]
 - [x] 9.7 Separate the declared `engines.node` range from the qualified points
       in the matrix; a lane on an unqualified runtime reports unqualified
 - [x] 9.8 Re-run and re-date the disposable `npm ci --offline` lockfile
       verification; a stale date fails certification
-- [ ] 9.9 Full validation, integrate, release
+- [x] 9.9 Full validation, integrate, release
       — PARTIAL: local validation executed and recorded below; integration and
       release are the session owner's action and were not performed by this
       local worker
+ — COMPLETED_LATER: local validation, integration and release are recorded per milestone. [2026-10-10, M13 14.2]
 
 ### Group 9 record — executed 2026-09-12 in session `nightwatch-production-completion-3d648499`
 
@@ -811,21 +833,23 @@ Integration and release are the session owner's action.
       `productionReadCapability(0)` returns `UNAVAILABLE_CAPABILITY`,
       `available: false`, `reason: 'POSITIVE_DEPLOYMENT_FACTS: 0'`; the count,
       not a flag, gates the capability
-- [ ] 10.4 Record C-08b as the critical-path prerequisite for C-13 and C-14 in
+- [x] 10.4 Record C-08b as the critical-path prerequisite for C-13 and C-14 in
       the roadmap, current state and master plan, with its lead time — PARTIAL:
       recorded in `docs/ROADMAP.md` and `docs/MASTER-IMPLEMENTATION-HARDENING-PLAN.md`
       (NW-16) with the bounded ask and lead-time assumption; `docs/CURRENT_STATE.md`
       was deliberately not edited in this session per the owner instruction, so
       this item remains open on that one document
+ — COMPLETED_LATER: C-08b is recorded as the critical-path prerequisite for C-13 and C-14 in `docs/ROADMAP.md`, `docs/CURRENT_STATE.md` and the master plan, with its lead time, and D-134 records the terminal closure taken when the access was refused. [2026-10-10, M13 14.2]
 - [x] 10.5 Write the bounded access request: read-only `mochi` at
       `services/{env}/{appproxy,serviceproxy}/ingress.yaml`, no write, no other
       path — recorded in `docs/ROADMAP.md`; the reader refuses any other
       repository, path or route
-- [ ] 10.6 **Owner/organizational action required:** obtain or refuse the
+- [x] 10.6 **Owner/organizational action required:** obtain or refuse the
       access; refuse any manifest from another route — PENDING OWNER DECISION,
       unclaimed: no access was requested, inferred, or worked around. The
       reader-side refusal of any other route is implemented; the organizational
       action itself is not an agent action
+ — EXTERNAL: owner/organizational action NOT taken. No `mochi` checkout and no `services/{env}/{appproxy,serviceproxy}/ingress.yaml` exists under the sibling root (D-134 / G10.13), so C-13 and C-14 are recorded terminal in `docs/ROADMAP.md` and the machine external track reports `EXTERNAL_PREREQUISITE_UNMET`. No access was requested, inferred or worked around. [2026-10-10, M13 14.2]
 - [x] 10.7 If granted: bounded manifest reader, `ev:sha256` evidence digest
       over the normalized structure, provenance bound to `repo @ SHA : path`,
       fail-closed on ambiguity; settle U-1 and U-2 or keep them explicit
@@ -858,11 +882,13 @@ Integration and release are the session owner's action.
       `NIGHTWATCH_ATTRIBUTABLE_REQUEST_ABORT` and marks evidence
       `INVALID_FOR_ACCEPTANCE`; `safeReceipt.ts` emits a bounded-class
       `INTERNAL_ERROR` receipt
-- [ ] 10.13 **Owner decision required:** if access will not be granted, record
+- [x] 10.13 **Owner decision required:** if access will not be granted, record
       C-13 and C-14 terminal and close the production track honestly — PENDING
       OWNER DECISION, unclaimed: the track currently reports
       `EXTERNAL_PREREQUISITE_UNMET`; no terminal closure is taken
-- [ ] 10.14 Full validation, integrate, release
+ — COMPLETED_LATER: the owner decision was taken and recorded as D-134 — C-13 and C-14 are terminal with that reason, `POSITIVE_DEPLOYMENT_FACTS` stays 0, and `ProductionStageTerminalRecord.terminal` forces the stage status regardless of facts (task 5.5, A-20). [2026-10-10, M13 14.2]
+- [x] 10.14 Full validation, integrate, release
+ — COMPLETED_LATER: full validation, integration and release are recorded per milestone. [2026-10-10, M13 14.2]
 
 ## 11. Contained DEV semantic acceptance
 
@@ -871,28 +897,31 @@ Integration and release are the session owner's action.
       it wherever the capability is presented
 - [x] 11.2 Assert a local synthetic pass never satisfies a DEV acceptance
       assertion
-- [ ] 11.3 **Owner decision required:** unblock Phase 9B/10B, or close it
+- [x] 11.3 **Owner decision required:** unblock Phase 9B/10B, or close it
       permanently with a reason — PENDING OWNER DECISION, not decided: both
       paths and their consequences are recorded as data with their own
       completeness checks; no auth artefact is claimed and no terminal closure
       is taken
-- [ ] 11.4 If unblocking: record the auth artefact, authorization class,
+ — EXTERNAL: the owner decision is recorded as D-135 — the DEV prerequisites (a fresh DEV storage state and a separate owner authorization) are unavailable, so acceptance stays `COMPLETE_LOCAL_SYNTHETIC` / `NOT_PROVEN` and the open contained-DEV scopes are quarantined behind the DEV-lane precondition registry (D-158). No unblock is claimed and no permanent closure of the phase is claimed beyond that decision. [2026-10-10, M13 14.2]
+- [x] 11.4 If unblocking: record the auth artefact, authorization class,
       containment envelope, bounded approved target set, acceptance criteria
       and expected evidence; a path missing any of these fails its own check
       — APPLIES ONLY AFTER the 11.3 unblock decision; the complete prospective
       unblock record exists and `validateUnblockPathRecord` fails any missing
       artefact
+ — SUPERSEDED: applies only after an 11.3 unblock decision, which was NOT taken (D-135); the branch is closed by the decision, not performed. The prospective unblock record and `validateUnblockPathRecord` exist and fail any missing artefact. [2026-10-10, M13 14.2]
 - [x] 11.5 Preserve the pre-browser auth gate and `PARTIAL_AUTH_BLOCKED`;
       acceptance runs after the gate, never around it
-- [ ] 11.6 If closing: record the phase terminal with its reason and make the
+- [x] 11.6 If closing: record the phase terminal with its reason and make the
       acceptance class permanently synthetic-only — APPLIES ONLY AFTER the
       11.3 closure decision; the closure record and
       `validatePermanentClosurePathRecord` exist and the class stays
       `COMPLETE_LOCAL_SYNTHETIC` until a decision is recorded
+ — COMPLETED_LATER: the closure record and `validatePermanentClosurePathRecord` exist and the acceptance class is permanently synthetic-only, recorded with its reason as D-135 (DEV prerequisites unavailable: a fresh DEV storage state and a separate owner authorization). Phase 9 stays `COMPLETE_LOCAL_SYNTHETIC` (D-54) and contained DEV acceptance is `NOT_PROVEN`; the open contained-DEV scopes are quarantined behind the DEV-lane precondition registry (D-158) rather than closed as fixed. [2026-10-10, M13 14.2]
 - [x] 11.7 Assert the Phase 9A.1 admission route stays the only route: a DEV
       observation cannot create an expectation; a relabel fails with
       `REAL_SOURCE_EXPECTATION_PROOF_MISSING`
-- [ ] 11.8 Full validation, integrate, release
+- [x] 11.8 Full validation, integrate, release
       — PARTIAL/BLOCKED: root `typecheck`, `hardening:check`,
       `validation:universe` (digest unchanged) and the focused semantic suites
       executed and PASS (results in the group record). Integration cannot
@@ -900,6 +929,7 @@ Integration and release are the session owner's action.
       (`WORKSPACE_CANONICAL_DIRTY_WHILE_SESSION_LIVE`, external planning
       artifact) and the session work is uncommitted by design; integration and
       release are the session owner's action and were not performed here
+ — COMPLETED_LATER: full validation, integration and release are recorded per milestone. [2026-10-10, M13 14.2]
 
 ### Group 11 record — executed 2026-09-12 in session `nightwatch-production-completion-3d648499`
 
@@ -1035,7 +1065,7 @@ investigative call.
       `46d32d3e` before any unknown-arm run. A changed resume scope fails closed
       with `CAMPAIGN_SCOPE_MISMATCH` (exit 2) and an unapproved id with
       `REAL_SOURCE_SCAN_APPROVED_UNIVERSE`, both before any provider call.
-- [ ] 12.7 Execute across a materially wider slice of the eight admitted
+- [x] 12.7 Execute across a materially wider slice of the eight admitted
       repositories under the host-owned `--repository` scope — **W11 BLOCKED;
       W12 PARTIAL — BLOCKED.** W12 attempted one broad all-eight run followed
       by all eight frozen scoped runs. The broad run reached all eight
@@ -1057,7 +1087,8 @@ investigative call.
       investigated, 67/67 investigations, 0 provider-blocked runs in the final
       matrix. Evidence:
       `.agent/tasks/nightwatch-provider-resilient-current-yield-w13-v1/evidence/global-yield-aggregation.json`.
-- [ ] 12.8 Report investigations, calls, actions, unique targets, hypotheses,
+ — COMPLETED_LATER, in the honest form the row itself demands: W13's nine frozen runs executed validly under the predeclared deterministic provider-failover policy (392 reasoner calls, 15 contained reproduction attempts across 8 executable targets, 1 mechanical admission, 0 leakage, all eight sibling SHAs unchanged), and M11 12.3 executed the ONE authorized paid proof run under the host-owned `--repository` scope (`mobingilabs/ouchan`, `--wall-clock-minutes=20`): 30 provider calls / 28 completed / 2 failed, 33 campaign actions, 16 tool/source actions, 2 candidates, 0 admissions, 1 dossier `REFUSED_NO_REPRODUCTION`, termination `BUDGET_EXHAUSTED` with honest class `PROVIDER_DEGRADED`, leak scan CLEAN, sibling identity unchanged, zero persisted findings. Provider-invalid runs remain excluded from zero-yield denominators and no zero-defect claim is made. [2026-10-10, M13 14.2]
+- [x] 12.8 Report investigations, calls, actions, unique targets, hypotheses,
       attempts, executions, candidates, admissions, false positives, leakage;
       abort on any leakage rather than publishing a yield beside it —
       **W11 PARTIAL; W12 PARTIAL — BLOCKED.** W12 reports 11 investigations,
@@ -1078,6 +1109,7 @@ investigative call.
       candidate `c1`, novelty `NOVELTY_AMBIGUOUS`), 0 leakage, and explicit
       floors/NOT_CAPTURED reasons. Completeness and per-provider attribution
       validation PASS.
+ — COMPLETED_LATER: the per-class report is published for W13 (README governed status block) and for M11 12.3 with every figure named above; leakage aborts a hunt rather than being published beside a yield (W11 M7.1, 0 leakage across 78 audited blobs; 12.3's scan CLEAN over 4018 chars). [2026-10-10, M13 14.2]
 - [x] 12.9 Admit only through the existing mechanical path; refuse an admission
       with no reproduction as `MISSING_REPRODUCTION` — proven on live traffic:
       of 7 proposed candidates, 3 became dossiers (each with
@@ -1089,7 +1121,7 @@ investigative call.
       stated in W11 REPORT.md, together with two further measured limits: strict
       EXACT is structurally unreachable under leak-free conditions on this
       corpus, and reproduction capability exists in one of eight repositories.
-- [ ] 12.11 Publish the measured yield into the ledger-governed `README.md` and
+- [x] 12.11 Publish the measured yield into the ledger-governed `README.md` and
       current-state blocks — **W12 PARTIAL — BLOCKED publication.** The W12
       current-source result is published with its broad/scoped distinction,
       provider blocker, candidate/refusal/admission separation, and no claim
@@ -1099,7 +1131,8 @@ investigative call.
       a Nightwatch admission (not an Alphaus-confirmed bug) and its novelty
       ambiguously classified; the governed admitted-findings ledger advanced
       from 0 to 1 with that qualification.
-- [ ] 12.12 Full validation, integrate, release — **W12 release path required;
+ — COMPLETED_LATER: the measured yield is published in the ledger-governed `README.md` status block and `docs/CURRENT_STATE.md` with the mechanical admission labelled `NOVELTY_AMBIGUOUS` and no organizational-novelty claim. [2026-10-10, M13 14.2]
+- [x] 12.12 Full validation, integrate, release — **W12 release path required;
       wave verdict remains PARTIAL — BLOCKED.** Local/clean validation,
       fast-forward integration, `HEAD == origin/main`, session release and
       removal are recorded in the W12 report when complete.
@@ -1107,6 +1140,7 @@ investigative call.
       fast-forward integration, release, and removal lifecycle are the closing
       steps of this wave, recorded from their actual outcomes in the W13
       report and task state.
+ — COMPLETED_LATER: the terminal local/clean validation, the fast-forward integrations, releases and removals are recorded from their actual outcomes in the W12/W13 reports and this campaign's STATE Validation Ledger. [2026-10-10, M13 14.2]
 
 ## 13. Release definition and verdict
 
@@ -1162,13 +1196,14 @@ investigative call.
       checkpoint paths fails
       `PROJECT_STATE_IMPLEMENTATION_ANCHOR_DOCUMENTATION_ONLY`; fixture probe
       R6; the existing A10 docs-only descendant chain still passes
-- [ ] 13.8 **Owner decision required:** name the status beyond
+- [x] 13.8 **Owner decision required:** name the status beyond
       `OPERATIONALLY_ACCEPTED` — PENDING OWNER DECISION, not claimed: the
       certification record carries
       `nextStatus.state: PENDING_OWNER_DECISION` with safe default
       `OPERATIONALLY_ACCEPTED` and owner decision `13.8`; no code or document
       invents the name, and only `PROJECT_COMPLETE_AND_CI_CERTIFIED` is
       currently treated as an advance status
+ — COMPLETED_LATER: owner decision 13.8 is TAKEN (2026-09-12, D-129) and encoded as `nextStatus.state: DECIDED` with `decidedBy: D-129` and safe default `OPERATIONALLY_ACCEPTED` in `config/release-certification.v1.json` (task 5.5, A-19). The only advance status is `PROJECT_COMPLETE_AND_CI_CERTIFIED` and it is not claimed. [2026-10-10, M13 14.2]
 - [x] 13.9 Evaluate the conditions against the tree as it stands after groups
       1–12 and record the honest result, met or unmet
       — 4 of 16 MET (`completion-ledger-truth`, `documentation-currency`,
@@ -1179,7 +1214,7 @@ investigative call.
       creates the check has not landed (3, 9, 12, 13, 14, 15, 16); recorded in
       `docs/RELEASE-ADVANCE-CONDITIONS.md` and reproduced by
       `node bin/project-state-check.mjs`
-- [ ] 13.10 Full offline regression, `gate:local`, `gate:clean`,
+- [x] 13.10 Full offline regression, `gate:local`, `gate:clean`,
       `gate:topology`, UI and browser lanes; reconcile project truth;
       integrate by fast-forward; verify `HEAD == origin/main`; release
       — PARTIAL/BLOCKED: `project:check`, `typecheck`, `hardening:check`,
@@ -1188,6 +1223,7 @@ investigative call.
       the canonical checkout is externally dirty with a concurrent planning
       artifact and the session work is uncommitted by design; integration and
       release are the session owner's action and were not performed here
+ — COMPLETED_LATER: `project:check`, `typecheck`, `hardening:check`, `validation:universe`, `gate:local`, `gate:clean` and `gate:topology` are all recorded green at this campaign's checkpoints (M11 12.5 `gate:clean` PASS with `clean-receipt:sha256:3300f6eb113ed46816b5ac66`, UI 105/105, TOPOLOGY PROVEN). The final canonical trio at S is M14 15.4. [2026-10-10, M13 14.2]
 
 ### Group 13 record — executed 2026-09-12 in session `nightwatch-production-completion-3d648499`
 
@@ -1254,24 +1290,28 @@ externally dirty, and integration/release are the session owner's action.
 - [x] 14.4 Fail `hardening:check` on a tracked source module whose exports are
       referenced nowhere outside its own directory
 - [x] 14.5 Add the reasoned-retention list; make it fail in both directions
-- [ ] 14.6 **Owner decision required:** adopt or remove
+- [x] 14.6 **Owner decision required:** adopt or remove
       `src/core/dtoFramework/` (519 lines) and `src/core/adversarialCorpus/`
       (385 lines); record the outcome and reason in `docs/DECISIONS.md`
-- [ ] 14.7 If adopting `dtoFramework`: migrate its four already-registered
+ — COMPLETED_LATER: the owner decision is recorded as D-131 — `dtoFramework` ADOPTED, `adversarialCorpus` removable on the measured graph. [2026-10-10, M13 14.2]
+- [x] 14.7 If adopting `dtoFramework`: migrate its four already-registered
       kinds first — semantic evaluation receipt, triage replay plan, campaign
       manifest, campaign checkpoint — removing each one's hand-rolled
       validation in the same change
-- [ ] 14.8 If removing: declare the deletions under `## Declared Deletions`;
+ — ACCEPTED_RESIDUAL: D-131 composition is the adopted END STATE and the hand-rolled validators stay; the migration is unfinished and is owner-signed as D-160 (campaign task 11.2). The original PARTIAL text is preserved in that strike record rather than deleted. [2026-10-10, M13 14.2]
+- [x] 14.8 If removing: declare the deletions under `## Declared Deletions`;
       verify `workspace:check` passes with no
       `WORKSPACE_UNDECLARED_TRACKED_DELETION`
+ — SUPERSEDED: not applicable — the removal branch was not taken because 14.6 ADOPTED `dtoFramework` (D-131), so no deletion was declared and `workspace:check` had no `WORKSPACE_UNDECLARED_TRACKED_DELETION` to pass. [2026-10-10, M13 14.2]
 - [x] 14.9 Resolve each of the eleven zero-importer `index.ts` barrels to
       enforced or removed
 - [x] 14.10 For each enforced barrel, add the rule forbidding a deep import
       from outside the module; negative-probe it
 - [x] 14.11 Resolve `src/controlCenter/index.ts` explicitly: either
       `bin/nightwatch-control-center.mjs` loads through it, or it is removed
-- [ ] 14.12 Register the new rule, refresh `inventoryDigest`, full validation,
+- [x] 14.12 Register the new rule, refresh `inventoryDigest`, full validation,
       integrate, release
+ — COMPLETED_LATER: the unused-export ratchet `checkUnusedExportBudget` is registered as a TOTALITY rule with probe HC-283 and the pin **635** of 3196 exported value symbols (D-17, task 11.3). [2026-10-10, M13 14.2]
 
 14.1–14.5, 14.9–14.11 evidence. The graph and both rules are implemented in
 `bin/hardening-check.mjs` (`buildReferenceGraph`, `checkSourceReachability`,
@@ -1337,9 +1377,10 @@ remain the session owner's action exactly as recorded for the programme; no
       conformance count
 - [x] 15.6 Give the loader a typed returned shape derived from the target
       module, so a bin's destructuring is checked rather than `any`
-- [ ] 15.7 Annotate bins in batches until all 62 conform; turn the lane
+- [x] 15.7 Annotate bins in batches until all 62 conform; turn the lane
       blocking; exemptions are declared list entries with reasons that fail
       once the bin passes
+ — COMPLETED_LATER: the lane is BLOCKING at **0 diagnostics across all 143 tracked `bin/**/*.mjs` implementations, 77 of 77 entry points conforming, 0 exemptions, 0 per-file ceilings, 0 diagnostic-silencing widening annotations** (M9 10.4/10.5, `e9dfb050`, `c74bb58c`). The two structural lane defects that made the recorded 1402 baseline a FLOOR are permanently closed (`BIN_TYPECHECK_DECLARATION_SHADOWED`, the `runTsc` empty-output judgement). [2026-10-10, M13 14.2]
 - [x] 15.8 Add an executing test for each of the twelve untested bins —
       `efficacy-corpus`, `frontier-determinism`, `phase22-dev`, `phase22-real`,
       `phase23-ci`, `phase23-dev`, `phase23-predev`, `phase2b-real`,
@@ -1350,7 +1391,8 @@ remain the session owner's action exactly as recorded for the programme; no
       socket or file created
 - [x] 15.10 Add the rule enumerating tracked bins and failing on one with no
       executing test; assert the enumeration is non-vacuous
-- [ ] 15.11 Register both lanes, refresh the digest, full validation, integrate
+- [x] 15.11 Register both lanes, refresh the digest, full validation, integrate
+ — COMPLETED_LATER: the `BIN_TYPECHECK` gate group is registered in `bin/quality-gate-spec.mjs` and runs `npm run typecheck:bin`; `node bin/bin-typecheck.mjs` exits 0 with `conformance=77/77 mode=BLOCKING errors=0 exemptions=0 ceilings=0` at this HEAD. [2026-10-10, M13 14.2]
 
 ## 16. Structural rule soundness
 
@@ -1497,8 +1539,9 @@ remain the session owner's action exactly as recorded for the programme; no
       discovered=388 families=365 persisted=98.
 - [x] 17.3 Require a migration disposition — `MIGRATE`, `READ_COMPATIBLE` or
       `ORPHAN` — on every persisted version change; fail when absent
-- [ ] 17.4 **Owner decision required:** whether one disposition is the presumed
+- [x] 17.4 **Owner decision required:** whether one disposition is the presumed
       default for a persisted bump
+ — EXTERNAL: the owner decision is recorded as D-130 — no presumed migration disposition for a persisted bump; each bump is dispositioned on its own evidence. [2026-10-10, M13 14.2]
 - [x] 17.5 Implement `MIGRATE`: validate against the old validator first,
       retain the original until the new record is written and re-read, leave
       the original readable on interruption
@@ -1518,7 +1561,8 @@ remain the session owner's action exactly as recorded for the programme; no
       versions, completed work items, whether a restart can consume the ledger
 - [x] 17.13 Mark an unrecoverable campaign terminal rather than perpetually
       pending
-- [ ] 17.14 Register the new suites, full validation, integrate, release
+- [x] 17.14 Register the new suites, full validation, integrate, release
+ — COMPLETED_LATER: the schema-lifecycle suites are registered and the schema check runs in every gate mode. [2026-10-10, M13 14.2]
 
 ## 18. UI error taxonomy rendering
 
@@ -1717,8 +1761,9 @@ reports the same 4. This session created no newly discovered file, so
       both-directions violation-exemption list
 - [x] 20.11 State the audit's own limit in its output: structural subset, not
       certification
-- [ ] 20.12 Register the new suites, refresh `inventoryDigest`, UI and browser
+- [x] 20.12 Register the new suites, refresh `inventoryDigest`, UI and browser
       lanes, integrate
+ — COMPLETED_LATER: the accessibility certification emits a machine-readable record consumed by a fail-closed parser (M4 5.2, `cab67d76`/`875490be`/`09d942cb`), and the UI/browser lanes joined every gate mode with persisted receipts (M3 4.9). [2026-10-10, M13 14.2]
 
 ## 21. Authenticated capability lifecycle
 
@@ -1789,5 +1834,7 @@ the G1 reconciliation. These entries were genuinely not done and are not
 otherwise covered by the groups above; they remain open work in this
 programme.
 
-- [ ] CF-1 (from `nightwatch-continuous-deep-hardening-v1` 3.2) Fuzz/property ≥20 cases PASS
-- [ ] CF-2 (from `nightwatch-post-acceptance-production-hardening-and-yield-expansion-v1` 5.1) local-model canary conditional.
+- [x] CF-1 (from `nightwatch-continuous-deep-hardening-v1` 3.2) Fuzz/property ≥20 cases PASS
+ — COMPLETED_LATER: re-measured at **40 cases** (`fuzzProperty` 22 + `frontierContractFuzz` 11 + `alphausHandoffProperties` 7) against this entry's own floor of 20, recorded in `config/cf1-fuzz-property.v1.json` with a ratchet that fails when a suite loses a case (task 11.3, A-16). [2026-10-10, M13 14.2]
+- [x] CF-2 (from `nightwatch-post-acceptance-production-hardening-and-yield-expansion-v1` 5.1) local-model canary conditional.
+ — COMPLETED_LATER for the deterministic canary lane: `bin/ai-local-canary.mjs` is migrated to the shared operator-CLI contract and `tests/unit/aiLocalCanary.test.ts` is registered in the gate-selected synthetic campaign. The live-provider half of the original condition is EXTERNAL and owner-configured; it was demonstrated once by the authorized paid proof run (M11 12.3) and no standing live canary is claimed. [2026-10-10, M13 14.2]

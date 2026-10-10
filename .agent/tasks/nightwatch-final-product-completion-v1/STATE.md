@@ -6,10 +6,9 @@ Task ID: nightwatch-final-product-completion-v1
 Phase: FINAL_PRODUCT_COMPLETION_V1
 Status: IN_PROGRESS
 TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1
-TASK_GROUPS_COMPLETE: 1,2,3,4,5,6,7,8,10,11,12,13
-TASK_GROUP_NEXT: 14
-TASK_NEXT_ID: 14.1
-TASK_GROUP_DEFERRED: 9.5b
+TASK_GROUPS_COMPLETE: 1,2,3,4,5,6,7,8,9,10,11,12,13,14
+TASK_GROUP_NEXT: 15
+TASK_NEXT_ID: 15.1
 Starting SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
 Last validated implementation SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
 Last substantive checkpoint SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
@@ -73,56 +72,49 @@ ledger, and end at `PROJECT_COMPLETE_AND_CI_CERTIFIED` under D-129 with a
 
 ## Current Milestone
 
-M13 ledger closure and live-rendered documentation (group 14, tasks 14.1-14.6) is
-the NEXT group. M9 (group 10), M10 (group 11), M11 (group 12) and M12 (group 13)
-are COMPLETE. M9 D-129 CLI contract and bin type-check
-(group 10, tasks 10.1-10.6) is COMPLETE: 10.1 DONE, 10.2 COMPLETE (76/76
-declared: 72 operator-CLI + 4 library-retained, 0 pending), 10.3 COMPLETE, 10.4
-and 10.5 COMPLETE, 10.6 COMPLETE. **10.4 and 10.5 are COMPLETE (2026-10-09)**: the bin
-type-check lane measures **0 diagnostics across all 143 tracked `bin/**/*.mjs`
-implementations**, 77 of 77 entry points conforming, 0 exemptions, 0 per-file
-ceilings, 0 diagnostic-silencing widening annotations, and the lane is
-**BLOCKING**. 10.6 (`gate:milestone` PASS; commit) is the remaining M9 task.
+M14 close-out choreography and certification (group 15, tasks 15.1-15.8) is the
+NEXT group. **M13 (group 14, tasks 14.1-14.6) is COMPLETE (2026-10-10)** and the
+deferred 9.5b is RESOLVED against the popup/frame/worker admission evidence
+rather than inherited. What M13 produced:
 
-Two structural findings made the recorded 1402-diagnostic baseline a FLOOR
-rather than a measurement, and both are closed:
+- **14.1** - the NW-AUD original / successor reconciliation is appended to
+  `audit.md` with SHA citations: NW-AUD-021 <-> `credential-use-binding-successor`,
+  NW-AUD-022 <-> `proxy-event-firewall`,
+  NW-AUD-024 <-> `run-evidence-transaction-successor`,
+  NW-AUD-014 <-> `child-process-census-indirection`, plus the two engine-discovered
+  successors that have no original (`shard-certification-integrity`,
+  `shard-temp-isolation`) and the five originals the priority remediation
+  sequence implemented.
+- **14.2** - the six BLOCKED successor children are COMPLETE against their
+  receipts (`status:local` `blocked-campaigns` 6 -> 0).
+  production-completion-programme (47 boxes), the autonomous bug-hunting
+  programme (18 boxes), W11 (3 struck boxes) and the observability master plan
+  (10 boxes) are all terminal with every box ticked-with-citation or
+  struck-with-disposition. Programme 9.1-9.3 ticked against `a574945e`.
+  `agent:check` PASS.
+- **14.3** - all 228 census items carry exactly one closed-vocabulary
+  disposition (FIXED 153 / SUPERSEDED 24 / ACCEPTED_RESIDUAL 18 /
+  INVALID_STALE_CLAIM 16 / EXTERNAL_PREREQUISITE 8 / QUARANTINED 5 /
+  HISTORICAL_ONLY 4), appended to `audit.md` with the normalization rule and a
+  class cross-check.
+- **14.4** - the owner-confirmation record states exactly what exists (D-152,
+  D-160..D-167, D-153's tier rule, D-158's quarantine list with an empty
+  `ownerAuthorizations`) and exactly what does not. Nothing fabricated.
+- **14.5** - the operator truth is rendered from live output into README,
+  CURRENT_STATE, RELEASE-ADVANCE-CONDITIONS, ROADMAP, SAFETY_MODEL section 33
+  and AGENTS.md. The repository-visibility mismatch is resolved: the repository
+  is **PUBLIC** (`gh repo view`), the owner action to make it private is PENDING
+  (task 15.8), and no safety invariant depends on privacy.
+- **14.6** - `openspec validate --all --strict` PASS with exactly one active
+  change; every other active change archived oldest-first.
 
-1. **Declaration shadowing (BIN_TYPECHECK_DECLARATION_SHADOWED).**
-   `tsconfig.bin.json` included `bin/**/*.d.mts` alongside `bin/**/*.mjs`.
-   TypeScript treats a hand-written sibling declaration as that module's
-   authoritative type and DROPS the counted implementation from the program, so
-   53 bin implementations — 30 of them carrying 952 real diagnostics, including
-   `bin/agent-continuity-protocol.mjs` (171), `bin/agent-state.mjs` (138) and
-   `bin/lib/operator-cli.mjs` (109) — were never checked at all while the lane
-   reported a clean number for them. `include` now matches the `.mjs`
-   implementations only (the declarations still govern importers through module
-   resolution, and `skipLibCheck` still skips them), and a new hard error
-   refuses any include pattern that would let a declaration shadow an
-   implementation again. Regression: `tests/unit/binTypecheckLaneCompleteness.test.ts`.
-2. **Vacuous success in `runTsc`.** An EMPTY tsc output was treated as
-   `BIN_TYPECHECK_TOOLCHAIN_UNAVAILABLE`, so the first fully clean surface
-   would have been reported as a missing toolchain. tsc exits 0 on a clean
-   surface and 1 when it has diagnostics; only a spawn error, a kill signal or
-   exit code 2 (configuration error, no per-file judgement) now fails closed.
-   Regression pinned in the same suite.
-
-The 1402 -> 0 burn-down therefore annotates 143 implementations rather than 77.
-`anyAnnotationBudget` reached 0 because every JSDoc object shape in `bin/` is
-single-line (the detector's `[^}]*` spans newlines, so a multi-line type is a
-false positive via its ` * ` continuation prefixes) and every optional field is
-a `Partial<...>` rather than the `?:` form.
-
-Three further defects were found and repaired in the same pass:
-`bin/planner-handoff-protocol.d.mts` omitted the runtime export
-`HANDOFF_PLANNING_ONLY_STATUS` (TS2305 at `bin/project-state-check.mjs:64`);
-`bin/lib/gate-receipt.d.mts` declared `origin` as `'DEFAULT' | 'EXPLICIT'` while
-the implementation also returns `'REPOSITORY_IGNORED'`; and
-`bin/lib/childProcessCensus.mjs` reported a JSDoc `import('node:child_process')`
-TYPE reference as an unresolved runtime dynamic import, which failed
-`hardening:check` on the repository's own annotation convention. Also repaired
-in the same pass: `bin/project-state-check.mjs`'s `parseKeyValueBlock` carried a
-multi-line `@returns` union that TypeScript's JSDoc parser silently reads as
-`any`, masking 12 real downstream diagnostics.
+M9 (group 10), M10 (group 11), M11 (group 12) and M12 (group 13) are COMPLETE.
+M9 is COMPLETE: the bin type-check lane measures **0 diagnostics across all 143
+tracked `bin/**/*.mjs` implementations**, 77 of 77 entry points conforming, 0
+exemptions, 0 per-file ceilings, 0 diagnostic-silencing widening annotations, and
+the lane is **BLOCKING**. Its two structural findings
+(`BIN_TYPECHECK_DECLARATION_SHADOWED` and the `runTsc` empty-output judgement)
+are permanently closed with regressions.
 
 ## Completed Milestones
 
@@ -204,388 +196,44 @@ multi-line `@returns` union that TypeScript's JSDoc parser silently reads as
 
 ## Work In Progress
 
-**Current (2026-10-09):** M10 (group 11) — tasks 11.1-11.6 are COMPLETE and
-recorded; the remaining M10 box is 11.7 (commit).
-The log below is HISTORICAL (M7-M9, oldest first) and is not the current state.
-
-- M7 (tasks 8.1-8.5) is in progress; 8.1 is implemented and committed: the
-  `.env` layer is parsed FAIL CLOSED (a malformed line, an undeclared key and a
-  duplicate key are each refused with their line number; an ABSENT file is an
-  empty layer while an UNREADABLE one is a `DOTENV_UNREADABLE` error), and the
-  launchers now forward the VALIDATED process+.env merge — the dispatcher
-  spawns every child from `mergedEnvironment` (its agent, operator and scenario
-  branches) and the agent CLI reads its forwarded configuration from the merge
-  via a cached `campaignEnvironment()` (`campaignEnvironment().NIGHTWATCH_*`),
-  never from the ambient environment. `tests/unit/dotEnvLayerStrictness.test.ts`
-  7/7 and 15/15 across the launcher cones.
-  8.2 — HEAD is re-checked AFTER the scan (`currentness.currentSnapshot(repoId)`
-  per scanned repository, computed once), the surface descriptor carries the
-  verified `sourceSnapshotMatches` (true only on a match, false on a mismatch,
-  ABSENT when the re-check could not run), the Phase 24 projection reads that
-  fact instead of the hard-coded `true`, and the read view's proof signal now
-  requires `=== true` — `tests/unit/sourceSnapshotRecheck.test.ts` 4/4 and 207
-  source-cone tests green.
-  8.3 — evidence that could not be evaluated is INCOMPLETE, never PASS: the
-  semantic oracle's `anyPass ? 'PASS' : 'NOT_APPLICABLE'` became an
-  every-invariant-PASS rule with an explicit MIX distinction (a passed +
-  unevaluated pair is `PARTIAL_COVERAGE`; nothing applicable is
-  `NOT_APPLICABLE`; a partially covered invariant is `PARTIAL_COVERAGE`
-  regardless) — `tests/unit/semanticEvidenceCompleteness.test.ts` 4/4, the
-  semantic/oracle cones 105/105 and the FULL suite 5623 passed / 33 skipped /
-  0 failed on this change.
-  8.4 — regex-derived analyzer observations are no longer proof: the
-  observation vocabulary gained `HEURISTIC` and the raw-text regex families
-  (`TS_STATIC_REQUIRED_FIELDS` / `TS_STATIC_ENUM` / `TS_STATIC_DEFAULT` /
-  `TS_STATIC_FIELD_TYPE` / `GO_STRUCT_TAGS` / `GO_STRUCT_FIELD_TYPE`) now carry
-  it, so the proven-candidate filters (which compare
-  `status === 'MECHANICALLY_PROVABLE'`) exclude them by construction; a
-  truncated observation budget is REPORTED as `ANALYZER_OUTPUT_TRUNCATED`
-  instead of silently sliced. Evidence:
-  `tests/unit/sourceAnalyzerProofTier.test.ts` 5/5 plus the Phase 20/25/26 +
-  semantic cones 63/63; the Phase 20 fixture/mutant floors were re-calibrated
-  to the honest admitted set (78 fixtures / 28 mutants, score still 1000,
-  zero survivors, zero benign false positives).
-  8.5 — **M7 IS COMPLETE.** `npm run gate:dev` PASS (5645 passed / 0 failed,
-  every group exit=0) and `npm run gate:milestone` PASS (wall 1087.9s, 5645/0,
-  typecheck-bin + hardening-rules + project-check + workspace-check exit=0);
-  8.1-8.5 are ticked in `tasks.md` and PLAN M7 is COMPLETE. The narrowed claims
-  legitimately re-based the frozen Phase 20/21 baselines (graph 157->133 nodes,
-  gaps 86->62, mutants 67->55) and required the semantic receipt to carry
-  `PARTIAL_COVERAGE_NO_VIOLATION` whenever the oracle reports incomplete
-  coverage (the `realSourceConformingMutation` empty-list case is now
-  PARTIAL_COVERAGE, never PASS).
-  M8 9.1 DONE — DEV-lane precondition registry and launcher refusal:
-  `config/dev-lane-preconditions.v1.json` lists NW-AUD-016 (full), 022 (task
-  2.1 / R2-47), 025 (full), 026, 037, 038 as OPEN with NO standing owner
-  authorization; `src/core/policy/devLanePreconditions.ts` is the authority
-  (fail-closed registry parse, `DEV_LANE_PRECONDITION_OPEN` listing every open
-  id, `DEV_LANE_OWNER_TOKEN_UNRECOGNIZED` for an unrecognized/unauthorized
-  `D-<n>` citation) and `bin/lib/dev-lane-precondition.mjs` is the launcher
-  guard, called FIRST by all thirteen DEV-contacting launchers (before argument
-  validation, auth validation or any child process). `observe-preflight.mjs` is
-  exempt by construction (pinned: no spawn/browser/socket/cookie read) so its
-  argument-validation coverage survives. A registry-path seam
-  (`NIGHTWATCH_DEV_LANE_REGISTRY_PATH`) plus `tests/helpers/devLaneAuthorization.ts`
-  keeps each launcher's OWN boundary tests reachable under an authorized
-  citation; the shipped default still refuses unconditionally. Evidence:
-  `tests/unit/devLanePreconditions.test.ts` 10/10 (including a real spawn of
-  every guarded launcher), the repaired launcher-boundary suites green, and the
-  sharded lane PASS at 5655/0 (5688 planned, 0 failed).
-  M8 9.2 DONE — DEV credential effect binding (NW-AUD-021 residual): effects
-  now go through `pinVerified()` element handles (the verified element
-  IDENTITY, never a fresh locator resolution), `beginEffectSequence()` sets
-  `used` on the FIRST effect and refuses a second sequence, the snapshot pins
-  the source-approved exchange (`formAction`/`formMethod`) and an optional
-  `expectedProxyInstanceId` must be echoed before any effect. Evidence:
-  `tests/unit/devCredentialEffectBinding.test.ts` 7/7 (one-shot mark, detached
-  pin after a swap, navigation between effects, `formaction` redirect refused,
-  proxy-instance mismatch, the full pinned-handle login, and a source census of
-  the effect sites / same-evaluate verification / credential consumers) plus
-  the pre-existing `devLoginSecurity` suite green and the sharded lane PASS at
-  5662/0 (5695 planned, 0 failed).
-  M8 9.3 DONE — transactional storage-state plus sidecar publication
-  (NW-AUD-015): `publishAuthCapabilityBundle` stages both files, journals the
-  intended pair (`nightwatch.auth-bundle-transaction.v1`), commits the two
-  renames and removes the journal; the record is built from the STAGED artefact
-  bytes so a digest disagreement refuses before any rename; readers refuse a
-  pending journal (`AUTH_BUNDLE_TRANSACTION_PENDING`) instead of reading an
-  interrupted publication as a completed pair, and `recoverAuthCapabilityBundle`
-  completes the commit only against the journal's digests
-  (`AUTH_BUNDLE_RECOVERY_REFUSED` otherwise). The capture path
-  (`directRunner.ts`) publishes through the bundle and the old separate-write
-  pair is gone (source-censused). Evidence:
-  `tests/unit/authBundleTransaction.test.ts` 7/7, the auth launcher suites
-  green, `hardening:check` + `schema-lifecycle check` PASS, and the sharded lane
-  PASS at 5669/0 (5702 planned, 0 failed).
-  M8 9.4 DONE — proxy effect-pair evidence (NW-AUD-022 narrowed): every effect
-  path (HTTP forward, CONNECT tunnel, Upgrade handshake) writes a PREPARED
-  record before the effect and exactly one TERMINAL record after it, joined by
-  one `effectId`; `readProxyEventLedger` fails closed on malformed lines/events
-  and on unmatched, orphaned, duplicated or mis-ordered pairs
-  (`PROXY_EVIDENCE_LEDGER_INVALID`), while `readProxyEvents` stays the tolerant
-  live reader. This work also found and fixed a real falsy-seq defect: the
-  evidence-write sentinel was `!recorded`, so the legitimate first record
-  (seq 0) was treated as a write failure and closed the socket — it is now
-  `recorded < 0`. Evidence: `tests/unit/proxyEffectPairEvidence.test.ts` 7/7,
-  the proxy/containment suites 44/44, `hardening:check` PASS, and the sharded
-  lane PASS at 5676/0 (5709 planned, 0 failed).
-  M8 9.5 DONE — browser context guard transaction integrity (NW-AUD-023
-  narrowed): a rollback boundary now closes the context and clears the health
-  poll when any post-context setup stage fails (the original error still
-  propagates); the health poll is a tracked variable cleared on both exit
-  paths; popup acquisition is an awaited barrier whose failure mode is
-  deny-by-policy (reported at close, never swallowed); and `close()` joins
-  every in-flight acquisition before tearing down. The NW-AUD-020 tasks 3.2/4.2
-  closure claims are RE-TAGGED UNPROVEN (9.5b). Evidence:
-  `tests/unit/contextGuardTransaction.test.ts` 5/5, `hardening:check` PASS, and
-  the sharded lane PASS at 5681/0 (5714 planned, 0 failed).
-  M8 9.6 DONE — bounded response-body acquisition (NW-AUD-035): a body read
-  that loses its race against the 5s timer is now JOINED (one settlement
-  handler that discards the value and swallows the rejection, released exactly
-  once), and acquisition is bounded at `MAX_CONCURRENT_BODY_READS` (4) with a
-  distinct refusal outcome reported as the new closed failure code
-  `BODY_READ_ACQUISITION_BOUND` instead of an unbounded queue. Cancellation is
-  not available for Playwright's `body()`, so joining + the gate is the
-  strongest available guarantee and is recorded as such. Evidence:
-  `tests/unit/bodyReadAcquisition.test.ts` 4/4, the network-observer/journey
-  suites 14/14, `hardening:check` PASS, and the sharded lane PASS at 5685/0
-  (5718 planned, 0 failed).
-  M8 9.7 DONE — run evidence bundle transaction integrity (NW-AUD-024
-  residual): a deterministic `generation` identity in the manifest (two
-  bundles differing in run id or start instant are distinguishable; a
-  frozen-clock replay stays byte-identical), `addManifestEntry` fails closed on
-  a malformed manifest instead of silently replacing it with `{}`, appends are
-  bounded at append time (`RUN_EVIDENCE_APPEND_BOUND_EXCEEDED`), and
-  `download.cancel()` moved into a `finally`. Evidence:
-  `tests/unit/runEvidenceBundleTransaction.test.ts` 7/7, `evidence.test.ts`
-  26/26 (including byte-for-byte reproducibility with the new field),
-  `hardening:check` PASS, and the sharded lane PASS at 5692/0 (5725 planned,
-  0 failed).
-  M8 9.8 DONE (with a recorded narrowing) — per-start proxy instance nonce
-  (NW-AUD-016): each start generates a fresh 32-hex nonce, the health endpoint
-  echoes it, the runtime state records it (optional-but-validated key) and
-  EVERY event record carries it, so a log belongs to one instance.
-  `checkProxyHealthDetailed` reports `observedNonce`/`attested`; the boolean
-  startup gate deliberately keeps its 204 semantics, so the echo is OBSERVED
-  and available to callers but NOT enforced there (a foreign listener that
-  answers 204 without or with a wrong header still passes the boolean gate).
-  That remaining enforcement is recorded as open rather than over-claimed.
-  Evidence: `tests/unit/proxyInstanceNonce.test.ts` 4/4, the sharded lane PASS
-  at 5695/0 before commit plus `projectState` 103/103 post-commit,
-  `hardening:check` PASS.
-  M8 9.9 DONE (with a recorded narrowing) — relay invocation authority
-  (NW-AUD-028): a per-INVOCATION 32-hex credential is minted by the relay,
-  accepted as protocol surface and presented by the parent on every relay
-  request; a RELAY-WIDE budget (`MAX_RELAY_REQUESTS = 8`) is owned by the relay
-  and spent per request; and an observation is written ONCE per operation
-  (a second write is refused with `RELAY_OBSERVATION_ALREADY_RECORDED` and the
-  first stands). NARROWING: the relay-wide budget is accounted but not yet
-  ENFORCED in `requestPhase5Relay` (an earlier attempt blocked a legitimate run
-  with `RELAY_SAFETY_BLOCK`; the probe/scenario traffic must be counted first),
-  so the runtime-level bound still holds and this stays open. Evidence:
-  `tests/unit/relayInvocationAuthority.test.ts` 5/5, `phase5Api` 18/18,
-  `hardening:check` PASS, sharded lane PASS at 5701/0 (5734 planned).
-  M8 9.10 DONE (with a recorded narrowing) — change intelligence source
-  generation integrity (NW-AUD-043): `validateChangeSet` runs before any
-  selection and RECOMPUTES `changesetId` from the content (canonical `cs-<24
-  hex>` ids only; `CHANGESET_ID_MISMATCH`), requires a baseline for every
-  changed file (`CHANGESET_BASELINE_MISSING`), requires BOTH rename endpoints
-  (`CHANGESET_RENAME_ENDPOINT_MISSING`) and refuses a self-referential rename;
-  both endpoints already drive edge matching and non-runtime classification,
-  and edges are matched against the changeset's own baselines. NARROWING: the
-  baseline SHA-SHAPE rule was removed (it coupled the validator to synthetic
-  fixture conventions and broke 16 legitimate aiReview/aiOwnerReview tests) and
-  stays open. Evidence: `tests/unit/changeSetGenerationIntegrity.test.ts` 5/5,
-  the aiReview/aiOwnerReview/changeIntelligence suites green, `hardening:check`
-  PASS, sharded lane PASS at 5705/0 (5739 planned) plus `projectState` 103/103.
-  M8 9.11 DONE for R2-03, R2-04 RECORDED OPEN — child-process census
-  indirection totality: dynamic `import()`, `createRequire`, string-built
-  specifiers and namespace destructuring all record an unresolved indirection
-  now (a plain literal import stays clean; the two legitimate `createRequire`
-  sites are named in `KNOWN_CREATE_REQUIRE_SITES` so a new one still fails).
-  R2-04's explicit-env-allowlist and sync timeout/output-bound rules were
-  implemented, run and REVERTED because dozens of existing call sites are not
-  conformant (affected-tests, bin-typecheck, c12-preflight, evidence-retention,
-  finding-intel-scale, …); they need their own conformance sweep and stay open,
-  with the test pinning that the rules are absent rather than pretending.
-  Evidence: `tests/unit/childProcessCensusIndirection.test.ts` 6/6,
-  `hardening:check` PASS, sharded lane PASS at 5711/0 (5745 planned).
-  M8 9.12 + 9.13 DONE — **M8 IS COMPLETE.** A new TOTALITY rule
-  `checkM8GuardTotality` requires 22 M8 guards to remain present in code, each
-  with its own registered mutation probe (HC-155…HC-176); the run-bundle guards
-  gained four probes on the evidence-firewall rule (HC-150…HC-153) and the
-  census indirection guard gained HC-154. The FULL campaign is green: **90
-  rules, 175 probes, 175 DETECTED, 0 undetected, every mutation restored**.
-  `npm run gate:dev` PASS (5712 passed / 0 failed, all groups exit=0) and
-  `npm run gate:milestone` PASS (wall 829.9s, 5712/0, typecheck-bin +
-  hardening-rules + project-check + workspace-check exit=0); rule-count pins
-  advanced (90 rules / 67 TOTALITY). One 9.6 follow-through: the
-  `observerSemanticLedger` overflow loop is paced because bounded acquisition
-  deliberately refuses reads under saturation (the exact 512 cap and the
-  explicit-overflow assertion are unchanged).
-  M9 10.1 DONE, 10.2 IN PROGRESS — the operator-CLI surface registry
-  (`config/operator-cli-surface.v1.json`) declares every tracked `bin/*.mjs`
-  file with exactly one disposition (OPERATOR_CLI / LIBRARY_RETAINED with a
-  reason / PENDING_OPERATOR_CLI) and records the counts, so the remaining
-  migration is a counted fact; `tests/unit/operatorCliSurface.test.ts` pins the
-  declaration/entry-point honesty and the count reconciliation. Seven DEV
-  launchers are migrated with accurate flag metadata (phase2b/2c/4/5/9b/10b/
-  22-real), which surfaced a real defect: the migrated bins exited 0 on a
-  `cli.stop` path and overwrote the shared parser's refusal code, so an unknown
-  option exited 0 instead of 2 — fixed by exiting with `process.exitCode ?? 0`.
-  `phase7-real` was reverted deliberately (its option surface is richer than the
-  derived set). Conformance: 55/76 declared, 4 library-retained, 17 pending.
-  Second 10.2 batch: `auth-capture`, `ai-owner-review` (+ its `show`/`status`/
-  `decide` commands), `nightwatch-control-center` and `phase7-real` migrated —
-  conformance is now 59/76 declared, 4 library-retained, 13 pending. The
-  migration surfaced two shared-parser refusal codes (`CLI_ARGUMENT_CONFLICT`,
-  `CLI_UNKNOWN_ARGUMENT`), so the launcher boundary suites accept the shared
-  codes alongside the bins' own; the properties under test are unchanged.
-  Sharded lane PASS at 5718/0 (5751 planned).
-  Next: continue 10.2 (the remaining 13 bins), then 10.3 (shared-parser
-  structural rule with a negative probe, task counts, README claim at 76/76).
-- M6 is COMPLETE: 7.1-7.11 are ticked in the campaign ledger with DONE notes
-  and PLAN marks M6 COMPLETE. The view-DOM baseline was intentionally
-  REGENERATED (`NIGHTWATCH_UPDATE_VIEW_DOM_BASELINE=1`) because the Agent
-  Campaigns view adds a navigation entry and a view — an intended DOM change
-  the baseline test itself requires to be recorded here.
-- M7 (tasks 8.1-8.x) has not started.
-
-- M5 is COMPLETE (ledger ticked, PLAN/STATE advanced, gate pair 5585/0,
-  exact-head CI run 36302111703 green) and pushed.
-- M6 (tasks 7.1-7.11) is in progress; 7.1-7.3 are implemented and committed:
-  7.1 — the protocol dossier's status is DERIVED (`protocolDossierReadiness`)
-  instead of hard-coded READY, the v1 validator accepts the truthful
-  `UNRESOLVED`, and every consumer filtering on `status === 'READY'` excludes a
-  dossier that never reproduced (`tests/unit/dossierReadiness.test.ts` 4/4);
-  7.2 — the Control Center status mapping is TOTAL: the dossier-status
-  vocabulary gained `UNRESOLVED` (+ `UNKNOWN` for unknown values), one
-  exhaustive `dossierStatusOf` projection serves the adapter and the findings
-  authority, and the sanitizer allowlists are DERIVED from the contract
-  vocabularies (the inline dossier-status list was silently dropping an
-  unresolved dossier) — `tests/unit/controlCenterStatusTotality.test.ts` 4/4;
-  7.3 — replay contexts are ROLE-typed: the admission key is `(role, runId)`,
-  L1/L2 require a genuinely different role, three runs of one role stay an L0
-  candidate, and the phase7 harness receives its role explicitly instead of
-  inferring it — `tests/unit/replayContextRoles.test.ts` 6/6.
-  7.4 — orchestrator state now lives in a dedicated `campaign-state/` private
-  subtree (the closed directory vocabulary gained a second member, with the
-  hardening pin and its mutation probe widened), the legacy findings-root
-  location stays READABLE through a fallback, and the Control Center findings
-  authority decides the DOSSIER FAMILY first: a non-dossier file is skipped
-  with the informational `FINDINGS_NON_DOSSIER_FILE_SKIPPED` reason instead of
-  being parsed as a corrupt dossier, so orchestrator state beside the dossiers
-  can never blank the Findings view — `tests/unit/campaignStateSubtree.test.ts`
-  3/3 and 158 affected tests green.
-  7.5 — the run-evidence reader now reports a bounded NEWEST-N window over the
-  real run root (with `window.limit/considered/truncated` and the informational
-  `RUN_EVIDENCE_WINDOW_TRUNCATED` reason) instead of refusing a growing tree,
-  inspection itself is bounded, and the test seam carries an injectable window
-  limit so the bound is provable without materialising 256 run directories —
-  `tests/unit/controlCenterRunEvidenceReader.test.ts` 12/12;
-  7.6 — a read-only agent-campaign authority/view/route: measured per-campaign
-  rows read from the durable owner-local store, an unreadable store is
-  explicitly UNAVAILABLE (never a silent empty view), the DTO carries campaign
-  and candidate ids plus `afr:` dossier identities and counts but NO path
-  (asserted against `/`, `\\`, `.nightwatch` and the store root), and
-  `/api/v1/agent/campaigns` is served by the collector —
-  `tests/unit/controlCenterAgentCampaigns.test.ts` 4/4.
-  7.7 — the Safety Center is MEASURED: the owner-scope check comes from the
-  policy record, the owner-CLI surfaces (workspace integrity, session
-  protocol) are explicitly `NOT_MEASURED` with named reasons, the frozen
-  operation classes come from `FROZEN_OWNER_OPERATIONS`, and currentness is
-  labelled `NOT_WIRED` with the prerequisite named (C-25); the retired
-  `DEFAULT_CONTROL_CENTER_SAFETY_INPUT` constant is gone (asserted) —
-  `tests/unit/controlCenterSafetyAuthority.test.ts` 6/6;
-  7.8 — ONE `resolveSiblingRoot()` in the topology authority (trimmed,
-  env-first, empty-means-unset, relative refuses) now serves the intelligence
-  CLI, the Control Center source view, the historical context, the bug-atlas
-  miner, the owner-local context and reproduction provider, the operational
-  CLIs and the shared test authority; the new TOTALITY rule
-  `checkSiblingRootResolution` (probe HC-149) flags direct leaf-constant reads
-  and the pre-existing rule enforces the resolver call form —
-  `tests/unit/siblingRootResolution.test.ts` 4/4, 62 affected green.
-  Next: 7.9 (relabel the synthetic Phase 19-21 previews as synthetic preview,
-  or delegate them to `status:local`).
-- M5 history (kept for context): 6.1-6.11 are implemented, validated and
-  committed (`9a044b49`, `5719f6ea`-lineage): the content-addressed
-  `AgentFindingRecord` in `admitLocalFinding`; the atomic `agent-findings/`
-  store published BEFORE any checkpoint deletion (write failure →
-  `NOT_PERSISTED`, checkpoint kept, CLI exit 3); the TERMINATED resume that
-  returns persisted records verbatim or `UNAVAILABLE_NOT_PERSISTED`; the full
-  reasoner identity with `REASONER_IDENTITY_MISMATCH` and `--model`
-  cross-check; resumed-budget conservation (the in-flight usage was being
-  subtracted twice), the persisted per-investigation turn limit and the
-  per-dimension conservation assertion; per-call provider-failure classes with
-  the honest `terminationClass` (a dead provider is no longer BUDGET_EXHAUSTED
-  or zero yield); tier-scaled failure ceilings, transient/permanent classes
-  with bounded jittered backoff, unreachable provider orders, and the
-  `retries` → `failures` rename with read-compatible legacy bytes (D-144);
-  the dispatcher forwards a campaign without a fixed deadline, streaming output
-  and forwarding signals; SIGINT/SIGTERM pause with a PAUSED checkpoint and a
-  reasoner group kill plus per-investigation progress checkpoints; the print
-  adapter cleans up on every exit path and never fabricates grounding refs;
-  and reproduction materializes from the recorded HEAD tree in the Git object
-  store (D-145). Next: 6.12 (ENVIRONMENT_DEPENDENT refusal).
-
-## M7 exact-head CI observation (OD-3)
-
-Command: `gh run watch 36321415439 --exit-status` (OD-3 exact-head CI observation, M7)
-Result: PASS — `completed / success`, headSha `995378d23316173a91596bf6c3f72045a31dbb35`
-When: 2026-09-27
-Relevant failure/output summary: the M7 closeout head; every job step green
-(`Execute authoritative quality gate` included). The TWO PRIOR pushes failed CI
-and were repaired forward in this head: run `36314901548` at `56ec55c5` (the 8.4
-push) and run `36314103246` at `895f0e02` (the 8.3 push) both failed on the
-frozen Phase 20/21 baselines that the honest narrowing legitimately moved
-(graph 157->133 nodes, gaps 86->62, mutants 67->55) plus the receipt coherence
-for an incomplete-coverage outcome. Those repairs are committed
-(`19fba2b2`, the differential re-base, and the semantic receipt mapping) and CI
-confirmed the repaired head green. M7 is validated end to end: focused cones,
-`gate:dev` and `gate:milestone` at 5645/0, and exact-head CI green.
-
-## M8 exact-head CI observation (OD-3)
-
-Command: `gh run watch 36349771611 --exit-status` (OD-3 exact-head CI observation, M8)
-Result: PASS — `completed / success`, headSha `badb6f883f51b7001d59552b7c0b19d16d4f1012`
-When: 2026-09-27
-Relevant failure/output summary: the M8 closeout head; every job step green
-(`Execute authoritative quality gate` included). The PRIOR push (`ab1fa187`,
-the 9.11 census-indirection checkpoint) failed CI in run `36343583350` with
-exactly one failed location — `tests/unit/observerSemanticLedger.test.ts:136`,
-the 550-request ledger-overflow loop, which assumed every response body is
-captured and therefore collided with 9.6's bounded acquisition gate (a
-saturated gate refuses a read rather than queueing it). That failure was
-repaired forward by pacing the loop and widening the poll timeout while keeping
-the exact 512 cap and the explicit-overflow assertion, and CI confirmed the
-repaired head green. M8 is validated end to end: focused cones, the full probe
-campaign (175/175 detected), `gate:dev` and `gate:milestone` at 5712/0, and
-exact-head CI green.
-
-## M9 10.2 checkpoint CI observation (OD-3)
-
-Command: `gh run watch 36366426608 --exit-status` (OD-3 exact-head CI
-observation, M9 10.2 checkpoint)
-Result: PASS — `completed / success`, headSha
-`321800018bc819465326ba7c0556bac31e565da4`
-When: 2026-09-28
-Relevant failure/output summary: the M9 10.2 checkpoint head (three commits:
-`0a436f12`, `09c50277`, `32180001`); every job step green (`Execute
-authoritative quality gate` included). Local validation before the push:
-gate:dev PASS 5718/0 post-commit (the only pre-commit failure was the known
-`projectState.test.ts:2316` clean-tree assertion on the dirty worktree),
-projectState 103/103, focused CLI/launcher/review suites 77/77, full probe
-campaign 176/176 detected with every mutation restored, hardening:check PASS,
-agent:check PASS (86 warnings).
+**Current (2026-10-10):** M13 (group 14) tasks 14.1-14.6 are COMPLETE and
+recorded; the deferred 9.5b is RESOLVED. The campaign's next group is M14
+(tasks 15.1-15.8): the full authoritative validation set, the final substantive
+commit S, the exact-head CI observation and re-binding at S, the canonical gate
+trio plus the authorized npm registry advisory query, the documentary receipt
+commit and archive, the topology proof, the 13-section final report, and the
+OWNER STEP that returns the repository to private.
+The log below is HISTORICAL (M2-M12, oldest first) and is not the current state.
 
 ## Exact Next Action
 
-M13 task **14.1**. The deferred **9.5b** (NW-AUD-020 tasks
-3.2/4.2) continues to be carried by 14.1/14.2. What 11.1-11.6 produced, so the
-next session does not redo it: 11.1/11.3 are implemented and validated at
-`b7afa9e9` (run-shards 6129/0/33 declared skips; typecheck and typecheck:bin
-BLOCKING 0; `hardening:check` PASS; `hardening:rules` 96 rules; validation:universe
-and execution-classes PASS); 11.2's eight ACCEPTED_RESIDUAL entries are
-D-160..D-167 with the NW-AUD-019 2.2 / programme 14.7 strike records; 11.4's
-campaign-frame entries are D-153..D-159 plus the SAFETY_MODEL §25-§32 and
-ARCHITECTURE M10 appends; 11.5 removed the unconsumed `NIGHTWATCH_REASONER_PRINT`
-declaration (surface now 73 variables), corrected the `NIGHTWATCH_PRINT_CLI`
-purpose to the LIVE-provider wording, and pinned the census in
-`tests/unit/safety.test.ts` (37/37); 11.6 extended the dependency assessment to
-the UI lockfile (`nightwatch.ui-lockfile-assessment.v1`, GHSA-82fw disposition
-recorded). Sequencing constraint recorded in D-148: run the paid proof (12.3)
-after the last substantive fix so G12's receipt binds to S.
+M14 task **15.1**: run the full authoritative set in this session - `typecheck`,
+`typecheck:bin` (BLOCKING), Control Center UI typecheck/test/build, browser
+suite, `schema:check`, `hardening:check`, `hardening:rules`, `validation:universe`,
+`agent:check`, `agent:audit`, `project:check`, `workspace:check`, `session:check`,
+`campaign:synthetic`, `gate:local` and `npm test`. Then 15.2 (create the final
+substantive commit S, routed canonical, and integrate with `--expect-head S`),
+15.3 (observe CI `EXECUTED_PASS` at S with `gh`, ingest it through
+`phase23-ci observe`, and re-execute + re-bind every lane and condition at S with
+`certify:evidence` so no condition carries ancestor evidence), 15.4 (from
+canonical with no live session: `gate:local`, `gate:clean` sibling-absent for
+root and UI, `gate:topology` at S, plus the authorized npm registry advisory
+query), 15.5 (the documentary receipt commit on approved paths only, archive this
+change, push, confirm the `project:check` verdict at S and `HEAD == origin/main`),
+15.6 (the topology proof: only `main`, one worktree, clean), 15.7 (the
+13-section final completion report) and 15.8 (the OWNER STEP: revert the
+repository to private and confirm GitHub Actions still executes, recording the
+run).
 
-Two LIVE-SOURCE items are carried forward into M12/M13, both pre-existing at
-`545b24f3` and both reproduced on a clean HEAD clone before repair:
-`tests/unit/c03GrpcTopology.test.ts`'s measured floor of twelve proven ouchan
-bindings no longer matches the pinned sibling SHA's walk yield (now ten), and
-the `RegisterMetricsControlPlaneServer` UNSUPPORTED expectation depended on a
-daemon the truncated enumeration no longer reaches. Both were re-based to the
-MEASUREMENT (floor 10; the honesty properties asserted over the whole reachable
-set rather than one remembered symbol) with the revisit trigger recorded in the
-test file. Nothing under the Alphaus sibling `services/` tree was modified.
-
+What 14.1-14.6 produced, so the next session does not redo it: the successor
+reconciliation, the six child closures, the four terminal legacy ledgers, the
+228-item disposition table, the owner-confirmation record and the live-rendered
+operator truth are all appended to `audit.md`, `docs/**` and the four legacy
+task records. The live figures the next session must carry forward rather than
+re-measure: `project:check` PASS with `conditionsMet 0/16` and
+`certificationRefused true` at certified `027367d9` / live head `c931444a`; the
+newest CI run `37881189722` at `88987013` is RED on `HANDOFF_TRUTH` and the six
+commits `88987013..c931444a` are CI-unobserved; the repository is PUBLIC.
 ## Superseded Next Action (8.1, complete)
 
 Read tasks 8.1-8.x and the environment-surface loader
@@ -1312,16 +960,43 @@ named in the routing block; integration is fast-forward only.
 
 ## Completion Snapshot
 
-Not complete. M10 tasks 11.1-11.6 are COMPLETE (2026-10-09): 11.1 and 11.3
-implemented and validated at `b7afa9e9`; 11.2 recorded as DECISIONS D-160..D-167
-with the strike records; 11.4 recorded as DECISIONS D-153..D-159 plus the
-SAFETY_MODEL §25-§32 and ARCHITECTURE M10 appends; 11.5 removed
-`NIGHTWATCH_REASONER_PRINT` and documented the print CLI as a LIVE provider;
-11.6 extended the dependency assessment to the UI lockfile with the GHSA-82fw
-disposition and the Vue review item. The bin type-check lane stays BLOCKING at
-0 diagnostics with 77 of 77 conforming entry points. Task 11.7 (commit) is the
-last M10 box.
-Terminal snapshot is written at M14: all 228 census items
-dispositioned (OD-1), `PROJECT_COMPLETE_AND_CI_CERTIFIED` under D-129 with CI
-`EXECUTED_PASS` at S (OD-2), operator proofs recorded, ledger closed, and a
-`main`-only clean topology equal to `origin/main`.
+Not complete. M13 (group 14, tasks 14.1-14.6) is COMPLETE (2026-10-10) and the
+deferred 9.5b is RESOLVED. M14 (group 15, tasks 15.1-15.8) is the remaining work.
+
+The terminal snapshot is written at M14: all 228 census items dispositioned
+(OD-1), the ledger closed with exactly one active change archived at the final
+documentary commit, `PROJECT_COMPLETE_AND_CI_CERTIFIED` under D-129 with CI
+`EXECUTED_PASS` at S and every lane and condition re-bound at S (OD-2), the
+operator proofs recorded, and a `main`-only clean topology equal to `origin/main`.
+The mandatory owner step 15.8 (return the repository to private and confirm
+Actions still executes) is recorded as PENDING with the live PUBLIC reading, and
+is an owner/admin action no agent may take.
+
+Current progress figures, stated once at the end so no historical figure can be
+read as the current claim: the operator-CLI surface is **77/77 conforming**
+(`node bin/bin-typecheck.mjs` → `conformance=77/77 mode=BLOCKING errors=0
+exemptions=0 ceilings=0` at HEAD `c931444a`, 2026-10-10) and the bin type-check
+lane is BLOCKING at 0 diagnostics across all 143 tracked implementations.
+
+---
+
+- 2026-10-10 — M13 (group 14, tasks 14.1-14.6) COMPLETE, plus the deferred 9.5b
+  RESOLVED. `npm run hardening:check` PASS; `npm run agent:check` PASS (35
+  warnings); `node bin/validation-universe.mjs` PASS; `npx openspec validate
+  --all --strict` PASS (80 passed, 0 failed) with exactly one active change
+  remaining; `node bin/bin-typecheck.mjs` `conformance=77/77 mode=BLOCKING
+  errors=0 exemptions=0 ceilings=0`; `npm run typecheck` exit 0. Sixty-six active
+  changes were archived oldest-first (17 with spec sync, 49 with
+  `--skip-specs`), 20 published capability specs gained a real Purpose, the
+  task-ID ledger was reduced to this campaign's single entry, and the SPEC's
+  `## Declared Deletions` block was extended with the 368 pre-move paths.
+  `npm run project:check` reports exactly ONE finding,
+  `PROJECT_STATE_CHECKOUT_DIRTY`: the working tree carries this task's
+  uncommitted archive-and-documentation work, and this session is forbidden to
+  commit (the commit is M14 15.2/15.5). On a clean tree with this same content
+  the check exits 0: the release verdict is unchanged
+  (`OPERATIONALLY_ACCEPTED`, certified `027367d9`, conditions met 0/16,
+  `certificationRefused: true`, `advanceClaimed: false`, external track
+  `EXTERNAL_PREREQUISITE_UNMET`). The live figures of record are in
+  `docs/CURRENT_STATE.md`'s M13 14.5 append and in the README measured-status
+  block.

@@ -75,7 +75,7 @@ controls, and mutations that remove the executed/unknown guards.
 - Acceptance criteria: mutations detected; milestone gate green; no safety
   counter regression.
 - Validation commands: `npm run gate:milestone`, targeted lint/type checks.
-- **Status:** BLOCKED
+- **Status:** COMPLETE — the 12 broad-gate failures reproduced on the certified baseline and were cleared by the parent's M3 live-source hermeticity work (tasks 4.1/4.2); the receipt guards were mutation-detected. Recorded 2026-10-10.
 
 ### M4 — Close and reassess
 
@@ -85,7 +85,12 @@ controls, and mutations that remove the executed/unknown guards.
 - Acceptance criteria: no false COMPLETE claim; next campaign is evidence-led.
 - Validation commands: required continuity checks and one justified release
   grouping if applicable.
-- Status: NOT_STARTED
+- Status: COMPLETE — reconciled 2026-10-10 by the parent campaign's M13 ledger
+  closure (tasks 14.1/14.2): the successor is bound to the engine's own
+  evidence-ranked backlog (no NW-AUD original), the closure receipts are
+  recorded in STATE.md's Completion Snapshot, and no false COMPLETE claim is
+  made — the only blocker ever recorded was the independent live-source drift
+  residual, cleared by the parent's M3 hermeticity work.
 
 ## Validation Strategy
 

@@ -30,7 +30,7 @@ None; the record exists for continuity bookkeeping only.
 
 ## Milestones
 
-- [ ] M0 — never started; requires a future owner-authorised campaign.
+- [x] M0 — closed as a park record 2026-10-10: never started, and the record itself is the deliverable. Requires a future owner-authorised campaign.
 
 ## Validation Strategy
 

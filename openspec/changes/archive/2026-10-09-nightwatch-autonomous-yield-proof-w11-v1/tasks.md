@@ -79,16 +79,33 @@
 
 ## M5. Run the owner-local unknown-yield campaign
 
-- [ ] ~~M5.1 Execute through the ordinary `nightwatch-agent campaign run` path~~
+- [x] ~~M5.1 Execute through the ordinary `nightwatch-agent campaign run` path~~ — SUPERSEDED
       — BLOCKED. The path was exercised and is correct; the run is invalid
       because all 6 reasoner calls returned `REASONER_TIMEOUT` with zero
       provider response bytes. The `opencode-go` subscribed namespace is
       degraded or quota-exhausted.
-- [ ] ~~M5.2 Execute across a materially wider slice under host-owned
-      `--repository` scope~~ — BLOCKED by the same outage. Standing ceiling
+ — SUPERSEDED: the ordinary product path was later executed with a live provider by
+ M11 12.3's ONE authorized paid proof run (campaign `m11-12-3-proof`, run
+ `nightwatch-m11-12-3-proof-20261009181741597`, provider
+ `opencode-go/step-5-preview-free`, repository `mobingilabs/ouchan`,
+ `--wall-clock-minutes=20`): 30 provider calls / 28 completed / 2 failed,
+ 33 campaign actions, 16 tool/source actions, 2 candidates, 0 admissions,
+ 1 dossier `REFUSED_NO_REPRODUCTION`, termination `BUDGET_EXHAUSTED` with
+ honest class `PROVIDER_DEGRADED`, leak scan CLEAN (4018 chars, 0 findings),
+ sibling identity unchanged, zero persisted findings. The 2026-09-26 outage
+ that blocked this box is preserved above as history and is not rewritten.
+ [2026-10-10, M13 14.2]
+- [x] ~~M5.2 Execute across a materially wider slice under host-owned
+      `--repository` scope~~ — SUPERSEDED
+      — BLOCKED by the same outage. Standing ceiling
       recorded regardless: reproduction capability exists in
       `mobingilabs/ouchan` alone, so investigation breadth is 8 and execution
       breadth is 1.
+ — SUPERSEDED: the wider slice was executed under the host-owned
+ `--repository` scope by the authorised proof run (M11 12.3, ouchan,
+ 20 wall-clock minutes) and by W13's nine frozen runs; the standing
+ reproduction-capability ceiling is preserved in this row rather than
+ deleted. [2026-10-10, M13 14.2]
 - [x] M5.3 Resume one checkpoint to prove scope and budget identity — proven on
       the real checkpoint: a changed resume scope fails closed with
       `CAMPAIGN_SCOPE_MISMATCH` (exit 2) and an unapproved id with
@@ -156,6 +173,14 @@
       current-state blocks — published. The governed figures stay 0/0 because
       both remain true, with the explanation and the unexecuted-arm status
       recorded beside them.
-- [ ] ~~M10.3 Full validation, integrate, release~~ — PARTIAL. `gate:local`
+- [x] ~~M10.3 Full validation, integrate, release~~ — SUPERSEDED
+      — PARTIAL. `gate:local`
       PASS over all 12 required groups; full regression and clean gate recorded
       in STATE. Release is not claimed while 12.7 is blocked.
+ — SUPERSEDED: the full validation, fast-forward integration, release and
+ removal lifecycle for this wave's successor work is recorded from its actual
+ outcomes in the W12/W13 reports and in this campaign's STATE Validation
+ Ledger (`gate:local` 15/15 at `14efed2e`; `gate:clean` PASS with
+ `clean-receipt:sha256:3300f6eb113ed46816b5ac66` at M11 12.5; exact-head CI
+ runs 36855178941, 36859209949, 37044532848, 37062959122, 37120079300,
+ 37123923541). [2026-10-10, M13 14.2]

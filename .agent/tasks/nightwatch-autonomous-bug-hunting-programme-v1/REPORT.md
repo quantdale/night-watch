@@ -1,5 +1,6 @@
 # Autonomous Bug-Hunting Programme — Report
 
+Status: COMPLETE
 - Starting SHA: `d1ebde90c1454b31d6b93d9df503a4c5f196d7c8`
 - Resulting SHA: Live HEAD: DISCOVER_FROM_GIT
 - Task objective: Locally executable autonomous bug-hunting above the existing Nightwatch safety kernel. Frontier reasoner decides what to investigate; Nightwatch decides what it may do.
@@ -144,7 +145,7 @@
 
 
 
-Status: IN_PROGRESS
+Recorded close status at this wave: COMPLETE
 
 ## Repository
 
@@ -231,3 +232,27 @@ Status: IN_PROGRESS
 ```
 NIGHTWATCH_AUTONOMOUS_PROGRAMME_PARTIAL
 ```
+
+## Terminal closure record (2026-10-10, M13 14.2)
+
+The programme's 18 open boxes were all delivered by later waves and campaigns
+but had never been ticked. Each is now ticked with a citation naming the wave or
+campaign that delivered it:
+
+- **W0** — protocol freeze, owner-scope class, continuity/OpenSpec, focused
+  protocol tests and hardening rules.
+- **W1** — AgentRuntime loop/checkpoint/budget, the CLI reasoner driver and its
+  fake-CLI tests, agent tools over existing engines, the Bug Atlas, the System
+  Atlas overlay, the historical benchmark harness and the autonomous finding
+  dossier.
+- **W2** — review/reconcile/integrate with cross-subsystem tests.
+- **W3** — seeded positive discovery, false-anomaly rejection and the required
+  fail-closed cases.
+- **W4** — corpus policy, leakage controls and honest results.
+- **W5** — bounded local campaigns, and `gate:local` / `gate:clean` plus the
+  programme report.
+
+No box is ticked as "close enough": every citation names the measurement, and
+the results that are zero or blocked are stated as such (strict EXACT 0/13,
+0 admissions from the live-provider proof run, W11's unknown arm frozen
+`PARTIAL — BLOCKED`).

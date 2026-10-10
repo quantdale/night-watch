@@ -1,24 +1,73 @@
 # Nightwatch Agent Contract
 
-This repository is a private, read-only-by-default bug-hunting framework. All
+This repository is a PUBLIC (verified 2026-10-10 with `gh repo view`; see the
+visibility note below), read-only-by-default bug-hunting framework. All
 implementation changes belong here. Do not contact a real Alphaus environment,
 query a database, mutate production data, or modify Alphaus repositories as
-part of normal development.
+part of normal development. Because the repository is public, every committed
+byte is published.
 
 ## Canonical Git topology and checkpoint policy
 
 The canonical writable Git root is
 `/home/dalepalaca/go/src/alphaus-main/REPOSITORIES/nightwatch`. Its canonical
-remote is the private `origin`
-(`https://github.com/quantdale/night-watch.git`) on `main`. The parent
+remote is `origin`
+(`https://github.com/quantdale/night-watch.git`, **PUBLIC** — see the visibility
+note below) on `main`. The parent
 workspace is intentionally not a Git repository; do not restore its retired
 `.git` metadata or use the preserved accidental-Git backup.
 
-Visibility note (D-149, 2026-09-30): the repository is TEMPORARILY PUBLIC by
-owner decision, because GitHub Actions failed while it was private. Treat every
-push and CI artifact as public: nothing secret, customer-derived or
-authentication-bearing, and no new absolute home path. It returns to private at
-the final close-out, where the owner confirms Actions still runs.
+Visibility note (D-149, 2026-09-30; reconciled against LIVE GitHub evidence
+2026-10-10): the repository is **PUBLIC, not private**. `gh repo view
+quantdale/night-watch --json visibility,isPrivate` returns
+`{"isPrivate":false,"visibility":"PUBLIC"}`. GitHub's real visibility is
+authoritative and overrides any prose in this file that says otherwise, so the
+TWO CURRENT "private repository" claims in this note are corrected here, in
+place, because they are current-state claims and not historical records:
+
+- line 3 ("This repository is a **private**, read-only-by-default bug-hunting
+  framework") is FALSE as a current claim. The framework is still
+  read-only-by-default over Alphaus environments and data; the repository that
+  holds it is PUBLIC.
+- line 12 ("its canonical remote is the **private** `origin`") is FALSE as a
+  current claim. The canonical remote is `https://github.com/quantdale/night-watch`
+  on `main` and it is PUBLIC.
+
+D-149's decision stands and is preserved as history: the repository was made
+TEMPORARILY PUBLIC by owner decision because GitHub Actions failed while it was
+private, and it was to return to private at the final close-out, where the owner
+confirms Actions still runs. That return is an OWNER/ADMIN action on GitHub and
+has NOT been taken: no agent may change the visibility. Campaign task 15.8
+tracks it, with the evidence to record (`gh repo view` showing PRIVATE, the
+observed workflow run at the same head, and the run id in this ledger). Until
+then the operative rule is D-149's, and it is unchanged: **treat every push and
+every CI artifact as public** — nothing secret, customer-derived or
+authentication-bearing may enter source, artifacts, or `.agent` files, and no
+new absolute home path may be introduced. This campaign introduced no secret,
+no credential, no customer value and no new absolute home path; its
+authorized external contact was OD-3 only (GitHub CI read/observe, one bounded
+paid provider proof run, one npm registry advisory query).
+
+**No safety invariant depends on the repository being private.**
+`docs/SAFETY_MODEL.md` was read in full for this reconciliation. Its
+invariants are enforced by fail-closed code and by the gates that run it —
+the owner-scope freeze (`FROZEN_BY_OWNER /
+INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE`, enforced by
+`assertGatedReadAllowed` and by the L6 process/network containment
+capability), the private-artifact boundaries (`agent-findings`,
+`campaign-state`, `PRIVATE_RETENTION_SCOPES`), the sanitization of every
+receipt and finding, the leak scans, and the workspace/session isolation
+invariants. None of them reads the GitHub visibility setting, and none of
+them is weakened by the repository being public: the safety model is
+"fail closed regardless of who can read the repository". The two
+consequences of publicity that DO bind are documentary and already enforced —
+(1) everything pushed is public, so the privacy surface of every commit must
+be inspected before each push, which the checkpoint policy above already
+requires; and (2) a session identifier that reached git history is already
+published and can never be unpublished by making the repository private
+again (D-152's redaction record states exactly this). Making the repository
+private later therefore reduces FUTURE exposure and cannot retract anything
+already published.
 
 Nightwatch development sessions may commit and push only validated durable
 checkpoints from this repository to `origin main`. Before each push, validate

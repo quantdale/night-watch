@@ -1972,3 +1972,54 @@ always runs. Untrusted observation bytes and every memory field are quoted as
 inert DATA with ZERO instruction authority, and a missing model evidence ref is
 never back-filled with campaign refs (an ungrounded proposal is refused, not
 decorated).
+
+## 33. No safety invariant depends on the repository being private (appended 2026-10-10, M13 task 14.5)
+
+Measured 2026-10-10 with the one owner-authorized read-only GitHub command of
+this task: `gh repo view quantdale/night-watch --json visibility,isPrivate`
+returns `{"isPrivate":false,"visibility":"PUBLIC"}`. GitHub's real visibility
+is authoritative. `AGENTS.md` previously carried two CURRENT claims that the
+repository is private; both were false, both are corrected there, and D-149's
+owner decision (TEMPORARILY PUBLIC so GitHub Actions could run; returns to
+private at the final close-out where the owner confirms Actions still runs) is
+preserved as history rather than deleted. The return to private is an
+owner/admin action and has not been taken.
+
+**Every invariant in this document was re-read for this reconciliation, and
+NONE of them depends on the repository being private.** Specifically:
+
+- The safety kernel and scope freeze (the early sections). The owner-scope
+  freeze is enforced by `assertGatedReadAllowed` and the owner policy module
+  against `FROZEN_OWNER_OPERATIONS`; unknown operation classes fail closed with
+  `OWNER_POLICY_BLOCKED` before any executor callback. It never consults a
+  GitHub visibility setting.
+- Containment. The L6 process/network containment capability qualifies the host
+  envelope (user/PID/network namespace, minimal read-only root view,
+  namespace-local bounded proxy) and fails closed on any unsupported or lost
+  state. It never consults a GitHub visibility setting.
+- Evidence, receipts and findings. Receipts are tamper-evident and never
+  tamper-proof (OD-5); every finding, dossier, fingerprint and receipt is
+  sanitized at its boundary; the private subtrees (`agent-findings`,
+  `campaign-state`) are governed by `PRIVATE_RETENTION_SCOPES` with
+  `OWNER_EXPLICIT_APPLY` as the only removal authority. None of these reads a
+  GitHub visibility setting.
+- The M9/M10 authorities (sections 25-32). The bin type-check lane, the report
+  boundary, the gated-read authority, the retention journal, the toolchain
+  admission, the three one-way ratchets and the LIVE print-provider rule are
+  all fail-closed code invariants, independent of repository visibility.
+- Workspace and session isolation. The C-00 invariants (one writing agent per
+  worktree, no shared index, declared deletions, fast-forward-only
+  integration) are enforced by `bin/workspace-integrity.mjs` and
+  `bin/nightwatch-session.mjs`. They are independent of repository visibility.
+
+The model's shape is "fail closed regardless of who can read the repository".
+The two consequences of publicity that DO bind are documentary and were already
+enforced before this reconciliation: (1) every push is public, so the privacy
+surface of every commit must be inspected before each push - which the
+checkpoint policy in `AGENTS.md` already requires; and (2) a session identifier
+or a home path that reached git history is already published and can never be
+un-published by making the repository private again (D-152 records exactly this
+for a redacted identifier). Making the repository private later reduces FUTURE
+exposure and cannot retract anything already published.
+
+No invariant was weakened, added or removed by this reconciliation.

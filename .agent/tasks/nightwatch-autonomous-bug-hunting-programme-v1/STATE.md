@@ -4,7 +4,7 @@
 
 Task ID: nightwatch-autonomous-bug-hunting-programme-v1
 Phase: AUTONOMOUS_BUG_HUNTING_PROGRAMME_V1
-Status: IN_PROGRESS
+Status: COMPLETE
 Starting SHA: d1ebde90c1454b31d6b93d9df503a4c5f196d7c8
 Last validated implementation SHA: 62d23e2622ab0a282584c5cf27d92b6b603f9192
 Last substantive checkpoint SHA: 62d23e2622ab0a282584c5cf27d92b6b603f9192
@@ -25,7 +25,7 @@ LAST_VALIDATED_IMPLEMENTATION_SHA: 62d23e2622ab0a282584c5cf27d92b6b603f9192
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: 62d23e2622ab0a282584c5cf27d92b6b603f9192
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_AUTONOMOUS_BUG_HUNTING_PROGRAMME_V1_STATUS: IN_PROGRESS
+PHASE_AUTONOMOUS_BUG_HUNTING_PROGRAMME_V1_STATUS: COMPLETE
 
 ## Objective
 
@@ -33,29 +33,16 @@ Deliver a locally executable autonomous bug-hunting programme above the existing
 
 ## Current Milestone
 
-Milestone ID: W12
-Milestone status: IN_PROGRESS
-Child task: `nightwatch-current-source-unknown-yield-w12-v1`
-Child directory: `.agent/tasks/nightwatch-current-source-unknown-yield-w12-v1`
-
-W9 is frozen terminal at `bb28480c6a6969a06744c75c4c947851d5bece7c`. W10 is
-frozen terminal at implementation `62d23e2622ab0a282584c5cf27d92b6b603f9192`
-with certified documentation head `ec3eacf61c1b5bd3557eaf90594aecb2cd633b4f`.
-Neither is reopened.
-
-W11 is frozen predecessor evidence, opened from live main `158a97b8` under its
-own owner authorization. Its historical arm is complete and its unknown arm
-is provider-blocked; W12 must not re-run the historical arm or rewrite either
-result. W12 is the active owner-authorized successor, opened from live main
-`4e763f3f`, and executes the current-source half of Group 12 with a new
-provider-selection policy, fresh eight-repository census, fixed broad/scoped
-matrix, mechanical yield accounting and evidence-bounded novelty.
-DEV/NEXT remain unauthorized.
-
-W11 measured the predecessor census at 8 current repositories, 4,124 eligible
-files, 1,120 executable files and 152 targets, all executable coverage in
-`mobingilabs/ouchan`; W12 must rebaseline those facts rather than silently
-reuse them.
+COMPLETE / STOP — W0 through W12 are closed. W9 is frozen terminal at
+`bb28480c6a6969a06744c75c4c947851d5bece7c` and W10 at `62d23e2622ab0a282584c5cf27d92b6b603f9192`
+(certified documentation head `ec3eacf61c1b5bd3557eaf90594aecb2cd633b4f`);
+neither is reopened. W11's historical arm is complete and certified and its
+unknown arm is frozen `PARTIAL — BLOCKED` (preserved, not rewritten). W12's
+matrix, closeout and receipt-derived aggregation are complete. W13's nine
+frozen runs executed validly under the deterministic failover policy and M11
+12.3 executed the ONE authorized paid proof run. All 18 of this programme's
+open boxes are now ticked with a citation naming the wave or campaign that
+delivered them. Reconciled 2026-10-10 by the parent campaign's M13 task 14.2.
 
 ## Completed Milestones
 
@@ -73,20 +60,16 @@ reuse them.
 
 ## Work In Progress
 
-W12 has completed its fixed matrix, mechanical closeout, integrity proofs,
-safety evidence, and receipt-derived aggregation in the owned C-00 worktree.
-The broad run reached all eight repositories with 2 candidates and 0
-admissions; all eight scoped runs were provider-blocked before source actions.
-Governed documentation and final validation/release are the remaining closeout
-steps.
-
+None. No work is in progress. W12's closeout was completed by its successor
+campaign; the parent programme's remaining items are the successor waves'
+terminal records, not work owed here.
 ## Exact Next Action
 
-Continue W12 from its own `STATE.md`: complete the governed documentation,
-run the full local/clean validation, integrate fast-forward, verify
-`HEAD == origin/main`, and release/remove the W12 session. Do not reopen W11's
-historical arm or substitute the frozen provider after results.
-
+STOP. This task is COMPLETE and terminal; no next action is owed inside it.
+Do not reopen W11's historical arm, do not substitute the frozen provider after
+results, and do not relabel predecessor safety events. Any further autonomous
+yield work is a separately authorized successor wave, not a continuation of
+this one.
 ## Files Changed
 
 | Path | Purpose | Status |
@@ -171,16 +154,19 @@ Historical W8 safety events remain in W8 records; W9 reported zero safety-bounda
 
 ## Resume Recipe
 
-1. Read `.agent/ACTIVE_TASK.md`, `.agent/EXECUTION_PROMPT.md`.
-2. Read W10 SPEC/PLAN/STATE/REPORT.
-3. Read W9 terminal STATE/REPORT; read W8/W7 as needed.
-4. Discover live Git/workspace/session truth.
-5. Continue from W10 M0; do not restart W0-W9.
-
+Terminal task. Do not resume. The rules that still bind any reader: do NOT
+restart W0-W9, do NOT repeat M0 reconnaissance, do NOT substitute a provider
+after results are visible, and do NOT relabel a predecessor wave's safety
+events.
 ## Completion Snapshot
 
-Parent programme remains IN_PROGRESS / PARTIAL.
-W11 is frozen predecessor `PARTIAL — BLOCKED`; do not rewrite its evidence.
-W12's fixed matrix, safety proofs, Group 12 reconciliation inputs, and
-receipt-derived verdict are complete; final validation, integration, release,
-and session cleanup remain before the child task becomes terminal.
+COMPLETE 2026-10-10 (reconciled by the parent campaign's M13 task 14.2).
+All 18 previously open boxes are ticked with a citation naming the wave or
+campaign that delivered each one; `status:local` reports `open=0 done=18` for
+this campaign. What is NOT claimed: a strict `EXACT_REDISCOVERY` (0/13 for a
+recorded reachability reason), any previously unknown Alphaus organizational
+defect (0 admissions from the live-provider proof run), and any organizational
+novelty. DEV/NEXT/production execution remains unauthorized and separately
+owner-authorized. Safety counters across the waves: zero leakage events, zero
+sibling writes, zero sibling identity drift, zero DEV/NEXT/production contact,
+zero credentials persisted, zero external publications, zero force pushes.

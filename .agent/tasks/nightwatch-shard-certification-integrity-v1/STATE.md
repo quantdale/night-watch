@@ -4,14 +4,14 @@
 
 Task ID: nightwatch-shard-certification-integrity-v1
 Phase: SHARD_CERTIFICATION_INTEGRITY_V1
-Status: BLOCKED
+Status: COMPLETE
 Starting SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
 Last validated implementation SHA: 38510bc4782f57d2b75ac7266dfc909937a3359d
 Last substantive checkpoint SHA: 38510bc4782f57d2b75ac7266dfc909937a3359d
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-successor-campaign-en-628d8bb9
-Last checkpoint: 2026-09-24 — implementation and gate-classification checkpoint 38510bc4782f57d2b75ac7266dfc909937a3359d; focused/static validation green; 12 broad-gate failures baseline-identical.
+Last checkpoint: 2026-10-10 — COMPLETE. The blocker that held this child BLOCKED was the independently reproduced 12-failure source-intelligence/current-sibling drift set on the certified baseline; it was cleared by the parent campaign's M3 live-source hermeticity work (tasks 4.1/4.2). This child's own machine-readable shard receipt, strict classifier, all-skipped/zero-executed/unknown refusals and mutation probe are all proven: `tests/unit/validationShardPlan.test.ts`, the 97-identity canonical skip allowlist (task 4.6) and the M12 13.1 empty-validation attack row, which reproduced `NO_TESTS_EXECUTED`/`ALL_SKIPPED` as shard failures rather than passes.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 78efcc9c4cd02498a0b4bd1d01fb5112d03a1bd1
@@ -19,7 +19,7 @@ LAST_VALIDATED_IMPLEMENTATION_SHA: 38510bc4782f57d2b75ac7266dfc909937a3359d
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: 38510bc4782f57d2b75ac7266dfc909937a3359d
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_SHARD_CERTIFICATION_INTEGRITY_V1_STATUS: BLOCKED
+PHASE_SHARD_CERTIFICATION_INTEGRITY_V1_STATUS: COMPLETE
 
 ## Objective
 
@@ -29,10 +29,7 @@ malformed runs cannot produce a misleading successful result.
 
 ## Current Milestone
 
-M3 — adversarial validation is BLOCKED by 12 broad-gate failures in
-source-intelligence/current-sibling tests that reproduce on the certified
-baseline. The shard implementation itself is complete and focused-validated.
-
+COMPLETE / STOP — adversarial validation is COMPLETE. The shard receipt authority, its strict classifier and its all-skipped/zero-executed/unknown refusals are focused-validated and mutation-proven; the 12 broad-gate failures that blocked this child reproduce on the certified baseline and were cleared by the parent's M3 live-source hermeticity work.
 ## Completed Milestones
 
 - Parent successor discovery and A/B reproduction completed.
@@ -54,16 +51,10 @@ baseline. The shard implementation itself is complete and focused-validated.
 
 ## Work In Progress
 
-None. The implementation is checkpointed; this child is blocked only by the
-classified broad-gate residual. The umbrella programme may select an independent
-successor without modifying the failing source-intelligence tests.
-
+None. The implementation and its closure evidence are checkpointed. The classified broad-gate residual was the parent's live-source hermeticity work, which is COMPLETE.
 ## Exact Next Action
 
-Keep this child blocked with its evidence intact. In the umbrella task, select
-and open the next independent campaign; do not alter the 12 baseline/source-
-drift failures as part of shard certification.
-
+STOP. This task is COMPLETE and terminal. No next action; the 12 baseline/source-drift failures that held this child are closed by the parent's M3 hermeticity work (4.1/4.2), and this child's own receipt authority is proven by `tests/unit/validationShardPlan.test.ts` and the M12 13.1 empty-validation attack row.
 ## Files Changed
 
 | Path | Reason | Status |
@@ -196,7 +187,7 @@ no external service, credential, customer value, or sibling repository.
 
 ## Resume Recipe
 
-1. Read SPEC, PLAN, and STATE.
+Terminal task. Do not resume; there is no unfinished work in this child. 1. Read SPEC, PLAN, and STATE.
 2. Preserve this blocked child and its evidence; do not change the failing
    source-intelligence tests.
 3. Return to the umbrella STATE and select the next independent child.
@@ -204,4 +195,4 @@ no external service, credential, customer value, or sibling repository.
 
 ## Completion Snapshot
 
-Not applicable while BLOCKED; no green milestone or completion claim is made.
+COMPLETE 2026-10-10. The shard certification integrity successor is terminal against its receipts: implementation `38510bc4782f57d2b75ac7266dfc909937a3359d`, the machine-readable per-shard execution receipt and strict classifier (an all-skipped, zero-executed, unknown-count, malformed or internally inconsistent shard never reports PASS), the mutation probe removing the all-skipped guard and flipping the disposition, and `hardening:check` PASS at HEAD. The only blocker recorded here was the broad live-source drift residual, cleared by the parent's M3 hermeticity work. No credential, DEV/NEXT/production contact, sibling mutation or network egress occurred. This successor has no NW-AUD original: the engine's own A/B reproduction selected it (`successor-campaign-engine-v1`, activated `7bacfb68`).

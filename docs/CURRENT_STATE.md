@@ -4217,3 +4217,206 @@ Design direction is Axiom's discipline with Linear's density, refreshed through
 Refero at this checkpoint. Nightwatch's own identity is preserved: the
 blue-black `#0b1118` base and the amber `#e4a853` accent are unchanged, and
 Axiom's black canvas and orange accent were deliberately NOT adopted.
+
+---
+
+## M13 14.5 — the operator truth rendered from LIVE evidence (appended 2026-10-10)
+
+This section is a dated APPEND. Every table and row above it remains verbatim,
+including the rows this one corrects, supersedes or labels historical. Where a
+row above states a figure that live measurement contradicts, the correction is
+recorded HERE and the old row is labelled, never rewritten — the append-only
+method of D-159 / VA-03.
+
+### 1. `npm run project:check` — live output at HEAD `c931444a`
+
+Command: `npm run project:check` (exit 0, `status: PASS`).
+
+| Field | Live value |
+| --- | --- |
+| `projectCompletionStatus` | `OPERATIONALLY_ACCEPTED` |
+| `certifiedCheckpointSha` | `027367d9da22ea1198c0a60fb1b11805f6719d40` |
+| `liveHeadSha` | `c931444ae680780291a70e77edf08c59fe15360a` |
+| `ciObservedSha` / `ciExecutedSha` | `027367d9da22ea1198c0a60fb1b11805f6719d40` (both) |
+| `ciStatus` | `EXECUTED_PASS` |
+| `checkoutClean` | `true` |
+| `activeTaskContinuity` | `PASS` |
+| `laneCounts` | `proven=0 externallyBlocked=0 neverAttempted=1 staleEvidence=10` |
+| `conditionsMet` / `conditionsUnmet` | `0` / `16` |
+| `certificationRefused` | `true` |
+| `advanceClaimed` | `false` |
+| `nextStatus` | `DECIDED`, `decidedBy: D-129`, safe default `OPERATIONALLY_ACCEPTED` |
+| `externalTrack` | `EXTERNAL_PREREQUISITE_UNMET` (C-12, C-13, C-14, P4) |
+| `certificationDemotion.relation` | `NOT_CLAIMED` (no advance is claimed) |
+
+**The sixteen release conditions and their live states** (the `checkState` /
+`state` pair exactly as `project:check` reports it):
+
+| # | Condition | Live checkState | Live state |
+| --- | --- | --- | --- |
+| 1 | `validation-lane-closure` | UNMET | `EVIDENCE_ARTIFACT_ABSENT_AT_SHA` — all ten declared lanes `STALE_EVIDENCE`; the bound artifact `config/validation-lane-state.v1.json` is absent at `88e3c3fb52937ff303b0944cc22cfee624bf807e` |
+| 2 | `exact-head-ci-authority` | UNMET | `UNMET` — `TOPOLOGY_RECEIPT_ABSENT`: no local topology receipt at the certified checkpoint `027367d9`; exact-head CI is `EXECUTED_PASS` but a run envelope is not local proof (block record `37123923541`, class `EXECUTED_PASS`) |
+| 3 | `autonomous-yield-proof` | UNMET | `UNMET` — no qualifying yield-campaign receipt among the 42 newest runs |
+| 4 | `completion-ledger-truth` | NOT_AT_CHECKPOINT | `EVIDENCE_ARTIFACT_ABSENT_AT_SHA` — measured PASS on the working tree (`strict_errors=0 legacy_undeclared=0 ledger_errors=0 tasks=219`) but not bound to the checkpoint |
+| 5 | `operator-cli-contract` | NOT_AT_CHECKPOINT | `EVIDENCE_ARTIFACT_ABSENT_AT_SHA` |
+| 6 | `documentation-currency` | NOT_AT_CHECKPOINT | `EVIDENCE_ARTIFACT_ABSENT_AT_SHA` |
+| 7 | `workspace-continuity-drift-closure` | NOT_AT_CHECKPOINT | `STALE_EVIDENCE` |
+| 8 | `dependency-supply-chain-currency` | NOT_AT_CHECKPOINT | `EVIDENCE_ARTIFACT_ABSENT_AT_SHA` |
+| 9 | `dead-architecture-closure` | NOT_AT_CHECKPOINT | `NOT_AT_CHECKPOINT` |
+| 10 | `cli-implementation-contract` | NOT_AT_CHECKPOINT | `STALE_EVIDENCE` |
+| 11 | `structural-rule-soundness` | NOT_AT_CHECKPOINT | `STALE_EVIDENCE` |
+| 12 | `schema-version-lifecycle` | NOT_AT_CHECKPOINT | `NOT_AT_CHECKPOINT` |
+| 13 | `ui-error-taxonomy-rendering` | UNMET | `UNMET` |
+| 14 | `configuration-contract` | NOT_AT_CHECKPOINT | `NOT_AT_CHECKPOINT` |
+| 15 | `accessibility-certification` | UNMET | `STALE_EVIDENCE` |
+| 16 | `authenticated-capability-lifecycle` | NOT_AT_CHECKPOINT | `NOT_AT_CHECKPOINT` |
+
+The nine `staleEvidenceConditions` are 1, 4, 5, 6, 7, 8, 10, 11 and 15. The
+distinction that matters to an operator: **none of the sixteen is MET at this
+HEAD**, and the certification is REFUSED rather than unmet, so the project
+completion status stays `OPERATIONALLY_ACCEPTED` and the OD-2 target
+`PROJECT_COMPLETE_AND_CI_CERTIFIED` is NOT claimed. Re-earning every condition at
+a single certified checkpoint S is exactly what campaign task 15.3 does
+(`npm run certify:evidence`), and this section records why it has not happened
+yet.
+
+### 2. The exact-head CI observation (live `gh` output)
+
+| Command | Result |
+| --- | --- |
+| `gh run list --limit 1 --json databaseId,headSha,conclusion,status` | `[{"conclusion":"failure","databaseId":37881189722,"headSha":"88987013e93f9f4d147db6e2982f70529e9d72a4","status":"completed"}]` |
+| `gh repo view quantdale/night-watch --json visibility,isPrivate` | `{"isPrivate":false,"visibility":"PUBLIC"}` |
+
+The newest run `37881189722` executed at `88987013`
+(`docs(m9): bind the STATE branch to the live session worktree`, 2026-10-09,
+`completed/failure`). Its gate receipt is
+`receipt:sha256:3fac6ebff9630c2f2fecbdec`, node v22.23.3 / npm 10.9.9,
+`environmentClass: CI`, `sourceRootCleanAtEmit: true`. Group results:
+GATE_DEFINITION PASS, STATIC PASS, BIN_TYPECHECK_CEILING PASS, HARDENING PASS,
+HARDENING_PROBES PASS (295,501 ms), **HANDOFF_TRUTH TEST_FAILURE**, and the
+remaining nine groups NOT_RUN because the gate stops at the first failing
+required group. The cause is the routing/continuity mismatch at that commit:
+`.agent/ACTIVE_TASK.md` still declared `SESSION WORKTREE: NONE` while
+`.agent/tasks/.../STATE.md`'s `Branch` had just been bound to
+`session/nightwatch-final-product-complet-bd061869`. The repair is `ea26954e`
+(`docs(m10): route the live session worktree in the continuity record and
+advance to group 11`), which is committed in the campaign session worktree and
+is one of the six commits that lineage `88987013..c931444a` carries. **None of
+those six commits has a CI observation**, so the campaign's own work is
+CI-unobserved, and this section says so rather than implying otherwise. The
+newest GREEN run is `37125148449` at `545b24f3` (2026-10-03).
+
+This is the R2-61 / D-03 disposition made current: the billing block is retired,
+GitHub Actions executes the hardening workflow on every push, and a run is red
+for LOCAL causes that must be repaired forward.
+
+### 3. The local operator commands (live output)
+
+| Command | Live result |
+| --- | --- |
+| `npm run status:local` | `category: READY_LOCAL_SYNTHETIC`; `scope: LOCAL_SYNTHETIC` (ready claim `LOCAL_SYNTHETIC_ONLY`); `source-contracts: total=16 active=14 archived=2 targets-covered=6/6 campaign-eligible-expectations=8`; `currentness: current=0 stale=0 unavailable=0 unevaluated=6`; `coverage: covered=4 partial=2 missing=0`; `campaign: UNMEASURED`; `analyzer: availability=NOT_EVALUATED`; `verification: TESTING/TYPECHECK/HARDENING=DEFERRED_TO_HARDENING`; `external-ci: UNKNOWN (classification=UNMEASURED_UNKNOWN)`; `authenticated-capability: ATTENTION entries=2 present-and-expired=none` (auth dev `UNKNOWN_AGE present=true`, auth next `MISSING present=false`); `owner-scope: FROZEN_BY_OWNER / INFRASTRUCTURE_AND_DATA_LAYER_OUT_OF_SCOPE (frozen=22 markers-match=true)`; `blockers: 0` |
+| `status:local` open work | `campaigns=50 open-items=15 undispositioned=527 blocked-campaigns=0 externally-blocked=4` |
+| `node bin/bin-typecheck.mjs` | `PASS: conformance=77/77 mode=BLOCKING errors=0 exemptions=0 ceilings=0` |
+| `npm run typecheck` | exit 0, no diagnostics |
+
+`blocked-campaigns=0` is new and is the M13 14.2 result: the six BLOCKED
+successor children (`credential-use-binding-successor-v1`,
+`proxy-event-firewall-v1`, `run-evidence-transaction-successor-v1`,
+`child-process-census-indirection-v1`, `shard-certification-integrity-v1`,
+`shard-temp-isolation-v1`) are now COMPLETE against their receipts. The 15
+remaining open items are this campaign's own 14.1-14.6 and 15.1-15.8 boxes.
+
+### 4. The rows above this one, labelled (A-18, B-15, B-16, R2-11, X-07)
+
+These rows are HISTORICAL. They are preserved verbatim and are not current
+authority; the machine-checked `nightwatch.project-state.v2` block above is the
+authority, and the live rendering in section 1 is what the gate says today.
+
+| Row above | Historical value it still shows | Live value (2026-10-10) |
+| --- | --- | --- |
+| the anchors table around lines 811-812, `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA` / `LAST_LOCALLY_VALIDATED_SHA` | `3c9c1a06` / `c18db55` | `027367d9da22ea1198c0a60fb1b11805f6719d40` / `6066390511dcf5d2744515624be9dbf1b537b5f4` |
+| the anchors table around lines 813-814, `CI_OBSERVED_SHA` / `CI_EXECUTED_SHA` | `27bfe44` / `4e0bfc1` (run `33864698218`, `NO_STEPS_EXTERNAL_NON_EVIDENCE`) | both `027367d9…`, `EXECUTED_PASS` (machine block) — and the newest live run is `37881189722` at `88987013`, `failure` (section 2) |
+| the `LAST_CLEAN_VALIDATED_SHA` row | `c18db55` | `b4d0c611a7848df675390d47aa21f008d078cde6` |
+| the passage around lines 4009-4010 ("no executed external CI, which remains `BLOCKED_EXTERNAL` under the predecessor's classification") | that campaign's own non-claim, true when written | the block is RETIRED (D-03 / R2-61): Actions executes on every push; that passage is a historical record of an earlier baseline, not a current claim |
+| every `PHASE_*_STATUS: BLOCKED_EXTERNAL_CI` row | `BLOCKED_EXTERNAL_CI` / `NO_STEPS_BILLING_OR_PLATFORM_BLOCK` | historical. The billing/spending block no longer applies; the current external blockers are the owner/organizational actions in section 6 |
+| the `W11_AUTONOMOUS_YIELD_PROOF_STATUS` and `W12_CURRENT_SOURCE_UNKNOWN_YIELD_STATUS` rows | `PARTIAL_BLOCKED_EXTERNAL_PROVIDER` | unchanged and still true; the M11 12.3 paid proof run is the live successor measurement (section 3 of `README.md`) |
+| the X-07 "CI is externally blocked" framing in this file and in `docs/ROADMAP.md` | externally blocked / superseded provider blockers | the blocker class is now LOCAL: the newest run is red on `HANDOFF_TRUTH` for a continuity mismatch, repaired forward in `ea26954e` |
+
+### 5. Repository visibility, resolved (mandatory)
+
+Live and authoritative: **the repository is PUBLIC**
+(`gh repo view quantdale/night-watch --json visibility,isPrivate` →
+`{"isPrivate":false,"visibility":"PUBLIC"}`, 2026-10-10). The mismatch with the
+documentation is resolved as follows:
+
+- The two CURRENT "private repository" claims in `AGENTS.md`'s header and
+  visibility note are corrected in place, because a current-state claim that is
+  false must not survive. D-149's owner decision itself is preserved as history
+  (TEMPORARILY PUBLIC so Actions could run; returns to private at the final
+  close-out where the owner confirms Actions still runs).
+- **The owner action required to make the repository private is PENDING and is
+  owned by the owner/admin, not by an agent.** Campaign task 15.8 tracks it and
+  records what must be evidenced when it happens: `gh repo view` showing
+  `PRIVATE`, the observed workflow run at the same head, and the run id in this
+  ledger. No agent attempt to change the visibility was made and none is
+  authorized.
+- **No safety invariant depends on the repository being private.**
+  `docs/SAFETY_MODEL.md` was read in full for this reconciliation and §33 was
+  appended with that reading: the owner-scope freeze, the containment
+  capability, the private-artifact scopes, the sanitized receipts, the leak
+  scans, the bin type-check lane and the workspace/session invariants are all
+  fail-closed code invariants that never consult a GitHub visibility setting.
+  The two consequences of publicity that DO bind are documentary and were
+  already enforced: every push is public, so the privacy surface of every commit
+  is inspected before each push; and anything already in git history is already
+  published and cannot be un-published.
+- The README measured-status block carries the live visibility reading
+  (appended 2026-10-10), and `README.md`'s prose no longer implies a private
+  repository.
+
+### 6. What remains external, stated rather than omitted
+
+| External prerequisite | Owner action | Revisit |
+| --- | --- | --- |
+| Return the repository to private and confirm Actions still executes | owner/admin GitHub action (task 15.8) | at the final close-out |
+| The one authorized npm registry advisory query at S | owner-authorized egress (task 15.4) | before the final certification pass |
+| Owner-gated retention apply (`agent-findings`, `campaign-state`) | `OWNER_EXPLICIT_APPLY` (X-11, D-159) | when the owner chooses a window |
+| Contained-DEV acceptance (Phase 9B/10B) and a fresh DEV storage state | fresh owner authorization (D-135, D-158) | separately authorized |
+| Production track C-12/C-13/C-14/P4 and `mochi` access | organizational (D-134) | on positive deployment facts |
+| `ripple-api` re-admission at its new SHA | recurring owner maintenance (C-27) | operational, not terminal |
+
+### 7. Method and honesty note
+
+Every figure in this section is the ACTUAL output of the command named beside
+it, captured 2026-10-10 at HEAD `c931444a` on branch
+`session/nightwatch-final-product-complet-bd061869` (six commits ahead of
+`origin/main` = `88987013`, clean tree). No figure is inferred, estimated or
+carried forward from an earlier checkpoint. The `project:check` verdict is
+`PASS` with `certificationRefused: true` — a PASSING CHECK THAT REFUSES THE
+CERTIFICATION — and those two facts are both live and both recorded here rather
+than collapsed into one word.
+
+### 8. Post-14.6 correction to section 3 (appended 2026-10-10, same session)
+
+The `status:local` figures quoted in section 3 were measured BEFORE this
+campaign's task 14.6 archive wave ran, and they are preserved above as measured.
+After archiving the sixty-six other active changes, the same command reports:
+
+`open work nightwatch.open-work-report.v1: campaigns=1 open-items=8
+undispositioned=0 blocked-campaigns=0 externally-blocked=0`
+
+with the single remaining campaign being
+`nightwatch-final-product-completion-v1 status=IN_PROGRESS open=8 done=107
+blocker=INTERNAL`. The eight open items are this campaign's own 15.1-15.8 boxes
+(M14 close-out choreography and certification). The 527 legacy undispositioned
+strikes reported in section 3 lived inside the archived changes, whose ledgers
+are no longer scanned as active; each struck item carries its disposition token
+and each change's task record is terminal. The 15 open items section 3 reported
+were 14.1-14.6 (now complete, ticked with citations) plus 15.1-15.8.
+
+`node bin/bin-typecheck.mjs` still reports `conformance=77/77 mode=BLOCKING
+errors=0 exemptions=0 ceilings=0` and `npm run typecheck` still exits 0 after the
+archive wave. `npm run project:check` reports exactly one finding,
+`PROJECT_STATE_CHECKOUT_DIRTY`, because the archive wave is uncommitted in the
+session worktree and this session is forbidden to commit; on a clean tree with
+this same content the check exits 0 and the release verdict is unchanged.

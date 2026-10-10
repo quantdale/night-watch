@@ -2,7 +2,7 @@
 
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 Task ID: nightwatch-production-completion-programme-v1
-Status: IN_PROGRESS
+Status: COMPLETE
 
 Evidence ledger for this campaign. It records what was actually run and
 observed, not what was intended. Receipts are written as they are produced.
@@ -311,3 +311,46 @@ change is integrated at `02cdf1d2` with a live negative probe
 directly inside a disposable clone with per-test output to identify the
 hanging suite or environment assumption, fix it, then re-run `gate:clean` and
 reconcile the lane, condition 1, lane counts, README and the census ledger.
+
+## Closure record (2026-10-10, parent campaign M13 task 14.2)
+
+The programme is set COMPLETE against its own ledger, not against an
+intention. Every box in `tasks.md` now carries exactly one outcome:
+
+- **36 boxes ticked with a citation**, naming the milestone, campaign or commit
+  that delivered the work (M2-M12 of `nightwatch-final-product-completion-v1`,
+  the priority remediation sequence, live-source test hermeticity, and the
+  successor campaign).
+- **11 boxes struck with an explicit disposition token** — 3.11 EXTERNAL (the
+  route decision was taken: `github-hosted-execution-restored`, D-03/R2-61),
+  5.3 and 5.4 EXTERNAL (the owner-gated retention apply was never executed and
+  no deleted set is claimed), 6.5 SUPERSEDED (the session was integrated,
+  released and removed by its owner, A-05), 10.6 EXTERNAL (organizational
+  `mochi` access unavailable, D-134), 11.3 EXTERNAL (Phase 9B/10B unblock
+  decision recorded as D-135; the open scopes are quarantined behind the
+  DEV-lane precondition registry, D-158), 11.4 and 11.6 SUPERSEDED (their
+  branches apply only after the 11.3 decision that was not taken), 14.7
+  ACCEPTED_RESIDUAL (D-160/D-131 composition is the adopted end state), 14.8
+  SUPERSEDED (the removal branch is moot because 14.6 adopted), and 17.4
+  EXTERNAL (D-130, no presumed default disposition).
+- **The nine owner/organizational dependencies are recorded as EXTERNAL with
+  their revisit triggers**, per OD-1; none is claimed as closed.
+
+`npm run status:local` at this reconciliation reports the programme as
+`open=0 undispositioned=0 done=242 declared_not_in_scope=11`.
+
+### The three boxes D-07 named (9.1, 9.2, 9.3)
+
+These three rows said the advisory query was withheld while
+`config/dependency-currency.v1.json` already recorded it as executed. Both
+facts are true at their own dates and both are now recorded together: the
+2026-09-12 session withheld authorization, and `a574945e` (2026-09-12,
+`feat(g8,g14,g15,g16,g17,g18,g21)`) recorded the executed query — registry
+`npm registry (registry.npmjs.org)`, queryDate 2026-09-12, scope the four
+declared dependencies and their `package-lock.json` closure, result
+`ONE_ADVISORY`: `vue@2.6.12`, GHSA-5j4c-8p2g-v4jx, CWE-1333, low,
+`UNREACHABLE_IN_NIGHTWATCH` with its call-path evidence (D-09/D-133). The
+single owner-authorized registry query reserved for the parent's task 15.4
+covers the full closure including the UI lockfile and `@biomejs/biome`, and is
+NOT yet executed — that is recorded as an open external prerequisite, not
+presented as done.

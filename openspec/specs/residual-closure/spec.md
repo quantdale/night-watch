@@ -3,7 +3,6 @@
 ## Purpose
 
 The repository hardening campaign closed all fifteen master-plan findings and left four lanes recorded UNAVAILABLE. Auditing those four against the live host shows they are not equivalent: one of them already executes and passes here, one has an observed external cause that project state does not record, and two genuinely need an owner capability this campaign will not claim.
-
 ## Requirements
 ### Requirement: Residual closure and lane qualification
 
@@ -12,12 +11,25 @@ Nightwatch SHALL resolve every declared validation lane to exactly one of
 `PROVEN` lane to a receipt produced by an owning session, and SHALL bound the
 growth of local evidence without ever weakening immutable evidence identity.
 
+A lane-state row of `UNAVAILABLE_CAPABILITY` SHALL NOT cover files that the
+default Playwright runner (`playwright.config.ts` `testMatch`, `npm test`)
+executes. Those files are executed lanes; carrying them as unavailable is a
+classification defect, not an honest host gap.
+
 #### Scenario: a lane that executes is not carried as unavailable
 
 - GIVEN a host that provides the capability a lane requires
 - WHEN the lane is executed inside an owned session worktree
 - THEN the lane resolves to `PROVEN` with a receipt naming that session
 - AND no lane state records it as UNAVAILABLE thereafter
+
+#### Scenario: default-runner files are not recorded as never-executed
+
+- GIVEN a validation-universe class listing `tests/smoke/*.smoke.ts` or `scenarios/**/*.smoke.ts`
+- AND those globs are in the default Playwright `testMatch`
+- WHEN lane-state is emitted
+- THEN that class is not `UNAVAILABLE_CAPABILITY`
+- AND evidence SHALL NOT claim those files have never executed
 
 #### Scenario: a run from the canonical checkout is not a receipt
 

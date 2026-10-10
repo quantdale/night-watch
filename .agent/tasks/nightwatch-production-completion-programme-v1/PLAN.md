@@ -211,11 +211,17 @@ integration.
 - Acceptance: pre-flight threshold enforced; false positives reported; zero
   yield stated as a result, never as an omission; leakage aborts.
 - Validation commands: `npm run campaign:synthetic`, focused yield suites.
-- **Status:** PARTIAL — BLOCKED — W12 successor
-  `nightwatch-current-source-unknown-yield-w12-v1` completed its frozen broad
-  plus eight scoped attempt. The broad run was valid; all eight scoped runs
-  were provider-blocked before source actions. W11 remains frozen predecessor
-  evidence; neither blocked arm is projected as zero yield.
+- **Status:** COMPLETE_LOCAL — the yield proof was carried to an honest
+  conclusion by this campaign and its successors: W13 executed all nine frozen
+  runs validly under the predeclared deterministic failover policy (1
+  mechanical admission, 6 candidates, 5 refusals, 392 reasoner calls, 0
+  leakage, all eight sibling SHAs unchanged) and M11 12.3 executed the ONE
+  authorized paid proof run (30 provider calls / 28 completed / 2 failed, 2
+  candidates, 0 admissions, 1 dossier `REFUSED_NO_REPRODUCTION`,
+  `PROVIDER_DEGRADED`, leak scan CLEAN, sibling identity unchanged, zero
+  persisted findings). Provider-invalid runs stay excluded from zero-yield
+  denominators and W11 remains frozen predecessor evidence. Reconciled
+  2026-10-10 (M13 14.2).
 
 ### G13 — Release definition and verdict
 
@@ -242,7 +248,13 @@ integration.
 - Acceptance: reachability rule fails on an unreferenced module; retention
   list fails both directions; owner decision recorded.
 - Validation commands: `npm run hardening:check`, `npm run typecheck`.
-- **Status:** IN_PROGRESS
+- **Status:** COMPLETE_LOCAL — the owner decision is recorded as D-131
+  (`dtoFramework` ADOPTED, `adversarialCorpus` removable on the measured
+  graph); the four already-registered kinds' migration is struck
+  ACCEPTED_RESIDUAL as D-160 rather than falsely ticked; the eleven barrels are
+  resolved (G14.4/G14.5 ticked in the programme ledger) and the unused-export
+  ratchet is registered with probe HC-283 at pin 635. Reconciled 2026-10-10
+  (M13 14.2).
 
 ### G15 — CLI-to-implementation contract
 
@@ -254,7 +266,12 @@ integration.
   fail-closed refusal asserted for gated launchers.
 - Validation commands: `npx tsc -p tsconfig.bin.json`, new lane,
   `npm run validation:universe`.
-- **Status:** IN_PROGRESS
+- **Status:** COMPLETE_LOCAL — the bin type-check lane is BLOCKING at 0
+  diagnostics across all 143 tracked `bin/**/*.mjs` implementations with 77 of
+  77 entry points conforming, 0 exemptions, 0 per-file ceilings and 0
+  diagnostic-silencing widening annotations (M9 10.4/10.5, `e9dfb050`,
+  `c74bb58c`), and every one of the 72 operator-CLI entry points answers
+  `--help` without executing (M9 10.2/10.3). Reconciled 2026-10-10 (M13 14.2).
 
 ### G16 — Structural rule soundness
 
@@ -267,7 +284,12 @@ integration.
   decomposition.
 - Validation commands: `node bin/hardening-check.mjs`,
   `npm run rule-mutation` (new).
-- **Status:** IN_PROGRESS
+- **Status:** COMPLETE_LOCAL — the rule engine is decomposed into 11
+  invariant-family modules plus a mechanically authoritative registry, the five
+  raw-source assertions are converted, and the full probe campaign is green
+  (M2 146/146; M8 175/175; M9-M12 advances). G16.12's blocker was the
+  pre-existing sibling-source drift set, cleared by the parent's M3
+  live-source hermeticity work. Reconciled 2026-10-10 (M13 14.2).
 
 ### G17 — Schema version lifecycle
 
@@ -280,7 +302,10 @@ integration.
   `READ_COMPATIBLE` fixture per version; `ORPHAN` only from `docs/DECISIONS.md`.
 - Validation commands: new schema-lifecycle lane, `npm run typecheck`,
   focused review-store suites.
-- **Status:** IN_PROGRESS
+- **Status:** COMPLETE_LOCAL — the schema lifecycle is declared with
+  migration dispositions, `VERSION_UNSUPPORTED` distinct from `CORRUPT`, and a
+  sanitized export; the 17.4 owner decision is recorded as D-130 (no presumed
+  default disposition). Reconciled 2026-10-10 (M13 14.2).
 
 ### G18 — UI error taxonomy rendering
 
@@ -290,7 +315,10 @@ integration.
 - Acceptance: kind-driven coverage assertion (a sixth kind fails); no
   server-supplied text; mutation proof; partial-failure proof.
 - Validation commands: UI tests, browser lane.
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE_LOCAL — the UI error taxonomy work landed with group
+  18 at `a574945e` (18.1-18.13 ticked in the programme ledger) and the
+  accessibility certification record plus its fail-closed parser landed at
+  M4 5.2 (`cab67d76`, `875490be`, `09d942cb`). Reconciled 2026-10-10 (M13 14.2).
 
 ### G19 — Configuration contract and UI decomposition
 
@@ -302,7 +330,12 @@ integration.
 - Acceptance: undeclared read fails; malformed value refused before any
   effect; DOM-identical decomposition; per-view contract carriers.
 - Validation commands: UI tests, root typecheck, `npm run hardening:check`.
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE_LOCAL — the environment surface is declared and
+  validated (73 variables; an undeclared `NIGHTWATCH_*` name is REPORTED, a
+  malformed declared value is refused by shape on every launch path, and the
+  `.env` layer parses FAIL CLOSED per M7 8.1); the Control Center launcher is
+  migrated to the shared operator-CLI contract (M9 10.2). Reconciled
+  2026-10-10 (M13 14.2).
 
 ### G20 — Accessibility certification
 

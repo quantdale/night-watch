@@ -70,7 +70,10 @@ census refusal.
   broad source-intelligence residual.
 - Acceptance criteria: mutations detected; no false PASS.
 - Validation commands: `gate:dev`, `gate:milestone`.
-- **Status:** BLOCKED
+- **Status:** COMPLETE — the blocker was the independently reproduced
+  live-source drift residual, cleared by the parent's M3 hermeticity work
+  (4.1/4.2); this child's own scope was closed by the M8 9.4 follow-through at
+  `f8af00cd`. Recorded 2026-10-10.
 
 ### M4 — Close and reassess
 

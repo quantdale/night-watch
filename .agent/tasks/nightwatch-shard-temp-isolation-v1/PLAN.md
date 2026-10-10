@@ -58,7 +58,7 @@ Build the child environment through the existing allowlist, then overwrite stand
 
 - Objective: run development/milestone lanes, classify independent residuals, and reconcile continuity.
 - Acceptance: exact evidence recorded; no cross-shard temp race; source drift remains separately classified.
-- Status: BLOCKED
+- Status: COMPLETE — the independent live-source drift residual was cleared by the parent's M3 hermeticity work (tasks 4.1/4.2), the successor this child named; the isolation proof is process-level and green. Recorded 2026-10-10.
 
 ## Validation Strategy
 

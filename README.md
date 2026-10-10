@@ -97,12 +97,28 @@ validation-lane state (`config/validation-lane-state.v1.json`);
 the system as measured, not as intended, and it states a lane that has never
 executed rather than omitting it.
 
+Two different measures appear below and they are not synonyms. The
+`<!--status:...-->` tags and the lane-class counts are the LEDGER's declared
+class counts, which `hardening:check` enforces. The live-evaluation figures are
+what `npm run project:check` measures at the checkout as it stands: they resolve
+each lane's evidence at the certified checkpoint, so a lane whose evidence
+predates that checkpoint is `STALE_EVIDENCE` and does not count as proven. Both
+are true at once; only the second tells an operator what the gate says today.
+
 <!--status-block:begin-->
 - Project completion status: `OPERATIONALLY_ACCEPTED` — local/clean certified,
   exact-head CI never executed. `<!--status:PROJECT_COMPLETION_STATUS=OPERATIONALLY_ACCEPTED-->`
 - Validation lane classes: 9 `PROVEN`, 1 `PROVEN` carrying stale evidence,
   0 `BLOCKED_EXTERNAL`, 1 `UNAVAILABLE_CAPABILITY`.
   `<!--status:VALIDATION_LANE_PROVEN_COUNT=9-->` `<!--status:VALIDATION_LANE_STALE_EVIDENCE_COUNT=1-->` `<!--status:VALIDATION_LANE_BLOCKED_EXTERNAL_COUNT=0-->` `<!--status:VALIDATION_LANE_UNAVAILABLE_CAPABILITY_COUNT=1-->`
+  **Live evaluation at `c931444a` (2026-10-10): `proven=0
+  externallyBlocked=0 neverAttempted=1 staleEvidence=10`.** All ten declared
+  `PROVEN` lanes carry evidence that does not resolve at the certified
+  checkpoint, so none counts as proven in the live gate. The owner-manual lane
+  is the `UNAVAILABLE_CAPABILITY` entry. The certification is therefore
+  REFUSED (`certificationRefused: true`, `conditionsMet: 0/16`) rather than
+  merely unmet, and no advance status is claimed.
+  Full live rendering: `docs/RELEASE-ADVANCE-CONDITIONS.md`.
 - Measured yield: **1** Nightwatch mechanical admission and **0** strict
   `EXACT_REDISCOVERY` across W7–W13. The admission (W13, `mobingilabs/ouchan`,
   candidate `c1`) is a Nightwatch mechanical result whose novelty is
@@ -118,6 +134,14 @@ executed rather than omitting it.
   provider tier went down mid-wave, and an unexecutable arm is not reported as a
   zero-yield arm.
   `<!--status:MEASURED_YIELD_ADMITTED_FINDINGS=1-->` `<!--status:MEASURED_YIELD_EXACT_REDISCOVERY=0-->`
+  **Live addendum (2026-10-10): the M11 12.3 authorized paid proof run measured
+  the product path directly and produced 0 admissions** — 30 provider calls (28
+  completed, 2 failed), 33 campaign actions, 16 tool/source actions, 2
+  candidates, 1 dossier with status `REFUSED_NO_REPRODUCTION`, termination
+  `BUDGET_EXHAUSTED` with the honest class `PROVIDER_DEGRADED`, leak scan CLEAN,
+  sibling identity unchanged, zero persisted findings. It does not change the
+  governed count of 1 mechanical admission and it is not an Alphaus-confirmed
+  bug.
 - W12's owner-authorized current-source successor is **PARTIAL — BLOCKED**:
   its valid broad run reached all eight repositories and produced 2 candidates,
   2 non-reproductions, 2 `MISSING_REPRODUCTION` refusals, and 0 admissions;
@@ -152,6 +176,29 @@ executed rather than omitting it.
   executed at the certified checkpoint (GitHub Actions run 34705274649,
   `66df26b7`, green), and the owner-manual harnesses and live-app smokes are
   `UNAVAILABLE_CAPABILITY` (need DEV authentication and separate authorization).
+  **Live GitHub observation 2026-10-10 (`gh run list --limit 1`): the newest
+  run is `37881189722` at head `88987013` (= `origin/main`), `completed` with
+  conclusion `failure`.** Its gate receipt is
+  `receipt:sha256:3fac6ebff9630c2f2fecbdec` (node v22.23.3 / npm 10.9.9,
+  `environmentClass: CI`); six groups PASS (GATE_DEFINITION, STATIC,
+  BIN_TYPECHECK_CEILING, HARDENING, HARDENING_PROBES) and then
+  `HANDOFF_TRUTH` failed, so the remaining nine groups did not run. The newest
+  GREEN run is `37125148449` at `545b24f3`. The head `88987013` is the
+  docs-only commit that bound the STATE branch while the routing block still
+  said `SESSION WORKTREE: NONE`; that mismatch is the HANDOFF_TRUTH failure and
+  the repair `ea26954e` is committed in the campaign worktree but has not been
+  integrated, so no CI observation exists for it. Every run and its
+  classification is a live fact here; none is presented as green.
+- **Repository visibility (live `gh repo view quantdale/night-watch --json
+  visibility,isPrivate`, 2026-10-10): `{"isPrivate":false,
+  "visibility":"PUBLIC"}`.** The repository is PUBLIC. D-149's owner decision
+  to make it temporarily public so GitHub Actions could run stands, and the
+  owner action that returns it to private is PENDING (campaign task 15.8: revert
+  to private, confirm Actions still executes, record the run). No safety
+  invariant depends on the repository being private — `docs/SAFETY_MODEL.md`
+  §33 records that reading in full — and the binding rule while it is public is
+  unchanged: nothing secret, customer-derived or authentication-bearing may
+  enter source, artifacts or `.agent` files, and no new absolute home path.
   `<!--status:EXACT_CHECKPOINT_CI_LANE=PROVEN-->` `<!--status:OWNER_MANUAL_LANE=UNAVAILABLE_CAPABILITY-->` `<!--status:LIVE_APP_SMOKE_LANE=UNAVAILABLE_CAPABILITY-->`
 - The dependency-advisory lane executed its one authorized bounded registry
   query on 2026-09-12: exactly one low, unreachable `vue@2.6.12` advisory.

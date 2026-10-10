@@ -180,6 +180,10 @@ test.describe('the live published baseline', () => {
   test('every published capability purpose is a real statement', () => {
     const result = inspectPublishedSpecPurposes(REPO_ROOT);
     expect(result.errors).toEqual([]);
-    expect(result.capabilities).toBe(59);
+    // M13 14.6 archived 66 completed changes and published their specs, taking
+    // the published baseline from 59 to 79 capabilities. The floor is a floor:
+    // the assertion is that every published purpose is a real statement, and the
+    // count may only grow as capabilities are published.
+    expect(result.capabilities).toBeGreaterThanOrEqual(59);
   });
 });

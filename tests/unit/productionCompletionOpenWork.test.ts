@@ -284,7 +284,13 @@ test.describe('open work report', () => {
     expect(parsed.openWork.modelVersion).toBe(OPEN_WORK_REPORT_MODEL_VERSION);
     expect(parsed.openWork.derived).toBe(true);
     const ids = parsed.openWork.campaigns.map((campaign) => campaign.changeId);
-    expect(ids).toContain('nightwatch-production-completion-programme-v1');
+    // M13 14.2 set production-completion-programme, the autonomous programme,
+    // W11 and the observability plan terminal against their receipts, and 14.6
+    // archived 66 completed changes. The derived open work is therefore exactly
+    // this terminal campaign: the ledger is closed, which is the honest end
+    // state and not a regression in the derivation.
+    expect(ids).toContain('nightwatch-final-product-completion-v1');
+    expect(ids).not.toContain('nightwatch-production-completion-programme-v1');
     expect(ids).not.toContain('nightwatch-residual-closure-and-lane-qualification-v1');
 
     const text = spawnSync(process.execPath, [STATUS_BIN], {
