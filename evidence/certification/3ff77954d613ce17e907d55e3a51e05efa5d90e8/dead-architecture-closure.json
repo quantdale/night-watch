@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "nightwatch.certification-evidence-receipt.v1",
+  "subject": "dead-architecture-closure",
+  "subjects": [
+    "dead-architecture-closure"
+  ],
+  "sourceHead": "3ff77954d613ce17e907d55e3a51e05efa5d90e8",
+  "observedAtHead": "d285ef2fc0a23463dc463aa56f00a0fa98de11e8",
+  "sourceRootCleanAtEmit": true,
+  "checkId": "dead-architecture-closure-check",
+  "checkState": "MET",
+  "result": "PASS",
+  "producer": "PROJECT_CHECK",
+  "environmentClass": "HOST_LOCAL",
+  "receiptDigest": "receipt:sha256:70694af5c67f7ee43e564ba2"
+}
