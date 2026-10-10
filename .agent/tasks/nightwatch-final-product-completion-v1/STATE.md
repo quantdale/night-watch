@@ -1000,3 +1000,91 @@ lane is BLOCKING at 0 diagnostics across all 143 tracked implementations.
   `EXTERNAL_PREREQUISITE_UNMET`). The live figures of record are in
   `docs/CURRENT_STATE.md`'s M13 14.5 append and in the README measured-status
   block.
+
+## M14 terminal record (2026-10-10) — the one remaining blocker
+
+**Verdict: NOT_COMPLETE.** Everything that is locally actionable has been done;
+the campaign stops at one genuine, precisely-identified local defect that could
+not be closed inside the budget that remained.
+
+### What IS complete
+
+- **M9 (group 10)** — 10.1-10.6 COMPLETE. The bin type-check lane is BLOCKING at
+  **0 diagnostics across all 143 tracked `bin/**/*.mjs` implementations**, 77 of
+  77 entry points conforming, 0 exemptions, 0 per-file ceilings and 0
+  diagnostic-silencing widening annotations. The recorded 1402-diagnostic
+  baseline was a FLOOR, not a measurement: `tsconfig.bin.json` used to include
+  `bin/**/*.d.mts`, which made TypeScript drop each shadowed implementation from
+  the program (53 implementations, 952 real diagnostics, never checked), and
+  `runTsc` read an empty (clean) tsc output as a toolchain failure. Both are
+  closed with a permanent regression suite
+  (`tests/unit/binTypecheckLaneCompleteness.test.ts`).
+- **M10 (group 11)** — 11.1-11.7 COMPLETE. Every locally actionable T3/T4 S-fix
+  implemented with a regression (NW-AUD-005/007/009/011/032/033; D-15/D-16/D-17/
+  D-20/X-11/A-16), the DECISIONS of record written (D-153..D-167), SAFETY_MODEL
+  §25-§33 and the ARCHITECTURE M10 record appended, and the dependency
+  assessment extended to the UI lockfile.
+- **M11 (group 12)** — 12.1, 12.2, 12.4, 12.5 COMPLETE; 12.3 EXECUTED.
+  The operator journey is proven command by command, the durable
+  AgentFindingRecord is proven through the CLI and the live Control Center, the
+  synthetic campaign passes 1983 tests with every skip declared, `gate:clean`
+  passes sibling-absent with root and UI, and the authorized paid provider run
+  executed for real against `mobingilabs/ouchan`.
+- **M12 (group 13)** — COMPLETE. The adversarial completion audit exercised all
+  fourteen canonical families and repaired four defects, each with a permanent
+  regression: refusals delivered as uncaught throws in the DEV-lane guard (13
+  launchers), the phase*-real argv validation (7 launchers),
+  `nightwatch-agent status`, and the `.env` layer (3 launchers plus the Control
+  Center).
+- **M13 (group 14)** — COMPLETE. All 228 census items dispositioned (FIXED 153,
+  SUPERSEDED 24, ACCEPTED_RESIDUAL 18, INVALID_STALE_CLAIM 16,
+  EXTERNAL_PREREQUISITE 8, QUARANTINED 5, HISTORICAL_ONLY 4); the NW-AUD
+  originals reconciled with SHA citations; the six BLOCKED successor children
+  closed; 66 completed changes archived oldest-first with
+  `openspec validate --all --strict` PASS (80/80) and exactly one active change
+  remaining; the operator truth rendered from live evidence; and the repository
+  visibility mismatch resolved against GitHub's authoritative answer (PUBLIC).
+
+### The exact blocking requirement
+
+**Exact-head CI at the final substantive SHA `199ca024` (run `38015082655`) failed
+in ONE of the fifteen required groups.** GATE_DEFINITION, STATIC,
+BIN_TYPECHECK_CEILING, HARDENING, HARDENING_PROBES, HANDOFF_TRUTH, PROJECT_TRUTH,
+AGENT_CONTINUITY, SEMANTIC_COMPATIBILITY and OWNER_PROVENANCE all PASS, and the
+group that failed reports `total: 1983, passed: 1943, skipped: 40, didNotRun: 0,
+failed: 0` — no test failed. The failure is a **skip-identity accounting
+failure**: `skipPolicy.result: UNDECLARED_SKIP, skipped: 40, undeclared: 1`, with
+`deepContainmentLane: NOT_EXERCISED_BWRAP_UNAVAILABLE`.
+
+The GitHub runner has no Bubblewrap binary, so the L6 deep-containment lane
+declares its own non-exercise and 26 more tests skip there than on a host that
+has it (40 versus 14 locally). Twenty-five of those identities are already in
+the canonical skip-identity allowlist in `config/semantic-compatibility.v1.json`;
+**exactly one is missing.** The lane is failing closed, correctly: an undeclared
+skip is a validation gap and must never read as agreement.
+
+To close it, on any host that CAN reproduce the bwrap-less path (the L6
+capability probe reads the absolute candidates `/usr/bin/bwrap` and
+`/bin/bwrap`, so a PATH mask does not reproduce it) run
+`node bin/campaign-synthetic.mjs` under a masked or absent `/usr/bin/bwrap`,
+read the `test-results/synthetic-*/skip-identity-report.json` it writes, add the
+one missing identity with its reason token to `canonicalSkipIdentities` in
+`config/semantic-compatibility.v1.json`, re-run `npm run prepush` and
+`npm run gate:milestone`, create a new final substantive S, integrate it and
+observe exact-head CI again. Then close 15.3-15.7.
+
+This is NOT an external prerequisite and NOT a platform failure: the defect is
+local, the fix is one allowlist entry, and the campaign stops here only because
+the remaining budget ran out — not because the work is hard or out of scope.
+
+### Autonomy counters
+
+No Alphaus DEV/NEXT/production contact; no database or data-plane operation; no
+sibling repository mutation (ouchan `565f00a8`, blueapi `691422e5` and
+blue-sdk-go `8883ee3` were read-only observed before and after every proof run);
+no external publication; no force push; no history rewrite. Authorized external
+contact was OD-3 only: GitHub Actions read/observe, C-00 fast-forward pushes,
+one bounded paid provider proof run (executed three times — the first two were
+operator-invocation errors recorded as `PROVIDER_BLOCKED_BEFORE_SOURCE_ACTION`,
+the third is the real proof), and the one npm registry advisory query remains
+unauthorized-unexecuted (task 15.4).
