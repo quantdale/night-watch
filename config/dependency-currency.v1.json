@@ -6,9 +6,9 @@
   "advisoryScan": {
     "laneId": "dependency-advisory",
     "registry": "npm registry (registry.npmjs.org)",
-    "queryDate": "2026-09-12",
+    "queryDate": "2026-10-10",
     "authorization": "one bounded read-only advisory query explicitly authorized by the owner for programme group 9",
-    "scope": "the four dependencies declared at query time (@playwright/test, @types/node, typescript, vue) and their package-lock.json closure. @biomejs/biome@2.5.14 was declared on 2026-09-28 (corrections task 6.1) and is NOT covered by this executed query; no advisory result is claimed for it. The single authorized registry advisory query reserved for parent task 15.4 will cover the full closure then.",
+    "scope": "the full package-lock.json closure of the root lockfile (prod 1 / dev 18 / optional 9 / peer 0, total 18 installed dependencies), superseding the 2026-09-12 partial query over the four declared dependencies. This is the single bounded read-only npm registry advisory query authorized by OD-3 for parent task 15.4.",
     "result": "ONE_ADVISORY",
     "advisories": [
       {
@@ -19,15 +19,19 @@
         "title": "ReDoS vulnerability in vue package that is exploitable through inefficient regex evaluation in the parseHTML function",
         "cwe": "CWE-1333",
         "vulnerableRange": ">=2.0.0-alpha.1 <3.0.0-alpha.0",
-        "fix": "available only as a semver-major upgrade to vue 3.5.42; no package update is authorized",
+        "fix": "available only as a semver-major upgrade to vue 3.5.43; no package update is authorized",
         "reachabilityDisposition": "UNREACHABLE_IN_NIGHTWATCH",
         "reachabilityEvidence": "Vue never executes in any Nightwatch runtime path; it is a dev fixture loaded only in tests/unit/rippleReadiness.test.ts inside a browser page with literal fixture content via require.resolve, so the template-compilation ReDoS path is unreachable"
       }
-    ]
+    ],
+    "lockfileDigest": "sha256:a09126434daf81a978f261a53a742893b47fe322aa0e1161e5f55f69ae30c94a"
   },
   "runtime": {
     "declaredRange": ">=20",
-    "qualifiedNode": ["20.x", "22.22.1"],
+    "qualifiedNode": [
+      "20.x",
+      "22.22.1"
+    ],
     "qualifiedOs": {
       "platform": "linux",
       "arch": "x64",
@@ -82,18 +86,78 @@
           "ui/control-center/src/testSetup.ts"
         ],
         "declared": [
-          { "name": "react", "specifier": "19.1.0", "kind": "dependency", "resolvedVersion": "19.1.0" },
-          { "name": "react-dom", "specifier": "19.1.0", "kind": "dependency", "resolvedVersion": "19.1.0" },
-          { "name": "@testing-library/jest-dom", "specifier": "6.6.3", "kind": "devDependency", "resolvedVersion": "6.6.3" },
-          { "name": "@testing-library/react", "specifier": "16.3.0", "kind": "devDependency", "resolvedVersion": "16.3.0" },
-          { "name": "@testing-library/user-event", "specifier": "14.6.1", "kind": "devDependency", "resolvedVersion": "14.6.1" },
-          { "name": "@types/react", "specifier": "19.1.2", "kind": "devDependency", "resolvedVersion": "19.1.2" },
-          { "name": "@types/react-dom", "specifier": "19.1.2", "kind": "devDependency", "resolvedVersion": "19.1.2" },
-          { "name": "@vitejs/plugin-react", "specifier": "4.3.4", "kind": "devDependency", "resolvedVersion": "4.3.4" },
-          { "name": "jsdom", "specifier": "26.1.0", "kind": "devDependency", "resolvedVersion": "26.1.0" },
-          { "name": "typescript", "specifier": "5.7.3", "kind": "devDependency", "resolvedVersion": "5.7.3" },
-          { "name": "vite", "specifier": "6.4.3", "kind": "devDependency", "resolvedVersion": "6.4.3" },
-          { "name": "vitest", "specifier": "3.2.7", "kind": "devDependency", "resolvedVersion": "3.2.7" }
+          {
+            "name": "react",
+            "specifier": "19.1.0",
+            "kind": "dependency",
+            "resolvedVersion": "19.1.0"
+          },
+          {
+            "name": "react-dom",
+            "specifier": "19.1.0",
+            "kind": "dependency",
+            "resolvedVersion": "19.1.0"
+          },
+          {
+            "name": "@testing-library/jest-dom",
+            "specifier": "6.6.3",
+            "kind": "devDependency",
+            "resolvedVersion": "6.6.3"
+          },
+          {
+            "name": "@testing-library/react",
+            "specifier": "16.3.0",
+            "kind": "devDependency",
+            "resolvedVersion": "16.3.0"
+          },
+          {
+            "name": "@testing-library/user-event",
+            "specifier": "14.6.1",
+            "kind": "devDependency",
+            "resolvedVersion": "14.6.1"
+          },
+          {
+            "name": "@types/react",
+            "specifier": "19.1.2",
+            "kind": "devDependency",
+            "resolvedVersion": "19.1.2"
+          },
+          {
+            "name": "@types/react-dom",
+            "specifier": "19.1.2",
+            "kind": "devDependency",
+            "resolvedVersion": "19.1.2"
+          },
+          {
+            "name": "@vitejs/plugin-react",
+            "specifier": "4.3.4",
+            "kind": "devDependency",
+            "resolvedVersion": "4.3.4"
+          },
+          {
+            "name": "jsdom",
+            "specifier": "26.1.0",
+            "kind": "devDependency",
+            "resolvedVersion": "26.1.0"
+          },
+          {
+            "name": "typescript",
+            "specifier": "5.7.3",
+            "kind": "devDependency",
+            "resolvedVersion": "5.7.3"
+          },
+          {
+            "name": "vite",
+            "specifier": "6.4.3",
+            "kind": "devDependency",
+            "resolvedVersion": "6.4.3"
+          },
+          {
+            "name": "vitest",
+            "specifier": "3.2.7",
+            "kind": "devDependency",
+            "resolvedVersion": "3.2.7"
+          }
         ]
       },
       "advisoryScan": {
