@@ -117,7 +117,7 @@
       "id": "CORR-PERF-001",
       "path": "docs/CURRENT_STATE.md",
       "oldLineSha256": "sha256:8c6c2e74663d9af7d5c27984",
-      "oldLineExcerpt": "| `TEST_INFRASTRUCTURE_PERFORMANCE_V1_STATUS` | `IN_PROGRESS` \u2014 owner-authorized test/gate performance campaign activated from `8dd8b163b567b939b977649d6ba7c371cf230ee6`; W13 remains a frozen read-o",
+      "oldLineExcerpt": "| `TEST_INFRASTRUCTURE_PERFORMANCE_V1_STATUS` | `IN_PROGRESS` — owner-authorized test/gate performance campaign activated from `8dd8b163b567b939b977649d6ba7c371cf230ee6`; W13 remains a frozen read-o",
       "reason": "The performance campaign close-out advanced its governed status row from IN_PROGRESS to the terminal measured verdict; the campaign body after the status word is unchanged."
     },
     {
@@ -252,6 +252,13 @@
       "oldLineSha256": "sha256:f694df503eeb19ec2c2a5996",
       "oldLineExcerpt": "> Durable memory for the next agent/session. Last updated: **2026-10-02**",
       "reason": "The review-5 close-out (2026-10-03) rebound the governed LIVE_TASK_ID/LIVE_PHASE machine fields back to the parent campaign; the header date must cover the document's own last change, while the statement itself is unchanged."
+    },
+    {
+      "id": "CORR-M14-001",
+      "path": "docs/CURRENT_STATE.md",
+      "oldLineSha256": "sha256:e69d4cc3208d14d16765fee5",
+      "oldLineExcerpt": "> Durable memory for the next agent/session. Last updated: **2026-10-03**",
+      "reason": "M14 final certification bumped the header date to the day its last change actually landed (2026-10-10), after M13 14.5 rendered the live truth into the document by appending; the statement is unchanged."
     }
   ]
 }
