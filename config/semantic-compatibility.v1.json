@@ -701,6 +701,14 @@
         "file": "tests/unit/c03GrpcTopology.test.ts",
         "titlePath": [
           "C-03 \u2014 the real measured topology",
+          "every reachable registration is bound as a fact, and the unreached ones are named"
+        ],
+        "reasonToken": "LIVE_SOURCE_UNAVAILABLE"
+      },
+      {
+        "file": "tests/unit/c03GrpcTopology.test.ts",
+        "titlePath": [
+          "C-03 \u2014 the real measured topology",
           "the generated SDK descriptors all pair uniquely"
         ],
         "reasonToken": "LIVE_SOURCE_STALE"

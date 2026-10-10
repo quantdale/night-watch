@@ -468,7 +468,7 @@
         "ops": [
           {
             "file": "<ACTIVE_TASK_DIR>/STATE.md",
-            "append": "\n**M99 \u2014 PROBE COMPLETE**\n"
+            "append": "\n**M99 — PROBE COMPLETE**\n"
           }
         ]
       }
@@ -479,7 +479,7 @@
         "ops": [
           {
             "file": "docs/DECISIONS.md",
-            "append": "\n## D-98 \u2014 probe duplicate title\n## D-98 \u2014 probe duplicate title\n"
+            "append": "\n## D-98 — probe duplicate title\n## D-98 — probe duplicate title\n"
           }
         ]
       }
@@ -843,8 +843,8 @@
         "ops": [
           {
             "file": "docs/CURRENT_STATE.md",
-            "search": "OPERATIONALLY_ACCEPTED \u2014 2026-08-30 at 598e7fa",
-            "replace": "OPERATIONALLY_ACCEPTED \u2014 2026-08-30 at 0000000"
+            "search": "OPERATIONALLY_ACCEPTED — 2026-08-30 at 598e7fa",
+            "replace": "OPERATIONALLY_ACCEPTED — 2026-08-30 at 0000000"
           }
         ]
       }
@@ -4204,8 +4204,8 @@
       "ops": [
         {
           "file": "bin/lib/claim-journal.mjs",
-          "search": "    if (!identical && !closing) errors.push(",
-          "replace": "    if (false) errors.push("
+          "search": "    if (identityPreserved && releaseAdvanced && tipAdvanced && digestBound) continue;",
+          "replace": "    if (true) continue;"
         }
       ],
       "focusedTests": [

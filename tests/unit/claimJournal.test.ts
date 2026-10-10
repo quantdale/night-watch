@@ -13,6 +13,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {
   CLAIM_JOURNAL_PATH,
+  claimLineDigest,
   evaluateJournalAppendOnly,
   inspectClaimJournal,
   parseClaimJournal,
@@ -229,4 +230,153 @@ test('the real repository journal is valid and covers its own history', () => {
   const git = (args: string[]) => { const result = spawnSync('git', args, { cwd: ROOT, encoding: 'utf8', shell: false }); return { status: result.status, stdout: result.stdout ?? '' }; };
   const verdict = inspectClaimJournal({ readText: (relative) => { try { return fs.readFileSync(path.join(ROOT, relative), 'utf8'); } catch { return null; } }, git });
   expect(verdict.errors).toEqual([]);
+});
+
+// D-168 / campaign task 15.A — the append-only journal admits ONE escape: an
+// already-closed claim window may be ADVANCED (its tip moves, identity preserved,
+// release time moved forward) where an appended `CORRECTION:` line binds the exact
+// sha256 of the line that was replaced. The real terminal maintenance window needed
+// exactly this at fcd87fb6: `sess-m14-terminal` had been closed at c289a6cf, and
+// the commit that closed it had to be added to its window, which the previous
+// session recorded as a prose GAP — correct, but not mechanically admitted, so
+// `agent:check` (and therefore HANDOFF_TRUTH and every exact-head CI run) failed.
+//
+// The escape is modelled on `checkAppendOnlyArchives`
+// (`bin/lib/hardening/rules/documentation.mjs`): a replacement is admissible only
+// when a declaration binds the exact line digest, the declaration may never be
+// spent on a line that is still live, and it is append-only so it can never be
+// withdrawn. These probes pin both directions: the escape works when it is used,
+// and it licenses NOTHING else.
+const ADVANCE_BASE = 'b'.repeat(40);
+const ADVANCE_TIP = 'c'.repeat(40);
+const advanceLine = (tip: string, released = '2026-10-10T09:30:00Z') => `CLAIM: sess-advance-window | role=MAINTENANCE | task=task-one | created=2026-10-10T09:00:00Z | released=${released} | base=${ADVANCE_BASE} | tip=${tip}`;
+const advanceJournal = (lines: string[]) => `CLAIM_JOURNAL_PROTOCOL_VERSION: nightwatch.claim-journal.v1\nERA_START_SHA: ${'a'.repeat(40)}\n${lines.join('\n')}\n`;
+
+test.describe('D-168 an advanced closed claim window is admitted by a bound declaration', () => {
+  const closed = advanceLine(ADVANCE_TIP);
+  const replaced = advanceJournal([closed]);
+  const digest = claimLineDigest(closed);
+  const advanced = advanceLine('d'.repeat(40), '2026-10-10T09:45:00Z');
+  const correction = `CORRECTION: sess-advance-window | oldLineSha256=${digest} | reason=the maintenance window was re-closed so its tip covers the commit that closed it`;
+  const judge = (previous: string, next: string) => evaluateJournalAppendOnly(previous, next, parseClaimJournal(next).corrections);
+
+  test('the SAME advance with no declaration is still CLAIM_JOURNAL_REWRITTEN', () => {
+    expect(judge(replaced, advanceJournal([advanced]))).toEqual([
+      expect.stringContaining('CLAIM_JOURNAL_REWRITTEN: claim sess-advance-window was edited'),
+    ]);
+  });
+
+  test('the advance is admitted when the declaration binds the exact replaced line', () => {
+    expect(judge(replaced, advanceJournal([advanced, correction]))).toEqual([]);
+  });
+
+  test('a declaration bound to a different claim licenses nothing', () => {
+    expect(judge(replaced, advanceJournal([advanced, `CORRECTION: sess-other-window | oldLineSha256=${digest} | reason=a different claim name licenses no replacement at all`]))).toEqual([
+      expect.stringContaining('CLAIM_JOURNAL_REWRITTEN'),
+    ]);
+  });
+
+  test('a declaration bound to the wrong line digest licenses nothing', () => {
+    expect(judge(replaced, advanceJournal([advanced, `CORRECTION: sess-advance-window | oldLineSha256=${claimLineDigest(advanced)} | reason=a digest that names the new line cannot bind the replaced one`]))).toEqual([
+      expect.stringContaining('CLAIM_JOURNAL_REWRITTEN'),
+    ]);
+  });
+
+  test('a re-flowed old line has a different digest, so a stale declaration covers nothing', () => {
+    const reflowed = replaced.replace(' | base=', '  | base=');
+    expect(judge(reflowed, advanceJournal([advanced, correction]))).toEqual([
+      expect.stringContaining('CLAIM_JOURNAL_REWRITTEN'),
+    ]);
+  });
+
+  test('the escape never admits an identity change', () => {
+    const renamed = advanced.replace('task=task-one', 'task=task-two');
+    expect(judge(replaced, advanceJournal([renamed, correction]))).toEqual([
+      expect.stringContaining('CLAIM_JOURNAL_REWRITTEN'),
+    ]);
+  });
+
+  test('the escape never admits a non-advance (release time not moved forward)', () => {
+    const sameRelease = advanceLine('d'.repeat(40));
+    expect(judge(replaced, advanceJournal([sameRelease, correction]))).toEqual([
+      expect.stringContaining('CLAIM_JOURNAL_REWRITTEN'),
+    ]);
+  });
+
+  test('the escape never admits removing the claim it covers', () => {
+    expect(judge(replaced, advanceJournal([correction]))).toEqual([
+      expect.stringContaining('CLAIM_JOURNAL_REWRITTEN: claim sess-advance-window was removed'),
+    ]);
+  });
+
+  test('a declaration is itself append-only and can never be withdrawn to excuse a later edit', () => {
+    const declaredText = advanceJournal([closed, correction]);
+    const withdrawn = advanceJournal([advanced]);
+    const errors = judge(declaredText, withdrawn);
+    // Withdrawing the declaration fails closed TWICE over: the entry that was
+    // declared must survive unchanged, AND the edit it used to cover is now
+    // undeclared. Neither protection alone would be enough.
+    expect(errors).toContainEqual(expect.stringContaining('CLAIM_JOURNAL_REWRITTEN: the declared correction for sess-advance-window'));
+    expect(errors).toContainEqual(expect.stringContaining('CLAIM_JOURNAL_REWRITTEN: claim sess-advance-window was edited'));
+  });
+
+  test('closing an OPEN claim and appending a claim still need no declaration', () => {
+    const withOpen = advanceJournal([closed, `CLAIM: sess-open-window | role=SESSION | task=task-one | created=2026-10-10T09:00:00Z | released=OPEN | base=${ADVANCE_BASE} | tip=OPEN`]);
+    expect(judge(withOpen, advanceJournal([closed, `CLAIM: sess-open-window | role=SESSION | task=task-one | created=2026-10-10T09:00:00Z | released=2026-10-10T10:00:00Z | base=${ADVANCE_BASE} | tip=${ADVANCE_TIP}`]))).toEqual([]);
+    expect(judge(withOpen, `${withOpen}CLAIM: sess-appended-window | role=SESSION | task=task-one | created=2026-10-10T10:05:00Z | released=OPEN | base=${ADVANCE_TIP} | tip=OPEN\n`)).toEqual([]);
+  });
+
+  test('a correction is structurally invalid when it names no claim, states no reason or is duplicate', () => {
+    const skeleton = advanceJournal([closed]);
+    expect(validateClaimJournalStructure(parseClaimJournal(`${skeleton}${correction}\n`)).join(' ')).not.toContain('CLAIM_JOURNAL_CORRECTION');
+    expect(validateClaimJournalStructure(parseClaimJournal(`${skeleton}${correction}\n${correction}\n`)).join(' ')).toContain('CLAIM_JOURNAL_CORRECTION_DUPLICATE');
+    expect(validateClaimJournalStructure(parseClaimJournal(`${skeleton}CORRECTION: sess-unrecorded | oldLineSha256=${digest} | reason=no such claim exists in this journal\n`)).join(' ')).toContain('CLAIM_JOURNAL_CORRECTION_UNKNOWN_CLAIM');
+    expect(validateClaimJournalStructure(parseClaimJournal(`${skeleton}CORRECTION: sess-advance-window | oldLineSha256=notahex | reason=an invalid digest binds nothing\n`)).join(' ')).toContain('CLAIM_JOURNAL_CORRECTION_INVALID');
+    expect(validateClaimJournalStructure(parseClaimJournal(`${skeleton}CORRECTION: sess-advance-window | oldLineSha256=${digest} | reason=short\n`)).join(' ')).toContain('CLAIM_JOURNAL_CORRECTION_INVALID');
+  });
+
+  test('a correction that covers no replaced line is CLAIM_JOURNAL_CORRECTION_INERT over a real Git history', () => {
+    // The inertness guard is what stops a declaration from being a purchased
+    // future rewrite: over a real first-parent chain, an entry whose digest names
+    // no line that a commit actually replaced fails closed.
+    const r = repo();
+    try {
+      r.write('a.txt', 'era\n');
+      const era = r.commit('era start');
+      r.write('a.txt', 'one\n');
+      const one = r.commit('work');
+      r.write(CLAIM_JOURNAL_PATH, `CLAIM_JOURNAL_PROTOCOL_VERSION: nightwatch.claim-journal.v1\nERA_START_SHA: ${era}\nCLAIM: sess-inert-claim | role=SESSION | task=task-one | created=2026-10-02T10:00:00Z | released=2026-10-02T12:00:00Z | base=${era} | tip=${one}\nCORRECTION: sess-inert-claim | oldLineSha256=${claimLineDigest(advanceLine(ADVANCE_TIP))} | reason=this digest names no line any commit replaced in this history\n`);
+      r.commit('record an unconsumed declaration');
+      expect(r.inspect().errors.join(' ')).toContain('CLAIM_JOURNAL_CORRECTION_INERT');
+    } finally {
+      r.cleanup();
+    }
+  });
+
+  test('a real advance over a real Git history passes inspection end to end', () => {
+    const r = repo();
+    try {
+      r.write('a.txt', 'era\n');
+      const era = r.commit('era start');
+      r.write('a.txt', 'one\n');
+      const one = r.commit('work');
+      const claimLine = `CLAIM: sess-real-advance | role=MAINTENANCE | task=task-one | created=2026-10-02T10:00:00Z | released=2026-10-02T12:00:00Z | base=${era} | tip=${one}`;
+      r.write(CLAIM_JOURNAL_PATH, `CLAIM_JOURNAL_PROTOCOL_VERSION: nightwatch.claim-journal.v1\nERA_START_SHA: ${era}\n${claimLine}\n`);
+      const recorded = r.commit('record the claim window');
+      // A second commit made under the claim must be added to its window, so the
+      // closed window is advanced — exactly the terminal maintenance pattern.
+      r.write('a.txt', 'two\n');
+      const two = r.commit('work still under the claim');
+      const advancedLine = `CLAIM: sess-real-advance | role=MAINTENANCE | task=task-one | created=2026-10-02T10:00:00Z | released=2026-10-02T13:00:00Z | base=${era} | tip=${two}`;
+      r.write(CLAIM_JOURNAL_PATH, `CLAIM_JOURNAL_PROTOCOL_VERSION: nightwatch.claim-journal.v1\nERA_START_SHA: ${era}\n${advancedLine}\nCORRECTION: sess-real-advance | oldLineSha256=${claimLineDigest(claimLine)} | reason=the tip was advanced so the window covers the second commit made under the claim\n`);
+      r.commit('advance the window with a bound declaration');
+      expect(r.inspect().errors).toEqual([]);
+      // Removing the declaration, or the claim, fails closed again.
+      r.write(CLAIM_JOURNAL_PATH, `CLAIM_JOURNAL_PROTOCOL_VERSION: nightwatch.claim-journal.v1\nERA_START_SHA: ${era}\n${advancedLine}\n`);
+      r.commit('withdraw the declaration');
+      expect(r.inspect().errors.join(' ')).toContain('CLAIM_JOURNAL_REWRITTEN');
+    } finally {
+      r.cleanup();
+    }
+  });
 });

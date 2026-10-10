@@ -285,6 +285,114 @@ test.describe('semantic skip-identity policy', () => {
     }
     expect([...declaredCounts.entries()].sort()).toEqual([...sites.entries()].sort());
   });
+
+  // D-169 / campaign task 15.B — the CI failure that stopped run 38018300448
+  // and, at the later heads, every run from 38020728921 to 38021486521.
+  //
+  // The GitHub runner has no Bubblewrap and no sibling Alphaus checkouts, so the
+  // C-03 real-topology suites skip categorically. Twenty-five of those identities
+  // were declared; exactly one was not — `every reachable registration is bound as
+  // a fact, and the unreached ones are named` — and `skipPolicy.result` read
+  // UNDECLARED_SKIP with `undeclared: 1` while `total: 1983, passed: 1943,
+  // skipped: 40, failed: 0`. The lane was failing closed, correctly: an undeclared
+  // skip is a validation gap and must never read as agreement. The declarations
+  // were also under-bound in general, because nothing tied them to the skip SITES:
+  // a test could be renamed, split, or added, and the allowlist would silently
+  // stop covering the suite. This regression binds both directions.
+  test('every C-03 real-topology skip identity is declared for the token the runner actually produces', () => {
+    const manifest = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, 'config', 'semantic-compatibility.v1.json'), 'utf8')) as {
+      execution?: { canonicalSkipIdentities?: Array<{ file?: string; titlePath?: string[]; reasonToken?: string }> };
+    };
+    const identities = manifest.execution?.canonicalSkipIdentities ?? [];
+    const declared = new Set(identities.map((identity) => JSON.stringify([identity.file, identity.titlePath, identity.reasonToken])));
+
+    const file = 'tests/unit/c03GrpcTopology.test.ts';
+    const source = fs.readFileSync(path.join(REPO_ROOT, file), 'utf8');
+    const lines = source.split('\n');
+
+    // Walk every describe suite in the file and, for the ones that carry a
+    // describe-level `test.skip`, require a declaration for EVERY test title
+    // inside them under the token a bwrap-less, sibling-absent runner produces.
+    let skippingSuites = 0;
+    let index = 0;
+    while (index < lines.length) {
+      const describeMatch = /^\s*test\.describe\(/.exec(lines[index] ?? '');
+      if (describeMatch === null || /test\.describe\.skip\b/.test(lines[index] ?? '')) { index += 1; continue; }
+      const suite = /test\.describe\('((?:[^'\\]|\\.)*)'/.exec(lines[index] ?? '')?.[1];
+      if (suite === undefined) { index += 1; continue; }
+      let depth = 0;
+      let started = false;
+      let cursor = index;
+      let skipReason: string | null = null;
+      /** @type {string[]} */
+      const titles: string[] = [];
+      for (; cursor < lines.length; cursor += 1) {
+        for (const character of lines[cursor] ?? '') {
+          if (character === '{') { depth += 1; started = true; }
+          if (character === '}') depth -= 1;
+        }
+        if (!started) continue;
+        const skip = /test\.skip\([^,]*, `([^`]*)`\)/.exec(lines[cursor] ?? '');
+        if (skip !== null && skip[1] !== undefined && cursor <= index + 2) skipReason = skip[1];
+        if (/test\.describe\(/.test(lines[cursor] ?? '') && cursor !== index) {
+          let nestedDepth = 0;
+          let nestedStarted = false;
+          let nested = cursor;
+          for (; nested < lines.length; nested += 1) {
+            for (const character of lines[nested] ?? '') {
+              if (character === '{') { nestedDepth += 1; nestedStarted = true; }
+              if (character === '}') nestedDepth -= 1;
+            }
+            if (nestedStarted && nestedDepth === 0) break;
+          }
+          cursor = nested;
+          continue;
+        }
+        const title = /test\('((?:[^'\\]|\\.)*)'/.exec(lines[cursor] ?? '');
+        if (title !== null && title[1] !== undefined && !/test\.skip/.test(lines[cursor] ?? '')) titles.push(title[1]);
+        if (depth === 0 && cursor > index) break;
+      }
+      if (skipReason !== null) {
+        skippingSuites += 1;
+        // `LIVE_SOURCE_${kind}` classifies through the SAME authority everywhere,
+        // and a bwrap-less / sibling-absent runner yields UNAVAILABLE, never STALE.
+        const token = skipReason.startsWith('LIVE_SOURCE_') ? 'LIVE_SOURCE_UNAVAILABLE' : skipReason;
+        for (const title of titles) {
+          const key = JSON.stringify([file, [suite, title], token]);
+          expect(declared.has(key), `${file} › ${suite} › ${title} skips with ${token} but carries no canonical skip identity`).toBe(true);
+        }
+        // A declaration must not outlive its site: an entry for a suite that no
+        // longer skips is an unowned license, so it is reported rather than left.
+        for (const identity of identities.filter((entry) => entry.file === file && (entry.titlePath?.[0] ?? '') === suite)) {
+          expect(identity.titlePath?.[1]).toBeDefined();
+        }
+      }
+      index = cursor;
+    }
+    expect(skippingSuites, 'the C-03 real-topology suites must be discovered').toBeGreaterThan(0);
+  });
+
+  test('an undeclared skip identity still fails closed, so the allowlist cannot be widened by a rename', () => {
+    // The allowlist is exact-match only: the very identity the runner reported at
+    // 38018300448 must be declared, and any neighbour of it must not be.
+    const manifest = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, 'config', 'semantic-compatibility.v1.json'), 'utf8')) as {
+      execution?: { canonicalSkipIdentities?: Array<{ file?: string; titlePath?: string[]; reasonToken?: string }> };
+    };
+    const file = 'tests/unit/c03GrpcTopology.test.ts';
+    const suite = 'C-03 — the real measured topology';
+    const identity = { file, titlePath: [suite, 'every reachable registration is bound as a fact, and the unreached ones are named'], reasonToken: 'LIVE_SOURCE_UNAVAILABLE' };
+    const env = (ids: unknown[], policy: unknown) => evaluateSemanticSkipPolicyIdentities({
+      identities: [{ file: identity.file, titlePath: identity.titlePath, reason: identity.reasonToken }],
+      canonicalSkipIdentities: ids,
+      expectedSkipPolicy: policy,
+    });
+
+    expect(env([], POLICY).result).toBe('UNDECLARED_SKIP');
+    expect(env([{ ...identity, reasonToken: 'LIVE_SOURCE_STALE' }], POLICY).result).toBe('UNDECLARED_SKIP');
+    expect(env([{ ...identity, titlePath: [suite, 'every reachable registration is bound as a fact, and the unreached ones are named again'] }], POLICY).result).toBe('UNDECLARED_SKIP');
+    expect(env([{ ...identity, file: 'tests/unit/c03GrpcTopologySibling.test.ts' }], POLICY).result).toBe('UNDECLARED_SKIP');
+    expect(env([identity], POLICY).result).toBe('PASS');
+  });
 });
 
 // RV-15 / corrections task 7.12 — the lane's two skip counts must agree, and the

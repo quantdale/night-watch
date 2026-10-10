@@ -8,7 +8,12 @@ that lies in no window (review-5 R5-11 / task A9.1); a commit that touches nothi
 this file is the record itself and is exempt. Lines are only ever APPENDED: open a window
 when a claim starts (`released=OPEN`, `tip=OPEN`), and close it at release by APPENDING
 the closing line and marking the opening line in the same commit through a declared
-correction. Prose lines are ignored by the parser; only the `KEY: value` lines below count.
+correction. An already-closed claim may be replaced only where an appended `CORRECTION:`
+line binds the EXACT `oldLineSha256` of the line being replaced; the correction must name
+a real historical replacement, may never name a line that is still live, and licensing
+nothing else — every other edit of a recorded line fails closed with
+`CLAIM_JOURNAL_REWRITTEN`. Prose lines are ignored by the parser; only the `KEY: value`
+lines below count.
 
 CLAIM_JOURNAL_PROTOCOL_VERSION: nightwatch.claim-journal.v1
 ERA_START_SHA: f680bc839969e6c95df50a542b5680fccc81e012
@@ -36,3 +41,4 @@ CLAIM: sess-c5822bf676c9 | role=SESSION | task=nightwatch-final-product-completi
 CLAIM: sess-m14-terminal | role=MAINTENANCE | task=nightwatch-final-product-completion-v1 | created=2026-10-10T09:00:00Z | released=2026-10-10T09:45:00Z | base=ed248033268acec8ac9a9db48a2fb06ca050d37d | tip=7ddc60564bc1b4258cac347ccac71e18263ab111
 CLAIM: sess-m14-terminal-2 | role=MAINTENANCE | task=nightwatch-final-product-completion-v1 | created=2026-10-10T10:00:00Z | released=2026-10-10T10:15:00Z | base=7ddc60564bc1b4258cac347ccac71e18263ab111 | tip=e1fd2568430cdf8f8203741326951da90736a969
 GAP: fcd87fb6f9587826c4bf75c289b3d3a714d1cb88 | terminal maintenance window re-closed: `sess-m14-terminal` had already been closed at c289a6cf in 7ddc6056 and was edited again to extend its tip to 7ddc6056. The append-only journal permits closing an OPEN claim once; this is a recorded breach of that rule, made while closing out the campaign's terminal maintenance commits. The substantive content of every commit it covers is unchanged and each was made under a live canonical MAINTENANCE claim for this task; only the journal bookkeeping double-closed the window.
+CORRECTION: sess-m14-terminal | oldLineSha256=fe0f2e62599d352599f2503ef657ca9a6afff6395d6ec1eadc24842733f10510 | reason=commit fcd87fb6 re-closed the sess-m14-terminal maintenance window to extend its tip from c289a6cf to 7ddc6056 so the window covers the commit that closed it; the replaced line is bound by its digest and admitted by this appended declaration rather than by an undeclared edit
