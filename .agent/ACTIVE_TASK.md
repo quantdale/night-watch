@@ -10,7 +10,7 @@ TASK_GROUP_NEXT: 15
 TASK_NEXT_ID: 15.3
 Task directory: .agent/tasks/nightwatch-final-product-completion-v1
 Starting SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
-Last validated implementation SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
+Last validated implementation SHA: effc2baacce221aa8668147becef2fa7aa142aaf
 Last checkpoint: 2026-10-10 — M13 (group 14) LEDGER CLOSURE AND LIVE-RENDERED DOCUMENTATION.
 14.1 reconciles the NW-AUD originals against their successors with SHA citations; 14.2 sets the six
 BLOCKED successor children COMPLETE against their receipts and sets production-completion-programme,
@@ -90,8 +90,8 @@ PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
-LAST_VALIDATED_IMPLEMENTATION_SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 027367d9da22ea1198c0a60fb1b11805f6719d40
+LAST_VALIDATED_IMPLEMENTATION_SHA: effc2baacce221aa8668147becef2fa7aa142aaf
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: effc2baacce221aa8668147becef2fa7aa142aaf
 LIVE_HEAD_AUTHORITY: GIT
 PHASE_FINAL_PRODUCT_COMPLETION_V1_STATUS: IN_PROGRESS
 
