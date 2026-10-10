@@ -2,10 +2,17 @@
 
 Status: **NOT COMPLETE** (terminal record, 2026-10-11)
 SHA anchor: certified checkpoint `3ff77954d613ce17e907d55e3a51e05efa5d90e8`;
-integrated tip `1d8cefcd7924ff4de1de0b0e2fcac1f3fe81b0e5`; `origin/main` is
+integrated tip `d082c8d85c5554cda4e9b6b6d5b6dae8ab606fba`; `origin/main` is
 fast-forward-equal to the integrated tip.
-CI: **PASS**, run 38065778727 @ `ddb80be4` (15/15 groups) and run 38055518028 @
-`effc2baa` (15/15).
+CI: **PASS** at every integrated tip of this session — run 38055518028 @
+`effc2baa`, run 38065778727 @ `ddb80be4`, run 38075499543 @ `0643610a`,
+run 38079935290 @ `5ff2b832` and run 38082555043 @ `d082c8d8`, each 15/15 groups
+with both skip policies `PASS` and `undeclared: 0` (receipts
+`receipt:sha256:1493a385a1d44b07bff76c04`,
+`receipt:sha256:f910f3b0f4ead87c75f230b5`,
+`receipt:sha256:38df90dbeb1eeebe6b148b49`,
+`receipt:sha256:3bd2f2dad46490e20644699d`,
+`receipt:sha256:896c24ad7bf6d7ef9325f945`).
 
 ## 1. Verdict
 
@@ -77,7 +84,7 @@ structural evidence-binding limits and by the two owner decisions recorded in
 | `npm run gate:milestone` | STEP_FAILED on `mutation-harness` — see §6 |
 | `npx openspec validate --all --strict` | 80 passed / 0 failed, one active change |
 | `node bin/gate-topology.mjs` | PASS, envelope BUBBLEWRAP, class PROVEN |
-| Exact-head CI | PASS at both integrated tips (15/15 each) |
+| Exact-head CI | PASS at five integrated tips (15/15 each, `undeclared: 0`) |
 
 ## 4. Release-condition results (live at `project:check`, S = `3ff77954`)
 
