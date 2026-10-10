@@ -117,7 +117,7 @@ reconcile every operator-truth surface, close the ledger, and end with a
 ```text
 CAMPAIGN: nightwatch-final-product-completion-v1
 CHILD TASK: NONE
-SESSION WORKTREE: session/nightwatch-final-product-complet-bd061869
+SESSION WORKTREE: NONE
 
 IMPLEMENTATION AUTHORIZED:
   Nightwatch source, tests, hardening rules/probes, schemas/configuration,
@@ -134,7 +134,8 @@ CURRENT STATUS:
   campaign `nightwatch-final-completion-review5-v1` is COMPLETE and archived
   (`2026-10-03-nightwatch-final-completion-review5-v1`); exact-head CI is GREEN at each of its
   integrated tips (runs 37044532848, 37062959122, 37120079300, 37123923541). This session works in
-  the declared worktree `session/nightwatch-final-product-complet-bd061869`; the deferred `9.5b`
+  the declared worktree, which is now NONE because the session was released after integration;
+the deferred `9.5b`
   stays carried by 14.1/14.2, and task 11.7 (commit) is the remaining M10 box before M11-M14.
 
 ALPHAUS DEV / NEXT / PRODUCTION CONTACT:   NOT AUTHORIZED
