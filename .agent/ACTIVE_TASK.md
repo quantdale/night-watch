@@ -10,7 +10,7 @@ TASK_GROUP_NEXT: 15
 TASK_NEXT_ID: 15.3
 Task directory: .agent/tasks/nightwatch-final-product-completion-v1
 Starting SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
-Last validated implementation SHA: 3ff77954d613ce17e907d55e3a51e05efa5d90e8
+Last validated implementation SHA: 0b4f2cdbd5376afea6dbc72032f88e32cc59534f
 Last checkpoint: 2026-10-10 — M13 (group 14) LEDGER CLOSURE AND LIVE-RENDERED DOCUMENTATION.
 14.1 reconciles the NW-AUD originals against their successors with SHA citations; 14.2 sets the six
 BLOCKED successor children COMPLETE against their receipts and sets production-completion-programme,
@@ -90,8 +90,8 @@ PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
-LAST_VALIDATED_IMPLEMENTATION_SHA: 3ff77954d613ce17e907d55e3a51e05efa5d90e8
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 3ff77954d613ce17e907d55e3a51e05efa5d90e8
+LAST_VALIDATED_IMPLEMENTATION_SHA: 0b4f2cdbd5376afea6dbc72032f88e32cc59534f
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 0b4f2cdbd5376afea6dbc72032f88e32cc59534f
 LIVE_HEAD_AUTHORITY: GIT
 PHASE_FINAL_PRODUCT_COMPLETION_V1_STATUS: IN_PROGRESS
 
@@ -117,7 +117,7 @@ reconcile every operator-truth surface, close the ledger, and end with a
 ```text
 CAMPAIGN: nightwatch-final-product-completion-v1
 CHILD TASK: NONE
-SESSION WORKTREE: session/nightwatch-final-product-complet-c28a25aa
+SESSION WORKTREE: NONE
 
 IMPLEMENTATION AUTHORIZED:
   Nightwatch source, tests, hardening rules/probes, schemas/configuration,

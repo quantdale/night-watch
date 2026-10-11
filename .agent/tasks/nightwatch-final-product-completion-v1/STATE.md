@@ -10,11 +10,11 @@ TASK_GROUPS_COMPLETE: 1,2,3,4,5,6,7,8,9,10,11,12,13,14
 TASK_GROUP_NEXT: 15
 TASK_NEXT_ID: 15.3
 Starting SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
-Last validated implementation SHA: 3ff77954d613ce17e907d55e3a51e05efa5d90e8
-Last substantive checkpoint SHA: 3ff77954d613ce17e907d55e3a51e05efa5d90e8
+Last validated implementation SHA: 0b4f2cdbd5376afea6dbc72032f88e32cc59534f
+Last substantive checkpoint SHA: 0b4f2cdbd5376afea6dbc72032f88e32cc59534f
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
-Branch: session/nightwatch-final-product-complet-c28a25aa
+Branch: main
 Last checkpoint: 2026-10-09 — M10 (group 11) DOCUMENTATION OF RECORD WRITTEN; 11.1-11.6 COMPLETE
 (`b7afa9e9` for the S-fixes/ratchets; DECISIONS D-153..D-167, SAFETY_MODEL §25-§32 and the
 ARCHITECTURE M10 record for the documentation of record). The T3/T4 S-fixes and the wired shared
@@ -55,8 +55,8 @@ receipt `receipt:sha256:535217a6dbae65b7a26f9243`.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
-LAST_VALIDATED_IMPLEMENTATION_SHA: 3ff77954d613ce17e907d55e3a51e05efa5d90e8
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 3ff77954d613ce17e907d55e3a51e05efa5d90e8
+LAST_VALIDATED_IMPLEMENTATION_SHA: 0b4f2cdbd5376afea6dbc72032f88e32cc59534f
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 0b4f2cdbd5376afea6dbc72032f88e32cc59534f
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 PHASE_FINAL_PRODUCT_COMPLETION_V1_STATUS: IN_PROGRESS

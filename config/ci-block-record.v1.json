@@ -2,11 +2,11 @@
   "schemaVersion": "nightwatch.ci-block-record.v1",
   "definitionName": "Nightwatch exact-head CI block record (F-02)",
   "note": "The block is RETIRED: GitHub Actions executes the hardening workflow on every push, and the record's top level is the latest observed executed run (D-03 / R2-61). The block-record judgements stay load-bearing as the single CI authority shared by agent:check, project:check and gate:topology; the revisit date keeps the record from going stale. Candidate routes remain recorded with their trade-offs, and the materialised owner route is the restored GitHub-hosted execution.",
-  "runId": "38065778727",
-  "jobId": "114253009051",
-  "observedSha": "ddb80be46400e3f7199189862cea0aff987dede1",
+  "runId": "38117638451",
+  "jobId": "114405634508",
+  "observedSha": "0b4f2cdbd5376afea6dbc72032f88e32cc59534f",
   "blockClass": "EXECUTED_PASS",
-  "observedDate": "2026-10-10",
+  "observedDate": "2026-10-11",
   "ownerAction": "None required while the hardening workflow executes on every push; re-observe the next exact-head run and refresh this record before the revisit date.",
   "revisitCondition": "Re-observe each push: refresh runId, jobId, observedSha and observedDate from the latest hardening run, and record any red run with its classification.",
   "revisitDate": "2026-12-31",
@@ -385,6 +385,15 @@
       "classification": "EXECUTED_PASS",
       "detail": "green at the OD-3 advisory-query push: all 15 required groups PASS with both skip policies declared and zero undeclared skips (semantic 14/0, synthetic 40/0).",
       "runCreatedAt": "2026-10-10T16:01:14Z"
+    },
+    {
+      "runId": "38117638451",
+      "jobId": "114405634508",
+      "observedSha": "0b4f2cdbd5376afea6dbc72032f88e32cc59534f",
+      "observedDate": "2026-10-11",
+      "classification": "EXECUTED_PASS",
+      "detail": "green at the new certified checkpoint after the mutation-gate repair and the CI-block-record checkpoint guard; 15/15 groups, skipPolicy undeclared=0 in both lanes.",
+      "runCreatedAt": "2026-10-11T06:30:00Z"
     }
   ],
   "routeSelection": {
