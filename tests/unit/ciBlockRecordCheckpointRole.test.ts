@@ -25,7 +25,9 @@ import os from 'node:os';
 import path from 'node:path';
 import { checkpointRoleViolations } from '../../bin/lib/checkpoint-role.mjs';
 import { bindingReceiptVerifier } from '../../bin/lib/checkpoint-binding.mjs';
+import { productionBindingReceiptVerifier } from '../../bin/lib/release-evidence.mjs';
 
+const REPO_ROOT = path.join(__dirname, '..', '..');
 const CI_FILE = 'config/ci-block-record.v1.json';
 const RUN_A = '12345678';
 const RUN_B = '87654321';
@@ -314,5 +316,44 @@ test.describe('15.B the CI block record re-observation guard', () => {
     } finally {
       r.cleanup();
     }
+  });
+  test('the REAL repository still refuses a substantive range, and admits a documentary one', () => {
+    // Campaign 15.B's adversarial proof on THIS repository rather than a fixture:
+    // the checkpoint-role classifier, driven over the real object database with
+    // the real receipt verifier, must call a range that touches implementation
+    // source substantive and a range that touches only approved checkpoint paths
+    // documentary. Either direction failing means certification evidence could
+    // be mis-trusted (a substantive descendant reading as documentary) or
+    // needlessly refused (a documentary descendant reading as substantive).
+    const read = (a: string[]) => { const r = spawnSync('git', a, { cwd: REPO_ROOT, encoding: 'utf8', shell: false }); return r.status === 0 ? (r.stdout ?? '') : null; };
+    const head = (read(['rev-parse', 'HEAD']) ?? '').trim();
+    expect(head).not.toBe('');
+    const verifier = productionBindingReceiptVerifier(REPO_ROOT);
+    const judge = (files: string[]) => checkpointRoleViolations(REPO_ROOT, files, { kind: 'range', from: head, to: head, verifyBindingReceipt: verifier });
+
+    // Real implementation and validation paths are substantive.
+    for (const file of ['src/core/policy/ownerScope.ts', 'tests/unit/projectState.test.ts', 'config/hardening-rule-probes.v1.json']) {
+      if (fs.existsSync(path.join(REPO_ROOT, file))) expect(judge([file]), `${file} is substantive`).toContain(file);
+    }
+    // Real approved checkpoint paths are documentary.
+    for (const file of ['.agent/ACTIVE_TASK.md', 'docs/CURRENT_STATE.md', 'openspec/changes/nightwatch-final-product-completion-v1/tasks.md']) {
+      if (fs.existsSync(path.join(REPO_ROOT, file))) expect(judge([file]), `${file} is an approved checkpoint path`).toEqual([]);
+    }
+    // A guarded binding path with no diff at HEAD is documentary.
+    if (fs.existsSync(path.join(REPO_ROOT, 'config/release-evidence.v1.json'))) {
+      expect(judge(['config/release-evidence.v1.json']), 'a guarded binding file with no change is documentary').toEqual([]);
+    }
+  });
+
+  test('an implementation change after the certified checkpoint is substantive on the real repository', () => {
+    // The adversarial counterpart: touching a real implementation path after the
+    // checkpoint is exactly what must invalidate the certification, and the real
+    // classifier with the real receipt verifier must say so.
+    const read = (a: string[]) => { const r = spawnSync('git', a, { cwd: REPO_ROOT, encoding: 'utf8', shell: false }); return r.status === 0 ? (r.stdout ?? '') : null; };
+    const head = (read(['rev-parse', 'HEAD']) ?? '').trim();
+    expect(head).not.toBe('');
+    const verifier = productionBindingReceiptVerifier(REPO_ROOT);
+    const violations = checkpointRoleViolations(REPO_ROOT, ['src/core/policy/ownerScope.ts'], { kind: 'range', from: head, to: head, verifyBindingReceipt: verifier });
+    expect(violations, 'an implementation path after the checkpoint is substantive').toContain('src/core/policy/ownerScope.ts');
   });
 });
