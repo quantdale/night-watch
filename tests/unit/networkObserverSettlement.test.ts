@@ -75,11 +75,19 @@ function responseCaptureCodes(recorder: RunRecorder): string[] {
   }
 }
 
-test('passive hanging subresources do not hold active journey settlement open', async ({ browser }) => {
+test('passive hanging subresources do not hold active journey settlement open', async ({ browser }, testInfo) => {
   const fixture = await startFixtureServer();
   const env = fixtureEnvironment(fixture.origin);
+  // R5-05 / campaign 15.E: the recorder writes run evidence. Writing it into the
+  // SHARED repository `artifacts/` root made a parallel-safe suite pollute the
+  // root that `gateTopology.test.ts` (PROCESS_ISOLATED_ONLY, signal
+  // `artifacts-write`) asserts no new entry appears in, so the two suites could
+  // not share a shard deterministically. The recorder's `artifactsRoot` is
+  // honoured here and pointed at this test's own output directory, which
+  // Playwright already isolates per test.
   const recorder = new RunRecorder({
     runId: `network-settlement-${Date.now()}`,
+    artifactsRoot: testInfo.outputDir,
     environment: 'local',
     product: 'ripple',
     browser: 'chromium',
