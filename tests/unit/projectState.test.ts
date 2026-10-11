@@ -40,6 +40,7 @@ import type {
   ReleaseCheckOutput,
 } from '../../src/core/releaseCertification';
 import { parseAccessibilityCertificationRecord } from '../../bin/lib/accessibility-record.mjs';
+import { HOST_BOUND_SUBJECTS } from '../../bin/lib/committed-measurement.mjs';
 import {
   bindTreeProbe,
   describeProbeBinding,
@@ -2846,10 +2847,14 @@ test.describe('release probe wiring (M4 task 5.1, corrected by VD-01..VD-05)', (
         // receipts, when present, are bound to the working copy's own HEAD.
         // R5-13 / review-5 B3.1: the four HOST-BOUND checks may legitimately
         // report MET away from the checkpoint, because a committed receipt of S
-        // is consumed for them where the live host cannot measure (`consumeCommittedMeasurement`).
-        // Exact-head CI authority is not one of them: its topology half has no
-        // receipt route, so it still fails closed here.
-        if (check === 'ui-error-taxonomy-check' || check === 'yield-campaign-result' || check === 'accessibility-certification' || check === 'dependency-advisory-lane') continue;
+        // is consumed for them where the live host cannot measure
+        // (`consumeCommittedMeasurement`). That set is exactly
+        // HOST_BOUND_SUBJECTS: exact-head CI authority (its local topology half
+        // is supplied by a committed receipt since campaign 15.B made the record
+        // re-observation documentary), autonomous yield, dependency assessment
+        // and accessibility. Asserting the exclusion by the module's own list
+        // rather than by hand keeps the two from drifting.
+        if (HOST_BOUND_SUBJECTS.includes(id)) continue;
         expect(state, `${check} must not be MET at HEAD ${head} for checkpoint ${checkpoint}`).not.toBe('MET');
         // R3-07 / corrections task 8.6: assert the CHECK state, not only the
         // effective state (which is EVIDENCE_ABSENT regardless): the demotion
