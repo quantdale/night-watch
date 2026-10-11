@@ -117,7 +117,7 @@ reconcile every operator-truth surface, close the ledger, and end with a
 ```text
 CAMPAIGN: nightwatch-final-product-completion-v1
 CHILD TASK: NONE
-SESSION WORKTREE: NONE
+SESSION WORKTREE: session/nightwatch-final-product-complet-c28a25aa
 
 IMPLEMENTATION AUTHORIZED:
   Nightwatch source, tests, hardening rules/probes, schemas/configuration,
