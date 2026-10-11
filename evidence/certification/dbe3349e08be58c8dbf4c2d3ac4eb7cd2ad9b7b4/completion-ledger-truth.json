@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "nightwatch.certification-evidence-receipt.v1",
+  "subject": "completion-ledger-truth",
+  "subjects": [
+    "completion-ledger-truth"
+  ],
+  "sourceHead": "dbe3349e08be58c8dbf4c2d3ac4eb7cd2ad9b7b4",
+  "observedAtHead": "2eeccca848be3bae311a003800b7cde5417f455c",
+  "sourceRootCleanAtEmit": true,
+  "checkId": "ledger-agreement",
+  "checkState": "MET",
+  "result": "PASS",
+  "producer": "PROJECT_CHECK",
+  "environmentClass": "HOST_LOCAL",
+  "receiptDigest": "receipt:sha256:19c63448a89419485d7f55f7"
+}
