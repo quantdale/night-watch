@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "nightwatch.certification-evidence-receipt.v1",
+  "subject": "schema-version-lifecycle",
+  "subjects": [
+    "schema-version-lifecycle"
+  ],
+  "sourceHead": "0b4f2cdbd5376afea6dbc72032f88e32cc59534f",
+  "observedAtHead": "976ba706f7ca24de9d874807e0757b6388199f36",
+  "sourceRootCleanAtEmit": true,
+  "checkId": "schema-version-lifecycle-check",
+  "checkState": "MET",
+  "result": "PASS",
+  "producer": "PROJECT_CHECK",
+  "environmentClass": "HOST_LOCAL",
+  "receiptDigest": "receipt:sha256:101e2cbb0d6ba74127d91ed5"
+}
