@@ -295,9 +295,18 @@ export function checkpointRoleViolations(root, files, context) {
       for (const parent of parentRefs) {
         const before = parent === null ? null : blobAt(root, parent, file);
         const after = blobAt(root, commit, file);
+        /** @type {Partial<{ verifyReceipt: (subject: string, digest: string, sha: string) => boolean, commitExists: (sha: string) => boolean, isAncestor: (sha: string) => boolean }>} */
         const guardOptions = typeof context.verifyBindingReceipt === 'function'
           ? { verifyReceipt: context.verifyBindingReceipt }
           : {};
+        // 15.B: the CI block record's guard is given the repository's own history
+        // facts, so a recorded observation can only ever name a head that is an
+        // ancestor of the commit being judged. Without them the guard would treat
+        // an unverifiable `observedSha` as admissible.
+        if (guardClassForPath(file) === 'CI_BLOCK_RECORD_OBSERVATION') {
+          guardOptions.commitExists = (sha) => gitText(root, ['cat-file', '-e', `${sha}^{commit}`]) !== null;
+          guardOptions.isAncestor = (sha) => gitText(root, ['merge-base', '--is-ancestor', sha, commit]) !== null;
+        }
         if (!guardHoldsForChange(file, before, after, guardOptions)) {
           violations.push(file);
           guardFailed = true;

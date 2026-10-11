@@ -90,3 +90,132 @@ test.describe('R5-06 DEV-launcher effect analysis', () => {
     expect(launchers).toBeGreaterThanOrEqual(13);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Campaign 15.A — the guard-try evasion class and the lexical-scope repair.
+//
+// Every real DEV launcher wraps its guard in `try { guardDevLane(...) } catch { … }`.
+// The symbol table bound only TOP-LEVEL declarations, so a binding made INSIDE
+// that try block (or any other nested block) was never resolved and any effect
+// placed there was invisible. Five registered mutants exploited exactly this
+// (BM-026/029/030/034/035) and survived the whole campaign. The analysis now
+// resolves bindings through the module's lexical scopes.
+// ---------------------------------------------------------------------------
+test.describe('15.A the guard-try evasion class is closed', () => {
+  /** A launcher with the same shape the real ones have: the guard inside a try block. */
+  const guardedTryShape = (insideTryCode: string) => [
+    "import { spawnSync } from 'node:child_process';",
+    "import fs from 'node:fs';",
+    "import { guardDevLane } from './lib/dev-lane-precondition.mjs';",
+    "import { defineOperatorCli } from './lib/operator-cli.mjs';",
+    "const root = '/x';",
+    'try {',
+    "  guardDevLane({ root, launcher: 'x.mjs', args: process.argv.slice(2) });",
+    insideTryCode,
+    '} catch (error) {',
+    '  console.error(String(error));',
+    '  process.exit(3);',
+    '}',
+    'const cli = defineOperatorCli(META, { entryUrl: import.meta.url });',
+    'if (cli.stop) {',
+    '} else {',
+    "  spawnSync('/bin/true', []);",
+    '  fs.rmSync(root);',
+    '}',
+    '',
+  ].join('\n');
+
+  test('an effect injected inside the guard try block is reported', () => {
+    for (const code of [
+      "const { rmSync } = fs; rmSync(root);",
+      "const run = spawnSync; run('/bin/true');",
+      "const helper = function () { fs.rmSync(root); }; helper();",
+      'let go = () => fs.rmSync(root); go();',
+      "function localFn() { fs.rmSync(root); }\n  localFn.call(null);",
+      "if (root) { spawnSync('/bin/true'); }",
+      'for (const item of [root]) { fs.rmSync(item); }',
+      "try { fs.rmSync(root); } catch { /* bounded */ }",
+    ]) {
+      const analysis = analyzeDevLauncher(guardedTryShape(code), 'x.mjs');
+      expect(analysis.guardFound, code).toBe(true);
+      expect(analysis.shortCircuitFound, code).toBe(true);
+      expect(analysis.problems, code).toEqual([]);
+      expect(analysis.effects.some((effect) => effect.region === 'BEFORE_SHORT_CIRCUIT'), code).toBe(true);
+    }
+  });
+
+  test('a declared-but-never-called binding inside the guard try block is still NOT reported', () => {
+    // The repair must not turn declarations into effects: the guarantee the clean
+    // launcher relies on survives the scope change.
+    const analysis = analyzeDevLauncher(guardedTryShape([
+      'const helper = () => { fs.rmSync(root); };',
+      'function other() { spawnSync("/bin/true"); }',
+      'class Holder { run() { fs.rmSync(root); } }',
+      "const data = JSON.parse('{}');",
+    ].join('\n')), 'x.mjs');
+    expect(analysis.effects).toEqual([]);
+    expect(analysis.problems).toEqual([]);
+  });
+
+  test('a block-scoped binding that shadows an effect-module import resolves to the shadow', () => {
+    // Lexical scoping, not a module-wide table: a `const fs = {...}` declared inside
+    // the guard block must shadow the module import there, and the same member use
+    // outside it must still be reported. A flat table would report both.
+    const a = analyzeDevLauncher(guardedTryShape("const fs = { rmSync: (t) => String(t) };\n  fs.rmSync(root);"), 'x.mjs');
+    expect(a.effects).toEqual([]);
+    const b = analyzeDevLauncher(guardedTryShape('fs.rmSync(root);'), 'x.mjs');
+    expect(b.effects.some((effect) => effect.region === 'BEFORE_SHORT_CIRCUIT')).toBe(true);
+  });
+
+  test('the five surviving mutants are dead over the real launcher they targeted', () => {
+    // The behavioural proof of the repair: apply each registered mutation to the
+    // real tracked launcher it names and require the analysis to report it.
+    const registry = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, 'config', 'hardening-rule-probes.v1.json'), 'utf8')) as { behaviouralMutants?: Array<{ id: string; ops: Array<{ file: string; search: string; replace: string }> }> };
+    const targetFile = 'bin/observe-gate.mjs';
+    const source = fs.readFileSync(path.join(REPO_ROOT, targetFile), 'utf8');
+    const survivors = ['BM-026', 'BM-029', 'BM-030', 'BM-034', 'BM-035'];
+    for (const id of survivors) {
+      const mutant = (registry.behaviouralMutants ?? []).find((entry) => entry.id === id);
+      expect(mutant, id).toBeDefined();
+      const op = mutant?.ops[0];
+      expect(op?.file, id).toBe(targetFile);
+      expect(source.split(op?.search ?? '').length - 1, `${id} search literal must be unique`).toBe(1);
+      const mutated = source.replace(op?.search ?? '', () => op?.replace ?? '');
+      expect(mutated, `${id} must actually change the launcher`).not.toBe(source);
+      const analysis = analyzeDevLauncher(mutated, targetFile);
+      expect(analysis.effects.length, `${id} must be killed`).toBeGreaterThan(0);
+      expect(analysis.effects[0]?.region, `${id} region`).toBe('BEFORE_SHORT_CIRCUIT');
+    }
+  });
+
+  test('the unmutated launchers stay clean, so the repair added no false positives', () => {
+    for (const file of ['bin/observe-gate.mjs', 'bin/phase2c-real.mjs', 'bin/phase4-real.mjs', 'bin/phase7-real.mjs', 'bin/devtools-start.mjs']) {
+      const absolute = path.join(REPO_ROOT, file);
+      if (!fs.existsSync(absolute)) continue;
+      const source = fs.readFileSync(absolute, 'utf8');
+      if (!source.includes('guardDevLane(')) continue;
+      const analysis = analyzeDevLauncher(source, file);
+      expect(analysis.problems, file).toEqual([]);
+      expect(analysis.effects, file).toEqual([]);
+    }
+  });
+
+  test('the registered mutant universe is unchanged — nothing was removed to make the gate pass', () => {
+    const registry = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, 'config', 'hardening-rule-probes.v1.json'), 'utf8')) as { behaviouralMutants?: Array<{ id: string }> };
+    const ids = (registry.behaviouralMutants ?? []).map((entry) => entry.id);
+    expect(ids.length).toBe(116);
+    expect(new Set(ids).size).toBe(ids.length);
+    // The five previously-surviving mutants are all still registered.
+    for (const id of ['BM-026', 'BM-029', 'BM-030', 'BM-034', 'BM-035']) expect(ids).toContain(id);
+    // Every mutant still targets a real search literal in a tracked file.
+    const registry2 = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, 'config', 'hardening-rule-probes.v1.json'), 'utf8')) as { behaviouralMutants?: Array<{ id: string; ops: Array<{ file: string; search: string }> }> };
+    for (const mutant of registry2.behaviouralMutants ?? []) {
+      for (const op of mutant.ops) {
+        const absolute = path.join(REPO_ROOT, op.file);
+        expect(fs.existsSync(absolute), `${mutant.id} names ${op.file}`).toBe(true);
+        const occurrences = fs.readFileSync(absolute, 'utf8').split(op.search).length - 1;
+        expect(occurrences, `${mutant.id} search literal in ${op.file}`).toBeGreaterThanOrEqual(1);
+      }
+    }
+  });
+});

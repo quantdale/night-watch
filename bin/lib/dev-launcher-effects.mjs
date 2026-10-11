@@ -59,6 +59,7 @@ const BROWSER_MEMBERS = new Set(['chromium', 'firefox', 'webkit', 'launchPersist
  * @property {string} [before]
  * @property {string} [between]
  * @property {string} [imports]
+ * @property {string} [insideGuardTry] code placed inside the guard's own `try` block, immediately after the guard call
  * @typedef {object} SampleIdentity
  * @property {string} id
  * @property {string} name
@@ -91,8 +92,30 @@ function stringLiteralText(node) {
 export function analyzeDevLauncher(code, fileName = 'launcher.mjs', options = {}) {
   const sourceFile = typescript.createSourceFile(fileName, code, typescript.ScriptTarget.Latest, true, typescript.ScriptKind.JS);
   const pureLocals = options.pureLocals ?? new Set();
-  /** @type {Map<string, Symbol>} */
-  const symbols = new Map();
+  /**
+   * The module's LEXICAL scopes. Phase 1 binds the top level exactly as before;
+   * nested scopes are pushed while walking, so a binding made inside any block
+   * (in practice: the `try { guardDevLane(...) … }` every DEV launcher uses, or
+   * an `if`, `for`, `case` or callback body) resolves where it is visible.
+   *
+   * R5-06 follow-up (campaign 15.A): the flat symbol table bound only TOP-LEVEL
+   * declarations, so `const { rmSync } = fs; rmSync(...)` injected after
+   * `guardDevLane(...)` *inside the guard's own try block* was never resolved
+   * and therefore never reported. Five registered mutants (BM-026/029/030/034/035)
+   * evaded the analysis exactly this way. A flat table also lost SHADOWING, so
+   * scope resolution is lexical rather than module-wide.
+   * @type {Array<{ owner: typescript.Node | null, symbols: Map<string, Symbol> }>}
+   */
+  const scopeStack = [{ owner: null, symbols: new Map() }];
+  const declares = (/** @type {string} */ name, /** @type {Symbol} */ symbol) => scopeStack[scopeStack.length - 1]?.symbols.set(name, symbol);
+  /** @param {string} name */
+  const resolveLocal = (name) => {
+    for (let index = scopeStack.length - 1; index >= 0; index -= 1) {
+      const symbol = scopeStack[index]?.symbols.get(name);
+      if (symbol !== undefined) return symbol;
+    }
+    return undefined;
+  };
   /** @param {typescript.Node} node */
   const lineOf = (node) => sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile)).line + 1;
   /** @param {typescript.Node} node */
@@ -105,16 +128,16 @@ export function analyzeDevLauncher(code, fileName = 'launcher.mjs', options = {}
       if (initializer === undefined) return;
       const unwrapped = unwrap(initializer);
       if (typescript.isArrowFunction(unwrapped) || typescript.isFunctionExpression(unwrapped) || typescript.isClassExpression(unwrapped)) {
-        symbols.set(name.text, { kind: 'local' });
+        declares(name.text, { kind: 'local' });
       } else {
-        symbols.set(name.text, { kind: 'alias', target: unwrapped });
+        declares(name.text, { kind: 'alias', target: unwrapped });
       }
     } else if (typescript.isObjectBindingPattern(name) && initializer !== undefined) {
       for (const element of name.elements) {
         const property = element.propertyName !== undefined && typescript.isIdentifier(element.propertyName) ? element.propertyName.text : (typescript.isIdentifier(element.name) ? element.name.text : null);
         if (property === null || !typescript.isIdentifier(element.name)) continue;
         // `const { rmSync: remove } = fs` binds `remove` to `fs.rmSync`.
-        symbols.set(element.name.text, { kind: 'alias', target: typescript.factory.createPropertyAccessExpression(unwrap(initializer), property) });
+        declares(element.name.text, { kind: 'alias', target: typescript.factory.createPropertyAccessExpression(unwrap(initializer), property) });
       }
     }
   };
@@ -127,31 +150,31 @@ export function analyzeDevLauncher(code, fileName = 'launcher.mjs', options = {}
         // Not an effect-capable platform module: a pure module's members are pure; any
         // OTHER import (a repository-local module) is a callable whose body is unknown.
         const source = statement.moduleSpecifier.text;
-        if (clause.name !== undefined) symbols.set(clause.name.text, { kind: 'import-module', source });
+        if (clause.name !== undefined) declares(clause.name.text, { kind: 'import-module', source });
         const named = clause.namedBindings;
-        if (named !== undefined && typescript.isNamespaceImport(named)) symbols.set(named.name.text, { kind: 'import-module', source });
+        if (named !== undefined && typescript.isNamespaceImport(named)) declares(named.name.text, { kind: 'import-module', source });
         if (named !== undefined && typescript.isNamedImports(named)) {
-          for (const element of named.elements) symbols.set(element.name.text, { kind: 'import', source, member: (element.propertyName ?? element.name).text });
+          for (const element of named.elements) declares(element.name.text, { kind: 'import', source, member: (element.propertyName ?? element.name).text });
         }
         continue;
       }
-      if (clause.name !== undefined) symbols.set(clause.name.text, { kind: 'module', category });
+      if (clause.name !== undefined) declares(clause.name.text, { kind: 'module', category });
       const bindings = clause.namedBindings;
-      if (bindings !== undefined && typescript.isNamespaceImport(bindings)) symbols.set(bindings.name.text, { kind: 'module', category });
+      if (bindings !== undefined && typescript.isNamespaceImport(bindings)) declares(bindings.name.text, { kind: 'module', category });
       if (bindings !== undefined && typescript.isNamedImports(bindings)) {
         for (const element of bindings.elements) {
-          symbols.set(element.name.text, { kind: 'member', category, member: (element.propertyName ?? element.name).text });
+          declares(element.name.text, { kind: 'member', category, member: (element.propertyName ?? element.name).text });
         }
       }
     } else if (typescript.isFunctionDeclaration(statement) && statement.name !== undefined) {
-      symbols.set(statement.name.text, { kind: 'local' });
+      declares(statement.name.text, { kind: 'local' });
     } else if (typescript.isClassDeclaration(statement) && statement.name !== undefined) {
-      symbols.set(statement.name.text, { kind: 'local' });
+      declares(statement.name.text, { kind: 'local' });
     } else if (typescript.isVariableStatement(statement)) {
       for (const declaration of statement.declarationList.declarations) bind(declaration.name, declaration.initializer);
     }
   }
-  for (const name of pureLocals) if (symbols.get(name)?.kind === 'local') symbols.delete(name);
+  for (const name of pureLocals) if (scopeStack[0]?.symbols.get(name)?.kind === 'local') scopeStack[0]?.symbols.delete(name);
 
   /** @param {typescript.Expression} expression @returns {typescript.Expression} */
   function unwrap(expression) {
@@ -170,7 +193,7 @@ export function analyzeDevLauncher(code, fileName = 'launcher.mjs', options = {}
     if (depth > 8) return null;
     const node = unwrap(expression);
     if (typescript.isIdentifier(node)) {
-      const symbol = symbols.get(node.text);
+      const symbol = resolveLocal(node.text);
       if (symbol === undefined) return GLOBAL_EFFECT_CALLS.has(node.text) ? { kind: 'global-call', name: node.text } : null;
       if (symbol.kind === 'alias') return resolve(symbol.target, depth + 1);
       return symbol;
@@ -180,7 +203,7 @@ export function analyzeDevLauncher(code, fileName = 'launcher.mjs', options = {}
         ? node.name.text
         : (typescript.isElementAccessExpression(node) ? stringLiteralText(node.argumentExpression) : null);
       const base = unwrap(node.expression);
-      if (typescript.isIdentifier(base) && GLOBAL_OBJECTS.has(base.text) && symbols.get(base.text) === undefined) {
+      if (typescript.isIdentifier(base) && GLOBAL_OBJECTS.has(base.text) && resolveLocal(base.text) === undefined) {
         return member !== null && GLOBAL_EFFECT_CALLS.has(member) ? { kind: 'global-call', name: member } : null;
       }
       let inner = resolve(base, depth + 1);
@@ -260,12 +283,76 @@ export function analyzeDevLauncher(code, fileName = 'launcher.mjs', options = {}
       const callee = unwrap(node.expression);
       const name = typescript.isIdentifier(callee) ? callee.text : (typescript.isPropertyAccessExpression(callee) ? callee.name.text : null);
       const resolved = resolve(callee);
-      if ((name !== null && NEW_EFFECTS.has(name) && symbols.get(name)?.kind !== 'local') || (resolved !== null && resolved.kind === 'member' && resolved.category !== 'FS' && resolved.category !== 'BROWSER')) {
+      if ((name !== null && NEW_EFFECTS.has(name) && resolveLocal(name)?.kind !== 'local') || (resolved !== null && resolved.kind === 'member' && resolved.category !== 'FS' && resolved.category !== 'BROWSER')) {
         effects.push({ line: lineOf(node), text: textOf(node), region });
       }
     }
+    // Enter the scopes this node introduces, so a binding made in a nested block
+    // resolves at its uses (and goes out of scope when the block ends). This is
+    // what makes an effect injected into the guard's own `try` block visible.
+    const opened = scopesOpenedBy(node);
+    for (const scope of opened) scopeStack.push(scope);
+    // (scopes are pushed as { owner, symbols } records, matching scopeStack's shape)
     typescript.forEachChild(node, (child) => walk(child, region));
+    for (let index = 0; index < opened.length; index += 1) scopeStack.pop();
   }
+
+  /**
+   * The scopes a node introduces, each as the declarations it directly owns.
+   * A binding declared in a block is visible only from that block onward —
+   * JavaScript's actual lexical scoping — so a flat module-wide table would
+   * both miss the guarded-block evasions and corrupt unrelated resolution.
+   * @param {typescript.Node} node
+   * @returns {Array<{ owner: typescript.Node, symbols: Map<string, Symbol> }>}
+   */
+  const scopesOpenedBy = (node) => {
+    /** @type {Array<{ owner: typescript.Node, symbols: Map<string, Symbol> }>} */
+    const opened = [];
+    /** @param {typescript.Node} owner @param {typescript.BindingName} name @param {typescript.Expression | undefined} initializer */
+    const bindInto = (owner, name, initializer) => {
+      const scope = opened.find((candidate) => candidate.owner === owner);
+      if (scope === undefined) return;
+      if (typescript.isIdentifier(name)) {
+        if (initializer === undefined) return;
+        const unwrapped = unwrap(initializer);
+        if (typescript.isArrowFunction(unwrapped) || typescript.isFunctionExpression(unwrapped) || typescript.isClassExpression(unwrapped)) scope.symbols.set(name.text, { kind: 'local' });
+        else scope.symbols.set(name.text, { kind: 'alias', target: unwrapped });
+      } else if (typescript.isObjectBindingPattern(name) && initializer !== undefined) {
+        for (const element of name.elements) {
+          const property = element.propertyName !== undefined && typescript.isIdentifier(element.propertyName) ? element.propertyName.text : (typescript.isIdentifier(element.name) ? element.name.text : null);
+          if (property === null || !typescript.isIdentifier(element.name)) continue;
+          scope.symbols.set(element.name.text, { kind: 'alias', target: typescript.factory.createPropertyAccessExpression(unwrap(initializer), property) });
+        }
+      }
+    };
+    /** @param {typescript.Node} owner @param {ReadonlyArray<typescript.Statement>} statements */
+    const forOwner = (owner, statements) => {
+      const scope = { owner, symbols: new Map() };
+      opened.push(scope);
+      for (const statement of statements) {
+        if (typescript.isFunctionDeclaration(statement) && statement.name !== undefined) scope.symbols.set(statement.name.text, { kind: 'local' });
+        else if (typescript.isClassDeclaration(statement) && statement.name !== undefined) scope.symbols.set(statement.name.text, { kind: 'local' });
+        else if (typescript.isVariableStatement(statement)) for (const declaration of statement.declarationList.declarations) bindInto(owner, declaration.name, declaration.initializer);
+      }
+    };
+    if (typescript.isBlock(node) || typescript.isModuleBlock(node) || typescript.isCaseClause(node)) {
+      forOwner(node, [...node.statements]);
+    } else if (typescript.isForStatement(node) || typescript.isForInStatement(node) || typescript.isForOfStatement(node)) {
+      // The loop's own declarations cover the whole statement, including its body.
+      const scope = { owner: node, symbols: new Map() };
+      opened.push(scope);
+      if (typescript.isForStatement(node) && node.initializer !== undefined && typescript.isVariableDeclarationList(node.initializer)) {
+        for (const declaration of node.initializer.declarations) bindInto(node, declaration.name, declaration.initializer);
+      } else if ((typescript.isForInStatement(node) || typescript.isForOfStatement(node)) && typescript.isVariableDeclaration(node.initializer)) {
+        bindInto(node, node.initializer.name, node.initializer.initializer);
+      }
+    } else if (typescript.isCatchClause(node) && node.variableDeclaration !== undefined) {
+      const scope = { owner: node, symbols: new Map() };
+      opened.push(scope);
+      bindInto(node, node.variableDeclaration.name, undefined);
+    }
+    return opened;
+  };
 
   // ---- phase 4: locate the guard and the short-circuit, judge the regions ---
   /** @type {string[]} */
@@ -343,6 +430,17 @@ export const DEV_LAUNCHER_MUTANT_SAMPLES = Object.freeze([
   { id: 'M19', name: 'computed fs member', between: "fs['rmSync'](scratch);" },
   { id: 'M20', name: 'bind then call', between: "spawnSync.bind(null)('/bin/true');" },
   { id: 'M21', name: 'destructured and renamed process binding', between: "const { spawnSync: launch } = childProcessNamespace; launch('/bin/true');", imports: "import * as childProcessNamespace from 'node:child_process';" },
+  // The class the flat top-level symbol table missed (campaign 15.A): a binding
+  // made INSIDE the guard's own `try` block, which is where every real DEV
+  // launcher puts its guard. These must be reported as WHEN the evasions are
+  // composed into a launcher shaped like the real ones, not merely at top level.
+  { id: 'M22', name: 'destructured fs binding inside the guard try block', insideGuardTry: "const { rmSync } = fs; rmSync(scratch);" },
+  { id: 'M23', name: 'aliased process binding inside the guard try block', insideGuardTry: "const run = spawnSync; run('/bin/true');" },
+  { id: 'M24', name: 'function expression inside the guard try block', insideGuardTry: "const helper = function () { fs.rmSync(scratch); };\n    helper();" },
+  { id: 'M25', name: 'let arrow inside the guard try block', insideGuardTry: "let go = () => fs.rmSync(scratch); go();" },
+  { id: 'M26', name: '.call on a local function inside the guard try block', insideGuardTry: "function localFn() { fs.rmSync(scratch); }\n    localFn.call(null);" },
+  { id: 'M27', name: 'effect after the guard inside a nested if block', insideGuardTry: "if (scratch) { spawnSync('/bin/true'); }" },
+  { id: 'M28', name: 'effect inside a for-of body after the guard', insideGuardTry: "for (const item of [scratch]) { fs.rmSync(item); }" },
   { id: 'M22', name: 'alias chain of two', between: "const first = fs.rmSync; const second = first; second(scratch);" },
 ]);
 
@@ -352,6 +450,14 @@ export const DEV_LAUNCHER_MUTANT_SAMPLES = Object.freeze([
  * @returns {string}
  */
 export function composeSyntheticLauncher(sample) {
+  // An `insideGuardTry` sample reproduces the shape every real DEV launcher has:
+  // the guard call wrapped in `try { … } catch { … }`, with the evasion injected
+  // INSIDE the try block, immediately after the guard. That is the only placement
+  // the flat top-level symbol table could not see.
+  const guardCall = "guardDevLane({ root, launcher: 'fixture.mjs', args: process.argv.slice(2) });";
+  const guard = sample.insideGuardTry === undefined
+    ? guardCall
+    : `try {\n    ${guardCall}\n    ${String(sample.insideGuardTry).replace(/\n/g, '\n    ')}\n  } catch (error) {\n    console.error(String(error));\n    process.exit(3);\n  }`;
   return [
     "import { spawnSync } from 'node:child_process';",
     "import fs from 'node:fs';",
@@ -361,7 +467,7 @@ export function composeSyntheticLauncher(sample) {
     "const root = '/x';",
     "const scratch = '/x/scratch';",
     sample.before ?? '',
-    "guardDevLane({ root, launcher: 'fixture.mjs', args: process.argv.slice(2) });",
+    guard,
     sample.between ?? '',
     'const cli = defineOperatorCli(META, { entryUrl: import.meta.url });',
     'if (cli.stop) {',

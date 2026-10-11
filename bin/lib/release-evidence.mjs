@@ -96,6 +96,15 @@ export const CORRECTION_ENTRY_KEYS = Object.freeze(['id', 'path', 'oldLineSha256
 export const GUARD_CLASSES = Object.freeze({
   'config/release-evidence.v1.json': 'VALUES_ONLY_BINDINGS',
   'config/document-role-corrections.v1.json': 'APPEND_ONLY_CORRECTIONS',
+  // Campaign 15.B: the CI block record is a MEASUREMENT record — it records which
+  // run was observed at which head — not implementation truth. Certifying a new
+  // checkpoint requires observing the run at it and refreshing the record's top
+  // level, so exporting a fresh checkpoint used to make every descendant of it
+  // substantive and demote every working-tree probe. The guard below admits ONLY
+  // a re-observation: schema/prose/route/revisit fields byte-identical, history
+  // strictly append-only, and the new observation provably inside the repository
+  // history. See ciBlockRecordObservationHolds.
+  'config/ci-block-record.v1.json': 'CI_BLOCK_RECORD_OBSERVATION',
 });
 
 /**
@@ -828,12 +837,128 @@ export function correctionStillExemptsArchive(entry, archiveText) {
  * @param {string | null} afterText
  * @param {Partial<{ verifyReceipt: (subject: string, digest: string, sha: string) => boolean }>} [options]
  */
+/**
+ * @param {string} file
+ * @param {string | null} beforeText
+ * @param {string | null} afterText
+ * @param {Partial<{ verifyReceipt: (subject: string, digest: string, sha: string) => boolean, commitExists: (sha: string) => boolean, isAncestor: (sha: string) => boolean }>} [options]
+ */
 export function guardHoldsForChange(file, beforeText, afterText, options = {}) {
   const guard = guardClassForPath(file);
   if (guard === 'VALUES_ONLY_BINDINGS') return isValuesOnlyBindingChange(beforeText, afterText, options).valuesOnly;
   if (guard === 'APPEND_ONLY_CORRECTIONS') return isAppendOnlyCorrectionsChange(beforeText, afterText).appendOnly;
   if (guard === 'ADD_ONLY_EVIDENCE_RECEIPT') return evidenceReceiptChangeHolds(file, beforeText, afterText);
+  if (guard === 'CI_BLOCK_RECORD_OBSERVATION') return ciBlockRecordObservationHolds(beforeText, afterText, options);
   return false;
+}
+
+// The observation fields of the CI block record: WHAT was observed. Every other key
+// (schemaVersion, definitionName, note, ownerAction, revisitCondition, revisitDate,
+// routeSelection, candidateRoutes) is descriptive authority and must never move.
+const CI_BLOCK_OBSERVATION_KEYS = Object.freeze(['runId', 'jobId', 'observedSha', 'blockClass', 'observedDate', 'observedStepCount', 'history']);
+// The declared classification vocabulary of `config/ci-block-record.v1.json`. Kept
+// here (not imported from ci-block-record.mjs) so this module keeps no dependency on
+// the record's own Git-reading code path.
+const CI_BLOCK_CLASSIFICATIONS = new Set(['NO_STEPS_BILLING_OR_PLATFORM_BLOCK', 'EXECUTED_TEST_FAILURE', 'EXECUTED_INFRA_FAILURE', 'EXECUTED_PASS', 'API_UNOBSERVABLE', 'WORKFLOW_NOT_FOUND', 'HEAD_MISMATCH', 'RUN_PENDING', 'RUN_CANCELLED', 'UNKNOWN']);
+const CI_BLOCK_RUN_ID_RE = /^[0-9]+$/;
+const CI_BLOCK_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * Campaign 15.B — the ONE admissible change to `config/ci-block-record.v1.json`.
+ *
+ * Refreshing the record is how the run at a new certified checkpoint is observed,
+ * so the record must be updatable; but it is the exact-head CI authority, so it
+ * must never be rewritable. A change holds ONLY when:
+ *
+ *  1. both revisions are valid JSON objects carrying the same schema version;
+ *  2. every descriptive field (schemaVersion, definitionName, note, ownerAction,
+ *     revisitCondition, revisitDate, routeSelection, candidateRoutes) is
+ *     byte-identical, so no freshness, route or authority text can be edited;
+ *  3. `history` only APPENDS and the surviving prefix is byte-identical, so no
+ *     past observation can be removed or rewritten;
+ *  4. an appended entry is well formed and names a declared classification;
+ *  5. the new top-level observation either is unchanged or is backed by an entry
+ *     this very change appended (so a top-level refresh cannot arrive without a
+ *     history entry for it);
+ *  6. when the observation moves, the recorded `observedSha` is a 40-hex commit
+ *     that exists in the repository and is an ancestor of the commit being judged,
+ *     so a run can only ever be recorded at a head that is genuinely in history.
+ *
+ * This is deliberately NOT a general approval: editing the schema, moving the
+ * revisit date, editing or removing history, appending an entry with an undeclared
+ * class, or recording a run at a head outside history all fail closed.
+ *
+ * @param {string | null} beforeText
+ * @param {string | null} afterText
+ * @param {Partial<{ isAncestor: (sha: string) => boolean, commitExists: (sha: string) => boolean }>} [options]
+ * @returns {boolean}
+ */
+export function ciBlockRecordObservationHolds(beforeText, afterText, options = {}) {
+  if (beforeText === null) return false;
+  const before = parseJsonObject(beforeText);
+  const after = afterText === null ? null : parseJsonObject(afterText);
+  if (before === null || after === null) return false;
+  if (after.schemaVersion !== before.schemaVersion) return false;
+  // (2) Only the observation keys may differ; every other key is descriptive authority.
+  for (const key of Object.keys(before)) {
+    if (CI_BLOCK_OBSERVATION_KEYS.includes(key)) continue;
+    if (JSON.stringify(after[key]) !== JSON.stringify(before[key])) return false;
+  }
+  // An additive key outside the observation set is a widening, never an observation.
+  for (const key of Object.keys(after)) {
+    if (key in before) continue;
+    return false;
+  }
+  // (3) history is strictly append-only and its prefix survives byte-identical.
+  const beforeHistory = Array.isArray(before.history) ? before.history : null;
+  const afterHistory = Array.isArray(after.history) ? after.history : null;
+  if (beforeHistory === null || afterHistory === null) return false;
+  if (afterHistory.length < beforeHistory.length) return false;
+  for (let index = 0; index < beforeHistory.length; index += 1) {
+    if (JSON.stringify(afterHistory[index]) !== JSON.stringify(beforeHistory[index])) return false;
+  }
+  // (4) an appended entry is well formed and names a declared classification.
+  for (let index = beforeHistory.length; index < afterHistory.length; index += 1) {
+    const entry = afterHistory[index];
+    if (entry === null || typeof entry !== 'object' || Array.isArray(entry)) return false;
+    for (const key of ['runId', 'jobId', 'observedSha', 'observedDate', 'classification']) {
+      const value = entry[key];
+      if (typeof value !== 'string') return false;
+      if (key === 'classification') { if (!CI_BLOCK_CLASSIFICATIONS.has(value)) return false; continue; }
+      if (key === 'runId' || key === 'jobId') { if (!CI_BLOCK_RUN_ID_RE.test(value)) return false; continue; }
+      if (key === 'observedDate') { if (!CI_BLOCK_DATE_RE.test(value)) return false; continue; }
+      if (!SHA40_RE.test(value)) return false;
+    }
+  }
+  // (5) an unchanged observation is always admissible (nothing to back).
+  /** @param {Record<string, unknown>} record */
+  const observation = (record) => {
+    const keys = CI_BLOCK_OBSERVATION_KEYS.filter((key) => key !== 'history');
+    return JSON.stringify(keys.map((key) => [key, record[key] ?? null]));
+  };
+  if (observation(before) === observation(after)) return true;
+  // A moved observation must be backed by an entry THIS change appended.
+  const appended = afterHistory.slice(beforeHistory.length);
+  const backed = appended.some((/** @type {unknown} */ entry) => entry !== null && typeof entry === 'object'
+    && String(/** @type {Record<string, unknown>} */ (entry).runId) === String(after.runId)
+    && String(/** @type {Record<string, unknown>} */ (entry).observedSha) === String(after.observedSha));
+  if (!backed) return false;
+  // (6) the recorded head must really be in this repository's history.
+  const observedSha = after.observedSha;
+  if (typeof observedSha !== 'string' || !SHA40_RE.test(observedSha)) return false;
+  if (typeof options.commitExists === 'function' && !options.commitExists(observedSha)) return false;
+  if (typeof options.isAncestor === 'function' && !options.isAncestor(observedSha)) return false;
+  return true;
+}
+
+/** @param {string} text */
+function parseJsonObject(text) {
+  try {
+    const parsed = JSON.parse(text);
+    return parsed !== null && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
 }
 
 // ---------------------------------------------------------------------------

@@ -98,7 +98,7 @@
         "ops": [
           {
             "file": "bin/lib/dev-launcher-effects.mjs",
-            "search": "      if (bindings !== undefined && typescript.isNamespaceImport(bindings)) symbols.set(bindings.name.text, { kind: 'module', category });",
+            "search": "      if (bindings !== undefined && typescript.isNamespaceImport(bindings)) declares(bindings.name.text, { kind: 'module', category });",
             "replace": "      void bindings;"
           }
         ]
@@ -108,7 +108,7 @@
         "ops": [
           {
             "file": "bin/lib/dev-launcher-effects.mjs",
-            "search": "typescript.isIdentifier(base) && GLOBAL_OBJECTS.has(base.text) && symbols.get(base.text) === undefined",
+            "search": "typescript.isIdentifier(base) && GLOBAL_OBJECTS.has(base.text) && resolveLocal(base.text) === undefined",
             "replace": "false"
           }
         ]

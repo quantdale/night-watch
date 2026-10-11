@@ -3,6 +3,6 @@ export interface LauncherEffect { line: number; text: string; region: 'BEFORE_GU
 export interface LauncherAnalysis { guardFound: boolean; shortCircuitFound: boolean; effects: LauncherEffect[]; problems: string[] }
 export const FS_MUTATIONS: ReadonlySet<string>;
 export function analyzeDevLauncher(code: string, fileName?: string, options?: { pureLocals?: ReadonlySet<string> }): LauncherAnalysis;
-export const DEV_LAUNCHER_MUTANT_SAMPLES: ReadonlyArray<{ id: string; name: string; before?: string; between?: string; imports?: string; expectRegion?: LauncherEffect['region'] }>;
-export function composeSyntheticLauncher(sample: { before?: string; between?: string; imports?: string }): string;
+export const DEV_LAUNCHER_MUTANT_SAMPLES: ReadonlyArray<{ id: string; name: string; before?: string; between?: string; imports?: string; insideGuardTry?: string; expectRegion?: LauncherEffect['region'] }>;
+export function composeSyntheticLauncher(sample: { before?: string; between?: string; imports?: string; insideGuardTry?: string }): string;
 export function devLauncherAnalysisSelfTest(): string[];
