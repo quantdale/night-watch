@@ -45,6 +45,15 @@ function siblingRepoAvailable(repoId: string): boolean {
   return fs.existsSync(path.join(liveSourceTestRoot(), ...repoId.split('/'), '.git'));
 }
 
+// A sibling checkout that exists but sits at a non-pinned SHA is STALE: its
+// content no longer matches what the pinned expectations measure, so running the
+// suite against it produces a FALSE failure. Gating on existence alone made a
+// stale checkout read as a product defect; the class now comes from the same
+// currency authority every other live-source suite uses.
+function SIBLING_STATE(repoId: string) {
+  return classifyLiveSourceTestState({ repositoryIds: [repoId] });
+}
+
 function realAccess() {
   return createSiblingSourceAccess(liveSourceTestRoot());
 }
@@ -96,7 +105,7 @@ test.describe('C-02b — protobuf is a LANGUAGE admission, not a root admission'
 
 test.describe('C-02b — the real approved protobuf surface', () => {
   test('blueapi billing yields at least 147 mechanically proven RPCs', () => {
-    test.skip(!siblingRepoAvailable(BLUEAPI), 'blueapi checkout unavailable');
+    test.skip(SIBLING_STATE(BLUEAPI).kind !== 'CURRENT', 'blueapi checkout unavailable');
     const access = realAccess();
     const text = access.reader.readFile(BLUEAPI, BILLING_PROTO);
     expect(text).not.toBeNull();
@@ -122,7 +131,7 @@ test.describe('C-02b — the real approved protobuf surface', () => {
   });
 
   test('the measured streaming distribution is reported, not inherited', () => {
-    test.skip(!siblingRepoAvailable(BLUEAPI), 'blueapi checkout unavailable');
+    test.skip(SIBLING_STATE(BLUEAPI).kind !== 'CURRENT', 'blueapi checkout unavailable');
     const facts = readProtoDeclarations(realAccess().reader.readFile(BLUEAPI, BILLING_PROTO) as string);
     // The historical expectation was ~90 streaming RPCs. That figure counts the
     // whole blueapi repository, most of whose roots C-05 governs and this
@@ -135,7 +144,7 @@ test.describe('C-02b — the real approved protobuf surface', () => {
   });
 
   test('the measured HTTP verb distribution sums to the RPC count', () => {
-    test.skip(!siblingRepoAvailable(BLUEAPI), 'blueapi checkout unavailable');
+    test.skip(SIBLING_STATE(BLUEAPI).kind !== 'CURRENT', 'blueapi checkout unavailable');
     const facts = readProtoDeclarations(realAccess().reader.readFile(BLUEAPI, BILLING_PROTO) as string);
     const counts: Record<string, number> = {};
     for (const rpc of facts.services.flatMap((service) => service.rpcs)) {
@@ -146,7 +155,7 @@ test.describe('C-02b — the real approved protobuf surface', () => {
   });
 
   test('a message-only proto declares zero services rather than an empty one', () => {
-    test.skip(!siblingRepoAvailable(OUCHAN), 'ouchan checkout unavailable');
+    test.skip(SIBLING_STATE(OUCHAN).kind !== 'CURRENT', 'ouchan checkout unavailable');
     const text = realAccess().reader.readFile(OUCHAN, 'pkg/sapphire/proto/v1/types.proto');
     expect(text).not.toBeNull();
     const facts = readProtoDeclarations(text as string);
@@ -156,7 +165,7 @@ test.describe('C-02b — the real approved protobuf surface', () => {
   });
 
   test('the proto file is admitted by the scan rather than rejected on its extension', () => {
-    test.skip(!siblingRepoAvailable(BLUEAPI), 'blueapi checkout unavailable');
+    test.skip(SIBLING_STATE(BLUEAPI).kind !== 'CURRENT', 'blueapi checkout unavailable');
     const inventory = scanSource({ access: realAccess(), config: createApprovedRealSourceScanConfig({ repositoryIds: [BLUEAPI] }) });
     const record = inventory.files.find((file) => file.relativePath === BILLING_PROTO);
     expect(record?.status).toBe('ELIGIBLE');
@@ -167,7 +176,7 @@ test.describe('C-02b — the real approved protobuf surface', () => {
 
 test.describe('C-02b — proto operations reach route discovery', () => {
   test('blueapi discovery contains PROTOBUF-sourced operations with proven routes', () => {
-    test.skip(!siblingRepoAvailable(BLUEAPI), 'blueapi checkout unavailable');
+    test.skip(SIBLING_STATE(BLUEAPI).kind !== 'CURRENT', 'blueapi checkout unavailable');
     const discovery = discoverSourceSurfaces({ access: realAccess(), config: createApprovedRealSourceScanConfig({ repositoryIds: [BLUEAPI] }) });
     const proto = discovery.operations.filter((operation) => operation.sourcePath === BILLING_PROTO);
     expect(proto.length).toBeGreaterThanOrEqual(EXPECTED_RPCS);
@@ -244,7 +253,7 @@ test.describe('C-02b — C-01 no-eviction regression (F-27)', () => {
   });
 
   test('completeness stays truthful across the enlarged population', () => {
-    test.skip(!siblingRepoAvailable(BLUEAPI), 'blueapi checkout unavailable');
+    test.skip(SIBLING_STATE(BLUEAPI).kind !== 'CURRENT', 'blueapi checkout unavailable');
     const inventory = scanSource({ access: realAccess(), config: createApprovedRealSourceScanConfig({ repositoryIds: [BLUEAPI] }) });
     // Not "is it COMPLETE" — that would be a claim about the world. The
     // invariant is that whatever it is, it is stated exactly and its dropped
@@ -352,7 +361,7 @@ test.describe('C-02b — DEF-C02B-1: a generated mirror is not a rival declarati
   });
 
   test('the real blueapi surface keeps its 147 mutation-capable classifications', () => {
-    test.skip(!siblingRepoAvailable(BLUEAPI), 'blueapi checkout unavailable');
+    test.skip(SIBLING_STATE(BLUEAPI).kind !== 'CURRENT', 'blueapi checkout unavailable');
     const discovery = discoverSourceSurfaces({ access: realAccess(), config: createApprovedRealSourceScanConfig({ repositoryIds: [BLUEAPI] }) });
     const artifact = discovery.operations.filter((operation) => operation.sourcePath === 'openapiv2/apidocs.swagger.json');
     expect(artifact.length).toBe(591);

@@ -35,6 +35,7 @@ import {
   parseScenarioHeadings,
 } from '../../src/core/source/specScenarioInventory';
 import { resolveSiblingRoot } from '../../src/core/policy/sourceTopology';
+import { classifyLiveSourceTestState } from '../helpers/liveSourceTestAuthority';
 import { READ_ONLY_WITNESS_CLASS, buildReadOnlyProof, type ReadOnlyWitness } from '../../src/core/source/readOnlyProof';
 
 const root = path.resolve(__dirname, '..', '..');
@@ -297,9 +298,14 @@ test.describe('C-09 — every scenario is classified, and the corpus is out of s
 
 test.describe('C-09 — the real artifacts, measured', () => {
   const artifact = (repo: string) => path.join(SIBLINGS, repo, 'openapiv2/apidocs.swagger.json');
+  // Currency, not existence: a sibling checkout that exists at a non-pinned SHA
+  // is STALE and its content no longer matches these measured expectations, so
+  // the suite must skip with the declared LIVE_SOURCE token rather than fail.
+  const BLUEAPI_STATE = classifyLiveSourceTestState({ repositoryIds: ['alphauslabs/blueapi'] });
+  const BLUEINTERNAL_STATE = classifyLiveSourceTestState({ repositoryIds: ['alphauslabs/blueinternal'] });
 
   test('blueapi yields expectations far beyond the 40 target, all exactly joined', () => {
-    test.skip(!fs.existsSync(artifact('alphauslabs/blueapi')), 'requires the read-only sibling Alphaus checkouts');
+    test.skip(BLUEAPI_STATE.kind !== 'CURRENT', `LIVE_SOURCE_${BLUEAPI_STATE.kind}`);
     const projection = deriveSpecExpectations({
       repoId: 'alphauslabs/blueapi', sourceSha: 'c'.repeat(40), artifactPath: 'openapiv2/apidocs.swagger.json',
       document: JSON.parse(fs.readFileSync(artifact('alphauslabs/blueapi'), 'utf8')),
@@ -312,7 +318,7 @@ test.describe('C-09 — the real artifacts, measured', () => {
   });
 
   test('blueinternal yields expectations too, from the C-05 admission', () => {
-    test.skip(!fs.existsSync(artifact('alphauslabs/blueinternal')), 'requires the read-only sibling Alphaus checkouts');
+    test.skip(BLUEINTERNAL_STATE.kind !== 'CURRENT', `LIVE_SOURCE_${BLUEINTERNAL_STATE.kind}`);
     const projection = deriveSpecExpectations({
       repoId: 'alphauslabs/blueinternal', sourceSha: 'd'.repeat(40), artifactPath: 'openapiv2/apidocs.swagger.json',
       document: JSON.parse(fs.readFileSync(artifact('alphauslabs/blueinternal'), 'utf8')),
