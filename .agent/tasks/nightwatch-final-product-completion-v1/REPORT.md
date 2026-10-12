@@ -171,15 +171,37 @@ declared.
    certification window (one further cycle), plus the `owner-manual` revisit
    review.
 2. Condition 3 — the owner authorization in §7.
-3. **A CI-only regression introduced by the documentation push.** CI run
-   `38232668446` @ `e2fb65ee` failed `SEMANTIC_COMPATIBILITY` on exactly one
-   location, `tests/unit/projectState.test.ts` ("the real-tree evaluation
-   resolves every check to probe output, and no D3 probe is MET away from the
-   certified checkpoint"). That test passes locally (140/140) and the range
-   `7871b463..e2fb65ee` is classified `DOCUMENTARY_DESCENDANT` both locally and
-   in CI (`PROJECT_TRUTH` PASS, `HANDOFF_TRUTH` PASS, `AGENT_CONTINUITY` PASS),
-   so the divergence is not the checkpoint relation. It is recorded here as the
-   precise next debug target and is deliberately not papered over.
+3. **A reproducibility defect in this session's evidence binding, now diagnosed
+   exactly.** CI runs `38232668446` @ `e2fb65ee` and `38241273555` @ `6c5f9084`
+   both failed `SEMANTIC_COMPATIBILITY` on exactly one location,
+   `tests/unit/projectState.test.ts` — "the real-tree evaluation resolves every
+   check to probe output, and no D3 probe is MET away from the certified
+   checkpoint". Reproduced in a clean clone of `6c5f9084`:
+
+   ```
+   Error: ui-error-taxonomy-check must not be MET at HEAD 6c5f9084… for
+   checkpoint 7871b463a039…
+   ```
+
+   Root cause: the `certify:evidence bind` commit `fb1a2f59` changed
+   `config/release-evidence.v1.json`, and its `VALUES_ONLY_BINDINGS` guard
+   **holds in the canonical checkout but fails in a clean clone** with
+   `BINDING_RECEIPT_UNVERIFIED:authenticated-capability-lifecycle`
+   (`isValuesOnlyBindingChange` → `{valuesOnly: false}`). The failure therefore
+   makes the range `7871b463..HEAD` `SUBSTANTIVE_DESCENDANT` in a clean clone
+   while it is `DOCUMENTARY_DESCENDANT` in canonical — so `ui-error-taxonomy-check`
+   reads MET away from the certified checkpoint and the D3 assertion fires.
+
+   Consequence: the evidence publishing/binding performed in this session is
+   **not clean-clone reproducible**, so it cannot legitimately close the
+   certification. The correct repair is to re-derive the
+   `authenticated-capability-lifecycle` receipt in the `HEAD == S` window and
+   verify `bind` with `certify:evidence verify` from a clean clone before
+   integrating — not to relax the guard. Because `origin/main` was left red by
+   this, the last known GREEN exact-head CI run is `38220009838` @ `7871b463`.
+
+   This is recorded as the precise next repair, and it is deliberately NOT
+   papered over by weakening the binding guard or by claiming the condition met.
 
 ## 10. Minimal operator commands
 
