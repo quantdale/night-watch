@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "nightwatch.certification-evidence-receipt.v1",
+  "subject": "documentation-currency",
+  "subjects": [
+    "documentation-currency"
+  ],
+  "sourceHead": "7871b463a03936016caaf88081c9221baccc60f0",
+  "observedAtHead": "8c44a38ddc3ffe265b61e6affc3460f81712caf1",
+  "sourceRootCleanAtEmit": true,
+  "checkId": "documentation-currency-rules",
+  "checkState": "MET",
+  "result": "PASS",
+  "producer": "PROJECT_CHECK",
+  "environmentClass": "HOST_LOCAL",
+  "receiptDigest": "receipt:sha256:b4472ffb21de42e1bc66d258"
+}

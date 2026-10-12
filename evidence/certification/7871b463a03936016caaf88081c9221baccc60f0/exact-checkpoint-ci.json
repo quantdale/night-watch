@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "nightwatch.certification-evidence-receipt.v1",
+  "subject": "exact-checkpoint-ci",
+  "subjects": [
+    "exact-checkpoint-ci"
+  ],
+  "sourceHead": "7871b463a03936016caaf88081c9221baccc60f0",
+  "observedAtHead": "8c44a38ddc3ffe265b61e6affc3460f81712caf1",
+  "sourceRootCleanAtEmit": true,
+  "checkId": "ci-run-at-checkpoint",
+  "checkState": "MET",
+  "result": "PASS",
+  "producer": "OBSERVE_CI",
+  "environmentClass": "HOST_LOCAL",
+  "ciRunId": "38220009838",
+  "ciConclusion": "success",
+  "receiptDigest": "receipt:sha256:c7adfad7a227a7296adc3b5b"
+}
