@@ -186,3 +186,46 @@ No Alphaus DEV/NEXT/production contact; no database or data-plane operation; no
 sibling repository mutation (the read-only siblings were observed only through
 clean-clone runs); no credential persisted; no external publication; no force
 push; no history rewrite; no unauthorized paid call; no visibility change.
+
+## Terminal diagnosis (2026-10-12) — the irreducible architectural blocker
+
+The evidence route used by this session cannot work, and the reason is now proved
+rather than suspected. `productionBindingReceiptVerifier` verifies a binding by
+reading the receipt from the **gitignored** `artifacts/` tree. A clean clone of the
+same commit does not contain it, so `valuesOnlyBindingChange` returns
+`BINDING_RECEIPT_UNVERIFIED:authenticated-capability-lifecycle` and
+`guardHoldsForChange` returns false. Proved directly on a clean clone of `4a56bf25`:
+
+```
+artifact receipts present in clean clone? NO
+guardHolds in clean clone: false
+reason: BINDING_RECEIPT_UNVERIFIED:authenticated-capability-lifecycle
+```
+
+The consequence for the release conditions is exact: the `certify:evidence bind`
+commit `fb1a2f59` is documentary in the canonical checkout (where `artifacts/` is
+present) and **substantive in a clean clone**. `project-state-check` therefore
+classifies `7871b463..HEAD` as `SUBSTANTIVE_DESCENDANT` under CI, every
+working-tree probe is demoted to `NOT_AT_CHECKPOINT`, and
+`tests/unit/projectState.test.ts` fails on the D3 assertion
+(`ui-error-taxonomy-check must not be MET at HEAD … for checkpoint …`). Four
+consecutive runs (`38232668446`, `38241273555`, `38248210444`, `38262264755`)
+failed on this single location, and the failure is deterministic in a clean clone.
+
+The forward repair attempted (`db5d0ecb`, restoring
+`config/release-evidence.v1.json` to the `7871b463` bytes) is itself substantive
+from a clean clone, because the revert nulls an `evidenceSha` the bind had set
+(`BINDING_VALUE_NULLED:evidenceSha`). The state is therefore not repairable by
+further reverts inside this session's approach.
+
+The sound repair is architectural, and it is recorded here rather than attempted:
+the binding verifier must resolve its receipt from **tracked** state — for example
+by reading the committed `evidence/certification/<S>/<subject>.json` through
+`git show`, exactly as `probeUiErrorTaxonomy` already does — before a bind can be
+verified anywhere. Until that lands, no bind committed after `7871b463` can be
+clean-clone reproducible, and the terminal certification cannot be earned.
+
+The last exact-head CI run that is GREEN is `38220009838` @ `7871b463`
+(`receipt:sha256:6ed3233390fd484b828905f7`, 15/15 groups, both skip policies
+`undeclared: 0`). `origin/main` is `4a56bf25` and is red; no force push or history
+rewrite was used.
