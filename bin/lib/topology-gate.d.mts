@@ -92,6 +92,7 @@ export const TOPOLOGY_ABSENCES: readonly TopologyAbsence[];
 export function parseSiblingRoot(source: string): string | null;
 export function canonicalBwrapCandidates(environment?: NodeJS.ProcessEnv): readonly string[];
 export function chromeCandidates(environment?: NodeJS.ProcessEnv): readonly string[];
+export function siblingRootContainsWorktree(input: { worktree: string; siblingRoot: string | null }): { contained: boolean; detail: string };
 export function describeEnvelopePlan(input: EnvelopePlanInput): readonly string[];
 export function absenceTookEffect(absence: TopologyAbsence, probe: unknown): { readonly absent: boolean; readonly detail: string };
 export function evaluateAbsence(input: AbsenceEvaluationInput): readonly TopologyDiagnostic[];

@@ -226,6 +226,29 @@ export function describeEnvelopePlan(input) {
 }
 
 /**
+ * Whether the sibling root being masked CONTAINS the worktree that must run
+ * inside the envelope. `/home/…/REPOSITORIES` masked with `--tmpfs` also masks
+ * `/home/…/REPOSITORIES/nightwatch`, so the Node executable, the repository and
+ * every module it loads disappear with it and the probe cannot start at all.
+ * The gate can never prove that absence from such a checkout, and saying so
+ * precisely is the honest alternative to the opaque "probe did not produce an
+ * observation (exit=1)".
+ * @param {{ worktree: string, siblingRoot: string | null }} input
+ * @returns {{ contained: boolean, detail: string }}
+ */
+export function siblingRootContainsWorktree(/** @type {{ worktree: string, siblingRoot: string | null }} */ input) {
+  const root = typeof input.siblingRoot === 'string' ? input.siblingRoot : null;
+  const worktree = input.worktree;
+  if (root === null || root === '' || worktree === '') return { contained: false, detail: 'no sibling root resolved' };
+  const rootWithSlash = root.endsWith('/') ? root : `${root}/`;
+  if (worktree !== root && !worktree.startsWith(rootWithSlash)) return { contained: false, detail: 'the worktree is outside the sibling root' };
+  return {
+    contained: true,
+    detail: `the repository checkout ${worktree} lives INSIDE the sibling root ${root}; masking that root masks the repository, its Node runtime and its modules, so the absence cannot be observed from this checkout`,
+  };
+}
+
+/**
  * Does a capability observation prove the absence took effect?
  *
  * @param {TopologyAbsence} absence

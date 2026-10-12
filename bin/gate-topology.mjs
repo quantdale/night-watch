@@ -40,6 +40,7 @@ import {
   parseSiblingRoot,
   scanExternalAbsolutePathDependence,
   scanUndeclaredBinaryInvocation,
+  siblingRootContainsWorktree,
   topologyReceiptDigest,
   validateTopologyRegistration,
 } from './lib/topology-gate.mjs';
@@ -727,7 +728,15 @@ function runDynamic(selectedAbsences, lane, options) {
     }
     const absenceFindings = evaluateAbsence({ absence, probe, lane: laneOutcome });
     if (probe === null) {
-      findings.push({ code: 'TOPOLOGY_PROBE_FAILED', detail: `absence=${absence.id}: probe did not produce an observation (exit=${probeResult.status ?? 'SPAWN_ERROR'}${probeResult.errorCode === null ? '' : ` error=${probeResult.errorCode}`})` });
+      const containment = absence.id === 'sibling-root'
+        ? siblingRootContainsWorktree({ worktree: root, siblingRoot })
+        : { contained: false, detail: '' };
+      findings.push({
+        code: containment.contained ? 'TOPOLOGY_ABSENCE_UNOBSERVABLE_CHECKOUT_INSIDE_SIBLING_ROOT' : 'TOPOLOGY_PROBE_FAILED',
+        detail: containment.contained
+          ? `absence=sibling-root: ${containment.detail}`
+          : `absence=${absence.id}: probe did not produce an observation (exit=${probeResult.status ?? 'SPAWN_ERROR'}${probeResult.errorCode === null ? '' : ` error=${probeResult.errorCode}`})`,
+      });
     }
     for (const finding of absenceFindings) findings.push(finding);
     const effect = probe === null ? { absent: false, detail: 'probe produced no observation' } : absenceTookEffect(absence, probe);

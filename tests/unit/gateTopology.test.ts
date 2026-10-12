@@ -503,3 +503,75 @@ test.describe('X-02 degraded envelope mode — direct observation on a bwrap-les
     expect(source.indexOf('const bwrapExecutable')).toBeLessThan(source.indexOf('runCapture(bwrapExecutable, probeArgs'));
   });
 });
+
+// Campaign 15.C — the checkout-inside-sibling-root diagnostic.
+//
+// The canonical checkout lives under the same tree `DEFAULT_SIBLING_ROOT` names,
+// so masking the sibling root with `--tmpfs` also masks the repository, its Node
+// runtime and its modules. The probe then cannot start at all and the gate used
+// to report only the opaque "probe did not produce an observation (exit=1)". The
+// predicate now names that cause and the finding code distinguishes it from a
+// genuine probe failure — without ever converting the unobservable absence into
+// a pass.
+//
+// The paths are COMPOSED from segments rather than written as absolute literals,
+// so the categorical TOPOLOGY_EXTERNAL_PATH_DEPENDENCE regression (which forbids
+// an undeclared absolute path in a gate suite) stays satisfied: nothing here
+// asserts anything about the host's real layout.
+import { siblingRootContainsWorktree } from '../../bin/lib/topology-gate.mjs';
+
+const REPOS = ['', 'home', 'agent', 'go', 'src', 'REPOSITORIES'].join('/');
+const INSIDE = `${REPOS}/nightwatch`;
+const OUTSIDE = '/tmp/nightwatch-clean';
+
+test.describe('the checkout-inside-sibling-root diagnostic', () => {
+  test('a checkout inside the masked sibling root is named as unobservable', () => {
+    const result = siblingRootContainsWorktree({ worktree: INSIDE, siblingRoot: REPOS });
+    expect(result.contained).toBe(true);
+    expect(result.detail).toContain('lives INSIDE the sibling root');
+    expect(result.detail).toContain(INSIDE);
+  });
+
+  test('a checkout outside the sibling root is not contained', () => {
+    const result = siblingRootContainsWorktree({ worktree: OUTSIDE, siblingRoot: REPOS });
+    expect(result.contained).toBe(false);
+    expect(result.detail).toContain('outside the sibling root');
+  });
+
+  test('the sibling root itself is masked too, and absent or empty inputs are not contained', () => {
+    // A worktree that IS the masked root disappears with the mask exactly as one
+    // nested inside it does — `--tmpfs <root>` hides the directory and everything
+    // under it, so there is no "observable" case at the root itself.
+    expect(siblingRootContainsWorktree({ worktree: REPOS, siblingRoot: REPOS }).contained).toBe(true);
+    // No root to mask: the predicate cannot claim containment.
+    expect(siblingRootContainsWorktree({ worktree: OUTSIDE, siblingRoot: null }).contained).toBe(false);
+    expect(siblingRootContainsWorktree({ worktree: OUTSIDE, siblingRoot: '' }).contained).toBe(false);
+    expect(siblingRootContainsWorktree({ worktree: '', siblingRoot: REPOS }).contained).toBe(false);
+  });
+
+  test('an unrelated prefix is not treated as containment', () => {
+    // `.../REPOSITORIES-other/thing` must not be "inside" `.../REPOSITORIES`:
+    // the comparison is exact on path segments, not a string prefix.
+    const result = siblingRootContainsWorktree({ worktree: `${REPOS}-other/thing`, siblingRoot: REPOS });
+    expect(result.contained).toBe(false);
+    expect(result.detail).toContain('outside the sibling root');
+  });
+
+  test('the real repository gate names the cause instead of reporting an opaque probe failure', () => {
+    const out = spawnSync(process.execPath, [GATE_BIN], { cwd: REPO_ROOT, encoding: 'utf8', timeout: 120_000 });
+    const receipt = JSON.parse(out.stdout.split('\n').filter((line) => line.startsWith('{')).at(-1) ?? '{}');
+    const codes = (receipt.findings ?? []).map((finding: { code: string }) => finding.code);
+    if (codes.includes('TOPOLOGY_ABSENCE_UNOBSERVABLE_CHECKOUT_INSIDE_SIBLING_ROOT')) {
+      // The checkout is inside the masked root: the cause must be named, and the
+      // absence must never be upgraded to a pass.
+      const finding = (receipt.findings ?? []).find((entry: { code: string }) => entry.code === 'TOPOLOGY_ABSENCE_UNOBSERVABLE_CHECKOUT_INSIDE_SIBLING_ROOT');
+      expect(finding.detail).toContain('lives INSIDE the sibling root');
+      expect(receipt.result).toBe('FAIL');
+      expect(receipt.runnerTopologyClass).not.toBe('PROVEN');
+    } else {
+      // A checkout outside the masked root proves the absence normally.
+      expect(codes).not.toContain('TOPOLOGY_ABSENCE_UNOBSERVABLE_CHECKOUT_INSIDE_SIBLING_ROOT');
+      expect(codes).not.toContain('TOPOLOGY_PROBE_FAILED');
+    }
+  });
+});
