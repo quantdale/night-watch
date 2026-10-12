@@ -30,6 +30,17 @@ storage-state*.json
 storageState*.json
 auth-state*.json
 auth*.json
+
+# The `auth*.json` rule above keeps authentication STATE out of Git; it is a
+# defensive secret glob and must stay. It also matches the tracked
+# certification receipt `evidence/certification/<S>/authenticated-capability-lifecycle.json`,
+# which is NOT authentication state: it records that the F-21 lifecycle
+# evaluator refused five synthetic non-VALID artefacts, carries no secret,
+# and is the tracked evidence a clean clone must be able to read. Re-include
+# it explicitly so a secret-shaped name can never silently swallow tracked
+# certification evidence (15.C: BINDING_RECEIPT_UNVERIFIED in a clean clone).
+!evidence/certification/**/*.json
+
 session*.json
 *.cookies.json
 cookies*.json
