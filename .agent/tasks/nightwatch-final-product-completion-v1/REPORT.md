@@ -77,49 +77,26 @@ predicate tests and one real-repository test cover it.
 
 ## 5. The full 16-condition release matrix (live, at HEAD)
 
-| # | Condition | State |
-|---|---|---|
-| 1 | validation-lane-closure | UNMET — see §6 |
-| 2 | exact-head-ci-authority | **MET** |
-| 3 | autonomous-yield-proof | UNMET — owner authorization (§7) |
-| 4 | completion-ledger-truth | **MET** |
-| 5 | operator-cli-contract | **MET** |
-| 6 | documentation-currency | **MET** |
-| 7 | workspace-continuity-drift-closure | **MET** |
-| 8 | dependency-supply-chain-currency | **MET** |
-| 9 | dead-architecture-closure | **MET** |
-| 10 | cli-implementation-contract | **MET** |
-| 11 | structural-rule-soundness | **MET** |
-| 12 | schema-version-lifecycle | **MET** |
-| 13 | ui-error-taxonomy-rendering | **MET** |
-| 14 | configuration-contract | **MET** |
-| 15 | accessibility-certification | **MET** |
-| 16 | authenticated-capability-lifecycle | **MET** |
+All sixteen conditions read **UNMET** at the final HEAD. This is the honest,
+fail-closed consequence of this session's own repair: the evidence binding it
+produced was not clean-clone reproducible, so it was reverted in a forward commit
+(`db5d0ecb`), which removed the bindings the 14/16 state rested on. The
+checkpoint itself is still `7871b463`, at which exact-head CI is green and every
+evidence artefact described in §2 exists.
 
-**14 of 16 MET**, up from 2 of 16 at the start of this session. Two are blocked
-by checkpoint provenance rather than by absent capability:
-
-- **Condition 1** — the `COMMAND`-producer lane subjects (`root-compile`,
-  `bin-parse`, `structural-invariants`, `ui`, `browser-workflow`, `full-regression`)
-  require the certification window in which `HEAD == S` exactly
-  (`CERTIFY_HEAD_NOT_CHECKPOINT`). The `PROJECT_CHECK` and `COPY_THROUGH` subjects
-  were all produced and bound; the clean-checkout and F-18 receipts were imported.
-  The lane side additionally needs the `owner-manual` lane's `revisitDate`
-  refreshed by an owner review, which no agent should manufacture.
-- **Condition 3** — the owner authorization in §7.
-
-Nothing was converted from unavailable into PASS, and no unmet condition was
-reported as met.
+The 14/16 state reached mid-session (conditions 2, 4-12, 14, 15, 16 MET) was
+measured in the canonical checkout only and is **not** reproducible from a clean
+clone; it is therefore reported as a measurement, not as a certified result.
 
 ## 6. Condition 1 — exactly what remains
 
-1. Re-run `certify:evidence produce` for the six `COMMAND` lane subjects in the
-   window where `HEAD` is exactly the final substantive checkpoint (immediately
-   after the substantive push, before the documentary descendants), then
-   `publish` and `bind` them.
-2. An owner review of the `owner-manual` lane (12 `MANUAL_OWNER` harnesses)
-   refreshing its `revisitDate`, or an explicit owner decision to record it
-   permanently unavailable.
+1. Re-derive the certification evidence in the window where `HEAD == S` exactly
+   (immediately after the substantive push, before any documentary descendant).
+2. Verify every produced receipt with `certify:evidence verify` **from a clean
+   clone of S** before integrating, so the clean-clone verifier accepts the
+   bindings. This session skipped that step and CI caught it.
+3. An owner review of the `owner-manual` lane (12 `MANUAL_OWNER` harnesses)
+   refreshing its `revisitDate`.
 
 ## 7. Autonomous yield — the exact owner authorization required (not taken)
 
@@ -145,9 +122,9 @@ made, no record was amended):
   longer timeout alone is not sufficient; the run must reach
   `COMPLETED_SUCCESSFULLY`);
 - the qualifying-receipt contract: `campaignKind: PRINT_CLI_PROVIDER`,
-  `campaignTermination: COMPLETED_SUCCESSFULLY` with at least one
-  `COMPLETE_*` case, `reasonerIdentity.kind: PRINT_CLI_PROVIDER` with a valid
-  `rid:sha256:` digest and exactly the declared provider/model/print-CLI,
+  `campaignTermination: COMPLETED_SUCCESSFULLY` with at least one `COMPLETE_*`
+  case, `reasonerIdentity.kind: PRINT_CLI_PROVIDER` with a valid `rid:sha256:`
+  digest and exactly the declared provider/model/print-CLI,
   `terminationClass: VALID_PROVIDER_RUN`, `providerHealth.completedCalls ≥ 1`,
   `siblingIdentityChanged: false` with at least one sibling observed,
   `leakScan.result: CLEAN`, and `nightwatchTreeClean: true` at the checkpoint.
@@ -167,52 +144,36 @@ declared.
 
 ## 9. Remaining blockers
 
-1. Condition 1 — the `COMMAND`-producer lane receipts need the `HEAD == S`
-   certification window (one further cycle), plus the `owner-manual` revisit
-   review.
+1. The certification evidence is not clean-clone reproducible. It must be
+   re-derived in the `HEAD == S` window and verified from a clean clone before
+   integration (see §6).
 2. Condition 3 — the owner authorization in §7.
-3. **A reproducibility defect in this session's evidence binding, now diagnosed
-   exactly.** CI runs `38232668446` @ `e2fb65ee` and `38241273555` @ `6c5f9084`
-   both failed `SEMANTIC_COMPATIBILITY` on exactly one location,
+3. **origin/main is currently RED.** The last known GREEN exact-head CI run is
+   `38220009838` @ `7871b463`. Runs `38232668446` @ `e2fb65ee`,
+   `38241273555` @ `6c5f9084` and `38248210444` @ `9bd1360a` all failed
+   `SEMANTIC_COMPATIBILITY` on the same single location,
    `tests/unit/projectState.test.ts` — "the real-tree evaluation resolves every
    check to probe output, and no D3 probe is MET away from the certified
-   checkpoint". Reproduced in a clean clone of `6c5f9084`:
-
-   ```
-   Error: ui-error-taxonomy-check must not be MET at HEAD 6c5f9084… for
-   checkpoint 7871b463a039…
-   ```
-
-   Root cause: the `certify:evidence bind` commit `fb1a2f59` changed
-   `config/release-evidence.v1.json`, and its `VALUES_ONLY_BINDINGS` guard
-   **holds in the canonical checkout but fails in a clean clone** with
-   `BINDING_RECEIPT_UNVERIFIED:authenticated-capability-lifecycle`
-   (`isValuesOnlyBindingChange` → `{valuesOnly: false}`). The failure therefore
-   makes the range `7871b463..HEAD` `SUBSTANTIVE_DESCENDANT` in a clean clone
-   while it is `DOCUMENTARY_DESCENDANT` in canonical — so `ui-error-taxonomy-check`
-   reads MET away from the certified checkpoint and the D3 assertion fires.
-
-   Consequence: the evidence publishing/binding performed in this session is
-   **not clean-clone reproducible**, so it cannot legitimately close the
-   certification. The correct repair is to re-derive the
-   `authenticated-capability-lifecycle` receipt in the `HEAD == S` window and
-   verify `bind` with `certify:evidence verify` from a clean clone before
-   integrating — not to relax the guard. Because `origin/main` was left red by
-   this, the last known GREEN exact-head CI run is `38220009838` @ `7871b463`.
-
-   This is recorded as the precise next repair, and it is deliberately NOT
-   papered over by weakening the binding guard or by claiming the condition met.
+   checkpoint" — reproduced in a clean clone as
+   `BINDING_RECEIPT_UNVERIFIED:authenticated-capability-lifecycle` and, after the
+   bindings were reverted, as a still-`SUBSTANTIVE_DESCENDANT` range. The next
+   repair must restore the clean-clone `DOCUMENTARY_DESCENDANT` classification
+   before further evidence is bound.
+4. An intermittent load flake in `tests/unit/reasonerCli.test.ts`
+   ("process-tree termination: timed-out grandchildren stop heartbeating",
+   `heartbeat never stabilized`) that appears only under parallel shard load and
+   passes standalone.
 
 ## 10. Minimal operator commands
 
 ```
 npm run handoff:check       # the handoff route is truthful
 npm run agent:check         # continuity and the claim journal agree
-npm run project:check       # the release verdict (14/16 MET)
+npm run project:check       # the release verdict
 npm run typecheck           # root TypeScript
 npm run typecheck:bin       # the bin lane (BLOCKING, 77/77)
 npm run hardening:check     # structural invariants
-npm run hardening:mutants   # 116/116 behavioural mutants
+npm run hardening:mutants   # 116/116 behavioural mutants (with an open claim window)
 npm run campaign:synthetic  # the deterministic campaign (1983 tests)
 npm run prepush             # the lane every integrate runs first
 npm run gate:milestone      # the broad milestone gate
@@ -222,7 +183,6 @@ gh run list --limit 1       # the newest exact-head CI observation
 ## Safety counters
 
 No Alphaus DEV/NEXT/production contact; no database or data-plane operation; no
-sibling repository mutation (the read-only siblings were observed before and
-after the clean-clone runs only); no credential persisted; no external
-publication; no force push; no history rewrite; no unauthorized paid call; no
-visibility change.
+sibling repository mutation (the read-only siblings were observed only through
+clean-clone runs); no credential persisted; no external publication; no force
+push; no history rewrite; no unauthorized paid call; no visibility change.
