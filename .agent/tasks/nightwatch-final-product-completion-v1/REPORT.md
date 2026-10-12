@@ -1,212 +1,206 @@
-# Final terminal-resolution report — `nightwatch-final-product-completion-v1`
+# Final certification closure report — `nightwatch-final-product-completion-v1`
 
 Status: **NOT COMPLETE** (terminal record, 2026-10-12)
-Certified checkpoint S: `dbe3349e08be58c8dbf4c2d3ac4eb7cd2ad9b7b4`
-`origin/main` = `HEAD` = `b09263aa6d7efef04a2e02e80c6c8f8d209cd1bd`, `main` only, one worktree, clean.
+Certified checkpoint S: `7871b463a03936016caaf88081c9221baccc60f0`
+`origin/main` = `HEAD` = `<current tip>`, `main` only, one worktree, clean.
 
-## 1. Current SHA and exact project verdict
+## 1. Git truth and required checks
 
-`git rev-parse HEAD` = `b09263aa6d7efef04a2e02e80c6c8f8d209cd1bd`;
-`git rev-parse origin/main` = the same; `git status --short --branch` = `## main...origin/main`;
-one worktree (the canonical checkout); `git branch` = `* main`; no `session/*` branch.
+- `HEAD` = `origin/main` (fast-forward equal); `git status --short --branch` = `## main...origin/main`
+- `git worktree list --porcelain` = one worktree (the canonical checkout)
+- `git branch` = `* main`; no `session/*` branch; no live session
+- `npm run session:status` → PASS, `attention=0`, `canonicalSafe=true`
+- `npm run workspace:check` → PASS
+- `npm run handoff:check` → PASS (exit 0)
+- `npm run agent:check` → PASS (36 known legacy warnings)
+- `npm run project:check` → exit 0; see §5
 
-`npm run project:check` exits 0 with:
+## 2. The latest substantive implementation SHA
 
-- `projectCompletionStatus: OPERATIONALLY_ACCEPTED`
-- `advanceClaimed: false`, `certificationRefused: true`
-- `activeTaskContinuity: PASS`, `checkoutClean: true`
-- `ciStatus: EXECUTED_PASS` @ `dbe3349e`
-- certified checkpoint `dbe3349e`, `conditionsMet 2/16` at HEAD
+The repository's own classifier (`bin/lib/checkpoint-role.mjs` with the production
+binding-receipt verifier) was run over every commit after the previously certified
+`dbe3349e`. Only **one** is `IMPLEMENTATION`: `c0da74d7` (the sibling-currency
+test-admission fix). Because CI had executed only at its journal-close child
+`b09263aa`, the checkpoint could not be advanced to it directly, so a further
+substantive commit was made and CI observed at it.
 
-The advance status `PROJECT_COMPLETE_AND_CI_CERTIFIED` is **not claimed**. The
-project refuses its own certification — which is the intended, fail-closed
-consequence, not a gate failure.
+**The final certified checkpoint is `7871b463`** (`feat(gate): name the
+checkout-inside-sibling-root cause…`), at which:
+- exact-head CI run **38220009838** completed/success, 15/15 required groups,
+  `skipPolicy undeclared = 0` in both `SEMANTIC_COMPATIBILITY` (14 skipped) and
+  `SYNTHETIC_CAMPAIGN` (40 skipped);
+- a certifying `PROVEN` / `BUBBLEWRAP` topology receipt exists
+  (produced from a clean clone of that commit placed outside the masked sibling
+  root);
+- `gate:clean` PASS, 15/15 groups, clean before and after, sibling ABSENT
+  (`clean-receipt:sha256:66dc796faa56690951c398a6`);
+- the F-18 UI-harness receipt (`receipt:sha256:158af3f91d2467dbf0b5d652`,
+  105/105 tests, 5 `ApiErrorKind` members, tree clean) and the accessibility
+  certification record (certification and keyboard sections PASS) are both bound
+  to that commit;
+- `control-center:ui:browser` 9/9 passed.
 
-`gh repo view quantdale/night-watch --json visibility,isPrivate` →
-`{"isPrivate":false,"visibility":"PUBLIC"}`.
+All six evidence kinds were produced at the checkpoint from a clean clone of
+exactly that commit and imported into the canonical tree through
+`certify:evidence import` — the architecture's sanctioned route for host-bound
+checks.
 
-## 2. The five mutation survivors — all five killed
+## 3. Mutation analysis and milestone gate
 
-All five (BM-026, BM-029, BM-030, BM-034, BM-035) were **one** defect, not five:
+`npm run hardening:mutants` → **mutants=116 detected=116 survived=0 errors=0**.
+`npm run gate:milestone` → **PASS** on all 12 steps (mutation-harness exit 0).
 
-Every real DEV launcher wraps its guard in `try { guardDevLane(...) } catch { … }`.
-`bin/lib/dev-launcher-effects.mjs` built its symbol table from
-`sourceFile.statements` only — TOP-LEVEL declarations. A binding made inside
-any nested block was therefore never resolved, and any effect placed there was
-invisible. `bin/observe-gate.mjs` is exactly that shape, so
-`const { rmSync } = fs; rmSync(path.join(root, 'x'));` injected after the guard
-inside the try block was reported as **nothing at all**. This is a real
-implementation gap, not a missing test.
+One operational note, measured and recorded rather than worked around: the
+harness commits a scratch commit on top of the checkout it clones, and that
+commit is only covered by a claim window that is still **OPEN**. Running the
+harness with every window closed therefore fails the claim-journal baseline with
+`CLAIM_JOURNAL_UNCOVERED_COMMIT`. With an open maintenance window — the normal
+state while a session is working — it is 116/116.
 
-**Repair**: the analysis resolves bindings through the module's LEXICAL scopes
-(scope stack pushed for every `Block`/`ModuleBlock`/`CaseClause`/`for`-statement
-initialiser/`CatchClause`), which also restores correct SHADOWING. The evasion
-class is pinned by seven new mutant samples (M22–M28) composed into the real
-launcher shape, so the self-test and the focused suite fail closed if the
-analysis ever goes blind again.
+## 4. Canonical host-state discrepancy, resolved by clean-checkout comparison
 
-Result: `npm run hardening:mutants` → `mutants=116 detected=116 survived=0
-errors=0`, and `npm run gate:milestone` → **PASS** (all 12 steps, including
-`mutation-harness` exit 0). Nothing was removed from the mutant registry and the
-detection threshold was not touched; a regression asserts the universe is still
-116 mutants with every search literal unique.
+`gate:local`'s `TOPOLOGY` and `UI_CONTROL_CENTER` groups fail **only in the
+canonical checkout** and pass from a clean clone of the identical commit. Root
+cause, proved directly: `DEFAULT_SIBLING_ROOT` is `/home/…/REPOSITORIES`, and the
+canonical checkout is `/home/…/REPOSITORIES/nightwatch` — **inside** the path the
+`sibling-root` absence masks with `--tmpfs`. The mask therefore hides the
+repository, its Node runtime and its modules, and the probe cannot start at all.
 
-## 3. Checkpoint-classification root cause and implemented fix
+The gate previously reported only the opaque
+`TOPOLOGY_PROBE_FAILED: absence=sibling-root: probe did not produce an observation
+(exit=1)`. `siblingRootContainsWorktree` now states the cause, and the finding
+code `TOPOLOGY_ABSENCE_UNOBSERVABLE_CHECKOUT_INSIDE_SIBLING_ROOT` distinguishes
+it from a genuine probe failure. This is a diagnostic improvement only: the
+absence is still never converted into a pass or a declared non-exercise, and the
+receipt still reports FAIL / not-PROVEN, which a regression asserts. Five
+predicate tests and one real-repository test cover it.
 
-**Root cause.** `config/ci-block-record.v1.json` is the exact-head CI authority
-but was neither guarded (`GUARD_CLASSES`) nor checkpoint-approved
-(`APPROVED_CHECKPOINT_PATHS`). Certifying a new checkpoint REQUIRES observing the
-run at it and refreshing the record's top level; that edit therefore made the
-whole `S..HEAD` range `SUBSTANTIVE_DESCENDANT`, which demoted every working-tree
-probe to `NOT_AT_CHECKPOINT` and left 15 of 16 conditions unmet no matter how
-much evidence was produced. The two evidence routes were in direct tension.
-
-**Fix.** A narrow `CI_BLOCK_RECORD_OBSERVATION` guard class. A change holds only
-when: both revisions are valid JSON objects with the same schema version; every
-descriptive field (`definitionName`, `note`, `ownerAction`, `revisitCondition`,
-`revisitDate`, `routeSelection`, `candidateRoutes`) is byte-identical; `history`
-only APPENDS with a byte-identical surviving prefix; appended entries are well
-formed with a declared `classification`; the moved top-level observation is
-backed by an entry THIS change appended; and the recorded `observedSha` is a
-40-hex commit that exists in the repository and is an ANCESTOR of the commit
-being judged. The caller passes the repository's own `cat-file`/`merge-base`
-facts so a head outside history can never be recorded.
-
-This is deliberately NOT a broad approval of the file. Seventeen adversarial
-regressions (`tests/unit/ciBlockRecordCheckpointRole.test.ts`) drive real Git
-repositories and prove real source, validation and configuration changes still
-invalidate the classification, and that a forged head, a rewritten or removed
-history entry, an earlier revisit date, a changed route, an undeclared
-classification, an additive widening, and a re-observation without its history
-entry all fail closed. Two further tests drive the real classifier over THIS
-repository's object database with the real receipt verifier.
-
-## 4. Validation results (exact commands and receipts)
-
-| Command | Result |
-|---|---|
-| `npm run typecheck` | exit 0 |
-| `npm run typecheck:bin` | PASS `conformance=77/77 mode=BLOCKING errors=0 exemptions=0 ceilings=0` |
-| `node bin/hardening-check.mjs` | PASS |
-| `npm run hardening:rules` | 96 rules / 274 probes / 274 DETECTED / 0 undetected |
-| `npm run hardening:mutants` | `mutants=116 detected=116 survived=0 errors=0` |
-| `npm run gate:milestone` | **PASS** (12/12 steps) |
-| `npm run prepush` | **PASS** (affected-shards 6198 passed / 0 failed, 472 selected) |
-| `npm run campaign:synthetic` | **PASS** — 1983 total, 1947 passed, 36 skipped, 0 failed, `skipPolicy undeclared=0`, deep containment lane PROVEN |
-| `npm run gate:ui` | PASS (`control-center-ui` 3 built files, 362810 bytes, no external references) |
-| `npm run control-center:ui:browser` | 9/9 passed (incl. the 30-decision reviewer persistence workflow and the keyboard contrast contract) |
-| `npm run agent:check` / `agent:audit` | PASS (35 known legacy warnings) |
-| `npm run validation:universe` | PASS |
-| `npm run schema:check` | PASS (432 discovered / 409 families / 117 persisted) |
-| `npx openspec validate --all --strict` | 80 passed / 0 failed |
-| `node bin/gate-topology.mjs` | PASS, envelope BUBBLEWRAP, class PROVEN **from a clean clone of the same commit** |
-| exact-head CI | 38140035293 @ `8c5bd86d`, 38160391804 @ `dbe3349e`, 38180162235 @ `b09263aa` — each 15/15, `undeclared: 0` |
-
-Two gate groups fail **in the canonical checkout only** and pass from a clean
-clone of the identical commit: `TOPOLOGY` (class NOT_PROVEN; the sibling-root
-absence probe produces no observation) and `UI_CONTROL_CENTER`. Both were
-reproduced at the pre-change baseline `0b4f2cdb` as well, so they are host-state
-properties of this checkout, not regressions.
-
-## 5. Full 16-condition release matrix (live, at HEAD)
+## 5. The full 16-condition release matrix (live, at HEAD)
 
 | # | Condition | State |
 |---|---|---|
-| 1 | validation-lane-closure | UNMET `EVIDENCE_ARTIFACT_ABSENT_AT_SHA` |
+| 1 | validation-lane-closure | UNMET — see §6 |
 | 2 | exact-head-ci-authority | **MET** |
-| 3 | autonomous-yield-proof | UNMET — see §6 |
-| 4 | completion-ledger-truth | NOT_AT_CHECKPOINT |
-| 5 | operator-cli-contract | NOT_AT_CHECKPOINT |
-| 6 | documentation-currency | NOT_AT_CHECKPOINT |
-| 7 | workspace-continuity-drift-closure | NOT_AT_CHECKPOINT |
+| 3 | autonomous-yield-proof | UNMET — owner authorization (§7) |
+| 4 | completion-ledger-truth | **MET** |
+| 5 | operator-cli-contract | **MET** |
+| 6 | documentation-currency | **MET** |
+| 7 | workspace-continuity-drift-closure | **MET** |
 | 8 | dependency-supply-chain-currency | **MET** |
-| 9 | dead-architecture-closure | NOT_AT_CHECKPOINT |
-| 10 | cli-implementation-contract | NOT_AT_CHECKPOINT |
-| 11 | structural-rule-soundness | NOT_AT_CHECKPOINT |
-| 12 | schema-version-lifecycle | NOT_AT_CHECKPOINT |
-| 13 | ui-error-taxonomy-rendering | UNMET — no F-18 UI-harness receipt on this host |
-| 14 | configuration-contract | NOT_AT_CHECKPOINT |
-| 15 | accessibility-certification | NOT_AT_CHECKPOINT `STALE_EVIDENCE` |
-| 16 | authenticated-capability-lifecycle | NOT_AT_CHECKPOINT |
+| 9 | dead-architecture-closure | **MET** |
+| 10 | cli-implementation-contract | **MET** |
+| 11 | structural-rule-soundness | **MET** |
+| 12 | schema-version-lifecycle | **MET** |
+| 13 | ui-error-taxonomy-rendering | **MET** |
+| 14 | configuration-contract | **MET** |
+| 15 | accessibility-certification | **MET** |
+| 16 | authenticated-capability-lifecycle | **MET** |
 
-Why 13 of them read NOT_AT_CHECKPOINT at HEAD although their checkStates are MET:
-the certified checkpoint S is `dbe3349e`, and HEAD (`b09263aa`) is a
-**substantive** descendant of it (it carries the sibling-currency test and
-configuration changes). `project:check` correctly refuses to treat a
-measurement taken at a substantive descendant as a measurement of S. Earlier in
-this session, with HEAD a documentary descendant of S, the same checks read
-**MET/MET for 12 of 16** — the highest count reached. Reaching that state again
-requires the final substantive commit to be the integration tip on which CI
-executes and at which the evidence is produced; that choreography is recorded
-but not completed here.
+**14 of 16 MET**, up from 2 of 16 at the start of this session. Two are blocked
+by checkpoint provenance rather than by absent capability:
 
-Condition 1 additionally requires the `clean-checkout`, `ui` and
-`browser-workflow` lanes re-executed at S on a host whose canonical checkout can
-run `gate:topology` and the UI group; see §4.
+- **Condition 1** — the `COMMAND`-producer lane subjects (`root-compile`,
+  `bin-parse`, `structural-invariants`, `ui`, `browser-workflow`, `full-regression`)
+  require the certification window in which `HEAD == S` exactly
+  (`CERTIFY_HEAD_NOT_CHECKPOINT`). The `PROJECT_CHECK` and `COPY_THROUGH` subjects
+  were all produced and bound; the clean-checkout and F-18 receipts were imported.
+  The lane side additionally needs the `owner-manual` lane's `revisitDate`
+  refreshed by an owner review, which no agent should manufacture.
+- **Condition 3** — the owner authorization in §7.
 
-## 6. Autonomous yield — status and exact owner authorization
+Nothing was converted from unavailable into PASS, and no unmet condition was
+reported as met.
+
+## 6. Condition 1 — exactly what remains
+
+1. Re-run `certify:evidence produce` for the six `COMMAND` lane subjects in the
+   window where `HEAD` is exactly the final substantive checkpoint (immediately
+   after the substantive push, before the documentary descendants), then
+   `publish` and `bind` them.
+2. An owner review of the `owner-manual` lane (12 `MANUAL_OWNER` harnesses)
+   refreshing its `revisitDate`, or an explicit owner decision to record it
+   permanently unavailable.
+
+## 7. Autonomous yield — the exact owner authorization required (not taken)
 
 The only qualifying route is a `PRINT_CLI_PROVIDER` yield-campaign receipt with
-`campaignTermination: COMPLETED_SUCCESSFULLY`, a digest-bound
-`reasonerIdentity` matching the GRANTED record in
-`config/yield-run-authorization.v1.json`, ≥1 completed provider call, an
-unchanged sibling identity, a clean leak scan, executed at the certified
-checkpoint on a clean tree. The two recorded local autonomous checkpoints both
-terminated `BUDGET_EXHAUSTED` (wall 1203663/1200000 ms and 1313459/1200000 ms),
-and no qualifying `artifacts/nightwatch-*/product-run-receipt.json` exists on
-this host.
+`campaignTermination: COMPLETED_SUCCESSFULLY`, a digest-bound `reasonerIdentity`
+matching the GRANTED record, ≥1 completed provider call, an unchanged sibling
+identity, a clean leak scan, executed at the certified checkpoint on a clean tree.
 
-**The exact owner authorization required** (not taken, not forged, no paid call
-made): the owner must grant a NEW bounded paid provider proof run, carried at the
-final certified checkpoint S on a clean tree, naming the print-CLI digest,
-provider and model, with a wall-clock budget sufficient to reach
-`COMPLETED_SUCCESSFULLY` (the previous runs each exhausted a 20-minute ceiling),
-and with `maxQualifyingRuns` correctly bound in
-`config/yield-run-authorization.v1.json`. A longer timeout alone is not
-sufficient: the run must actually COMPLETE.
+The two recorded local checkpoints both terminated `BUDGET_EXHAUSTED`
+(wall 1203663/1200000 ms and 1313459/1200000 ms), so neither qualifies.
 
-## 7. PRIVATE visibility — an explicit owner/admin step
+**The authorization the owner must grant** (none was taken, no paid call was
+made, no record was amended):
 
-`gh repo view quantdale/night-watch --json visibility,isPrivate` returns
-`{"isPrivate":false,"visibility":"PUBLIC"}`. Restoring PRIVATE is a separate
-GitHub owner/admin action; it was NOT taken and no agent changed visibility.
-Until it is taken, every push and CI artifact must be treated as public
-(D-149), and nothing secret, customer-derived or authentication-bearing may
-enter source, artifacts or `.agent` files.
+- a NEW bounded paid provider proof run, at the certified checkpoint on a clean
+  tree;
+- provider `opencode-go`, model `step-5-preview-free`, print CLI the `opencode`
+  binary with digest `sha256:a233de331f4438336e604d8e006fdab18e5911c4ece16de8e502eb61394c3586`
+  (to be re-confirmed against the binary that will run);
+- `maxQualifyingRuns: 1`;
+- a wall-clock ceiling sufficient that the run **completes** — the prior runs each
+  exhausted a 20-minute ceiling, so the ceiling must be raised materially (a
+  longer timeout alone is not sufficient; the run must reach
+  `COMPLETED_SUCCESSFULLY`);
+- the qualifying-receipt contract: `campaignKind: PRINT_CLI_PROVIDER`,
+  `campaignTermination: COMPLETED_SUCCESSFULLY` with at least one
+  `COMPLETE_*` case, `reasonerIdentity.kind: PRINT_CLI_PROVIDER` with a valid
+  `rid:sha256:` digest and exactly the declared provider/model/print-CLI,
+  `terminationClass: VALID_PROVIDER_RUN`, `providerHealth.completedCalls ≥ 1`,
+  `siblingIdentityChanged: false` with at least one sibling observed,
+  `leakScan.result: CLEAN`, and `nightwatchTreeClean: true` at the checkpoint.
 
-## 8. Exact remaining blockers
+Once granted, the run is executed against the read-only sibling repositories and
+its receipt is bound at the checkpoint.
 
-1. **Choreography, not capability**: the final substantive commit must be the
-   integration tip on which CI executes, with the topology receipt and the
-   certification evidence produced at that same checkpoint, so HEAD is a
-   documentary descendant of S when `project:check` is read. This session
-   reached 12/16 that way; closing it needs one further clean cycle.
-2. **Condition 1** needs `clean-checkout`, `ui` and `browser-workflow` executed
-   at S on a host whose canonical checkout can run `gate:topology` and the UI
-   group (this checkout cannot — §4).
-3. **Condition 3** needs the owner authorization in §6 (a new bounded paid
-   provider run that COMPLETES).
-4. **Condition 13** needs an F-18 UI-harness execution receipt; **condition 15**
-   needs an accessibility certification record from the control-center browser
-   lane on a host where it runs.
+## 8. PRIVATE visibility — an explicit owner/admin action
 
-## 9. Minimal operator commands for ordinary bug hunting
+`gh repo view quantdale/night-watch --json visibility,isPrivate` →
+`{"isPrivate":false,"visibility":"PUBLIC"}`. No agent changed visibility. Until
+the owner transitions it back, every push and CI artifact must be treated as
+public (D-149), and nothing secret, customer-derived or authentication-bearing may
+enter source, artifacts or `.agent` files. After the owner changes it, Actions
+must be re-verified at the same intended source SHA before terminal closure is
+declared.
+
+## 9. Remaining blockers
+
+1. Condition 1 — the `COMMAND`-producer lane receipts need the `HEAD == S`
+   certification window (one further cycle), plus the `owner-manual` revisit
+   review.
+2. Condition 3 — the owner authorization in §7.
+3. **A CI-only regression introduced by the documentation push.** CI run
+   `38232668446` @ `e2fb65ee` failed `SEMANTIC_COMPATIBILITY` on exactly one
+   location, `tests/unit/projectState.test.ts` ("the real-tree evaluation
+   resolves every check to probe output, and no D3 probe is MET away from the
+   certified checkpoint"). That test passes locally (140/140) and the range
+   `7871b463..e2fb65ee` is classified `DOCUMENTARY_DESCENDANT` both locally and
+   in CI (`PROJECT_TRUTH` PASS, `HANDOFF_TRUTH` PASS, `AGENT_CONTINUITY` PASS),
+   so the divergence is not the checkpoint relation. It is recorded here as the
+   precise next debug target and is deliberately not papered over.
+
+## 10. Minimal operator commands
 
 ```
-npm run handoff:check      # the handoff route is truthful
+npm run handoff:check       # the handoff route is truthful
 npm run agent:check         # continuity and the claim journal agree
-npm run project:check       # the release verdict (certification refused, advance not claimed)
-npm run typecheck          # root TypeScript
-npm run typecheck:bin      # the bin lane (BLOCKING, 77/77)
-npm run hardening:check    # structural invariants
-npm run hardening:mutants  # 116/116 behavioural mutants
-npm run campaign:synthetic # the deterministic synthetic campaign (1983 tests)
-npm run prepush            # the lane every integrate runs first
-npm run gate:milestone     # the broad milestone gate
-gh run list --limit 1      # the newest exact-head CI observation
+npm run project:check       # the release verdict (14/16 MET)
+npm run typecheck           # root TypeScript
+npm run typecheck:bin       # the bin lane (BLOCKING, 77/77)
+npm run hardening:check     # structural invariants
+npm run hardening:mutants   # 116/116 behavioural mutants
+npm run campaign:synthetic  # the deterministic campaign (1983 tests)
+npm run prepush             # the lane every integrate runs first
+npm run gate:milestone      # the broad milestone gate
+gh run list --limit 1       # the newest exact-head CI observation
 ```
 
-Local read-only commands stay authorized. No Alphaus DEV/NEXT/production contact,
-no database or data-plane operation, no sibling repository mutation, no credential
-persistence, no external publication, no force push, no history rewrite occurred
-in this campaign.
+## Safety counters
+
+No Alphaus DEV/NEXT/production contact; no database or data-plane operation; no
+sibling repository mutation (the read-only siblings were observed before and
+after the clean-clone runs only); no credential persisted; no external
+publication; no force push; no history rewrite; no unauthorized paid call; no
+visibility change.
