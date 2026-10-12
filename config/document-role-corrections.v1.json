@@ -268,11 +268,11 @@
       "reason": "M14 terminal resolution (2026-10-11) rebinds the certified checkpoint and the CI authority to the executed run 38117638451 at 0b4f2cdb, so the header date must cover the document's own last change; the statement is unchanged."
     },
     {
-      "id": "CORR-M14-003",
+      "id": "CORR-M13-004",
       "path": "docs/CURRENT_STATE.md",
-      "oldLineSha256": "sha256:3e30a8f73aa98979dd3e40ab",
-      "oldLineExcerpt": "> Durable memory for the next agent/session. Last updated: **2026-10-11**",
-      "reason": "M14 final closure (2026-10-12) rebinds the certified checkpoint to the final substantive checkpoint 7871b463 and records the executed CI run 38220009838, so the header date must cover the document's own last change; the statement is unchanged."
+      "oldLineSha256": "sha256:6bd0e13436f14c7141a924fa",
+      "oldLineExcerpt": "> Durable memory for the next agent/session. Last updated: **2026-10-12**",
+      "reason": "The clean-clone certification repair (2026-10-13) rebinds the certified checkpoint to the SHA whose exact-head CI is green, so the header date must cover the document's own last change; the statement is unchanged."
     }
   ]
 }
