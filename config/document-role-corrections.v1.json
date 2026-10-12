@@ -266,6 +266,13 @@
       "oldLineSha256": "sha256:8273bdd3ca7d17aecf799e9d",
       "oldLineExcerpt": "> Durable memory for the next agent/session. Last updated: **2026-10-10**",
       "reason": "M14 terminal resolution (2026-10-11) rebinds the certified checkpoint and the CI authority to the executed run 38117638451 at 0b4f2cdb, so the header date must cover the document's own last change; the statement is unchanged."
+    },
+    {
+      "id": "CORR-M14-003",
+      "path": "docs/CURRENT_STATE.md",
+      "oldLineSha256": "sha256:3e30a8f73aa98979dd3e40ab",
+      "oldLineExcerpt": "> Durable memory for the next agent/session. Last updated: **2026-10-11**",
+      "reason": "M14 final closure (2026-10-12) rebinds the certified checkpoint to the final substantive checkpoint 7871b463 and records the executed CI run 38220009838, so the header date must cover the document's own last change; the statement is unchanged."
     }
   ]
 }
