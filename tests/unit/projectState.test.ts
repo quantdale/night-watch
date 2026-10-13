@@ -3153,8 +3153,21 @@ test.describe('fixture-root collector receipts (R3-07)', () => {
       harnessSource: harnessAtS,
       executedAt: '2026-09-30T00:00:00.000Z',
     });
-    const target = path.join(FIXTURE_ROOT, 'artifacts/receipts/ui-harness-receipt.v1.json');
+    const target = path.join(FIXTURE_ROOT, UI_HARNESS_RECEIPT_PATH);
+    const tracked = `evidence/certification/${s}/ui-error-taxonomy-rendering.json`;
     try {
+      // This fixture deliberately exercises the local-only producer route.
+      // A committed receipt of S legitimately wins over a stale host artifact;
+      // prove that first, then remove ONLY that receipt in the owned fixture.
+      const committed = spawnSync('git', ['show', `HEAD:${tracked}`], { cwd: FIXTURE_ROOT, env: gitEnv(FIXTURE_ROOT), encoding: 'utf8' });
+      if (committed.status === 0) {
+        fs.mkdirSync(path.dirname(target), { recursive: true });
+        fs.writeFileSync(target, `${JSON.stringify(build('b'.repeat(40)), null, 2)}\n`);
+        expect(conditionCheckState(runChecker(FIXTURE_ROOT), 'ui-error-taxonomy-rendering')).toBe('MET');
+        git(FIXTURE_ROOT, ['rm', '--', tracked]);
+        git(FIXTURE_ROOT, ['commit', '--quiet', '--no-gpg-sign', '-m', 'synthetic local-only UI receipt fixture']);
+      }
+
       fs.mkdirSync(path.dirname(target), { recursive: true });
       fs.writeFileSync(target, `${JSON.stringify(build(s), null, 2)}\n`);
       const bound = runChecker(FIXTURE_ROOT);

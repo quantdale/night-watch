@@ -284,8 +284,10 @@ test.describe('deterministic source eligibility census', () => {
     expect(repositories.length).toBeGreaterThan(0);
     const sourceRead = repositories.some((repository) => repository.status !== 'SOURCE_UNAVAILABLE');
 
-    if (!sourceRead) {
-      // ABSENT APPROVED SOURCE MUST NEVER MASQUERADE AS EVIDENCE.
+    const noProvenSurface = emissions[0]?.note === 'NO_MECHANICALLY_PROVABLE_SOURCE_SURFACE';
+    if (!sourceRead || noProvenSurface) {
+      // Absent or unadmitted operation evidence must never masquerade as a
+      // measured population, even when inventory entries can be read.
       // The sibling Alphaus repositories are a read-only INPUT that a checkout
       // is not entitled to assume: `DEFAULT_SIBLING_ROOT` is an absolute path
       // that does not exist on a CI runner or a fresh clone. When it is
@@ -297,11 +299,19 @@ test.describe('deterministic source eligibility census', () => {
       expect(emissions[0]?.census).toBeUndefined();
       expect(emissions[0]?.portfolio).toBeNull();
       expect(emissions[0]?.queue).toBeNull();
-      // Every approved repository is individually accounted for as unavailable
-      // rather than silently omitted, and none carries a source SHA.
+      // Every approved repository retains its real categorical identity.
+      // An unavailable repository never carries a source SHA.
       for (const repository of repositories) {
-        expect(repository.status).toBe('SOURCE_UNAVAILABLE');
-        expect(repository.sourceSha).toBeNull();
+        if (!sourceRead || repository.status === 'SOURCE_UNAVAILABLE') {
+          expect(repository.status).toBe('SOURCE_UNAVAILABLE');
+          expect(repository.sourceSha).toBeNull();
+        } else {
+          // Available inventory is not an admitted operation population. A
+          // stale backend or a current UI-only repository can yield no proven
+          // surface; preserve its categorical identity, never invent a census.
+          expect(['CURRENT', 'SOURCE_STALE']).toContain(repository.status);
+          expect(repository.sourceSha).toMatch(/^[0-9a-f]{40}$/);
+        }
       }
       // No counter that could be read as a proof or an admission may be
       // non-zero over an unmeasured population.

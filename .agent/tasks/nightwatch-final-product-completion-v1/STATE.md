@@ -128,14 +128,13 @@ HEAD, have re-derived digests and verified subject/SHA bindings. The other
 
 ## Exact Next Action
 
-Task 15.2: implement the scoped receipt-selection and D3 assertion repairs, add negative
-regressions for missing/stale receipts and source/config invalidation, and prove
-the narrow ignore exception leaves every secret exclusion intact. Run focused
-tests, both typechecks, hardening checks/mutants, milestone, prepush and a fresh
-clone. Commit a genuine S and integrate through C-00; observe executed CI at S.
-Only after green CI, use the guarded documentary protocol to record observations
-and bind honestly produced evidence. Do not run a paid campaign, change visibility
-or archive. Report all 16 effective conditions and remaining owner decisions.
+Task 15.2: commit the validated collector/census fixture repairs forward; run
+milestone (including all hardening mutants), prepush and fresh-clone validation
+at that exact HEAD. Repair forward on a required failure. Then integrate the
+new genuine S through C-00 and observe executed GitHub CI at S. Only after
+that run is green, record documentary observations and bind eligible genuine
+evidence through the existing guarded protocol. No additional paid proof,
+visibility change or archive is authorized; report all 16 actual conditions.
 
 ## Superseded Next Action (8.1, complete)
 
@@ -1099,3 +1098,49 @@ unauthorized-unexecuted (task 15.4).
   PROCESS_ISOLATED_ONLY. Its declaration is strengthened from PARALLEL_SAFE;
   no test or guard is exempted. This is a substantive configuration correction
   and lands forward before integration. The final S is discovered from Git.
+
+### Candidate S validation at efcf9d43 (not integrated)
+
+- Candidate `efcf9d433f345d4bdff5c4fc24c0b4dd170a2f97` remained clean and
+  session:status PASS, owned, no drift, base CURRENT. Nothing was pushed.
+- Milestone: static/type/bin/continuity/handoff/workspace/project PASS;
+  hardening probes PASS (274 detected), behavioural mutants PASS (117 detected,
+  zero survivors). Affected 472-file regression FAILED: 6202 passed, 2 failed.
+- Prepush: mandatory prefix checks PASS; affected regression FAILED identically,
+  6202 passed, 2 failed. No failed checkpoint was integrated.
+- Clean gate: install, static, bin, hardening, probes, handoff, project and agent
+  PASS; SEMANTIC_COMPATIBILITY failed `projectState.test.ts:3115:EXPECT_EQUAL`,
+  with 14 declared skips and 0 undeclared. It stopped before remaining groups.
+- G18 collector fixture cloned the actual committed HEAD. The earlier pre-commit
+  run cloned the old checker, explaining why it passed. The committed checker
+  correctly prefers the verified tracked receipt of S over the injected stale
+  host receipt. Repair the fixture by proving that preference, then removing
+  only G18's tracked receipt in the owned synthetic Git fixture before asserting
+  the unchanged local-only wrong-SHA rejection. No production exception changes.
+- The second failure is eligibilityCensus's census-presence assertion: inventory
+  availability was treated as equivalent to an admitted mechanically provable
+  population. Capture the bounded categorical emission and repair its semantic
+  discriminator while preserving determinism and all positive content assertions.
+- Topology qualification at this candidate returned NOT_PROVEN/FAIL because
+  its baseline and fresh-home lanes hit the census assertion. It is not used
+  as certifying evidence.
+- Resume: finish these two regression repairs, commit forward with a new genuine
+  S, rerun required gates at the exact new HEAD, then integrate and observe CI.
+  No documentary certification binding or CI advancement has been performed.
+
+- Census reproduction (bounded categorical output only) returned exit 0,
+  LOCAL_SOURCE_ONLY / NO_NETWORK_NO_AUTH_NO_PRODUCT_CONTACT, inventory entries
+  CURRENT/SOURCE_STALE/SOURCE_UNAVAILABLE, zero examined operations and zero
+  proofs/candidates/eligible operations, note NO_MECHANICALLY_PROVABLE_SOURCE_SURFACE,
+  no census, null portfolio/queue. Reading inventory is not admitting a proven
+  operation population. The deterministic test now follows that explicit
+  discriminator, keeps every absent-source and positive-population assertion,
+  verifies stale/current identities, and requires zero proof counters. No
+  source is re-admitted and no Alphaus repository is written or contacted.
+
+- Repaired collector fixture suite: 2 passed, 0 failed, including the actual
+  committed-checker G18 test. Repaired eligibility census suite: 4 passed,
+  0 failed, including three fresh process byte-stability and zero-evidence
+  refusal. Execution-class admission remains PASS with the stricter UI class.
+- These fixture repairs are substantive test changes. Commit forward to a
+  new S and repeat milestone/prepush/clean validation at that exact HEAD.
