@@ -14,8 +14,8 @@ Last validated implementation SHA: efbb277348a3d756036b2568ca02bb45a5a2018f
 Last substantive checkpoint SHA: efbb277348a3d756036b2568ca02bb45a5a2018f
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
-Branch: main
-Last checkpoint: 2026-10-13 — clean-clone D3 failure reproduced at 9fe141c7.
+Branch: session/nightwatch-final-product-complet-d23bf75f
+Last checkpoint: 2026-10-13 — HC-177 probe-fixture repair in the C-00 session worktree (S' pending CI + S'-bound evidence).
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
@@ -36,9 +36,13 @@ ledger, and end at `PROJECT_COMPLETE_AND_CI_CERTIFIED` under D-129 with a
 
 ## Current Milestone
 
-M14 (group 15): exact-S CI recovery is verified; task 15.3 now publishes
-and binds eligible genuine evidence, then checks the documentary descendant.
-The existing campaign remains IN_PROGRESS / NOT_COMPLETE under D-129.
+M14 (group 15): the S receipts are published and bound, and a NEW defect was
+reproduced at the documentary head — the required HARDENING_PROBES group fails
+because probe HC-177 names a binding SHA that the S evidence re-bind replaced.
+The probe is repaired value-independently in this C-00 session worktree as a
+genuine substantive checkpoint S'. Exact-S' CI, S'-bound receipts and the
+clean-clone comparison follow. The campaign remains IN_PROGRESS / NOT_COMPLETE
+under D-129.
 
 ## Completed Milestones
 
@@ -135,18 +139,20 @@ autonomous proof at S is UNMET and the manual-lane revisit is overdue.
 
 ## Exact Next Action
 
-Task 15.3: use the guarded producers, import/publish/bind and offline verifier
-for genuine S evidence. A fixed COMMAND producer must actually execute in a
-clean checkout whose HEAD is S; its checkpoint identity comes from the real,
-verified documentary project snapshot. Never change command outcomes, receipt
-SHAs, guard scope or HOST_BOUND_SUBJECTS. Verify the resulting descendant in a
-fresh clone with no ignored artifacts, run prepush at the final documentary
-HEAD, fast-forward push and observe that head's actual CI.
+Task 15.3: commit the repaired probe fixture (S') together with this continuity
+record,
+run `npm run gate:milestone` and `npm run prepush` at that exact HEAD, then
+`integrate` it and observe the real run at S'. Only after a green run at S'
+may the S'-bound receipts be produced: `certify:evidence produce` for the
+thirteen MET condition subjects plus the `dependency-advisory` and
+`exact-checkpoint-ci` lanes (the latter consumes the S' run), `import` the UI
+harness and gate receipts measured in an independent clone at S', then
+`publish` and `bind`. Never rebind by text and never change a command outcome.
 
-Then report all 16 conditions and stop at the owner boundary: manual-lane
-review/disposition, fresh separately authorized paid proof at the final S,
-visibility/Actions confirmation and eventual archive are owner decisions.
-No additional provider campaign or registry query is authorized.
+Then verify 14/16 effective MET at S', compare canonical with a fresh clone,
+and stop at the owner boundary: the owner-manual lane revisit (condition 1)
+and a fresh separately authorized paid proof (condition 3) remain owner
+decisions, as do visibility/Actions confirmation and the eventual archive.
 
 ## Superseded Next Action (8.1, complete)
 

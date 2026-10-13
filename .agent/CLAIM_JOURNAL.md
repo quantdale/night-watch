@@ -70,4 +70,12 @@ the known tip above contains its two documentary commits. The successor kept
 the original substantive base through C-00. The journal window begins at the
 known adoption tip, so the two historical commit windows do not overlap.
 
-CLAIM: sess-af150610aa5f | role=MAINTENANCE | task=nightwatch-final-product-completion-v1 | created=2026-10-13T12:31:44.293Z | released=OPEN | base=56c681aaabcc95f4b50e3c093e5e7b47469e7857 | tip=OPEN
+CLAIM: sess-af150610aa5f | role=MAINTENANCE | task=nightwatch-final-product-completion-v1 | created=2026-10-13T12:31:44.293Z | released=2026-10-13T19:14:02Z | base=56c681aaabcc95f4b50e3c093e5e7b47469e7857 | tip=556b764e1d96d43f9243fb7ab0371a6a6df447eb
+
+That maintenance window is closed at its last commit; the successor is a
+SESSION claim opened at the same tip, so the two windows are adjacent and
+do not overlap. The successor exists because the probe-fixture repair it
+carries is a substantive config change, which the canonical MAINTENANCE
+role may not author.
+
+CLAIM: sess-b273f0dab1b4 | role=SESSION | task=nightwatch-final-product-completion-v1 | created=2026-10-13T19:14:02Z | released=OPEN | base=556b764e1d96d43f9243fb7ab0371a6a6df447eb | tip=OPEN

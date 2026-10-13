@@ -2005,9 +2005,9 @@
         "id": "HC-177",
         "ops": [
           {
-            "file": "config/release-evidence.v1.json",
-            "search": "\"subject\": \"root-compile\",\n      \"evidenceSha\": \"88e3c3fb52937ff303b0944cc22cfee624bf807e\",",
-            "replace": "\"subject\": \"root-compile\",\n      \"evidenceSha\": null,"
+            "file": "config/validation-lane-state.v1.json",
+            "search": "  \"lanes\": [\n    {\n      \"laneId\": \"root-compile\",",
+            "replace": "  \"lanes\": [\n    {\n      \"laneId\": \"probe-unevidenced-lane\",\n      \"classes\": [],\n      \"class\": \"PROVEN\",\n      \"command\": \"probe\",\n      \"evidence\": \"probe: a PROVEN lane with no evidence binding\",\n      \"unblockCondition\": null,\n      \"revisitDate\": null\n    },\n    {\n      \"laneId\": \"root-compile\","
           }
         ]
       },

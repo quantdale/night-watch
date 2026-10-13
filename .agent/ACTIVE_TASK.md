@@ -11,11 +11,14 @@ TASK_NEXT_ID: 15.3
 Task directory: .agent/tasks/nightwatch-final-product-completion-v1
 Starting SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
 Last validated implementation SHA: efbb277348a3d756036b2568ca02bb45a5a2018f
-Last checkpoint: 2026-10-13 — exact-S CI recovery verified.
-Current milestone: M14 — publish and bind genuine eligible S receipts, verify
-identical canonical/clean-clone classifications, and report the remaining owner gates.
-Next action: stage verified S evidence through the guarded producer/binding
-protocol, validate the documentary descendant, and observe its exact-head CI.
+Last checkpoint: 2026-10-13 — HC-177 probe fixture repaired forward in a
+C-00 session worktree (S' pending exact-S' CI and S'-bound evidence).
+Current milestone: M14 — land the probe-fixture repair as a genuine
+substantive checkpoint, observe exact-S' CI, re-produce the S'-bound release
+evidence, and report the remaining owner gates.
+Next action: commit the repaired probe fixture with its continuity records,
+run milestone and prepush at that exact HEAD, integrate it, and observe the
+run at the new checkpoint before producing any S'-bound receipt.
 Authorization class: FINAL_PRODUCT_COMPLETION_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
@@ -45,17 +48,23 @@ No new campaign or additional paid provider proof is authorized by this recovery
 ```text
 CAMPAIGN: nightwatch-final-product-completion-v1
 CHILD TASK: NONE
-SESSION WORKTREE: NONE
+SESSION WORKTREE: session/nightwatch-final-product-complet-d23bf75f
 
 CURRENT STATUS:
-  IN_PROGRESS — M14 documentary evidence after green exact-S CI. Canonical
-  main is the sole checkout; bounded documentary maintenance uses its explicit
-  C-00 claim. Future implementation requires a dedicated C-00 session.
+  IN_PROGRESS — M14. A stale hardening-probe fixture (HC-177 named a binding
+  SHA that the S evidence re-bind legitimately replaced) made the required
+  HARDENING_PROBES group fail at HEAD. That fixture is repaired forward as a
+  genuine substantive checkpoint S', which then needs its own exact-S' CI
+  execution and fresh S'-bound evidence; the previous S receipts stay
+  historical and are never rebound by text. Canonical main remains the sole
+  integration checkout; this implementation runs in the C-00 session worktree
+  named above, and bounded documentary maintenance returns to canonical once
+  the session is released.
 
 IMPLEMENTATION AUTHORIZED:
-  This recovery's implementation is integrated and validated at S. Continue
-  only the approved documentary observation and evidence-binding protocol;
-  source/config/test changes require another genuine substantive checkpoint.
+  One bounded substantive repair: the value-independent HC-177 probe fixture
+  (no production rule, guard or bound is weakened). No other source, config or
+  test change is authorized by this window.
 
 EXTERNAL CONTACT AUTHORIZED:
   GitHub Actions read/observe; validated fast-forward Nightwatch pushes.
