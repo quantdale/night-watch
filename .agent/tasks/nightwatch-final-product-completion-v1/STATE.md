@@ -1092,3 +1092,10 @@ unauthorized-unexecuted (task 15.4).
   and filename values enter tests; existing tracked receipts remain unchanged.
 - Next: commit the scoped substantive candidate, execute milestone and prepush
   at that exact HEAD, repair forward on any failure, then C-00 integration.
+
+- Candidate `057c79fa187e3f0de8bfdd5c38206af45984e491` is local only. The first
+  milestone attempt correctly failed execution-class admission: the new clone
+  regression exposes an artifacts-write signal, so releaseReceiptProbes needs
+  PROCESS_ISOLATED_ONLY. Its declaration is strengthened from PARALLEL_SAFE;
+  no test or guard is exempted. This is a substantive configuration correction
+  and lands forward before integration. The final S is discovered from Git.

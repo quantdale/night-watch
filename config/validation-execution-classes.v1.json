@@ -1858,8 +1858,9 @@
       ]
     },
     "tests/unit/releaseReceiptProbes.test.ts": {
-      "class": "PARALLEL_SAFE",
+      "class": "PROCESS_ISOLATED_ONLY",
       "signals": [
+        "artifacts-write",
         "isolated-scratch"
       ]
     },
