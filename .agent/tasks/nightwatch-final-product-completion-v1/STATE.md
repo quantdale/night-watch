@@ -129,7 +129,7 @@ and topology failed closed on CHECKOUT_INSIDE_SIBLING_ROOT; they are not PASS.
 The same host's independent checkout qualified S as PROVEN/BUBBLEWRAP.
 
 The implementation worktree and branch are removed. Canonical main holds the
-explicit maintenance claim `sess-f581bf676713`. Only eligible verified S
+explicit maintenance claim `sess-af150610aa5f`. Only eligible verified S
 receipts will be published and bound. Historical receipts remain unchanged;
 autonomous proof at S is UNMET and the manual-lane revisit is overdue.
 
@@ -1222,3 +1222,21 @@ unauthorized-unexecuted (task 15.4).
   source validation and clean/CI validation at S are recorded separately.
 - The three original lifecycle receipts reverified from Git trees at 20dfa607,
   9fe141c7 and S with identical digests and VERIFIED subject/SHA bindings.
+
+### Documentary evidence binding and resumed authority (2026-10-13)
+
+- The preceding process ended with 23 genuine S receipts committed at
+  `56c681aaabcc95f4b50e3c093e5e7b47469e7857` and a values-only binding diff.
+  Its stale canonical claim was explicitly adopted through C-00 as
+  `sess-af150610aa5f`, preserving base S; session:status PASS, one checkout.
+- All 24 prospective bound receipt bodies reverified by the production verifier.
+  The genuine CI gate proof is also named `authoritative-gate.json`, which
+  matches the preserved `auth*.json` exclusion. Stage only that exact verified,
+  sanitized path explicitly; do not broaden the ignore exception. No auth state
+  or secret becomes newly trackable. Original exclusions remain unchanged.
+- Live GitHub re-observation confirms run 38382773612 completed/success at S.
+  Temporary prior-process logs are unavailable; tracked verified receipts,
+  task records and live Actions are the durable validation authorities.
+- Next: commit the safe exact gate proof and values-only bindings, rederive
+  the documentary range, compare all 16 states in a fresh independent clone,
+  finish the report and run exact-HEAD prepush before the documentary push.

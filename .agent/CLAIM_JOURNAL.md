@@ -63,4 +63,11 @@ CLAIM: sess-4d1c8b0e5f73 | role=MAINTENANCE | task=nightwatch-final-product-comp
 CLAIM: sess-0f4a2b6c8d13 | role=MAINTENANCE | task=nightwatch-final-product-completion-v1 | created=2026-10-12T13:15:00Z | released=2026-10-12T13:40:00Z | base=4a56bf2571ad579476e7b7ae692471db8d3e76cc | tip=dabce2f346da616ec8df9c01a2578e900115e69e
 CLAIM: sess-1b95df6dcaeb | role=MAINTENANCE | task=nightwatch-final-product-completion-v1 | created=2026-10-13T00:00:00Z | released=2026-10-13T03:49:04Z | base=45b46de12764e0c437a6115a2f13651778c4e4ae | tip=9fe141c726928469344d4e3b126ea898a8f4a52d
 CLAIM: sess-59eec16b2c79 | role=SESSION | task=nightwatch-final-product-completion-v1 | created=2026-10-13T03:47:41.673Z | released=2026-10-13T10:21:45Z | base=9fe141c726928469344d4e3b126ea898a8f4a52d | tip=efbb277348a3d756036b2568ca02bb45a5a2018f
-CLAIM: sess-f581bf676713 | role=MAINTENANCE | task=nightwatch-final-product-completion-v1 | created=2026-10-13T10:21:54.701Z | released=OPEN | base=efbb277348a3d756036b2568ca02bb45a5a2018f | tip=OPEN
+CLAIM: sess-f581bf676713 | role=MAINTENANCE | task=nightwatch-final-product-completion-v1 | created=2026-10-13T10:21:54.701Z | released=2026-10-13T12:31:44.293Z | base=efbb277348a3d756036b2568ca02bb45a5a2018f | tip=56c681aaabcc95f4b50e3c093e5e7b47469e7857
+
+The preceding maintenance ownership ended by explicit stale-claim adoption;
+the known tip above contains its two documentary commits. The successor kept
+the original substantive base through C-00. The journal window begins at the
+known adoption tip, so the two historical commit windows do not overlap.
+
+CLAIM: sess-af150610aa5f | role=MAINTENANCE | task=nightwatch-final-product-completion-v1 | created=2026-10-13T12:31:44.293Z | released=OPEN | base=56c681aaabcc95f4b50e3c093e5e7b47469e7857 | tip=OPEN

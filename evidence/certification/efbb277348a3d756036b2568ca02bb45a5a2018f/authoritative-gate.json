@@ -1,0 +1,282 @@
+{
+  "schemaVersion": "nightwatch.quality-gate-receipt.v1",
+  "subject": "authoritative-gate",
+  "gateDefinitionDigest": "sha256:1465503b58a4097b97fddbdcb725248d29420e20fd35bbbb62bdef8b97c1a4f3",
+  "gitHead": "efbb277348a3d756036b2568ca02bb45a5a2018f",
+  "packageLockDigest": "sha256:a09126434daf81a978f261a53a742893b47fe322aa0e1161e5f55f69ae30c94a",
+  "nodeMajor": 22,
+  "nodeVersion": "v22.23.3",
+  "npmVersion": "10.9.9",
+  "environmentClass": "CI",
+  "receiptPersistenceRequested": true,
+  "sourceRootCleanAtEmit": true,
+  "groupIds": [
+    "GATE_DEFINITION",
+    "STATIC",
+    "BIN_TYPECHECK_CEILING",
+    "HARDENING",
+    "HARDENING_PROBES",
+    "HANDOFF_TRUTH",
+    "PROJECT_TRUTH",
+    "AGENT_CONTINUITY",
+    "SEMANTIC_COMPATIBILITY",
+    "OWNER_PROVENANCE",
+    "SYNTHETIC_CAMPAIGN",
+    "PATCH_INTEGRITY",
+    "WORKSPACE_INTEGRITY",
+    "TOPOLOGY",
+    "UI_CONTROL_CENTER"
+  ],
+  "groups": [
+    {
+      "id": "GATE_DEFINITION",
+      "required": true,
+      "status": "PASS",
+      "exitCode": 0,
+      "counts": {
+        "total": null,
+        "passed": null,
+        "skipped": null,
+        "didNotRun": null,
+        "failed": null
+      },
+      "durationMs": 45
+    },
+    {
+      "id": "STATIC",
+      "required": true,
+      "status": "PASS",
+      "exitCode": 0,
+      "counts": {
+        "total": null,
+        "passed": null,
+        "skipped": null,
+        "didNotRun": null,
+        "failed": null
+      },
+      "durationMs": 20996
+    },
+    {
+      "id": "BIN_TYPECHECK_CEILING",
+      "required": true,
+      "status": "PASS",
+      "exitCode": 0,
+      "counts": {
+        "total": null,
+        "passed": null,
+        "skipped": null,
+        "didNotRun": null,
+        "failed": null
+      },
+      "durationMs": 12422
+    },
+    {
+      "id": "HARDENING",
+      "required": true,
+      "status": "PASS",
+      "exitCode": 0,
+      "counts": {
+        "total": null,
+        "passed": null,
+        "skipped": null,
+        "didNotRun": null,
+        "failed": null
+      },
+      "durationMs": 33187
+    },
+    {
+      "id": "HARDENING_PROBES",
+      "required": true,
+      "status": "PASS",
+      "exitCode": 0,
+      "counts": {
+        "total": null,
+        "passed": null,
+        "skipped": null,
+        "didNotRun": null,
+        "failed": null
+      },
+      "durationMs": 313521
+    },
+    {
+      "id": "HANDOFF_TRUTH",
+      "required": true,
+      "status": "PASS",
+      "exitCode": 0,
+      "counts": {
+        "total": null,
+        "passed": null,
+        "skipped": null,
+        "didNotRun": null,
+        "failed": null
+      },
+      "durationMs": 2425
+    },
+    {
+      "id": "PROJECT_TRUTH",
+      "required": true,
+      "status": "PASS",
+      "exitCode": 0,
+      "counts": {
+        "total": null,
+        "passed": null,
+        "skipped": null,
+        "didNotRun": null,
+        "failed": 0
+      },
+      "durationMs": 18910
+    },
+    {
+      "id": "AGENT_CONTINUITY",
+      "required": true,
+      "status": "PASS",
+      "exitCode": 0,
+      "counts": {
+        "total": null,
+        "passed": null,
+        "skipped": null,
+        "didNotRun": null,
+        "failed": null
+      },
+      "durationMs": 4932
+    },
+    {
+      "id": "SEMANTIC_COMPATIBILITY",
+      "required": true,
+      "status": "PASS",
+      "exitCode": 0,
+      "counts": {
+        "total": 2253,
+        "passed": 2239,
+        "skipped": 14,
+        "didNotRun": null,
+        "failed": 0
+      },
+      "durationMs": 549499,
+      "details": {
+        "failedLocations": [],
+        "skipPolicy": {
+          "result": "PASS",
+          "skipped": 14,
+          "undeclared": 0,
+          "declared": 14
+        }
+      }
+    },
+    {
+      "id": "OWNER_PROVENANCE",
+      "required": true,
+      "status": "PASS",
+      "exitCode": 0,
+      "counts": {
+        "total": null,
+        "passed": 91,
+        "skipped": null,
+        "didNotRun": null,
+        "failed": null
+      },
+      "durationMs": 12379,
+      "details": {
+        "failedLocations": [],
+        "skipPolicy": {
+          "result": "PASS",
+          "skipped": 0,
+          "undeclared": 0
+        }
+      }
+    },
+    {
+      "id": "SYNTHETIC_CAMPAIGN",
+      "required": true,
+      "status": "PASS",
+      "exitCode": 0,
+      "counts": {
+        "total": 1988,
+        "passed": 1948,
+        "skipped": 40,
+        "didNotRun": 0,
+        "failed": 0
+      },
+      "durationMs": 223992,
+      "details": {
+        "failedLocations": [],
+        "deepContainmentLane": "NOT_EXERCISED_BWRAP_UNAVAILABLE",
+        "skipPolicy": {
+          "result": "PASS",
+          "skipped": 40,
+          "undeclared": 0
+        }
+      }
+    },
+    {
+      "id": "PATCH_INTEGRITY",
+      "required": true,
+      "status": "PASS",
+      "exitCode": 0,
+      "counts": {
+        "total": null,
+        "passed": null,
+        "skipped": null,
+        "didNotRun": null,
+        "failed": null
+      },
+      "durationMs": 547
+    },
+    {
+      "id": "WORKSPACE_INTEGRITY",
+      "required": true,
+      "status": "PASS",
+      "exitCode": 0,
+      "counts": {
+        "total": null,
+        "passed": null,
+        "skipped": null,
+        "didNotRun": null,
+        "failed": null
+      },
+      "durationMs": 111
+    },
+    {
+      "id": "TOPOLOGY",
+      "required": true,
+      "status": "PASS",
+      "exitCode": 0,
+      "counts": {
+        "total": null,
+        "passed": null,
+        "skipped": null,
+        "didNotRun": null,
+        "failed": null
+      },
+      "durationMs": 23726,
+      "details": {
+        "failedLocations": [],
+        "topologyGitHead": "efbb277348a3d756036b2568ca02bb45a5a2018f",
+        "topologyReceiptDigest": "topology-receipt:sha256:edbf4beb7b1c37022b4d0da2",
+        "topologyEnvelope": "BWRAP_UNAVAILABLE_DEGRADED",
+        "unexercisedAbsences": [
+          "chrome"
+        ],
+        "runnerTopologyClass": "PROVEN_DEGRADED",
+        "topologyCertifying": false
+      }
+    },
+    {
+      "id": "UI_CONTROL_CENTER",
+      "required": true,
+      "status": "PASS",
+      "exitCode": 0,
+      "counts": {
+        "total": 105,
+        "passed": 105,
+        "skipped": 0,
+        "didNotRun": null,
+        "failed": 0
+      },
+      "durationMs": 49200
+    }
+  ],
+  "gateDurationMs": 1265898,
+  "finalResult": "PASS",
+  "receiptDigest": "receipt:sha256:42eeb5b21ca39e9774302861"
+}

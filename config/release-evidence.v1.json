@@ -14,9 +14,9 @@
     },
     {
       "subject": "exact-head-ci-authority",
-      "evidenceSha": "dbe3349e08be58c8dbf4c2d3ac4eb7cd2ad9b7b4",
-      "receiptDigest": "receipt:sha256:4ef9cb85f555b5dae917b11b",
-      "observedAt": "2026-10-11T18:18:02.379Z",
+      "evidenceSha": "efbb277348a3d756036b2568ca02bb45a5a2018f",
+      "receiptDigest": "receipt:sha256:134a60f49fa0fd47561ce3fe",
+      "observedAt": "2026-10-13T12:00:40.485Z",
       "executor": "certify-evidence",
       "artifactPaths": [
         "config/ci-block-record.v1.json"
@@ -34,9 +34,9 @@
     },
     {
       "subject": "completion-ledger-truth",
-      "evidenceSha": "dbe3349e08be58c8dbf4c2d3ac4eb7cd2ad9b7b4",
-      "receiptDigest": "receipt:sha256:19c63448a89419485d7f55f7",
-      "observedAt": "2026-10-11T18:18:02.379Z",
+      "evidenceSha": "efbb277348a3d756036b2568ca02bb45a5a2018f",
+      "receiptDigest": "receipt:sha256:3bba3633cf2bb298183e783e",
+      "observedAt": "2026-10-13T12:00:40.485Z",
       "executor": "certify-evidence",
       "artifactPaths": [
         "config/task-id-ledger.v1.json"
@@ -45,9 +45,9 @@
     },
     {
       "subject": "operator-cli-contract",
-      "evidenceSha": "dbe3349e08be58c8dbf4c2d3ac4eb7cd2ad9b7b4",
-      "receiptDigest": "receipt:sha256:8a7f9fd33193364db4d42a48",
-      "observedAt": "2026-10-11T18:18:02.379Z",
+      "evidenceSha": "efbb277348a3d756036b2568ca02bb45a5a2018f",
+      "receiptDigest": "receipt:sha256:e46f03153c14045100bf8884",
+      "observedAt": "2026-10-13T12:00:40.485Z",
       "executor": "certify-evidence",
       "artifactPaths": [
         "config/operator-cli-surface.v1.json"
@@ -56,9 +56,9 @@
     },
     {
       "subject": "documentation-currency",
-      "evidenceSha": "dbe3349e08be58c8dbf4c2d3ac4eb7cd2ad9b7b4",
-      "receiptDigest": "receipt:sha256:e9c839d99d0f823e1600b4f2",
-      "observedAt": "2026-10-11T18:18:02.379Z",
+      "evidenceSha": "efbb277348a3d756036b2568ca02bb45a5a2018f",
+      "receiptDigest": "receipt:sha256:b44391c0e94f9ba5320194b9",
+      "observedAt": "2026-10-13T12:00:40.485Z",
       "executor": "certify-evidence",
       "artifactPaths": [
         "config/document-role.v1.json",
@@ -68,9 +68,9 @@
     },
     {
       "subject": "workspace-continuity-drift-closure",
-      "evidenceSha": "dbe3349e08be58c8dbf4c2d3ac4eb7cd2ad9b7b4",
-      "receiptDigest": "receipt:sha256:74b486f2b87490852c90c003",
-      "observedAt": "2026-10-11T18:18:02.379Z",
+      "evidenceSha": "efbb277348a3d756036b2568ca02bb45a5a2018f",
+      "receiptDigest": "receipt:sha256:e5d3ac1b1bf9c2fbbc0018f1",
+      "observedAt": "2026-10-13T12:00:40.485Z",
       "executor": "certify-evidence",
       "artifactPaths": [
         "config/workspace-integrity.v1.json"
@@ -79,9 +79,9 @@
     },
     {
       "subject": "dependency-supply-chain-currency",
-      "evidenceSha": "dbe3349e08be58c8dbf4c2d3ac4eb7cd2ad9b7b4",
-      "receiptDigest": "receipt:sha256:9dd1995d41e7a9576d156361",
-      "observedAt": "2026-10-11T18:18:02.379Z",
+      "evidenceSha": "efbb277348a3d756036b2568ca02bb45a5a2018f",
+      "receiptDigest": "receipt:sha256:61a0508932069cec84959989",
+      "observedAt": "2026-10-13T12:00:40.485Z",
       "executor": "certify-evidence",
       "artifactPaths": [
         "config/dependency-currency.v1.json"
@@ -90,9 +90,9 @@
     },
     {
       "subject": "dead-architecture-closure",
-      "evidenceSha": "dbe3349e08be58c8dbf4c2d3ac4eb7cd2ad9b7b4",
-      "receiptDigest": "receipt:sha256:58eb95987ea87472e0c46e5d",
-      "observedAt": "2026-10-11T18:18:02.379Z",
+      "evidenceSha": "efbb277348a3d756036b2568ca02bb45a5a2018f",
+      "receiptDigest": "receipt:sha256:738317221feef63c2f835088",
+      "observedAt": "2026-10-13T12:00:40.485Z",
       "executor": "certify-evidence",
       "artifactPaths": [
         "config/reference-graph.v1.json"
@@ -101,9 +101,9 @@
     },
     {
       "subject": "cli-implementation-contract",
-      "evidenceSha": "dbe3349e08be58c8dbf4c2d3ac4eb7cd2ad9b7b4",
-      "receiptDigest": "receipt:sha256:6dbd9a57b85f6ef27a0cfc43",
-      "observedAt": "2026-10-11T18:18:02.379Z",
+      "evidenceSha": "efbb277348a3d756036b2568ca02bb45a5a2018f",
+      "receiptDigest": "receipt:sha256:4b4e02d8c430a78b6a175474",
+      "observedAt": "2026-10-13T12:00:40.485Z",
       "executor": "certify-evidence",
       "artifactPaths": [
         "config/bin-typecheck.v1.json"
@@ -112,9 +112,9 @@
     },
     {
       "subject": "structural-rule-soundness",
-      "evidenceSha": "dbe3349e08be58c8dbf4c2d3ac4eb7cd2ad9b7b4",
-      "receiptDigest": "receipt:sha256:d27418f82e54d99c9e6c2efc",
-      "observedAt": "2026-10-11T18:18:02.379Z",
+      "evidenceSha": "efbb277348a3d756036b2568ca02bb45a5a2018f",
+      "receiptDigest": "receipt:sha256:6532f4194b874cc0c172fcbb",
+      "observedAt": "2026-10-13T12:00:40.485Z",
       "executor": "certify-evidence",
       "artifactPaths": [
         "config/hardening-rule-probes.v1.json"
@@ -123,9 +123,9 @@
     },
     {
       "subject": "schema-version-lifecycle",
-      "evidenceSha": "dbe3349e08be58c8dbf4c2d3ac4eb7cd2ad9b7b4",
-      "receiptDigest": "receipt:sha256:1de701cd94ac45bf9a260345",
-      "observedAt": "2026-10-11T18:18:02.379Z",
+      "evidenceSha": "efbb277348a3d756036b2568ca02bb45a5a2018f",
+      "receiptDigest": "receipt:sha256:659d228341d720c0ed4646c2",
+      "observedAt": "2026-10-13T12:00:40.485Z",
       "executor": "certify-evidence",
       "artifactPaths": [
         "src/core/schemaLifecycle/declarations.ts"
@@ -134,10 +134,10 @@
     },
     {
       "subject": "ui-error-taxonomy-rendering",
-      "evidenceSha": null,
-      "receiptDigest": null,
-      "observedAt": null,
-      "executor": null,
+      "evidenceSha": "efbb277348a3d756036b2568ca02bb45a5a2018f",
+      "receiptDigest": "receipt:sha256:a0049ed0ed4a44021427f2d5",
+      "observedAt": "2026-10-13T12:00:40.485Z",
+      "executor": "certify-evidence",
       "artifactPaths": [
         "ui/control-center/scripts/receipt-reporter.mjs",
         "ui/control-center/src/__baselines__/view-dom-baseline.json"
@@ -146,9 +146,9 @@
     },
     {
       "subject": "configuration-contract",
-      "evidenceSha": "dbe3349e08be58c8dbf4c2d3ac4eb7cd2ad9b7b4",
-      "receiptDigest": "receipt:sha256:8897620f4acbfdd4b60333c1",
-      "observedAt": "2026-10-11T18:18:02.379Z",
+      "evidenceSha": "efbb277348a3d756036b2568ca02bb45a5a2018f",
+      "receiptDigest": "receipt:sha256:dd4478556e71ab30b5575524",
+      "observedAt": "2026-10-13T12:00:40.485Z",
       "executor": "certify-evidence",
       "artifactPaths": [
         "config/environment-surface.v1.json"
@@ -157,10 +157,10 @@
     },
     {
       "subject": "accessibility-certification",
-      "evidenceSha": "8bad862e3ee29d804103dd6ab1b9c9a2fd0391e6",
-      "receiptDigest": null,
-      "observedAt": null,
-      "executor": null,
+      "evidenceSha": "efbb277348a3d756036b2568ca02bb45a5a2018f",
+      "receiptDigest": "receipt:sha256:5aec4679e7298290c0a9ebfd",
+      "observedAt": "2026-10-13T12:00:40.485Z",
+      "executor": "certify-evidence",
       "artifactPaths": [
         "tests/browser/accessibilityCertification.browser.ts"
       ],
@@ -168,9 +168,9 @@
     },
     {
       "subject": "authenticated-capability-lifecycle",
-      "evidenceSha": "dbe3349e08be58c8dbf4c2d3ac4eb7cd2ad9b7b4",
-      "receiptDigest": "receipt:sha256:61840bc7bfe429fa114c4b6c",
-      "observedAt": "2026-10-11T18:18:02.379Z",
+      "evidenceSha": "efbb277348a3d756036b2568ca02bb45a5a2018f",
+      "receiptDigest": "receipt:sha256:ef4cb4ffd1cf4300db7e44c6",
+      "observedAt": "2026-10-13T12:00:40.485Z",
       "executor": "certify-evidence",
       "artifactPaths": [
         "src/auth/capabilityLifecycle.ts"
@@ -179,10 +179,10 @@
     },
     {
       "subject": "root-compile",
-      "evidenceSha": "88e3c3fb52937ff303b0944cc22cfee624bf807e",
-      "receiptDigest": null,
-      "observedAt": null,
-      "executor": null,
+      "evidenceSha": "efbb277348a3d756036b2568ca02bb45a5a2018f",
+      "receiptDigest": "receipt:sha256:96efdf9b641b16aa0f4f1345",
+      "observedAt": "2026-10-13T12:00:40.485Z",
+      "executor": "certify-evidence",
       "artifactPaths": [
         "tsconfig.json"
       ],
@@ -190,10 +190,10 @@
     },
     {
       "subject": "bin-parse",
-      "evidenceSha": "88e3c3fb52937ff303b0944cc22cfee624bf807e",
-      "receiptDigest": null,
-      "observedAt": null,
-      "executor": null,
+      "evidenceSha": "efbb277348a3d756036b2568ca02bb45a5a2018f",
+      "receiptDigest": "receipt:sha256:f4cd7286306f82baa551f7c3",
+      "observedAt": "2026-10-13T12:00:40.485Z",
+      "executor": "certify-evidence",
       "artifactPaths": [
         "tsconfig.bin.json"
       ],
@@ -201,10 +201,10 @@
     },
     {
       "subject": "structural-invariants",
-      "evidenceSha": "88e3c3fb52937ff303b0944cc22cfee624bf807e",
-      "receiptDigest": null,
-      "observedAt": null,
-      "executor": null,
+      "evidenceSha": "efbb277348a3d756036b2568ca02bb45a5a2018f",
+      "receiptDigest": "receipt:sha256:43a579821c3c0bf84000e437",
+      "observedAt": "2026-10-13T12:00:40.485Z",
+      "executor": "certify-evidence",
       "artifactPaths": [
         "config/hardening-rule-probes.v1.json"
       ],
@@ -212,10 +212,10 @@
     },
     {
       "subject": "authoritative-gate",
-      "evidenceSha": "88e3c3fb52937ff303b0944cc22cfee624bf807e",
-      "receiptDigest": null,
-      "observedAt": null,
-      "executor": null,
+      "evidenceSha": "efbb277348a3d756036b2568ca02bb45a5a2018f",
+      "receiptDigest": "receipt:sha256:42eeb5b21ca39e9774302861",
+      "observedAt": "2026-10-13T12:00:40.485Z",
+      "executor": "certify-evidence",
       "artifactPaths": [
         "config/quality-gate.v1.json"
       ],
@@ -223,10 +223,10 @@
     },
     {
       "subject": "full-regression",
-      "evidenceSha": "88e3c3fb52937ff303b0944cc22cfee624bf807e",
-      "receiptDigest": null,
-      "observedAt": null,
-      "executor": null,
+      "evidenceSha": "efbb277348a3d756036b2568ca02bb45a5a2018f",
+      "receiptDigest": "receipt:sha256:4f8e4155bb69a51cb0e86564",
+      "observedAt": "2026-10-13T12:00:40.485Z",
+      "executor": "certify-evidence",
       "artifactPaths": [
         "config/shard-weights.v1.json"
       ],
@@ -234,10 +234,10 @@
     },
     {
       "subject": "clean-checkout",
-      "evidenceSha": "c18db55970a6497470191c8c9ef58f5012a96c8c",
-      "receiptDigest": null,
-      "observedAt": null,
-      "executor": null,
+      "evidenceSha": "efbb277348a3d756036b2568ca02bb45a5a2018f",
+      "receiptDigest": "clean-receipt:sha256:da11731f54a463b23f56e7af",
+      "observedAt": "2026-10-13T12:00:40.485Z",
+      "executor": "certify-evidence",
       "artifactPaths": [
         "bin/quality-gate-clean.mjs"
       ],
@@ -245,10 +245,10 @@
     },
     {
       "subject": "ui",
-      "evidenceSha": "88e3c3fb52937ff303b0944cc22cfee624bf807e",
-      "receiptDigest": null,
-      "observedAt": null,
-      "executor": null,
+      "evidenceSha": "efbb277348a3d756036b2568ca02bb45a5a2018f",
+      "receiptDigest": "receipt:sha256:1659df07e8b56b764ede9c4f",
+      "observedAt": "2026-10-13T12:00:40.485Z",
+      "executor": "certify-evidence",
       "artifactPaths": [
         "ui/control-center/package-lock.json"
       ],
@@ -256,10 +256,10 @@
     },
     {
       "subject": "browser-workflow",
-      "evidenceSha": "88e3c3fb52937ff303b0944cc22cfee624bf807e",
-      "receiptDigest": null,
-      "observedAt": null,
-      "executor": null,
+      "evidenceSha": "efbb277348a3d756036b2568ca02bb45a5a2018f",
+      "receiptDigest": "receipt:sha256:8f188c08c852f5934e444d41",
+      "observedAt": "2026-10-13T12:00:40.485Z",
+      "executor": "certify-evidence",
       "artifactPaths": [
         "playwright.control-center.config.ts"
       ],
@@ -276,9 +276,9 @@
     },
     {
       "subject": "exact-checkpoint-ci",
-      "evidenceSha": "dbe3349e08be58c8dbf4c2d3ac4eb7cd2ad9b7b4",
-      "receiptDigest": "receipt:sha256:9b6eec07326d7bcc2c671c60",
-      "observedAt": "2026-10-11T18:18:02.379Z",
+      "evidenceSha": "efbb277348a3d756036b2568ca02bb45a5a2018f",
+      "receiptDigest": "receipt:sha256:f03b00d869832fb88adeb16b",
+      "observedAt": "2026-10-13T12:00:40.485Z",
       "executor": "certify-evidence",
       "artifactPaths": [
         "config/ci-block-record.v1.json"
@@ -287,9 +287,9 @@
     },
     {
       "subject": "dependency-advisory",
-      "evidenceSha": "dbe3349e08be58c8dbf4c2d3ac4eb7cd2ad9b7b4",
-      "receiptDigest": "receipt:sha256:35d2c0a568ce049b96fd198a",
-      "observedAt": "2026-10-11T18:18:02.379Z",
+      "evidenceSha": "efbb277348a3d756036b2568ca02bb45a5a2018f",
+      "receiptDigest": "receipt:sha256:306a565e719bf475318dcb3c",
+      "observedAt": "2026-10-13T12:00:40.485Z",
       "executor": "certify-evidence",
       "artifactPaths": [
         "config/dependency-currency.v1.json"
