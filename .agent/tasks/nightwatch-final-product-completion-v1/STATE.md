@@ -14,8 +14,8 @@ Last validated implementation SHA: 70f4b8269eae0c08e4a28c22f87b82c4958bbb92
 Last substantive checkpoint SHA: 70f4b8269eae0c08e4a28c22f87b82c4958bbb92
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
-Branch: session/nightwatch-final-product-complet-d23bf75f
-Last checkpoint: 2026-10-13 — HC-177 probe-fixture repair in the C-00 session worktree (S' pending CI + S'-bound evidence).
+Branch: main
+Last checkpoint: 2026-10-13 — HC-177 probe-fixture repair S'=70f4b826 with green exact-head CI and 14/16 S'-bound conditions; session released, canonical-routed.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a

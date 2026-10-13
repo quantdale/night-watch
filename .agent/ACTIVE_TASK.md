@@ -48,23 +48,20 @@ No new campaign or additional paid provider proof is authorized by this recovery
 ```text
 CAMPAIGN: nightwatch-final-product-completion-v1
 CHILD TASK: NONE
-SESSION WORKTREE: session/nightwatch-final-product-complet-d23bf75f
+SESSION WORKTREE: NONE
 
 CURRENT STATUS:
-  IN_PROGRESS — M14. A stale hardening-probe fixture (HC-177 named a binding
-  SHA that the S evidence re-bind legitimately replaced) made the required
-  HARDENING_PROBES group fail at HEAD. That fixture is repaired forward as a
-  genuine substantive checkpoint S', which then needs its own exact-S' CI
-  execution and fresh S'-bound evidence; the previous S receipts stay
-  historical and are never rebound by text. Canonical main remains the sole
-  integration checkout; this implementation runs in the C-00 session worktree
-  named above, and bounded documentary maintenance returns to canonical once
-  the session is released.
+  IN_PROGRESS — M14. The HC-177 probe-fixture defect is repaired at
+  S'=70f4b826, which executed green on GitHub (run 38461538853), and every
+  locally actionable subject is measured, published and bound at S'. Canonical
+  and a fresh clone agree exactly: 14/16 effective MET, one identical
+  evaluation digest, zero per-condition differences. The two remaining
+  conditions are owner gates, so the campaign is NOT_COMPLETE under D-129 and
+  canonical main is again the sole checkout.
 
 IMPLEMENTATION AUTHORIZED:
-  One bounded substantive repair: the value-independent HC-177 probe fixture
-  (no production rule, guard or bound is weakened). No other source, config or
-  test change is authorized by this window.
+  None outstanding. The substantive repair is integrated and validated; this
+  window covers documentary close-out only.
 
 EXTERNAL CONTACT AUTHORIZED:
   GitHub Actions read/observe; validated fast-forward Nightwatch pushes.

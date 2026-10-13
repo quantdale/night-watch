@@ -78,4 +78,11 @@ do not overlap. The successor exists because the probe-fixture repair it
 carries is a substantive config change, which the canonical MAINTENANCE
 role may not author.
 
-CLAIM: sess-b273f0dab1b4 | role=SESSION | task=nightwatch-final-product-completion-v1 | created=2026-10-13T19:14:02Z | released=OPEN | base=556b764e1d96d43f9243fb7ab0371a6a6df447eb | tip=OPEN
+CLAIM: sess-b273f0dab1b4 | role=SESSION | task=nightwatch-final-product-completion-v1 | created=2026-10-13T19:14:02Z | released=2026-10-13T22:35:15Z | base=556b764e1d96d43f9243fb7ab0371a6a6df447eb | tip=05e5a7aee9469dcd8be733e1c68aab1334fcbac0
+
+
+The implementation session is closed at its last commit. The successor is the
+canonical MAINTENANCE window that carries the documentary close-out and stands
+open for the campaign while the two owner gates remain.
+
+CLAIM: sess-79cd00033cd8 | role=MAINTENANCE | task=nightwatch-final-product-completion-v1 | created=2026-10-13T22:35:15Z | released=OPEN | base=05e5a7aee9469dcd8be733e1c68aab1334fcbac0 | tip=OPEN
