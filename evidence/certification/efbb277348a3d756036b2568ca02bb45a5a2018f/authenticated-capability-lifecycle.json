@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "nightwatch.certification-evidence-receipt.v1",
+  "subject": "authenticated-capability-lifecycle",
+  "subjects": [
+    "authenticated-capability-lifecycle"
+  ],
+  "sourceHead": "efbb277348a3d756036b2568ca02bb45a5a2018f",
+  "observedAtHead": "a12476e8d4c028efcf1f25659962d0f275c5c152",
+  "sourceRootCleanAtEmit": true,
+  "checkId": "authenticated-capability-lifecycle-check",
+  "checkState": "MET",
+  "result": "PASS",
+  "producer": "PROJECT_CHECK",
+  "environmentClass": "HOST_LOCAL",
+  "receiptDigest": "receipt:sha256:ef4cb4ffd1cf4300db7e44c6"
+}

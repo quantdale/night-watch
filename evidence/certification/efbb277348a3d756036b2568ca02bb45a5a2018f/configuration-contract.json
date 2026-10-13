@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "nightwatch.certification-evidence-receipt.v1",
+  "subject": "configuration-contract",
+  "subjects": [
+    "configuration-contract"
+  ],
+  "sourceHead": "efbb277348a3d756036b2568ca02bb45a5a2018f",
+  "observedAtHead": "a12476e8d4c028efcf1f25659962d0f275c5c152",
+  "sourceRootCleanAtEmit": true,
+  "checkId": "configuration-contract-check",
+  "checkState": "MET",
+  "result": "PASS",
+  "producer": "PROJECT_CHECK",
+  "environmentClass": "HOST_LOCAL",
+  "receiptDigest": "receipt:sha256:dd4478556e71ab30b5575524"
+}
