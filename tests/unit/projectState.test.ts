@@ -49,13 +49,15 @@ import {
   resolveProbeBinding,
 } from '../../bin/lib/probe-binding.mjs';
 import { classifyCheckpointRange } from '../../bin/lib/checkpoint-range.mjs';
-import { stableCanonical, productionBindingReceiptVerifier, verifyPersistedReceipt } from '../../bin/lib/release-evidence.mjs';
+import { stableCanonical, productionBindingReceiptVerifier, verifyPersistedReceipt, verifyReceiptBody, loadReleaseEvidenceBindings } from '../../bin/lib/release-evidence.mjs';
+import { probeUiErrorTaxonomy } from '../../bin/lib/release-receipt-probes.mjs';
 import { laneArtifactDemotions } from '../../bin/lib/evidence-artifact.mjs';
 import { topologyCertificationForCheckpoint, topologyCertificationVerdict } from '../../bin/lib/topology-receipts.mjs';
 import { topologyReceiptDigest } from '../../bin/lib/topology-gate.mjs';
 import { checkpointRoleViolations } from '../../bin/lib/checkpoint-role.mjs';
 import {
   UI_HARNESS_FILE,
+  UI_HARNESS_RECEIPT_PATH,
   UI_HARNESS_REQUIRED_TESTS,
   UI_HARNESS_SUITE,
   buildUiHarnessReceipt,
@@ -2763,7 +2765,7 @@ test.describe('release probe wiring (M4 task 5.1, corrected by VD-01..VD-05)', (
     // below proves every registered check resolves to probe output.
   });
 
-  test('the real-tree evaluation resolves every check to probe output, and no D3 probe is MET away from the certified checkpoint', () => {
+  test('the real-tree evaluation preserves D3 tree binding and separately verifies checkpoint receipt measurements', () => {
     const result = spawnSync(process.execPath, [CHECKER, '--root', REPO_ROOT], { encoding: 'utf8', timeout: 300_000 });
     // A failing evaluation (a dirty working tree) prints the verdict on
     // stderr; a passing one prints it on stdout with the JSON receipt.
@@ -2837,6 +2839,29 @@ test.describe('release probe wiring (M4 task 5.1, corrected by VD-01..VD-05)', (
       }),
     });
     const atCheckpoint = clean && (head === checkpoint || rangeClass === 'DOCUMENTARY_DESCENDANT');
+    // G18 measures the receipt's S, whereas bindTreeProbe measures this HEAD.
+    // A historical raw MET is legitimate even on a substantive descendant;
+    // it never substitutes for the condition's independent evidence binding.
+    const uiId = 'ui-error-taxonomy-rendering';
+    const ui = probeUiErrorTaxonomy(REPO_ROOT, checkpoint);
+    expect(checkStates.get(uiId)).toBe(ui.state);
+    if (ui.state === 'MET') {
+      const file = `evidence/certification/${checkpoint}/${uiId}.json`;
+      const committed = spawnSync('git', ['-C', REPO_ROOT, 'show', `HEAD:${file}`], {
+        env: gitEnv(REPO_ROOT), shell: false, encoding: 'utf8', timeout: 10_000,
+      });
+      // Before publication the probe may consume a local execution receipt.
+      const body = JSON.parse(committed.status === 0 ? committed.stdout : fs.readFileSync(path.join(REPO_ROOT, UI_HARNESS_RECEIPT_PATH), 'utf8'));
+      expect(verifyReceiptBody(body, uiId, body.receiptDigest, checkpoint)).toEqual({ verified: true, reason: 'VERIFIED' });
+      const bindings = loadReleaseEvidenceBindings(REPO_ROOT);
+      expect(bindings.ok).toBe(true);
+      const bound = bindings.bySubject.get(uiId);
+      if (bound?.evidenceSha == null) expect(states.get(uiId)).toBe('EVIDENCE_ABSENT');
+      else if (bound.evidenceSha !== checkpoint) expect(states.get(uiId)).not.toBe('MET');
+      else if (bound.receiptDigest === null || !verifyPersistedReceipt(REPO_ROOT, uiId, bound.receiptDigest, checkpoint).verified) {
+        expect(states.get(uiId)).toBe('EVIDENCE_RECEIPT_ABSENT');
+      } else expect(states.get(uiId)).toBe('MET');
+    } else expect(states.get(uiId)).not.toBe('MET');
     if (!atCheckpoint) {
       const conditionsByCheck = new Map<string, string>();
       for (const condition of liveDefinition().conditions) conditionsByCheck.set(condition.check, condition.id);
@@ -2854,6 +2879,9 @@ test.describe('release probe wiring (M4 task 5.1, corrected by VD-01..VD-05)', (
         // re-observation documentary), autonomous yield, dependency assessment
         // and accessibility. Asserting the exclusion by the module's own list
         // rather than by hand keeps the two from drifting.
+        // Receipt consumers are proved above (G18) or in the host-bound
+        // consumer matrix; the assertions below govern live tree measurements.
+        if (check === 'ui-error-taxonomy-check') continue;
         if (HOST_BOUND_SUBJECTS.includes(id)) continue;
         expect(state, `${check} must not be MET at HEAD ${head} for checkpoint ${checkpoint}`).not.toBe('MET');
         // R3-07 / corrections task 8.6: assert the CHECK state, not only the

@@ -6658,3 +6658,46 @@ confirmed or cleared before that query runs is unevidenced.
 
 **Phase applicability.** Every dependency audit from this checkpoint forward.
 
+
+
+## D-170 — UI receipt measurements preserve their checkpoint; effective certification still requires verified evidence
+
+**Context (2026-10-13, existing final-product campaign).** CI run `38283888651`
+at `9fe141c726928469344d4e3b126ea898a8f4a52d` failed D3's real-tree regression.
+A fresh clone and canonical both measured `ui-error-taxonomy-rendering` as raw
+MET from the valid UI harness receipt at `7871b463`, while its effective state
+was EVIDENCE_ABSENT and certification was refused. The regression incorrectly
+required the raw state of this receipt consumer to follow a live tree probe's
+demotion. D-148 already distinguishes those measurements.
+
+**Decision.** A receipt probe reports the measured checkpoint in its raw state,
+even when the observing HEAD is a substantive descendant. This grants no
+certification at a new checkpoint: the effective state independently requires
+an exact evidence binding, a persisted verified receipt and the declared
+source artifacts. Tree measurements continue through `bindTreeProbe`; the
+four `HOST_BOUND_SUBJECTS` and their consumer authority are unchanged. The D3
+regression positively verifies G18's receipt and its effective evidence gates
+instead of asserting that every raw historical pass is a tree measurement.
+
+The UI probe prefers the committed Git receipt of S, validated against the
+harness and type sources at S. An ignored stale host receipt cannot mask what
+a fresh clone observes; before publication a host-local execution receipt can
+still supply a raw diagnostic. Missing or invalid evidence never becomes an
+effective MET. The broad JSON ignore exception is replaced by the single
+rooted, one-checkpoint-directory lifecycle receipt filename. Authentication
+and secret exclusions remain intact; its certification content guard remains
+mandatory.
+
+**Regression evidence.** Real Git fixtures commit receipts, compare a host
+with stale ignored artifacts to an independent clone with no artifacts, refuse
+missing/digestless/mismatched receipts and bindings, and invalidate old evidence
+after committed source, test, UI, workflow, ignore, lockfile and config edits.
+Git itself checks the secret filename matrix at the root and inside the
+certification tree. The original CI assertion and exact observed states remain
+in the active task's recovery record. Validation results belong there.
+
+**Limit and owner actions.** OD-5's tamper-evident cooperative model remains; no
+signature, secret, provider campaign or new authority is introduced. A new S
+requires executed green CI at that SHA before documentary observation. An old
+paid proof cannot certify the new S; another paid proof, repository visibility
+and campaign archival remain separate owner actions.

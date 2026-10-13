@@ -8,50 +8,14 @@ Status: IN_PROGRESS
 TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1
 TASK_GROUPS_COMPLETE: 1,2,3,4,5,6,7,8,9,10,11,12,13,14
 TASK_GROUP_NEXT: 15
-TASK_NEXT_ID: 15.3
+TASK_NEXT_ID: 15.2
 Starting SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
 Last validated implementation SHA: 7871b463a03936016caaf88081c9221baccc60f0
 Last substantive checkpoint SHA: 7871b463a03936016caaf88081c9221baccc60f0
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
-Branch: main
-Last checkpoint: 2026-10-09 — M10 (group 11) DOCUMENTATION OF RECORD WRITTEN; 11.1-11.6 COMPLETE
-(`b7afa9e9` for the S-fixes/ratchets; DECISIONS D-153..D-167, SAFETY_MODEL §25-§32 and the
-ARCHITECTURE M10 record for the documentation of record). The T3/T4 S-fixes and the wired shared
-authorities landed at `b7afa9e9`: `assertGatedReadAllowed` (NW-AUD-032), the budget-reservation
-release (NW-AUD-033), the single-flight canonical apply (NW-AUD-011), the crash-consistent
-retention journal (NW-AUD-005), `publishLocalReport` (NW-AUD-009) and
-`admitLocalTypeScriptCompiler` (NW-AUD-007); D-15/D-16/D-20, the D-17 unused-export ratchet (pin
-635), the X-11 private retention scopes and the A-16 CF-1 re-measurement (40 cases, floor 20).
-DECISIONS now records OD-1..OD-4 as D-153 (the planning documents' reserved "D-144" label was
-already issued to the `retries`→`failures` rename, so the entry took the next unused number under
-Erratum E-1's rule), the 228-item census and its disposition vocabulary (D-154), the seven
-successor behaviours (D-155), the demotion semantics (D-156), the HANDOFF_TRUTH
-`SESSION_DECLARED_ABSENT_EXPECTED` classification (D-157), the DEV-lane precondition registry
-(D-158), the M10 documentation alignment (D-159), and the eight owner-signed ACCEPTED_RESIDUAL
-entries D-160..D-167 (A-15, NW-AUD-027, NW-AUD-030, NW-AUD-031, NW-AUD-034, R2-15, R2-17, R2-26).
-The unconsumed `NIGHTWATCH_REASONER_PRINT` declaration is removed from
-`config/environment-surface.v1.json` (73 variables remain) and the print CLI is documented as a
-LIVE provider driver whose authentication lives in HOME. RESUME POINT: M10 task 11.7 (commit),
-then M11-M14 (the single
-paid run is 12.3, the npm query 15.4) and the 13-section final report.
-Previous: 2026-10-03 — THE REVIEW-5 CHILD CAMPAIGN IS COMPLETE AND ARCHIVED
-(`2026-10-03-nightwatch-final-completion-review5-v1`, D-152); its Track A and Track B tips carry
-exact-head CI GREEN (runs 37044532848 at `4f4d7bfd` and 37062959122 at `5b2ea0f7`). M9 10.2 is COMPLETE
-(76/76 declared at the time: 72 operator-CLI + 4 library-retained; the registry now counts 77 with
-`certify-evidence`) and 10.3 is COMPLETE.
-Previous: 2026-10-01 — the review-4 child campaign closed and the parent resumed in a fresh session through 10.2 resume batch 1 (60/76 at that point).
-Previous: 2026-09-28 — M9 10.2 IN PROGRESS
-(59/76 declared, 4 library-retained, 13 pending): the Phase 0 formatter
-blocker is RESOLVED (owner disposition of the 16 disposable files, harness
-formatter/autofix disabled, canonical clean at `df0a6d35`, workspace:check
-PASS); the two 10.2 follow-through commits (`0a436f12`, `09c50277`) plus the
-lint and continuity follow-through were checkpointed. Previous: 2026-09-27 —
-M8 COMPLETE (9.1-9.13) with gate pair 5712/0 and exact-head CI green (run
-36349771611 @ `badb6f88`); M7 COMPLETE (8.1-8.5) at 5645/0 (run
-36321415439 @ `995378d2`); M6 COMPLETE (7.1-7.11); M5 COMPLETE (6.1-6.17);
-M4 COMPLETE (5.1-5.7); M3 COMPLETE (4.1-4.13) with run 36243034942,
-receipt `receipt:sha256:535217a6dbae65b7a26f9243`.
+Branch: session/nightwatch-final-product-complet-f4139a72
+Last checkpoint: 2026-10-13 — clean-clone D3 failure reproduced at 9fe141c7.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
@@ -72,49 +36,9 @@ ledger, and end at `PROJECT_COMPLETE_AND_CI_CERTIFIED` under D-129 with a
 
 ## Current Milestone
 
-M14 close-out choreography and certification (group 15, tasks 15.1-15.8) is the
-NEXT group. **M13 (group 14, tasks 14.1-14.6) is COMPLETE (2026-10-10)** and the
-deferred 9.5b is RESOLVED against the popup/frame/worker admission evidence
-rather than inherited. What M13 produced:
-
-- **14.1** - the NW-AUD original / successor reconciliation is appended to
-  `audit.md` with SHA citations: NW-AUD-021 <-> `credential-use-binding-successor`,
-  NW-AUD-022 <-> `proxy-event-firewall`,
-  NW-AUD-024 <-> `run-evidence-transaction-successor`,
-  NW-AUD-014 <-> `child-process-census-indirection`, plus the two engine-discovered
-  successors that have no original (`shard-certification-integrity`,
-  `shard-temp-isolation`) and the five originals the priority remediation
-  sequence implemented.
-- **14.2** - the six BLOCKED successor children are COMPLETE against their
-  receipts (`status:local` `blocked-campaigns` 6 -> 0).
-  production-completion-programme (47 boxes), the autonomous bug-hunting
-  programme (18 boxes), W11 (3 struck boxes) and the observability master plan
-  (10 boxes) are all terminal with every box ticked-with-citation or
-  struck-with-disposition. Programme 9.1-9.3 ticked against `a574945e`.
-  `agent:check` PASS.
-- **14.3** - all 228 census items carry exactly one closed-vocabulary
-  disposition (FIXED 153 / SUPERSEDED 24 / ACCEPTED_RESIDUAL 18 /
-  INVALID_STALE_CLAIM 16 / EXTERNAL_PREREQUISITE 8 / QUARANTINED 5 /
-  HISTORICAL_ONLY 4), appended to `audit.md` with the normalization rule and a
-  class cross-check.
-- **14.4** - the owner-confirmation record states exactly what exists (D-152,
-  D-160..D-167, D-153's tier rule, D-158's quarantine list with an empty
-  `ownerAuthorizations`) and exactly what does not. Nothing fabricated.
-- **14.5** - the operator truth is rendered from live output into README,
-  CURRENT_STATE, RELEASE-ADVANCE-CONDITIONS, ROADMAP, SAFETY_MODEL section 33
-  and AGENTS.md. The repository-visibility mismatch is resolved: the repository
-  is **PUBLIC** (`gh repo view`), the owner action to make it private is PENDING
-  (task 15.8), and no safety invariant depends on privacy.
-- **14.6** - `openspec validate --all --strict` PASS with exactly one active
-  change; every other active change archived oldest-first.
-
-M9 (group 10), M10 (group 11), M11 (group 12) and M12 (group 13) are COMPLETE.
-M9 is COMPLETE: the bin type-check lane measures **0 diagnostics across all 143
-tracked `bin/**/*.mjs` implementations**, 77 of 77 entry points conforming, 0
-exemptions, 0 per-file ceilings, 0 diagnostic-silencing widening annotations, and
-the lane is **BLOCKING**. Its two structural findings
-(`BIN_TYPECHECK_DECLARATION_SHADOWED` and the `runTsc` empty-output judgement)
-are permanently closed with regressions.
+M14 CI recovery (group 15) at tasks 15.1-15.3. Preserve the existing campaign; correct the
+receipt-versus-tree assertion, narrow the ignore exception, and validate a new
+substantive checkpoint before CI observation and documentary evidence binding.
 
 ## Completed Milestones
 
@@ -196,44 +120,23 @@ are permanently closed with regressions.
 
 ## Work In Progress
 
-**Current (2026-10-10):** M13 (group 14) tasks 14.1-14.6 are COMPLETE and
-recorded; the deferred 9.5b is RESOLVED. The campaign's next group is M14
-(tasks 15.1-15.8): the full authoritative validation set, the final substantive
-commit S, the exact-head CI observation and re-binding at S, the canonical gate
-trio plus the authorized npm registry advisory query, the documentary receipt
-commit and archive, the topology proof, the 13-section final report, and the
-OWNER STEP that returns the repository to private.
-The log below is HISTORICAL (M2-M12, oldest first) and is not the current state.
+Clean clone and canonical agree: UI raw MET, effective EVIDENCE_ABSENT; the
+certified checkpoint is 7871b463 and live 9fe141c7 is SUBSTANTIVE_DESCENDANT.
+The three lifecycle receipts added by 20dfa607 exist at both that commit and
+HEAD, have re-derived digests and verified subject/SHA bindings. The other
+16-condition evidence is stale or missing. No certification advance is claimed.
 
 ## Exact Next Action
 
-M14 task **15.1**: run the full authoritative set in this session - `typecheck`,
-`typecheck:bin` (BLOCKING), Control Center UI typecheck/test/build, browser
-suite, `schema:check`, `hardening:check`, `hardening:rules`, `validation:universe`,
-`agent:check`, `agent:audit`, `project:check`, `workspace:check`, `session:check`,
-`campaign:synthetic`, `gate:local` and `npm test`. Then 15.2 (create the final
-substantive commit S, routed canonical, and integrate with `--expect-head S`),
-15.3 (observe CI `EXECUTED_PASS` at S with `gh`, ingest it through
-`phase23-ci observe`, and re-execute + re-bind every lane and condition at S with
-`certify:evidence` so no condition carries ancestor evidence), 15.4 (from
-canonical with no live session: `gate:local`, `gate:clean` sibling-absent for
-root and UI, `gate:topology` at S, plus the authorized npm registry advisory
-query), 15.5 (the documentary receipt commit on approved paths only, archive this
-change, push, confirm the `project:check` verdict at S and `HEAD == origin/main`),
-15.6 (the topology proof: only `main`, one worktree, clean), 15.7 (the
-13-section final completion report) and 15.8 (the OWNER STEP: revert the
-repository to private and confirm GitHub Actions still executes, recording the
-run).
+Task 15.2: implement the scoped receipt-selection and D3 assertion repairs, add negative
+regressions for missing/stale receipts and source/config invalidation, and prove
+the narrow ignore exception leaves every secret exclusion intact. Run focused
+tests, both typechecks, hardening checks/mutants, milestone, prepush and a fresh
+clone. Commit a genuine S and integrate through C-00; observe executed CI at S.
+Only after green CI, use the guarded documentary protocol to record observations
+and bind honestly produced evidence. Do not run a paid campaign, change visibility
+or archive. Report all 16 effective conditions and remaining owner decisions.
 
-What 14.1-14.6 produced, so the next session does not redo it: the successor
-reconciliation, the six child closures, the four terminal legacy ledgers, the
-228-item disposition table, the owner-confirmation record and the live-rendered
-operator truth are all appended to `audit.md`, `docs/**` and the four legacy
-task records. The live figures the next session must carry forward rather than
-re-measure: `project:check` PASS with `conditionsMet 0/16` and
-`certificationRefused true` at certified `027367d9` / live head `c931444a`; the
-newest CI run `37881189722` at `88987013` is RED on `HANDOFF_TRUTH` and the six
-commits `88987013..c931444a` are CI-unobserved; the repository is PUBLIC.
 ## Superseded Next Action (8.1, complete)
 
 Read tasks 8.1-8.x and the environment-surface loader
@@ -303,7 +206,7 @@ exactly as in M4/M5.
   (run 37123923541). The close-out session `sess-7c6bca226ba5` was released and removed (`SESSION_BRANCH_DELETED`,
   `SESSION_WORKTREE_REMOVED`); this single canonical maintenance commit (claim `sess-af4de9d82ead`, recorded in
   `.agent/CLAIM_JOURNAL.md`) records the run and returns the routing block to `SESSION WORKTREE: NONE` and
-  `Branch: main`. A `gate:clean` from the canonical checkout with no live session follows from the next session.
+  `Branch: session/nightwatch-final-product-complet-f4139a72`. A `gate:clean` from the canonical checkout with no live session follows from the next session.
 - 2026-10-03 — review-5 child CLOSED. Exact-head CI GREEN at the close-out tip `15a8d1e8` (run 37120079300)
   after Track A `4f4d7bfd` (37044532848) and Track B `5b2ea0f7` (37062959122). `gate:clean` PASS over the
   close-out tree `3362bdb0` (`clean-receipt:sha256:59f8982ee3178e3d6adca79c`). The child session was released and removed; a fresh session owned by this
@@ -1137,3 +1040,55 @@ one bounded paid provider proof run (executed three times — the first two were
 operator-invocation errors recorded as `PROVIDER_BLOCKED_BEFORE_SOURCE_ACTION`,
 the third is the real proof), and the one npm registry advisory query remains
 unauthorized-unexecuted (task 15.4).
+
+## CI recovery evidence (2026-10-13)
+
+- Observed main/remote: `9fe141c726928469344d4e3b126ea898a8f4a52d`, clean.
+- CI `38283888651` executed and failed at that head. Clean-clone reproduction
+  fails `projectState.test.ts:2862`, subject `ui-error-taxonomy-rendering`:
+  expected raw checkState not MET, actual MET. Effective state EVIDENCE_ABSENT,
+  bound/resolved evidence SHA null, evidenceRelation null; 0/16 MET, certification
+  refused. Range SUBSTANTIVE_DESCENDANT; binding HEAD_NOT_CHECKPOINT.
+- The UI receipt is genuinely bound to `7871b463a03936016caaf88081c9221baccc60f0`,
+  digest `receipt:sha256:158af3f91d2467dbf0b5d652`, verified. D-148 explicitly
+  permits a receipt probe to report MET at S regardless of the measuring HEAD;
+  a tree probe requires the checkpoint binding. The D3 assertion conflated them.
+- All three lifecycle receipts added by `20dfa607` exist in its Git tree and
+  current HEAD. Digests re-derived and subject/SHA/clean/PASS bindings VERIFIED:
+  `0b4f2cdb` → `receipt:sha256:24f81d52f03a1506062767a2`,
+  `7871b463` → `receipt:sha256:e4005284147a8ffdac4dc201`,
+  `dbe3349e` → `receipt:sha256:61840bc7bfe429fa114c4b6c`.
+- Existing canonical maintenance record was live to the session CLI; adoption
+  refused SESSION_ALREADY_OWNED without effects. Its exact session was released
+  through C-00, then a dedicated implementation worktree was started/claimed.
+- Canonical versus fresh-clone raw/effective pairs are identical at the observed
+  head. Root install in the clone used `npm ci --ignore-scripts --offline`.
+- Safety: no Alphaus contact, sibling write, database/cloud operation, provider
+  campaign, visibility mutation, archive or history rewrite.
+
+### Recovery implementation validation
+
+- Focused receipt, committed-measurement, certification-evidence and reachability
+  suites: 31 passed, 0 failed. Typecheck exit 0; bin typecheck BLOCKING, 77/77,
+  errors/exemptions/ceilings 0/0/0. Structural hardening PASS.
+- Continuity initially caught three stale waypoint/progress statements; repaired
+  the task number, group number and current PLAN conformance. Agent check PASS
+  with 36 warnings (35 historical and the owner-manual revisit due).
+- Mutation validation correctly refused BM-108's obsolete search literal before
+  applying any mutant. Its operation now removes the committed-Git receipt read;
+  the clean-clone receipt tests remain its behavioural detector. A new mutant
+  broadens the ignore exception and is covered by Git's secret filename matrix.
+- Full projectState and the required mutation/lane validations remain pending.
+
+- Full projectState suite: 140 passed, 0 failed (3.1 minutes), including the
+  repaired real-tree D3 assertion. DEV launcher effects suite: 42 passed,
+  0 failed after strengthening the census to retain BM-001..BM-116 plus BM-117.
+- The first mutation scratch baseline failed its old 116 census pin after the
+  new mutant was added; no mutant ran. The live regression now requires all
+  117 exact identities, retaining every prior mutant. Re-run the complete
+  mutation harness through the milestone lane at the committed candidate S.
+- Diff reviewed; whitespace check PASS. Added-line scan found no absolute home
+  path, private key, bearer value, AWS access key or JWT. Only synthetic receipt
+  and filename values enter tests; existing tracked receipts remain unchanged.
+- Next: commit the scoped substantive candidate, execute milestone and prepush
+  at that exact HEAD, repair forward on any failure, then C-00 integration.

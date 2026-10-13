@@ -71,11 +71,23 @@ export function probeAccessibility(root, certifiedCheckpointSha) {
  * @returns {{state: string, detail: string}}
  */
 export function probeUiErrorTaxonomy(root, certifiedCheckpointSha) {
-  // R5-13: the host-local receipt first; in a clean clone only the TRACKED verbatim copy of S exists.
+  // Prefer the committed receipt of S in both environments. A newer or stale
+  // host-local run must not mask the same historical measurement a clone reads.
+  // Local execution evidence remains available before its documentary commit.
   const trackedPath = typeof certifiedCheckpointSha === 'string' && HEX40.test(certifiedCheckpointSha)
     ? `${CERTIFICATION_EVIDENCE_DIRECTORY}/${certifiedCheckpointSha.toLowerCase()}/ui-error-taxonomy-rendering.json`
     : null;
-  const raw = readJsonAt(root, UI_HARNESS_RECEIPT_PATH) ?? (trackedPath === null ? null : readJsonAt(root, trackedPath));
+  const committed = trackedPath === null ? null : gitReadOnly(root, ['show', `HEAD:${trackedPath}`]);
+  /** @type {unknown} */
+  let raw;
+  if (committed === null) raw = readJsonAt(root, UI_HARNESS_RECEIPT_PATH);
+  else {
+    try {
+      raw = JSON.parse(committed);
+    } catch {
+      return { state: 'UNMET', detail: 'committed UI-harness execution receipt is unreadable' };
+    }
+  }
   if (raw === null) {
     return {
       state: 'UNMET',

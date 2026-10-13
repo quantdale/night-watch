@@ -5079,8 +5079,8 @@
       "ops": [
         {
           "file": "bin/lib/release-receipt-probes.mjs",
-          "search": " ?? (trackedPath === null ? null : readJsonAt(root, trackedPath));",
-          "replace": ";"
+          "search": "  const committed = trackedPath === null ? null : gitReadOnly(root, ['show', `HEAD:${trackedPath}`]);",
+          "replace": "  const committed = null;"
         }
       ],
       "focusedTests": [
@@ -5246,6 +5246,24 @@
         },
         {
           "file": "tests/unit/certificationReachability.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-117",
+      "finding": "R5-13/auth-ignore-boundary",
+      "guard": "only the exact lifecycle certification filename escapes auth*.json",
+      "ops": [
+        {
+          "file": ".gitignore",
+          "search": "!/evidence/certification/*/authenticated-capability-lifecycle.json",
+          "replace": "!evidence/certification/**/*.json"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/releaseReceiptProbes.test.ts",
+          "grep": "the lifecycle receipt exception"
         }
       ]
     }

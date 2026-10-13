@@ -200,10 +200,11 @@ test.describe('15.A the guard-try evasion class is closed', () => {
     }
   });
 
-  test('the registered mutant universe is unchanged — nothing was removed to make the gate pass', () => {
+  test('the registered mutant universe retains every prior mutant and adds the receipt ignore regression', () => {
     const registry = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, 'config', 'hardening-rule-probes.v1.json'), 'utf8')) as { behaviouralMutants?: Array<{ id: string }> };
     const ids = (registry.behaviouralMutants ?? []).map((entry) => entry.id);
-    expect(ids.length).toBe(116);
+    expect(ids.length).toBe(117);
+    expect([...ids].sort()).toEqual(Array.from({ length: 117 }, (_, index) => `BM-${String(index + 1).padStart(3, '0')}`));
     expect(new Set(ids).size).toBe(ids.length);
     // The five previously-surviving mutants are all still registered.
     for (const id of ['BM-026', 'BM-029', 'BM-030', 'BM-034', 'BM-035']) expect(ids).toContain(id);

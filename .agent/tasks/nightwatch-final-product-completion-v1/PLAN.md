@@ -263,9 +263,9 @@ approved paths.
   X-03/X-12, R2-58).
 - Files/areas: all `bin/*.mjs`, `config/bin-typecheck.v1.json`, shared parser
   rule + probe, README claim, `bin/run-shards.mjs` batches.
-- Acceptance criteria: 76/76 conformance; zero diagnostics; the gate lane is
+- Acceptance criteria: 77/77 conformance; zero diagnostics; the gate lane is
   blocking; declared deletions for retired bins.
-- **Status:** IN_PROGRESS — 10.1 DONE, 10.2 COMPLETE (76/76 declared, 0 pending), 10.3 COMPLETE, 10.4 COMPLETE (0 diagnostics across all 143 tracked implementations, 77/77 conforming, 0 exemptions, 0 widening annotations), 10.5 COMPLETE (BLOCKING, 0 exemptions, no ceilings, budget 0); 10.6 (`gate:milestone` PASS; commit) is next. The recorded 1402 baseline was a FLOOR rather than a measurement: `tsconfig.bin.json` used to include `bin/**/*.d.mts`, which made TypeScript drop each shadowed `.mjs` implementation from the program, so 53 implementations carrying 952 real diagnostics were never checked; `runTsc` also read an empty (clean) tsc output as a toolchain failure. Both are closed with a permanent regression suite, and four declaration-drift defects plus the census's JSDoc false positive were repaired in the same pass.
+- **Status:** COMPLETE — implementation and validation recorded in STATE and tasks.md.
 
 ### M10 — Residual dispositions, quality debt and behaviour documentation (tasks 11.1-11.7)
 
@@ -276,7 +276,7 @@ approved paths.
   `docs/ARCHITECTURE.md`, affected source, ratchets, tests.
 - Acceptance criteria: every residual decision is owner-signed with a revisit
   trigger; docs contradict no implemented behaviour.
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE — landed implementation/proofs/dispositions recorded in STATE and tasks.md.
 
 ### M11 — Operator proofs (tasks 12.1-12.5)
 
@@ -289,14 +289,14 @@ approved paths.
   reproduction attempts, admissions/refusals, sibling identity before/after,
   and the leak scan; a blocked provider records
   `PROVIDER_BLOCKED_BEFORE_SOURCE_ACTION` as EXTERNAL.
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE — landed implementation/proofs/dispositions recorded in STATE and tasks.md.
 
 ### M12 — Adversarial completion audit (tasks 13.1-13.2)
 
 - Objective: read-only adversarial lanes attack the completed surfaces; every
   reproduced defect gets a fix plus regression (T0/T1) or a census
   disposition; affected gates re-run.
-- **Status:** NOT_STARTED
+- **Status:** COMPLETE — landed implementation/proofs/dispositions recorded in STATE and tasks.md.
 
 ### M13 — Ledger closure and live-rendered documentation (tasks 14.1-14.6)
 
@@ -321,7 +321,7 @@ approved paths.
   ingested; release and worktree removal; canonical gate trio; documentary
   receipt commit; archive this change; terminal topology proof; final
   13-section completion report.
-- **Status:** NOT_STARTED
+- **Status:** IN_PROGRESS — CI recovery at 15.1-15.3; exact-S CI and guarded observations remain.
 
 ## Validation Strategy
 
@@ -370,7 +370,7 @@ result as PASS.
 
 Exactly those in `SPEC.md`: all 228 items dispositioned (OD-1);
 `PROJECT_COMPLETE_AND_CI_CERTIFIED` under D-129 with CI `EXECUTED_PASS` at S
-(OD-2); bin type-check BLOCKING 0 exemptions and 76/76 CLI contract (OD-2);
+(OD-2); bin type-check BLOCKING 0 exemptions and 77/77 CLI contract (OD-2);
 operator proofs recorded (OD-3); ledger closed with this change archived last;
 terminal topology `main`-only, clean, equal to `origin/main`; final 13-section
 completion report delivered.

@@ -17,6 +17,8 @@ import { YIELD_AUTHORIZATION_PATH, probeAccessibility, probeUiErrorTaxonomy, pro
 import { UI_HARNESS_FILE, UI_HARNESS_RECEIPT_PATH, UI_HARNESS_REQUIRED_TESTS, UI_HARNESS_SUITE, buildUiHarnessReceipt } from '../../bin/lib/ui-harness-receipt.mjs';
 import { buildProductRunReceipt } from '../../src/core/agentRuntime/productRunReceipt';
 import { uiHarnessReceiptDigest } from '../../bin/lib/ui-harness-receipt.mjs';
+import { collectCheckpointBindingFacts } from '../../bin/lib/checkpoint-binding.mjs';
+import { evaluateReleaseCertification, parseReleaseCertificationDefinition, type ReleaseCheckState } from '../../src/core/releaseCertification';
 import { verifyPersistedReceipt } from '../../bin/lib/release-evidence.mjs';
 
 const REPO = path.join(__dirname, '..', '..');
@@ -84,11 +86,16 @@ test.describe('G20 accessibility certification probe', () => {
 });
 
 test.describe('G18 UI-harness probe', () => {
-  function uiFixture(): { root: string; cleanup: () => void; build: (sha: string, failFirst?: boolean) => unknown; head: string } {
+  function uiFixture(): { root: string; cleanup: () => void; build: (sha: string, failFirst?: boolean) => unknown; head: string; git: (args: string[]) => import('node:child_process').SpawnSyncReturns<string> } {
     const s = scratchRoot();
     const environment = { PATH: process.env.PATH ?? '', HOME: s.root, GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_NOSYSTEM: '1', GIT_AUTHOR_NAME: 'nw', GIT_AUTHOR_EMAIL: 'nw@example.invalid', GIT_COMMITTER_NAME: 'nw', GIT_COMMITTER_EMAIL: 'nw@example.invalid' };
-    const git = (args: string[]) => spawnSync('git', args, { cwd: s.root, env: environment, encoding: 'utf8', shell: false });
+    const git = (args: string[]) => {
+      const result = spawnSync('git', args, { cwd: s.root, env: environment, encoding: 'utf8', shell: false });
+      expect(result.status, result.stderr).toBe(0);
+      return result;
+    };
     git(['init', '--quiet', '-b', 'main']);
+    fs.writeFileSync(path.join(s.root, '.gitignore'), 'artifacts/\n');
     const harnessSource = fs.readFileSync(path.join(REPO, 'ui/control-center/src/contractRender.test.tsx'), 'utf8');
     const typesSource = fs.readFileSync(path.join(REPO, 'ui/control-center/src/types.ts'), 'utf8');
     for (const [relative, text] of [['ui/control-center/src/contractRender.test.tsx', harnessSource], ['ui/control-center/src/types.ts', typesSource]] as const) {
@@ -119,7 +126,7 @@ test.describe('G18 UI-harness probe', () => {
         : [vitestFile];
       return buildUiHarnessReceipt({ files, headSha: sha, treeClean: true, typesSource, harnessSource, executedAt: '2026-09-30T00:00:00.000Z' });
     };
-    return { root: s.root, cleanup: s.cleanup, build, head };
+    return { root: s.root, cleanup: s.cleanup, build, head, git };
   }
 
   test('a receipt bound to S is MET; one bound to another commit is NOT_AT_CHECKPOINT; absent or tampered is UNMET', () => {
@@ -163,14 +170,20 @@ test.describe('G18 UI-harness probe', () => {
     try {
       const tracked = (sha: string) => `evidence/certification/${sha}/ui-error-taxonomy-rendering.json`;
       writeJson(f.root, tracked(f.head), f.build(f.head));
+      f.git(['add', '--all']);
+      f.git(['commit', '--quiet', '--no-gpg-sign', '-m', 'documentary receipt']);
       expect(fs.existsSync(path.join(f.root, UI_HARNESS_RECEIPT_PATH))).toBe(false);
       expect(probeUiErrorTaxonomy(f.root, f.head).state).toBe('MET');
       // The tracked file of ANOTHER checkpoint is not consulted for S.
       fs.rmSync(path.join(f.root, tracked(f.head)));
       writeJson(f.root, tracked(OTHER), f.build(OTHER));
+      f.git(['add', '--all']);
+      f.git(['commit', '--quiet', '--no-gpg-sign', '-m', 'other receipt']);
       expect(probeUiErrorTaxonomy(f.root, f.head).state).toBe('UNMET');
       // A tampered tracked copy is rejected by the evaluator.
       writeJson(f.root, tracked(f.head), { ...(f.build(f.head) as Record<string, unknown>), treeClean: false });
+      f.git(['add', '--all']);
+      f.git(['commit', '--quiet', '--no-gpg-sign', '-m', 'invalid receipt']);
       expect(probeUiErrorTaxonomy(f.root, f.head).state).toBe('UNMET');
     } finally {
       f.cleanup();
@@ -188,6 +201,104 @@ test.describe('G18 UI-harness probe', () => {
       expect(probed.detail).toContain('UI_HARNESS_RECEIPT_RESULT_MISMATCH');
     } finally {
       f.cleanup();
+    }
+  });
+
+  test('committed UI evidence wins over stale host artifacts, and a fresh clone has the identical classification', () => {
+    const f = uiFixture();
+    const clone = scratchRoot();
+    const tracked = `evidence/certification/${f.head}/ui-error-taxonomy-rendering.json`;
+    const read = (root: string, args: string[]): string | null => {
+      const r = spawnSync('git', args, { cwd: root, encoding: 'utf8', shell: false });
+      return r.status === 0 ? r.stdout.trim() : null;
+    };
+    const id = 'ui-error-taxonomy-rendering';
+    const body = f.build(f.head) as Record<string, unknown>;
+    const digest = String(body.receiptDigest);
+    const parsed = parseReleaseCertificationDefinition(JSON.parse(fs.readFileSync(path.join(REPO, 'config/release-certification.v1.json'), 'utf8')));
+    if (parsed.definition === null) throw new Error('FIXTURE_DEFINITION_INVALID');
+    const definition = parsed.definition;
+    const evaluate = (root: string, checkpoint: string, evidenceSha: string | null, receiptDigest: string | null) => {
+      const raw = probeUiErrorTaxonomy(root, f.head);
+      return evaluateReleaseCertification({
+        definition: { ...definition, conditions: definition.conditions.filter(c => c.id === id).map(c => ({ ...c, evidenceSha })) },
+        certifiedCheckpointSha: checkpoint,
+        liveHeadSha: read(root, ['rev-parse', 'HEAD']),
+        projectCompletionStatus: 'OPERATIONALLY_ACCEPTED',
+        checkOutputs: { 'ui-error-taxonomy-check': { state: raw.state as ReleaseCheckState, detail: raw.detail } },
+        laneCounts: { proven: 0, externallyBlocked: 0, neverAttempted: 0, staleEvidence: 0 },
+        externalTrack: { id: 'production-path', stages: ['C-12'], state: 'EXTERNAL_PREREQUISITE_UNMET', detail: 'synthetic' },
+        evidenceReceiptDigests: { [id]: receiptDigest },
+        verifyEvidenceReceipt: (subject, boundDigest, sha) => verifyPersistedReceipt(root, subject, boundDigest, sha).verified,
+        resolveEvidenceRelation: (evidence, certified) => evidence === certified ? 'EXACT'
+          : read(root, ['merge-base', '--is-ancestor', evidence, certified]) !== null ? 'STALE_ANCESTOR' : 'GIT_INDETERMINATE',
+      });
+    };
+    try {
+      // A file on disk is not a committed measurement. No ignored artifact exists.
+      writeJson(f.root, tracked, body);
+      expect(probeUiErrorTaxonomy(f.root, f.head).state).toBe('UNMET');
+      f.git(['add', '--all']);
+      f.git(['commit', '--quiet', '--no-gpg-sign', '-m', 'documentary receipt']);
+      // The stale host execution is ignored, and is not copied into the clone.
+      writeJson(f.root, UI_HARNESS_RECEIPT_PATH, f.build(OTHER));
+      f.git(['clone', '--quiet', '--no-local', f.root, clone.root]);
+      expect(fs.existsSync(path.join(clone.root, 'artifacts'))).toBe(false);
+      const facts = (root: string) => collectCheckpointBindingFacts({ root, substantiveSha: f.head, git: args => read(root, args) });
+      expect(facts(f.root).rangeClass).toBe('DOCUMENTARY_DESCENDANT');
+      expect(facts(clone.root).binding).toEqual(facts(f.root).binding);
+      expect(probeUiErrorTaxonomy(f.root, f.head)).toEqual(probeUiErrorTaxonomy(clone.root, f.head));
+      const host = evaluate(f.root, f.head, f.head, digest);
+      const fresh = evaluate(clone.root, f.head, f.head, digest);
+      expect(host.conditions).toEqual(fresh.conditions);
+      expect(fresh.conditions[0]?.state).toBe('MET');
+      // A legitimate raw pass cannot override any missing or stale binding.
+      for (const [evidence, receipt, state] of [
+        [null, digest, 'EVIDENCE_ABSENT'],
+        [f.head, null, 'EVIDENCE_RECEIPT_ABSENT'],
+        [f.head, 'receipt:sha256:' + '0'.repeat(24), 'EVIDENCE_RECEIPT_ABSENT'],
+      ] as const) {
+        const verdict = evaluate(clone.root, f.head, evidence, receipt);
+        expect(verdict.conditions[0]?.checkState).toBe('MET');
+        expect(verdict.conditions[0]?.state).toBe(state);
+        expect(verdict.conditionsMet).toBe(0);
+        expect(verdict.certificationRefused).toBe(true);
+      }
+      // The receipt remains in HEAD, so its raw historical pass survives;
+      // removing the persisted evidence still refuses effective certification.
+      fs.rmSync(path.join(clone.root, tracked));
+      const missing = evaluate(clone.root, f.head, f.head, digest);
+      expect(missing.conditions[0]?.checkState).toBe('MET');
+      expect(missing.conditions[0]?.state).toBe('EVIDENCE_RECEIPT_ABSENT');
+      expect(missing.conditionsMet).toBe(0);
+      expect(missing.certificationRefused).toBe(true);
+      // Each implementation/config class is a real committed mutation. Old
+      // measurements describe S but cannot certify the new substantive SHA.
+      for (const file of [
+        'src/core/policy/ownerScope.ts', 'bin/project-state-check.mjs',
+        'config/hardening-rule-probes.v1.json', 'config/environment-surface.v1.json',
+        'ui/control-center/src/types.ts', 'tests/unit/projectState.test.ts',
+        '.github/workflows/hardening.yml', '.gitignore', 'package-lock.json', 'tsconfig.bin.json',
+      ]) {
+        const target = path.join(f.root, file);
+        fs.mkdirSync(path.dirname(target), { recursive: true });
+        fs.appendFileSync(target, '\nsynthetic substantive edit\n');
+        f.git(['add', '--all']);
+        f.git(['commit', '--quiet', '--no-gpg-sign', '-m', `substantive ${file}`]);
+        const next = read(f.root, ['rev-parse', 'HEAD'])!;
+        expect(facts(f.root).rangeClass, file).toBe('SUBSTANTIVE_DESCENDANT');
+        expect(facts(f.root).binding.atCheckpoint, file).toBe(false);
+        expect(probeUiErrorTaxonomy(f.root, f.head).state, file).toBe('MET');
+        expect(probeUiErrorTaxonomy(f.root, next).state, file).not.toBe('MET');
+        const stale = evaluate(f.root, next, f.head, digest);
+        expect(stale.conditions[0]?.checkState, file).toBe('MET');
+        expect(stale.conditions[0]?.state, file).toBe('STALE_EVIDENCE');
+        expect(stale.conditionsMet, file).toBe(0);
+        expect(stale.certificationRefused, file).toBe(true);
+      }
+    } finally {
+      f.cleanup();
+      clone.cleanup();
     }
   });
 
@@ -315,4 +426,38 @@ test.describe('G12 yield-campaign probe', () => {
       twoAllowed.cleanup();
     }
   });
+});
+
+// Exercise Git's actual ignore matching with synthetic filenames only.
+test('the lifecycle receipt exception preserves every authentication-secret exclusion', () => {
+  const f = scratchRoot();
+  try {
+    fs.writeFileSync(path.join(f.root, '.gitignore'), fs.readFileSync(path.join(REPO, '.gitignore')));
+    const init = spawnSync('git', ['init', '--quiet', '-b', 'main'], { cwd: f.root, encoding: 'utf8', shell: false });
+    expect(init.status).toBe(0);
+    const ignored = (file: string) => {
+      const r = spawnSync('git', ['check-ignore', '--no-index', '--quiet', '--', file], { cwd: f.root, encoding: 'utf8', shell: false });
+      expect([0, 1]).toContain(r.status);
+      return r.status === 0;
+    };
+    const secretNames = [
+      '.env', 'state.local.json', 'dev.storage-state.json', 'dev.storage-state',
+      'storage-state-dev.json', 'storageState-dev.json', 'auth-state-dev.json',
+      'auth.json', 'authenticated-state.json', 'session-dev.json', 'dev.cookies.json',
+      'cookies-dev.json', 'dev.credentials.json', 'credentials/state.json',
+      '.secrets/state.json', 'dev.token', 'dev.tokens.json',
+      'dev.auth-lifecycle.json', 'dev.auth-lifecycle.json.backup',
+    ];
+    for (const prefix of ['', 'nested/', `evidence/certification/${S}/`, `evidence/certification/${S}/nested/`]) {
+      for (const file of secretNames) expect(ignored(prefix + file), prefix + file).toBe(true);
+    }
+    const receipt = 'authenticated-capability-lifecycle.json';
+    expect(ignored(`evidence/certification/${S}/${receipt}`)).toBe(false);
+    for (const prefix of ['', 'nested/', 'evidence/', `evidence/certification/${S}/nested/`, `nested/evidence/certification/${S}/`]) {
+      expect(ignored(prefix + receipt), prefix + receipt).toBe(true);
+    }
+    expect(ignored(`evidence/certification/${S}/ui-error-taxonomy-rendering.json`)).toBe(false);
+  } finally {
+    f.cleanup();
+  }
 });
