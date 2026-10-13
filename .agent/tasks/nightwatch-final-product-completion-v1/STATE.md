@@ -10,8 +10,8 @@ TASK_GROUPS_COMPLETE: 1,2,3,4,5,6,7,8,9,10,11,12,13,14
 TASK_GROUP_NEXT: 15
 TASK_NEXT_ID: 15.3
 Starting SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
-Last validated implementation SHA: efbb277348a3d756036b2568ca02bb45a5a2018f
-Last substantive checkpoint SHA: efbb277348a3d756036b2568ca02bb45a5a2018f
+Last validated implementation SHA: 70f4b8269eae0c08e4a28c22f87b82c4958bbb92
+Last substantive checkpoint SHA: 70f4b8269eae0c08e4a28c22f87b82c4958bbb92
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-final-product-complet-d23bf75f
@@ -19,8 +19,8 @@ Last checkpoint: 2026-10-13 — HC-177 probe-fixture repair in the C-00 session 
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
-LAST_VALIDATED_IMPLEMENTATION_SHA: efbb277348a3d756036b2568ca02bb45a5a2018f
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: efbb277348a3d756036b2568ca02bb45a5a2018f
+LAST_VALIDATED_IMPLEMENTATION_SHA: 70f4b8269eae0c08e4a28c22f87b82c4958bbb92
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 70f4b8269eae0c08e4a28c22f87b82c4958bbb92
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 PHASE_FINAL_PRODUCT_COMPLETION_V1_STATUS: IN_PROGRESS
@@ -124,7 +124,8 @@ under D-129.
 
 ## Work In Progress
 
-S is `efbb277348a3d756036b2568ca02bb45a5a2018f`, integrated alone through C-00 and executed green
+S is `70f4b8269eae0c08e4a28c22f87b82c4958bbb92` (the HC-177 probe-fixture
+repair), integrated alone through C-00 and executed green
 on GitHub in run `38382773612` (job `115247033554`, 15/15 groups).
 Milestone and prepush each passed all 472 selected files (6204 passed / 0
 failed), including all 274 structural probes and 117 mutants at S. UI 105/105,

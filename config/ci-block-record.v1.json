@@ -2,9 +2,9 @@
   "schemaVersion": "nightwatch.ci-block-record.v1",
   "definitionName": "Nightwatch exact-head CI block record (F-02)",
   "note": "The block is RETIRED: GitHub Actions executes the hardening workflow on every push, and the record's top level is the latest observed executed run (D-03 / R2-61). The block-record judgements stay load-bearing as the single CI authority shared by agent:check, project:check and gate:topology; the revisit date keeps the record from going stale. Candidate routes remain recorded with their trade-offs, and the materialised owner route is the restored GitHub-hosted execution.",
-  "runId": "38382773612",
-  "jobId": "115247033554",
-  "observedSha": "efbb277348a3d756036b2568ca02bb45a5a2018f",
+  "runId": "38461538853",
+  "jobId": "115517671966",
+  "observedSha": "70f4b8269eae0c08e4a28c22f87b82c4958bbb92",
   "blockClass": "EXECUTED_PASS",
   "observedDate": "2026-10-13",
   "ownerAction": "None required while the hardening workflow executes on every push; re-observe the next exact-head run and refresh this record before the revisit date.",
@@ -140,7 +140,7 @@
       "observedSha": "b4d0c611a7848df675390d47aa21f008d078cde6",
       "observedDate": "2026-10-01",
       "classification": "EXECUTED_PASS",
-      "detail": "the corrections campaign close-out head b4d0c611 (its session branch tip, later deleted); recorded by review-5 R5-09 \u2014 the SHA was first recorded only after that branch was deleted.",
+      "detail": "the corrections campaign close-out head b4d0c611 (its session branch tip, later deleted); recorded by review-5 R5-09 — the SHA was first recorded only after that branch was deleted.",
       "runCreatedAt": "2026-10-01T00:39:01Z"
     },
     {
@@ -243,7 +243,7 @@
       "observedSha": "f87108992924a7ac9abbdb776ffdff6fdb0ba68e",
       "observedDate": "2026-10-01",
       "classification": "EXECUTED_TEST_FAILURE",
-      "detail": "SEMANTIC_COMPATIBILITY failed with one location, tests/unit/phase16hCliHandoffHardening.test.ts:233 (H01) \u2014 the portfolio migration moved the unknown-subcommand refusal into the shared operator-CLI parser, so the exit code is the categorical USAGE code 2 rather than the module's 1. Repaired forward by asserting the shared-parser contract (same properties: no stdout, usage on stderr, bounded, no secret shapes).",
+      "detail": "SEMANTIC_COMPATIBILITY failed with one location, tests/unit/phase16hCliHandoffHardening.test.ts:233 (H01) — the portfolio migration moved the unknown-subcommand refusal into the shared operator-CLI parser, so the exit code is the categorical USAGE code 2 rather than the module's 1. Repaired forward by asserting the shared-parser contract (same properties: no stdout, usage on stderr, bounded, no secret shapes).",
       "defectClasses": [
         {
           "class": "SHARED_PARSER_EXIT_CODE",
@@ -429,6 +429,15 @@
       "observedDate": "2026-10-13",
       "classification": "EXECUTED_PASS",
       "detail": "CI recovery after receipt tracking: actual exact-S execution succeeded, all 15 groups PASS; phase23-ci observer EXECUTED_GREEN / EXACT_HEAD_AND_GATE_PASS. No documentation SHA or future run is predicted."
+    },
+    {
+      "runId": "38461538853",
+      "jobId": "115517671966",
+      "observedSha": "70f4b8269eae0c08e4a28c22f87b82c4958bbb92",
+      "observedDate": "2026-10-13",
+      "classification": "EXECUTED_PASS",
+      "detail": "Exact-head execution of the HC-177 probe-fixture repair checkpoint: the required HARDENING_PROBES group now detects 274/274, and all 15 groups PASS. The prior documentary head could not be pushed because that group failed there.",
+      "runCreatedAt": "2026-10-13T20:16:43Z"
     }
   ],
   "routeSelection": {

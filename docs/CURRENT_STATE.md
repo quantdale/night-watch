@@ -889,11 +889,11 @@ RELEASE_CERTIFICATION_PROTOCOL_VERSION: nightwatch.release-certification.v1
 PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 RELEASE_CHECKPOINT_SHA: 2576c5751d33bb40046246e8fcf57c7cc5c30a57
 LIVE_HEAD_SHA: DISCOVER_FROM_GIT
-LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: efbb277348a3d756036b2568ca02bb45a5a2018f
+LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 70f4b8269eae0c08e4a28c22f87b82c4958bbb92
 LAST_LOCALLY_VALIDATED_SHA: 6066390511dcf5d2744515624be9dbf1b537b5f4
-LAST_CLEAN_VALIDATED_SHA: efbb277348a3d756036b2568ca02bb45a5a2018f
-CI_OBSERVED_SHA: efbb277348a3d756036b2568ca02bb45a5a2018f
-CI_EXECUTED_SHA: efbb277348a3d756036b2568ca02bb45a5a2018f
+LAST_CLEAN_VALIDATED_SHA: 70f4b8269eae0c08e4a28c22f87b82c4958bbb92
+CI_OBSERVED_SHA: 70f4b8269eae0c08e4a28c22f87b82c4958bbb92
+CI_EXECUTED_SHA: 70f4b8269eae0c08e4a28c22f87b82c4958bbb92
 CI_STATUS: EXECUTED_PASS
 FINAL_DOCUMENTATION_SHA: DISCOVER_FROM_GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
@@ -4421,23 +4421,33 @@ archive wave. `npm run project:check` reports exactly one finding,
 session worktree and this session is forbidden to commit; on a clean tree with
 this same content the check exits 0 and the release verdict is unchanged.
 
-### CI recovery after tracked receipts (2026-10-13; current observation)
+### HC-177 probe-fixture repair checkpoint (2026-10-13; current observation)
 
-The substantive implementation is `efbb277348a3d756036b2568ca02bb45a5a2018f`. GitHub run
-`38382773612` (job `115247033554`) executed the authoritative
-gate at that exact SHA and completed successfully: observer EXECUTED_GREEN,
-all 15 groups PASS. Milestone and prepush passed 6204 tests with zero failures;
-274 structural probes and all 117 mutants passed. Clean-checkout validation
-passed all 15 groups at S with no undeclared skips. The legacy local-gate
-anchor stays historical: canonical local/topology execution correctly fails
-closed because this checkout is inside the sibling root. S has separately
-verified PROVEN/BUBBLEWRAP qualification from the independent outside checkout.
+The substantive implementation is `70f4b8269eae0c08e4a28c22f87b82c4958bbb92`.
+The documentary descendant of `efbb2773` could not be pushed: the required
+HARDENING_PROBES group failed there because probe HC-177 searched
+`config/release-evidence.v1.json` for the literal pair `"subject":
+"root-compile"` + `"evidenceSha": "88e3c3fb..."`, and the S evidence re-bind
+had legitimately replaced that SHA, so the search literal matched zero times
+and the rule was reported UNDETECTED (campaign exit 1). A plain literal update
+would rot again at the next re-certification, so the probe now declares an
+unevidenced PROVEN lane in `config/validation-lane-state.v1.json`: the same
+rule branch with stable literals. No rule, guard, bound or exemption changed.
 
-The D3 assertion confused a raw S-bound UI receipt measurement with a live
-tree probe. Raw MET at S was legitimate; its effective state was
-EVIDENCE_ABSENT at 9fe141c7. D-170 preserves that distinction and the independent
-binding verifier, prefers committed UI evidence over stale ignored artifacts,
-and narrows the ignore exception to the exact lifecycle receipt filename.
+GitHub run `38461538853` (job `115517671966`) executed the authoritative gate at
+exactly `70f4b826` and completed successfully. Milestone and prepush passed at
+that HEAD (6204 tests, 0 failures; 274 structural probes and all 117 behavioural
+mutants detected). `gate:clean` passed all 15 groups at the same SHA with a
+PROVEN topology envelope from the independent outside checkout.
+
+The earlier S receipts stay historical and are never rebound by text: this
+checkpoint's own evidence is produced and bound at `70f4b826` before any
+release advance is claimed. The D3 assertion confused a raw S-bound UI receipt
+measurement with a live tree probe. Raw MET at S was legitimate; its effective
+state was EVIDENCE_ABSENT at 9fe141c7. D-170 preserves that distinction and the
+independent binding verifier, prefers committed UI evidence over stale ignored
+artifacts, and narrows the ignore exception to the exact lifecycle receipt
+filename.
 All real source/config/test changes still invalidate prior evidence.
 
 This is the existing campaign, IN_PROGRESS / NOT_COMPLETE. Eligible S

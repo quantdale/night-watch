@@ -321,7 +321,7 @@ approved paths.
   ingested; release and worktree removal; canonical gate trio; documentary
   receipt commit; archive this change; terminal topology proof; final
   13-section completion report.
-- **Status:** IN_PROGRESS — exact-S CI recovered at `efbb277348a3d756036b2568ca02bb45a5a2018f` (run 38382773612); guarded evidence publication and owner gates remain.
+- **Status:** IN_PROGRESS — the HC-177 probe-fixture repair checkpoint `70f4b8269eae0c08e4a28c22f87b82c4958bbb92` is integrated with exact-head CI (run 38461538853); its own evidence is produced and bound before any advance, and the owner gates remain.
 
 ## Validation Strategy
 
