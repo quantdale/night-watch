@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "nightwatch.certification-evidence-receipt.v1",
+  "subject": "workspace-continuity-drift-closure",
+  "subjects": [
+    "workspace-continuity-drift-closure"
+  ],
+  "sourceHead": "70f4b8269eae0c08e4a28c22f87b82c4958bbb92",
+  "observedAtHead": "f1de4e435b4c4a00a042607ee1a177560d1fd88d",
+  "sourceRootCleanAtEmit": true,
+  "checkId": "workspace-claims",
+  "checkState": "MET",
+  "result": "PASS",
+  "producer": "PROJECT_CHECK",
+  "environmentClass": "HOST_LOCAL",
+  "receiptDigest": "receipt:sha256:58eda6c5194ad9de92020f77"
+}

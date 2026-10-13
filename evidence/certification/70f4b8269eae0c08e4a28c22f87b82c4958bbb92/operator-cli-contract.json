@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "nightwatch.certification-evidence-receipt.v1",
+  "subject": "operator-cli-contract",
+  "subjects": [
+    "operator-cli-contract"
+  ],
+  "sourceHead": "70f4b8269eae0c08e4a28c22f87b82c4958bbb92",
+  "observedAtHead": "f1de4e435b4c4a00a042607ee1a177560d1fd88d",
+  "sourceRootCleanAtEmit": true,
+  "checkId": "operator-cli-sweep",
+  "checkState": "MET",
+  "result": "PASS",
+  "producer": "PROJECT_CHECK",
+  "environmentClass": "HOST_LOCAL",
+  "receiptDigest": "receipt:sha256:5264f8afc3008eca475e2635"
+}
