@@ -4421,6 +4421,31 @@ archive wave. `npm run project:check` reports exactly one finding,
 session worktree and this session is forbidden to commit; on a clean tree with
 this same content the check exits 0 and the release verdict is unchanged.
 
+### CI recovery after tracked receipts (2026-10-13; current observation)
+
+The substantive implementation is `efbb277348a3d756036b2568ca02bb45a5a2018f`. GitHub run
+`38382773612` (job `115247033554`) executed the authoritative
+gate at that exact SHA and completed successfully: observer EXECUTED_GREEN,
+all 15 groups PASS. Milestone and prepush passed 6204 tests with zero failures;
+274 structural probes and all 117 mutants passed. Clean-checkout validation
+passed all 15 groups at S with no undeclared skips. The legacy local-gate
+anchor stays historical: canonical local/topology execution correctly fails
+closed because this checkout is inside the sibling root. S has separately
+verified PROVEN/BUBBLEWRAP qualification from the independent outside checkout.
+
+The D3 assertion confused a raw S-bound UI receipt measurement with a live
+tree probe. Raw MET at S was legitimate; its effective state was
+EVIDENCE_ABSENT at 9fe141c7. D-170 preserves that distinction and the independent
+binding verifier, prefers committed UI evidence over stale ignored artifacts,
+and narrows the ignore exception to the exact lifecycle receipt filename.
+All real source/config/test changes still invalidate prior evidence.
+
+This is the existing campaign, IN_PROGRESS / NOT_COMPLETE. Eligible S
+receipts are bound only after this executed pass. No new paid proof was run,
+no Alphaus environment or database was accessed, and no visibility change or
+archive was performed. Manual-lane review and a current authorized proof at
+the final S remain owner decisions; full release advancement is not claimed.
+
 ### HC-177 probe-fixture repair checkpoint (2026-10-13; current observation)
 
 The substantive implementation is `70f4b8269eae0c08e4a28c22f87b82c4958bbb92`.
