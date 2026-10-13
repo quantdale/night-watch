@@ -321,7 +321,7 @@ approved paths.
   ingested; release and worktree removal; canonical gate trio; documentary
   receipt commit; archive this change; terminal topology proof; final
   13-section completion report.
-- **Status:** IN_PROGRESS — CI recovery at 15.1-15.3; exact-S CI and guarded observations remain.
+- **Status:** IN_PROGRESS — exact-S CI recovered at `efbb277348a3d756036b2568ca02bb45a5a2018f` (run 38382773612); guarded evidence publication and owner gates remain.
 
 ## Validation Strategy
 

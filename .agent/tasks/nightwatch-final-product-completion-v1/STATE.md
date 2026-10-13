@@ -8,19 +8,19 @@ Status: IN_PROGRESS
 TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1
 TASK_GROUPS_COMPLETE: 1,2,3,4,5,6,7,8,9,10,11,12,13,14
 TASK_GROUP_NEXT: 15
-TASK_NEXT_ID: 15.2
+TASK_NEXT_ID: 15.3
 Starting SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
-Last validated implementation SHA: 7871b463a03936016caaf88081c9221baccc60f0
-Last substantive checkpoint SHA: 7871b463a03936016caaf88081c9221baccc60f0
+Last validated implementation SHA: efbb277348a3d756036b2568ca02bb45a5a2018f
+Last substantive checkpoint SHA: efbb277348a3d756036b2568ca02bb45a5a2018f
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
-Branch: session/nightwatch-final-product-complet-f4139a72
+Branch: main
 Last checkpoint: 2026-10-13 — clean-clone D3 failure reproduced at 9fe141c7.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
-LAST_VALIDATED_IMPLEMENTATION_SHA: 7871b463a03936016caaf88081c9221baccc60f0
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 7871b463a03936016caaf88081c9221baccc60f0
+LAST_VALIDATED_IMPLEMENTATION_SHA: efbb277348a3d756036b2568ca02bb45a5a2018f
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: efbb277348a3d756036b2568ca02bb45a5a2018f
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 PHASE_FINAL_PRODUCT_COMPLETION_V1_STATUS: IN_PROGRESS
@@ -36,9 +36,9 @@ ledger, and end at `PROJECT_COMPLETE_AND_CI_CERTIFIED` under D-129 with a
 
 ## Current Milestone
 
-M14 CI recovery (group 15) at tasks 15.1-15.3. Preserve the existing campaign; correct the
-receipt-versus-tree assertion, narrow the ignore exception, and validate a new
-substantive checkpoint before CI observation and documentary evidence binding.
+M14 (group 15): exact-S CI recovery is verified; task 15.3 now publishes
+and binds eligible genuine evidence, then checks the documentary descendant.
+The existing campaign remains IN_PROGRESS / NOT_COMPLETE under D-129.
 
 ## Completed Milestones
 
@@ -120,21 +120,33 @@ substantive checkpoint before CI observation and documentary evidence binding.
 
 ## Work In Progress
 
-Clean clone and canonical agree: UI raw MET, effective EVIDENCE_ABSENT; the
-certified checkpoint is 7871b463 and live 9fe141c7 is SUBSTANTIVE_DESCENDANT.
-The three lifecycle receipts added by 20dfa607 exist at both that commit and
-HEAD, have re-derived digests and verified subject/SHA bindings. The other
-16-condition evidence is stale or missing. No certification advance is claimed.
+S is `efbb277348a3d756036b2568ca02bb45a5a2018f`, integrated alone through C-00 and executed green
+on GitHub in run `38382773612` (job `115247033554`, 15/15 groups).
+Milestone and prepush each passed all 472 selected files (6204 passed / 0
+failed), including all 274 structural probes and 117 mutants at S. UI 105/105,
+browser 9/9, and fresh clean-checkout gates passed at S. Canonical gate:local
+and topology failed closed on CHECKOUT_INSIDE_SIBLING_ROOT; they are not PASS.
+The same host's independent checkout qualified S as PROVEN/BUBBLEWRAP.
+
+The implementation worktree and branch are removed. Canonical main holds the
+explicit maintenance claim `sess-f581bf676713`. Only eligible verified S
+receipts will be published and bound. Historical receipts remain unchanged;
+autonomous proof at S is UNMET and the manual-lane revisit is overdue.
 
 ## Exact Next Action
 
-Task 15.2: validate and commit the bounded negative-smoke fixture repair
-forward, then repeat milestone, prepush and clean-clone validation at the new
-exact S. No checkpoint with a failed required lane is integrated. After the
-required checks pass, integrate through C-00 and observe executed GitHub CI at
-S. Only after green exact-S CI, record guarded documentary observations and
-bind eligible genuine evidence. No additional paid proof, visibility change
-or archive is authorized; report all 16 actual conditions.
+Task 15.3: use the guarded producers, import/publish/bind and offline verifier
+for genuine S evidence. A fixed COMMAND producer must actually execute in a
+clean checkout whose HEAD is S; its checkpoint identity comes from the real,
+verified documentary project snapshot. Never change command outcomes, receipt
+SHAs, guard scope or HOST_BOUND_SUBJECTS. Verify the resulting descendant in a
+fresh clone with no ignored artifacts, run prepush at the final documentary
+HEAD, fast-forward push and observe that head's actual CI.
+
+Then report all 16 conditions and stop at the owner boundary: manual-lane
+review/disposition, fresh separately authorized paid proof at the final S,
+visibility/Actions confirmation and eventual archive are owner decisions.
+No additional provider campaign or registry query is authorized.
 
 ## Superseded Next Action (8.1, complete)
 
@@ -816,6 +828,17 @@ lanes, the gate pair at 5625/0 and exact-head CI green.
 
 ## Blockers
 
+- Current: owner-manual revisit 2026-10-11 is overdue; no renewal or
+  authenticated manual execution was authorized in this recovery.
+- Current: no qualifying autonomous paid proof exists at the new S. The
+  existing proof is historical and another paid campaign is expressly
+  forbidden here. Fresh owner authorization is required at the final S.
+- Current: canonical gate:local cannot construct sibling-root absence from
+  a checkout inside that root. Its failure and the historical local-gate
+  anchor remain explicit; clean and exact-S CI validation are genuine.
+- Visibility/Actions confirmation and eventual campaign archive are owner
+  steps; PUBLIC visibility and the active change are preserved.
+
 - RESOLVED 2026-09-28 (RESUME_PROMPT): the Phase 0 canonical-dirty blocker.
   The owner dispositioned the 16 formatter-rewritten files as
   behaviour-neutral disposable output (AST-verified against `df0a6d35`;
@@ -834,15 +857,20 @@ lanes, the gate pair at 5625/0 and exact-head CI green.
 
 ## Safety Events
 
-No Alphaus environment, database, cloud, credential, or external publication
-contact; no sibling repository mutation; no force push or history rewrite;
-all testing local/synthetic. External contact is OD-3 only: `git fetch`
-(reads), C-00 fast-forward pushes of validated checkpoints to `origin/main`
-(heads `11afc06a`, `760e90fc`, `988834e1`, `58bf06f2`, `736e0e09`,
-`aa78a014`), and `gh` CI observations of the six matching hardening runs
-(36221563120, 36227213833, 36231098989, 36233319116, 36237628855,
-36243034942 — five failed, the last succeeded). The authorized npm registry
-advisory query (task 15.4) has not been run yet.
+During this recovery: Alphaus DEV/NEXT/production contacts 0; database/cloud
+operations 0; sibling writes 0; authentication state or credentials newly
+persisted/published 0; new paid provider campaigns/calls 0; force pushes and
+history rewrites 0. Public external activity was the authorized C-00
+fast-forward push of S and GitHub read/observation. Earlier OD-3 provider and
+registry actions remain historical at their recorded checkpoints.
+
+A canonical release attempt was refused with SESSION_CONTINUITY_MISMATCH
+because STATE still named the implementation branch. A subsequent adoption
+briefly created a duplicate private task claim; workspace:check correctly
+returned WORKSPACE_DUPLICATE_TASK_CLAIM. No tracked file changed under that
+claim. The new claim (`sess-f669d89d85ad`) was released through C-00, restoring
+workspace PASS, then the released worktree was removed through C-00. No
+ownership record was edited or deleted by hand.
 
 ## Deferred / Follow-Up
 
@@ -854,25 +882,20 @@ advisory query (task 15.4) has not been run yet.
 
 ## Resume Recipe
 
-Resume from this file: read `.agent/ACTIVE_TASK.md`, then the change's
-`tasks.md` (phases 1-15) and `audit.md` dispositions, reconcile against
-`git status` and the session record, run the smallest decisive validation,
-and continue the Exact Next Action. All work happens in the session worktree
-named in the routing block; integration is fast-forward only.
+Read ACTIVE_TASK, SPEC, PLAN and this STATE; inspect Git and session:status.
+Resume the Exact Next Action. This is the same campaign, on canonical main
+for bounded documentary maintenance. A future source change needs an owned
+C-00 worktree and invalidates old evidence; no paid or Alphaus action follows
+from an old authorization line.
 
 ## Completion Snapshot
 
-Not complete. M13 (group 14, tasks 14.1-14.6) is COMPLETE (2026-10-10) and the
-deferred 9.5b is RESOLVED. M14 (group 15, tasks 15.1-15.8) is the remaining work.
-
-The terminal snapshot is written at M14: all 228 census items dispositioned
-(OD-1), the ledger closed with exactly one active change archived at the final
-documentary commit, `PROJECT_COMPLETE_AND_CI_CERTIFIED` under D-129 with CI
-`EXECUTED_PASS` at S and every lane and condition re-bound at S (OD-2), the
-operator proofs recorded, and a `main`-only clean topology equal to `origin/main`.
-The mandatory owner step 15.8 (return the repository to private and confirm
-Actions still executes) is recorded as PENDING with the live PUBLIC reading, and
-is an owner/admin action no agent may take.
+NOT_COMPLETE. Implementation S `efbb277348a3d756036b2568ca02bb45a5a2018f` has genuine executed
+GitHub CI PASS; no PROJECT_COMPLETE_AND_CI_CERTIFIED advance is claimed.
+M13 remains complete; M14 remains in progress while eligible evidence is
+bound and the owner prerequisites are resolved. The campaign is unarchived,
+the repository is PUBLIC, and changing visibility remains owner/admin-only.
+Live/final documentary HEADs are DISCOVER_FROM_GIT, never predicted.
 
 ## Certification session record (2026-10-11) — the two terminal blockers repaired
 
@@ -1173,3 +1196,29 @@ unauthorized-unexecuted (task 15.4).
   agent:check PASS (36 existing warnings, including the owner-manual revisit).
   The source diff is only this synthetic driver plus the task waypoint; all
   original negative assertions survive, no tracked deletion or secret bytes.
+
+### Exact-S CI recovery observation (2026-10-13)
+
+- S `efbb277348a3d756036b2568ca02bb45a5a2018f`; real run `38382773612`, job `115247033554`,
+  completed/success, observer EXECUTED_GREEN / EXACT_HEAD_AND_GATE_PASS;
+  full original CI gate receipt VERIFIED, digest
+  `receipt:sha256:42eeb5b21ca39e9774302861`, 15/15 groups PASS.
+- Required source validation: milestone PASS (6204/0, 472 selected;
+  hardening-rules 274/274, mutants 117/117), prepush PASS (6204/0), root
+  typecheck and bin typecheck PASS (77/77 BLOCKING, zero exemptions/errors),
+  UI 105/105, browser 9/9, gate:clean PASS in two independent clone runs.
+- Canonical clean receipt VERIFIED `clean-receipt:sha256:da11731f54a463b23f56e7af`;
+  inner clean gate digest `receipt:sha256:acf1d11860b879d6d3191a52`, all 15
+  groups; clean before/after, dependency reuse false, no auth/finding state,
+  sibling identities unchanged. Its liveSessionCount includes the canonical
+  MAINTENANCE claim; linked implementation sessions were released.
+- Canonical gate:local failed only at TOPOLOGY (UI NOT_RUN), and canonical
+  standalone topology returned NOT_PROVEN: CHECKOUT_INSIDE_SIBLING_ROOT.
+  The qualified independent checkout at S produced VERIFIED PROVEN/BUBBLEWRAP
+  `topology-receipt:sha256:23fde630aa54ce855566be34`. No degraded or absent
+  envelope is relabelled as certifying. A disposable local-gate attempt also
+  failed HANDOFF_TARGET_BRANCH_MISMATCH; that failed receipt is not used.
+- LAST_LOCALLY_VALIDATED_SHA remains the historical actual local-gate anchor;
+  source validation and clean/CI validation at S are recorded separately.
+- The three original lifecycle receipts reverified from Git trees at 20dfa607,
+  9fe141c7 and S with identical digests and VERIFIED subject/SHA bindings.
