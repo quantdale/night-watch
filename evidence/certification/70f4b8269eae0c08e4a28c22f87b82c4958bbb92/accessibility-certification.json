@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "nightwatch.certification-evidence-receipt.v1",
+  "subject": "accessibility-certification",
+  "subjects": [
+    "accessibility-certification"
+  ],
+  "sourceHead": "70f4b8269eae0c08e4a28c22f87b82c4958bbb92",
+  "observedAtHead": "8582d483ddbb2354772058c59fab998b49f561c6",
+  "sourceRootCleanAtEmit": true,
+  "checkId": "accessibility-certification",
+  "checkState": "MET",
+  "result": "PASS",
+  "producer": "PROJECT_CHECK",
+  "environmentClass": "HOST_LOCAL",
+  "receiptDigest": "receipt:sha256:52bad487c628929ba819885b"
+}
