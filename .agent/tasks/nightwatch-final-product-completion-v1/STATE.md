@@ -128,13 +128,13 @@ HEAD, have re-derived digests and verified subject/SHA bindings. The other
 
 ## Exact Next Action
 
-Task 15.2: commit the validated collector/census fixture repairs forward; run
-milestone (including all hardening mutants), prepush and fresh-clone validation
-at that exact HEAD. Repair forward on a required failure. Then integrate the
-new genuine S through C-00 and observe executed GitHub CI at S. Only after
-that run is green, record documentary observations and bind eligible genuine
-evidence through the existing guarded protocol. No additional paid proof,
-visibility change or archive is authorized; report all 16 actual conditions.
+Task 15.2: validate and commit the bounded negative-smoke fixture repair
+forward, then repeat milestone, prepush and clean-clone validation at the new
+exact S. No checkpoint with a failed required lane is integrated. After the
+required checks pass, integrate through C-00 and observe executed GitHub CI at
+S. Only after green exact-S CI, record guarded documentary observations and
+bind eligible genuine evidence. No additional paid proof, visibility change
+or archive is authorized; report all 16 actual conditions.
 
 ## Superseded Next Action (8.1, complete)
 
@@ -1144,3 +1144,32 @@ unauthorized-unexecuted (task 15.4).
   refusal. Execution-class admission remains PASS with the stricter UI class.
 - These fixture repairs are substantive test changes. Commit forward to a
   new S and repeat milestone/prepush/clean validation at that exact HEAD.
+
+### CI recovery: bounded body-acquisition fixture (2026-10-13)
+
+- At candidate `deb2ee0898c393d59b7748b92e8dd41ef3bc4592`, prepush
+  PASS (472 selected files, 6204 passed / 0 failed), gate:clean PASS (all
+  15 groups; semantic 2239 passed / 14 declared skips / 0 failed; synthetic
+  1951 passed / 37 declared skips / 0 failed), and topology PROVEN/BUBBLEWRAP
+  PASS. UI 105/105 and browser 9/9 PASS at that SHA. These are local results,
+  and no GitHub execution at this unpushed SHA is claimed.
+- Milestone prefixes PASS, including 274 structural probes and all 117
+  behavioural mutants, then affected shards FAILED (6203 passed / 1 failed).
+  The failing test is `tests/smoke/negative.smoke.ts`'s malformed-json
+  assertion: the two fixture `/api/broken` responses were HTTP 200 with
+  `bodyCapture: unavailable` / `BODY_READ_ACQUISITION_BOUND`. An unreadable
+  body correctly yielded no malformed-json oracle. The isolated unchanged
+  smoke rerun passed, confirming burst-dependent acquisition rather than a
+  certification regression. No failed candidate was pushed.
+- Repair only the synthetic smoke driver: wait for pending response handlers
+  to drain, request `/api/broken` once locally, and await the actual oracle
+  event before finalization. All original assertions and the production
+  body-acquisition bound remain intact. Repeat this focused test, then commit
+  a new substantive S and repeat the required checks at that exact SHA.
+- Prior S receipts remain historical; they will not be rebound to the new S.
+  No paid campaign, Alphaus contact, sibling write, force push or archive.
+- Focused repair validation: negative smoke 8 consecutive runs PASS (21.6s);
+  root typecheck, structural hardening, execution-class admission and
+  agent:check PASS (36 existing warnings, including the owner-manual revisit).
+  The source diff is only this synthetic driver plus the task waypoint; all
+  original negative assertions survive, no tracked deletion or secret bytes.

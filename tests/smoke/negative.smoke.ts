@@ -75,6 +75,18 @@ test('policy blocks production hosts; oracles flag page problems', async ({ brow
       { recorder, monitor: ctx.monitor, network: ctx.network },
       { uiBaseUrl: server.origin }
     );
+    // The fixture's initial fetch burst may legitimately hit the bounded
+    // response-body acquisition limit. Exercise the malformed-body oracle
+    // with one local request after that burst drains; a refused capture is
+    // never evidence that a malformed body was inspected.
+    await expect.poll(() => ctx.network.pendingResponseHandlers()).toBe(0);
+    await ctx.page.evaluate(async () => {
+      const response = await fetch('/api/broken');
+      await response.text();
+    });
+    await expect.poll(() => readEvents(path.join(recorder.dir, 'events.jsonl'))
+      .some((event) => (event.data as Record<string, unknown> | undefined)?.reason === 'malformed-json'))
+      .toBe(true);
     await recorder.captureScreenshot(ctx.page, 'dashboard');
     const summary = await recorder.finalize({ passed: !ctx.monitor.failed });
     await ctx.close();
