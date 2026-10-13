@@ -36,13 +36,12 @@ ledger, and end at `PROJECT_COMPLETE_AND_CI_CERTIFIED` under D-129 with a
 
 ## Current Milestone
 
-M14 (group 15): the S receipts are published and bound, and a NEW defect was
-reproduced at the documentary head — the required HARDENING_PROBES group fails
-because probe HC-177 names a binding SHA that the S evidence re-bind replaced.
-The probe is repaired value-independently in this C-00 session worktree as a
-genuine substantive checkpoint S'. Exact-S' CI, S'-bound receipts and the
-clean-clone comparison follow. The campaign remains IN_PROGRESS / NOT_COMPLETE
-under D-129.
+M14 (group 15): the HC-177 probe-fixture defect is repaired at S'=70f4b826,
+which executed green on GitHub (run 38461538853), and the S'-bound evidence is
+produced, published, bound and pushed. Canonical and a fresh clone now agree
+exactly: 14/16 effective MET with an identical evaluation digest. The two
+remaining conditions are owner gates, so the campaign stays IN_PROGRESS /
+NOT_COMPLETE under D-129.
 
 ## Completed Milestones
 
@@ -140,20 +139,20 @@ autonomous proof at S is UNMET and the manual-lane revisit is overdue.
 
 ## Exact Next Action
 
-Task 15.3: commit the repaired probe fixture (S') together with this continuity
-record,
-run `npm run gate:milestone` and `npm run prepush` at that exact HEAD, then
-`integrate` it and observe the real run at S'. Only after a green run at S'
-may the S'-bound receipts be produced: `certify:evidence produce` for the
-thirteen MET condition subjects plus the `dependency-advisory` and
-`exact-checkpoint-ci` lanes (the latter consumes the S' run), `import` the UI
-harness and gate receipts measured in an independent clone at S', then
-`publish` and `bind`. Never rebind by text and never change a command outcome.
-
-Then verify 14/16 effective MET at S', compare canonical with a fresh clone,
-and stop at the owner boundary: the owner-manual lane revisit (condition 1)
-and a fresh separately authorized paid proof (condition 3) remain owner
-decisions, as do visibility/Actions confirmation and the eventual archive.
+Task 15.3 is complete for every locally actionable subject. The owner boundary
+is now the only remaining work, and each item is an explicit owner decision:
+(1) condition 1 needs the `owner-manual` lane resolved — either the
+owner-authorized executable `lanes:manual` route (DEV authentication plus a
+separate one-shot authorization) making it PROVEN, or an owner-renewed
+UNAVAILABLE_CAPABILITY record with a new revisit date; its revisit 2026-10-11
+has passed and no agent may refresh it. (2) Condition 3 needs a fresh,
+separately authorized paid provider campaign at the certified checkpoint under
+`config/yield-run-authorization.v1.json`; the existing GRANTED record belongs to
+historical parent task 12.3 and authorizes nothing here. (3) Repository
+visibility (PUBLIC) and the eventual campaign archive are owner/admin actions.
+No further local engineering work is authorized or outstanding: the probe
+campaign detects 274/274, all 117 behavioural mutants are detected, the clean
+mode gate passes all 15 groups at S', and canonical/clone classifications agree.
 
 ## Superseded Next Action (8.1, complete)
 
@@ -1247,3 +1246,37 @@ unauthorized-unexecuted (task 15.4).
 - Next: commit the safe exact gate proof and values-only bindings, rederive
   the documentary range, compare all 16 states in a fresh independent clone,
   finish the report and run exact-HEAD prepush before the documentary push.
+
+## HC-177 probe-fixture repair and S'-bound evidence (2026-10-13)
+
+- **Defect reproduced.** At the documentary head `556b764e` the required
+  HARDENING_PROBES group failed: `npm run hardening:rules` reported
+  `[probe] checkReleaseEvidenceBindings UNDETECTED HC-177` (exit 1) because the
+  probe's search literal named `"subject": "root-compile"` +
+  `"evidenceSha": "88e3c3fb…"`, a pair the S evidence re-bind legitimately
+  replaced. A plain literal update would rot again at the next re-certification,
+  so the probe now declares an unevidenced PROVEN lane in
+  `config/validation-lane-state.v1.json` — the same rule branch with stable
+  literals. No rule, guard, bound or exemption changed.
+- **S' = `70f4b8269eae0c08e4a28c22f87b82c4958bbb92`**, integrated alone through
+  C-00 (`sess-b273f0dab1b4`, canonical MAINTENANCE window `sess-af150610aa5f`
+  closed at `556b764e` first). Exact-head CI run `38461538853` (job
+  `115517671966`) completed/success.
+- **Validation at S'.** `gate:milestone` PASS (affected-shards 6204/0,
+  hardening-rules 274/274, mutation-harness 117 detected / 0 survivors);
+  `prepush` PASS (6204/0, selected 472); `gate:clean` PASS all 15 groups;
+  a qualified clean-mode gate outside the sibling root PASSED all 15 groups with
+  TOPOLOGY PROVEN and UI_CONTROL_CENTER PASS; browser lane 9/9; `openspec
+  validate --all --strict` 80/80.
+- **Evidence.** 18 subjects measured, published and bound at S' (`certify:evidence
+  verify` → 18 valid / 0 invalid). `authoritative-gate.json` needed an explicit
+  force-add: the defensive `auth*.json` rule matches it, so the receipt was on
+  disk but untracked, which made a clean clone demote ten conditions to
+  NOT_AT_CHECKPOINT. No ignore rule was changed.
+- **Canonical vs fresh clone.** At `4ab156cd` both report 14/16 effective MET,
+  identical evaluation digest `sha256:6997fa8ecb205a4a03…`, zero per-condition
+  differences, same stale list `["validation-lane-closure"]`.
+- **Remaining.** Condition 1 (`owner-manual` revisit 2026-10-11 passed; owner
+  action required) and condition 3 (no qualifying paid provider campaign at S';
+  a fresh owner authorization is required). No agent may refresh the owner
+  approval or launch a paid run.
