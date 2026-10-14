@@ -8,14 +8,16 @@ Status: IN_PROGRESS
 TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1
 TASK_GROUPS_COMPLETE: 1,2,3,4,5,6,7,8,9,10,11,12,13,14
 TASK_GROUP_NEXT: 15
-TASK_NEXT_ID: 15.3
+TASK_NEXT_ID: 15.4
 Starting SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
 Last validated implementation SHA: efae50ce5516d0d919bb8c5a6463dbb51caf3dc8
 Last substantive checkpoint SHA: efae50ce5516d0d919bb8c5a6463dbb51caf3dc8
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
-Branch: main
-Last checkpoint: 2026-10-14 — owner disposition certified at S=efae50ce (CI 38553902449 green; 14/16; routing back to canonical).
+Branch: session/nightwatch-final-product-complet-81c79680
+Last checkpoint: 2026-10-15 — D-172 lane-evidence semantics repaired and
+D-173 command-lane blocker proven in a C-00 session worktree (S2 pending gates,
+condition 1 UNMET with an exact proven blocker).
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
@@ -36,13 +38,51 @@ ledger, and end at `PROJECT_COMPLETE_AND_CI_CERTIFIED` under D-129 with a
 
 ## Current Milestone
 
-M14 (group 15): the owner's manual-validation disposition is applied as a new
-substantive checkpoint. The twelve MANUAL_OWNER harnesses stay
-UNAVAILABLE_CAPABILITY with the approved revisit date 2026-11-14; the six
-PROVEN lanes and every other subject are re-earned at the new checkpoint so
-condition 1's only remaining finding is `STALE_EVIDENCE:owner-manual`, whose
-binding the current machinery cannot legitimately advance. Condition 3 stays
-owner-gated. The campaign remains IN_PROGRESS / NOT_COMPLETE under D-129.
+M15 (group 15, task 15.4): the owner's 2026-10-15 "FINAL CERTIFICATION RECOVERY
+AND PROVIDER READINESS" instruction opened the targeted certification-machinery
+repair. Two of the four confirmed defects are resolved and proven:
+
+- **DEFECT A / D-172 — non-PROVEN lane evidence semantics.** `reportLaneState`
+  derived `staleEvidence` for every lane, including non-PROVEN ones, so the
+  `owner-manual` UNAVAILABLE_CAPABILITY disposition record emitted
+  `STALE_EVIDENCE:owner-manual` and demanded an execution receipt for a
+  capability the owner documented as unavailable. Staleness is now computed for
+  a PROVEN lane ONLY: a PROVEN lane binds an execution SHA that decays, while a
+  non-PROVEN lane binds a disposition record whose currency is its revisit date
+  (`collectRevisitDue`) and its named unblock condition (`validateLaneState`).
+  Nothing else changed. Measured: the condition-1 raw detail went from eight
+  `STALE_EVIDENCE:` findings (including `owner-manual`) to seven.
+- **DEFECT B / D-173 — COMMAND-lane checkpoint cycle, PROVEN UNREACHABLE.** A
+  COMMAND producer refuses anything but `head === checkpoint`, and both values
+  come from the same root: HEAD from Git and the checkpoint from
+  `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA` in that root's `docs/CURRENT_STATE.md`.
+  The authorized choreography therefore either checks out the substantive
+  commit (whose tree still declares the previous anchor) or the documentary
+  anchor-advance descendant (whose anchor names the substantive commit). No
+  commit in the whole certify-evidence era declares its own SHA as the anchor,
+  and amending the anchor to a commit's SHA changes that SHA, so the
+  conjunction is unsatisfiable. Executable proof: five new regressions in
+  `tests/unit/certifyEvidence.test.ts`.
+
+DEFECT C (condition-level binding at a SHA whose declared artifact is absent)
+and DEFECT D (clean-checkout currency) are downstream of B for the six command
+lanes: `root-compile`, `bin-parse`, `structural-invariants`, `full-regression`,
+`ui`, `browser-workflow`. They remain `STALE_EVIDENCE`, so condition 1's raw
+check stays UNMET and its effective state stays
+`EVIDENCE_ARTIFACT_ABSENT_AT_SHA`. The smallest sound extension — a GUARDED
+MEASUREMENT ROOT, needing no receipt-schema change — is recorded in D-173 and
+NOT implemented: it changes the text pinned by behavioural mutant BM-078, so it
+requires its own owner authorization.
+
+Condition 3 (autonomous yield proof) stays UNMET and owner-gated. The provider
+investigation of the same instruction is complete and read-only (verified
+`opencode` binary digest, verified $0.00/$0.00 pricing for
+`opencode-go/step-5-preview-free`, no Nightwatch monetary ceiling, no
+provider-side hard dollar cap): SAFE TO REQUEST OWNER APPROVAL, conditional on
+cost control, with a full proposed authorization drafted and NOT granted.
+
+The campaign remains IN_PROGRESS / NOT_COMPLETE under D-129: 14/16 conditions
+MET, `certificationRefused=true`, `advanceClaimed=false`.
 
 ## Completed Milestones
 
@@ -140,20 +180,33 @@ autonomous proof at S is UNMET and the manual-lane revisit is overdue.
 
 ## Exact Next Action
 
-Task 15.3 is complete for every locally actionable subject. The owner boundary
-is now the only remaining work, and each item is an explicit owner decision:
-(1) condition 1 needs the `owner-manual` lane resolved — either the
-owner-authorized executable `lanes:manual` route (DEV authentication plus a
-separate one-shot authorization) making it PROVEN, or an owner-renewed
-UNAVAILABLE_CAPABILITY record with a new revisit date; its revisit 2026-10-11
-has passed and no agent may refresh it. (2) Condition 3 needs a fresh,
-separately authorized paid provider campaign at the certified checkpoint under
+Task 15.4. The validated repair is committed at
+`5ac54614398817c0af30ef07b8f6f3770131b5de` in the owned session worktree
+`nightwatch-final-product-complet-81c79680`. Next action: repair the five
+continuity errors the in-flight records produced (STATE branch, the 15.4
+mention in this section, the released canonical MAINTENANCE claim), amend the
+checkpoint, run `npm run gate:milestone` and `npm run prepush` at that exact
+HEAD, integrate through C-00 (`integrate --expect-session sess-7e4166ba3b14
+--expect-head <S2>`), and observe the run at S2.
+
+Task 15.3 remains complete for every locally actionable subject, and the owner
+boundary is unchanged, each item an explicit owner decision: (1) condition 1
+needs the `owner-manual` lane resolved — either the owner-authorized executable
+`lanes:manual` route (DEV authentication plus a separate one-shot
+authorization) making it PROVEN, or an owner-renewed UNAVAILABLE_CAPABILITY
+record with a new revisit date; the revisit is now the owner-approved
+2026-11-14, re-affirmed by the owner's DECISION B of 2026-10-15. (2) Condition
+1 ALSO needs the D-173 extension: the six command lanes cannot be re-earned at
+any checkpoint until a guarded measurement root is authorized, because the
+COMMAND producer's `head === checkpoint` guard is unsatisfiable in a real
+repository. (3) Condition 3 needs a fresh, separately authorized paid provider
+campaign at the certified checkpoint under
 `config/yield-run-authorization.v1.json`; the existing GRANTED record belongs to
-historical parent task 12.3 and authorizes nothing here. (3) Repository
+historical parent task 12.3 and authorizes nothing here. (4) Repository
 visibility (PUBLIC) and the eventual campaign archive are owner/admin actions.
 No further local engineering work is authorized or outstanding: the probe
-campaign detects 274/274, all 117 behavioural mutants are detected, the clean
-mode gate passes all 15 groups at S', and canonical/clone classifications agree.
+campaign detects 274/274, all 117 behavioural mutants are detected, and no
+unexecuted check has been declared passing.
 
 ## Superseded Next Action (8.1, complete)
 
@@ -189,6 +242,40 @@ exactly as in M4/M5.
 | `openspec/changes/nightwatch-final-product-completion-v1/tasks.md` | stable IDs restored (VA-01), reopened-by-corrections annotations | corrected by the child campaign (task 5.1) |
 
 ## Validation Ledger
+- 2026-10-15 — M15 CERTIFICATION-MACHINERY REPAIR (this session, owner
+  instruction "FINAL CERTIFICATION RECOVERY AND PROVIDER READINESS"). Newly
+  authorized scope recorded in `.agent/ACTIVE_TASK.md` and here; the previous
+  session's close-out explicitly covered documentary work only. Two defects
+  resolved and proven, two proven blocked:
+  - D-172 / DEFECT A: `reportLaneState` derives `staleEvidence` for a PROVEN
+    lane ONLY (`bin/lib/validation-lane-state.mjs`). Measured effect on
+    condition 1's raw detail: `STALE_EVIDENCE:owner-manual` is gone; seven
+    `STALE_EVIDENCE:` findings remain (root-compile, bin-parse,
+    structural-invariants, full-regression, clean-checkout, ui,
+    browser-workflow) plus `evidence artifact config/validation-lane-state.v1.json
+    absent at bound SHA 88e3c3fb52937ff303b0944cc22cfee624bf807e`.
+  - D-173 / DEFECT B: the COMMAND producer's `head === checkpoint` guard is
+    unsatisfiable in any real repository state; proven by a bounded sweep of the
+    certify-evidence era (no commit self-declares its anchor), a measured
+    non-convergence of anchor amending, and a real synthetic Git repository in
+    which BOTH the substantive checkout and the anchor-advance descendant refuse
+    with `CERTIFY_HEAD_NOT_CHECKPOINT`.
+  Validation (all in the C-00 session worktree
+  `nightwatch-final-product-complet-81c79680`, session `sess-7e4166ba3b14`,
+  base `4ab808fc`): `npm run typecheck` clean; `npm run typecheck:bin` PASS
+  (conformance 77/77, errors 0); `npm run hardening:check` PASS;
+  `npm run hardening:rules` rules=96 probes=274 detected=274 undetected=0
+  restored=136 statusUnchanged=true; `npm run hardening:mutants` mutants=117
+  detected=117 survived=0 errors=0; focused suites
+  `tests/unit/certifyEvidence.test.ts` 18/18,
+  `tests/unit/productionCompletionLaneState.test.ts` 42/42 (13 new negative
+  regressions), `tests/unit/validationClassification.test.ts` 8/8 — 68 passed /
+  0 failed. The 12 MANUAL_OWNER harnesses remain unexecuted: the owner's
+  DECISION B of 2026-10-15 re-affirms `UNAVAILABLE_CAPABILITY` with the
+  approved revisit date 2026-11-14, an unchanged named unblock condition, and
+  no claim that they ran. No provider call, no spend, no new grant, no
+  visibility change and no Alphaus contact occurred.
+
 
 - 2026-10-09 — M10 11.2/11.4/11.5 (this session). `docs/DECISIONS.md` appended
   with D-153 (OD-1..OD-4; the reserved "D-144" label was already issued, so the

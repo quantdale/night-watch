@@ -806,3 +806,132 @@ test.describe('validation lane state', () => {
     }
   });
 });
+
+// ---------------------------------------------------------------------------
+// R5-14 / D-172 — the two kinds of lane binding (owner instruction DEFECT A).
+//
+// A lane's evidenceSha is an EXECUTION SHA for a PROVEN lane (it decays when
+// the source changes) and a DISPOSITION record for a non-PROVEN lane (it does
+// not: its currency is the revisit date and the named unblock condition). The
+// lane report must therefore judge staleness for PROVEN lanes ONLY, while every
+// other guard over a non-PROVEN lane stays intact.
+//
+// Every assertion below is a NEGATIVE regression: each one pins a refusal, not
+// an upgrade. None of them makes UNAVAILABLE_CAPABILITY equivalent to PROVEN.
+// ---------------------------------------------------------------------------
+
+const DISPOSITION = 'DEV authentication plus a separate one-shot owner authorization for the named checks (lanes:manual)';
+const TONIGHT = new Date().toISOString().slice(0, 10);
+
+test.describe('non-PROVEN lane disposition semantics (R5-14 / D-172)', () => {
+  const staleFrom = (left: string, right: string) => left === SHA_A && right === SHA_B;
+
+  test('1. the current owner-manual UNAVAILABLE_CAPABILITY disposition is not reported stale', () => {
+    // The live record: class UNAVAILABLE_CAPABILITY, a named unblock condition,
+    // an approved revisit date, and a historical disposition binding.
+    const loaded = loadLaneState(REPO_ROOT);
+    const manual = loaded.lanes.find((entry) => entry.laneId === 'owner-manual');
+    expect(manual?.class).toBe('UNAVAILABLE_CAPABILITY');
+    expect(manual?.unblockCondition).toBe(DISPOSITION);
+    expect(manual?.revisitDate).toBe('2026-11-14');
+    const report = reportLaneState(loaded.lanes, SHA_B, staleFrom);
+    expect(report.find((entry) => entry.laneId === 'owner-manual')?.staleEvidence).toBe(false);
+    expect(report.find((entry) => entry.laneId === 'owner-manual')?.reportedClass).toBe('UNAVAILABLE_CAPABILITY');
+  });
+
+  test('2. the approved revisit date 2026-11-14 is the one recorded, and the 12 harnesses stay unexecuted', () => {
+    const loaded = loadLaneState(REPO_ROOT);
+    const manual = loaded.lanes.find((entry) => entry.laneId === 'owner-manual');
+    expect(manual?.revisitDate).toBe('2026-11-14');
+    // The record itself still says they have never run: no PASS is claimed.
+    expect(String(manual?.evidence)).toContain('remain declared and unexecuted');
+    expect(String(manual?.command)).toContain('lanes:manual');
+  });
+
+  test('3. 2026-11-15 reports the disposition as overdue without a further approved renewal', () => {
+    const lanes = [lane({ laneId: 'owner-manual', class: 'UNAVAILABLE_CAPABILITY', unblockCondition: DISPOSITION, revisitDate: '2026-11-14', evidenceSha: SHA_A })];
+    expect(collectRevisitDue(lanes, '2026-11-15').map((entry) => entry.laneId)).toEqual(['owner-manual']);
+    // Still never promoted to PROVEN by expiry alone.
+    expect(reportLaneState(lanes, SHA_B, staleFrom)[0]?.reportedClass).toBe('UNAVAILABLE_CAPABILITY');
+  });
+
+  test('4. a non-PROVEN lane without an owner unblockCondition fails validation', () => {
+    const lanes = [lane({ laneId: 'owner-manual', class: 'UNAVAILABLE_CAPABILITY', unblockCondition: '', revisitDate: '2026-11-14', evidenceSha: SHA_A })];
+    expect(validateLaneState(lanes, ['MANUAL_OWNER']).map((entry) => entry.code)).toContain('LANE_STATE_CONDITION_MISSING');
+    const blank = [lane({ laneId: 'owner-manual', class: 'UNAVAILABLE_CAPABILITY', unblockCondition: '   ', revisitDate: '2026-11-14', evidenceSha: SHA_A })];
+    expect(validateLaneState(blank, ['MANUAL_OWNER']).map((entry) => entry.code)).toContain('LANE_STATE_CONDITION_MISSING');
+  });
+
+  test('5. a forged owner approval (an invented class, or a PROVEN lane with no execution SHA) fails', () => {
+    // An invented class name is not an owner approval.
+    const invented = [lane({ laneId: 'owner-manual', class: 'AUTHORIZED_BY_OWNER' as never, unblockCondition: DISPOSITION, revisitDate: '2026-11-14', evidenceSha: SHA_A })];
+    expect(validateLaneState(invented, ['MANUAL_OWNER']).map((entry) => entry.code)).toContain('LANE_STATE_CLASS_INVALID');
+    // Claiming PROVEN without an execution SHA is an unevidenced claim, not a promotion.
+    const forged = [lane({ laneId: 'owner-manual', class: 'PROVEN', unblockCondition: null, revisitDate: null, evidenceSha: null })];
+    expect(validateLaneState(forged, ['MANUAL_OWNER']).map((entry) => entry.code)).toContain('LANE_STATE_EVIDENCE_SHA_MISSING');
+  });
+
+  test('6. an unavailable lane cannot become PROVEN without genuine execution evidence', () => {
+    const lanes = [lane({ laneId: 'owner-manual', class: 'UNAVAILABLE_CAPABILITY', unblockCondition: DISPOSITION, revisitDate: '2026-11-14', evidenceSha: SHA_A })];
+    const report = reportLaneState(lanes, SHA_B, staleFrom);
+    expect(report[0]?.class).toBe('UNAVAILABLE_CAPABILITY');
+    expect(report[0]?.reportedClass).toBe('UNAVAILABLE_CAPABILITY');
+    expect(report[0]?.dispositionRecord).toBe(true);
+    // The only promotion path is an execution SHA AT the checkpoint with class PROVEN.
+    const promoted = [lane({ laneId: 'owner-manual', class: 'PROVEN', unblockCondition: null, revisitDate: null, evidenceSha: SHA_B })];
+    expect(reportLaneState(promoted, SHA_B, staleFrom)[0]?.reportedClass).toBe('PROVEN');
+  });
+
+  test('7. a stale PROVEN lane is still stale', () => {
+    const lanes = [lane({ laneId: 'root-compile', class: 'PROVEN', evidenceSha: SHA_A })];
+    const report = reportLaneState(lanes, SHA_B, staleFrom);
+    expect(report[0]?.staleEvidence).toBe(true);
+    expect(report[0]?.reportedClass).toBe('PROVEN (STALE_EVIDENCE)');
+    expect(report[0]?.dispositionRecord).toBe(false);
+  });
+
+  test('8. a PROVEN lane with no bound evidence SHA is unevidenced and fails structurally', () => {
+    const lanes = [lane({ laneId: 'root-compile', class: 'PROVEN', evidenceSha: null })];
+    expect(validateLaneState(lanes, []).map((entry) => entry.code)).toContain('LANE_STATE_EVIDENCE_SHA_MISSING');
+  });
+
+  test('9. a non-PROVEN lane with a FUTURE (non-ancestral) record is not stale either; ancestry decides, not inequality', () => {
+    const lanes = [lane({ laneId: 'owner-manual', class: 'UNAVAILABLE_CAPABILITY', unblockCondition: DISPOSITION, revisitDate: '2026-11-14', evidenceSha: SHA_C })];
+    expect(reportLaneState(lanes, SHA_B, staleFrom)[0]?.staleEvidence).toBe(false);
+  });
+
+  test('10. the live lane record still carries exactly one non-PROVEN lane and no STALE class', () => {
+    // The repair must not silently promote or hide: the record still declares
+    // 10 PROVEN lanes and exactly one UNAVAILABLE_CAPABILITY lane.
+    const loaded = loadLaneState(REPO_ROOT);
+    const nonProven = loaded.lanes.filter((entry) => entry.class !== 'PROVEN').map((entry) => entry.laneId);
+    expect(nonProven).toEqual(['owner-manual']);
+    expect(loaded.lanes.filter((entry) => entry.class === 'PROVEN').length).toBe(10);
+    // No lane stores a class.
+    expect(loaded.lanes.map((entry) => entry.class)).not.toContain('PROVEN (STALE_EVIDENCE)');
+  });
+
+  test('11. the lane-state record itself is not a documentation-only path (a class change stays substantive)', () => {
+    // VB-01: config/validation-lane-state.v1.json is not an approved
+    // documentation-only path, so the repair could not have hidden a class
+    // change inside a documentary commit.
+    expect(isApprovedCheckpointPath('config/validation-lane-state.v1.json')).toBe(false);
+  });
+
+  test('12. the condition-1 evidence text still states the non-PROVEN criterion it satisfies', () => {
+    const definition = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, 'config', 'release-certification.v1.json'), 'utf8'));
+    const condition = definition.conditions.find((entry: { id: string }) => entry.id === 'validation-lane-closure');
+    expect(condition.title).toContain('BLOCKED_EXTERNAL / UNAVAILABLE_CAPABILITY');
+    expect(condition.title).toContain('current unexpired record naming its owner action');
+  });
+
+  test('13. the lane-state module has no authority to manufacture a PROVEN report', () => {
+    // The source must not contain a path that rewrites a lane's declared class.
+    const source = fs.readFileSync(path.join(REPO_ROOT, 'bin', 'lib', 'validation-lane-state.mjs'), 'utf8');
+    expect(source).toContain("lane.class === 'PROVEN'\n      && typeof lane.evidenceSha === 'string'");
+    // No assignment to `.class` anywhere: a comparison (`===`, `!==`) is not one.
+    expect(source).not.toMatch(/\.class\s*=(?!=)/);
+    // And the class is read from the record, never from the evidence binding.
+    expect(source).not.toMatch(/class:\s*resolveEvidenceShaForSubject/);
+  });
+});

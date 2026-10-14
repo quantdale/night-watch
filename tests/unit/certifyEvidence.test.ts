@@ -318,3 +318,193 @@ test.describe('the producer decision logic (injected effects)', () => {
     expect(selectCiObservation([{ databaseId: -1, headSha: S, status: 'completed', conclusion: 'success' }], S)).toBeNull();
   });
 });
+
+// ---------------------------------------------------------------------------
+// R5-15 / D-173 — the COMMAND-producer checkpoint cycle (owner DEFECT B),
+// proven, not asserted.
+//
+// A COMMAND receipt is the only evidence that re-earns the six command lanes
+// (`root-compile`, `bin-parse`, `structural-invariants`, `full-regression`,
+// `ui`, `browser-workflow`) and it therefore decides release condition #1.
+// Its guard is `head === checkpoint`, where BOTH values come from the SAME
+// root: HEAD from Git, and the checkpoint from the verdict the real
+// `bin/project-state-check.mjs` derives from that root's
+// `docs/CURRENT_STATE.md` `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA`.
+//
+// The authoritative choreography (session worktree -> substantive commit S ->
+// documentary anchor-advance commit -> evidence commits) therefore puts HEAD at
+// S while the tree at S still declares the PREVIOUS anchor, or puts the anchor
+// at S while HEAD is the documentary descendant. The two facts can never be
+// equal in a real repository, because a commit that declared its own SHA as the
+// anchor would be a SHA-1 fixed point of its own tree.
+//
+// These tests reproduce that contradiction against a REAL synthetic Git
+// repository (no stubbed verifier), and they pin the refusals so that any
+// future relaxation of the identity rule must be deliberate and equally strict.
+// ---------------------------------------------------------------------------
+
+test.describe('the command-lane checkpoint cycle is unreachable today (R5-15 / D-173)', () => {
+  const ANCHOR_FIELD = 'LAST_SUBSTANTIVE_IMPLEMENTATION_SHA';
+  const environment = { PATH: process.env.PATH ?? '', GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_NOSYSTEM: '1', GIT_AUTHOR_NAME: 'nw', GIT_AUTHOR_EMAIL: 'nw@example.invalid', GIT_COMMITTER_NAME: 'nw', GIT_COMMITTER_EMAIL: 'nw@example.invalid' };
+
+  interface CycleRepo {
+    readonly root: string;
+    readonly declaredAnchor: () => string;
+    readonly commit: (message: string, mutate?: () => void) => string;
+    readonly worktree: (name: string, sha: string) => string;
+    readonly produce: (worktreeRoot: string, subject: string) => { status: number | null; json: { code?: string } | null };
+    cleanup(): void;
+  }
+
+  /** A real Git repository carrying a real docs/CURRENT_STATE.md anchor and a REAL project-state-check. */
+  function cycleRepo(): CycleRepo {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'nw-cycle-'));
+    fs.writeFileSync(path.join(root, '.gitignore'), 'artifacts/\n');
+    fs.mkdirSync(path.join(root, 'config'), { recursive: true });
+    fs.mkdirSync(path.join(root, 'bin'), { recursive: true });
+    // A verdict source that derives the certified checkpoint the SAME way the
+    // real one does — from this root's docs/CURRENT_STATE.md anchor field — so
+    // the identity guard is exercised for real rather than stubbed away.
+    fs.writeFileSync(path.join(root, 'bin', 'project-state-check.mjs'), "import fs from 'node:fs';\nconst text = fs.readFileSync(new URL('../docs/CURRENT_STATE.md', import.meta.url), 'utf8');\nconst sha = /^LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: ([0-9a-f]{40})$/m.exec(text)?.[1] ?? '';\nprocess.stdout.write(JSON.stringify({ releaseVerdict: { certifiedCheckpointSha: sha, conditions: [] } }));\n");
+    fs.writeFileSync(path.join(root, 'config', 'release-certification.v1.json'), JSON.stringify({ schemaVersion: 'nightwatch.release-certification.v1', definitionName: 'fixture', certifiedCheckpointField: ANCHOR_FIELD, advanceStatuses: [], nextStatus: { state: 'DECIDED', safeDefault: 'OPERATIONALLY_ACCEPTED', ownerDecision: 'fixture', decidedBy: 'D-1', statement: 'fixture' }, externalTrack: { id: 'x', stages: [], excludedFromAdvanceConditions: true, checks: [], statement: 'fixture' }, presentationSurfaces: [], conditions: [] }));
+    fs.writeFileSync(path.join(root, 'tsconfig.json'), '{}\n');
+    fs.writeFileSync(path.join(root, 'package.json'), JSON.stringify({ name: 'fixture', version: '0.0.0', scripts: { typecheck: 'node -e "process.exit(0)"' } }));
+    fs.mkdirSync(path.join(root, 'docs'), { recursive: true });
+    fs.writeFileSync(path.join(root, 'docs', 'CURRENT_STATE.md'), `## block\n${ANCHOR_FIELD}: ${'0'.repeat(40)}\nPROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED\n`);
+    const git = (args: string[], cwd = root) => spawnSync('git', args, { cwd, env: environment, encoding: 'utf8', shell: false, timeout: 60_000 });
+    git(['init', '--quiet']);
+    git(['add', '--all']);
+    git(['commit', '--quiet', '--no-gpg-sign', '-m', 'base']);
+    /** Marker bytes so every commit in this fixture carries a real change. */
+    let generation = 0;
+    const commit = (message: string, mutate?: () => void): string => {
+      if (mutate !== undefined) mutate();
+      else fs.writeFileSync(path.join(root, 'generation.txt'), `generation ${String(generation += 1)}\n`);
+      git(['add', '--all']);
+      const result = git(['commit', '--quiet', '--no-gpg-sign', '-m', message]);
+      expect(result.status).toBe(0);
+      return git(['rev-parse', 'HEAD']).stdout.trim();
+    };
+    return {
+      root,
+      declaredAnchor: () => new RegExp(`^${ANCHOR_FIELD}: ([0-9a-f]{40})$`, 'm').exec(fs.readFileSync(path.join(root, 'docs', 'CURRENT_STATE.md'), 'utf8'))?.[1] ?? '',
+      commit,
+      worktree: (name: string, sha: string) => {
+        const target = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'nw-cycle-wt-')), name);
+        const result = git(['worktree', 'add', '--detach', '--quiet', target, sha]);
+        expect(result.status).toBe(0);
+        return target;
+      },
+      produce: (worktreeRoot: string, subject: string) => {
+        const result = spawnSync(process.execPath, [path.join(ROOT, 'bin', 'certify-evidence.mjs'), 'produce', '--subject', subject, '--root', worktreeRoot], { cwd: worktreeRoot, encoding: 'utf8', timeout: 120_000, env: environment });
+        /** @type {{ code?: string } | null} */
+        let json = null;
+        try {
+          json = JSON.parse(result.stdout ?? '');
+        } catch {
+          json = null;
+        }
+        return { status: result.status, json };
+      },
+      cleanup: () => {
+        fs.rmSync(root, { recursive: true, force: true });
+      },
+    };
+  }
+
+  const advanceAnchor = (repo: CycleRepo, sha: string): void => {
+    const file = path.join(repo.root, 'docs', 'CURRENT_STATE.md');
+    const text = fs.readFileSync(file, 'utf8');
+    fs.writeFileSync(file, text.replace(new RegExp(`^${ANCHOR_FIELD}: [0-9a-f]{40}$`, 'm'), `${ANCHOR_FIELD}: ${sha}`));
+  };
+
+  test('14. the live repository refuses a COMMAND receipt at HEAD, whatever else it says', () => {
+    // A COMMAND receipt can only be produced when HEAD IS the certified
+    // checkpoint on a clean tree. The live checkout never satisfies both: the
+    // anchor names an ancestor, and this working tree is dirty while the repair
+    // is uncommitted. Either way NO receipt is produced and the CLI exits 3.
+    const result = spawnSync(process.execPath, [CLI, 'produce', '--subject', 'root-compile'], { cwd: ROOT, encoding: 'utf8', timeout: 120_000 });
+    expect(result.status).toBe(3);
+    const parsed = JSON.parse(result.stdout) as { ok: boolean; code: string };
+    expect(parsed.ok).toBe(false);
+    expect(['CERTIFY_HEAD_NOT_CHECKPOINT', 'CERTIFY_TREE_DIRTY', 'CERTIFY_CHECKPOINT_UNRESOLVED']).toContain(parsed.code);
+    // And nothing was staged for the live HEAD: no SHA was measured, so no
+    // receipt may exist for it. (The staging directory itself is a host-local
+    // ignored artefact of earlier runs, so only the HEAD-specific file matters.)
+    const liveHead = spawnSync('git', ['rev-parse', 'HEAD'], { cwd: ROOT, encoding: 'utf8' }).stdout.trim();
+    expect(fs.existsSync(path.join(ROOT, 'artifacts', 'certification-staging', liveHead, 'root-compile.json'))).toBe(false);
+  });
+
+  test('15. no commit in the certify-evidence era declares its own SHA as the anchor', () => {
+    // Bounded to the range in which bin/lib/certify-producers.mjs exists, so the
+    // check stays decisive without scanning the whole history.
+    const introduced = spawnSync('git', ['log', '--diff-filter=A', '--format=%H', '--reverse', '--', 'bin/lib/certify-producers.mjs'], { cwd: ROOT, encoding: 'utf8', timeout: 60_000 }).stdout.trim().split('\n').filter(Boolean);
+    const floor = introduced[0] ?? 'HEAD';
+    const commits = spawnSync('git', ['rev-list', `${floor}..HEAD`], { cwd: ROOT, encoding: 'utf8', timeout: 120_000 }).stdout.trim().split('\n').filter(Boolean);
+    expect(commits.length).toBeGreaterThan(0);
+    for (const sha of [...commits, floor]) {
+      const declared = spawnSync('git', ['show', `${sha}:docs/CURRENT_STATE.md`], { cwd: ROOT, encoding: 'utf8', timeout: 30_000 });
+      if (declared.status !== 0) continue;
+      const anchor = new RegExp(`^${ANCHOR_FIELD}: ([0-9a-f]{40})$`, 'm').exec(declared.stdout)?.[1] ?? '';
+      expect(anchor === sha ? sha : 'declared-other').toBe('declared-other');
+    }
+  });
+
+  test('16. amending the anchor to the commit SHA changes the SHA, forever', () => {
+    // The fixpoint the COMMAND producer needs does not converge: the SHA is a
+    // hash of the tree that contains the SHA.
+    const repo = cycleRepo();
+    try {
+      const first = repo.commit('substantive-1');
+      advanceAnchor(repo, first);
+      const second = repo.commit('anchor-advance-1');
+      expect(second).not.toBe(first);
+      advanceAnchor(repo, second);
+      const third = repo.commit('anchor-advance-2');
+      expect(third).not.toBe(second);
+      expect(third).not.toBe(first);
+      // And the anchor still never names the commit that carries it.
+      expect(repo.declaredAnchor()).toBe(second);
+    } finally {
+      repo.cleanup();
+    }
+  });
+
+  test('17. neither the substantive commit nor the anchor-advance descendant can produce a COMMAND receipt', () => {
+    const repo = cycleRepo();
+    try {
+      // The substantive fix: a real source change.
+      fs.writeFileSync(path.join(repo.root, 'tsconfig.json'), '{ "compilerOptions": {} }\n');
+      const substantive = repo.commit('fix: substantive');
+      // The documentary anchor advance (the approved documentation-only path).
+      advanceAnchor(repo, substantive);
+      const anchor = repo.commit('docs: advance the anchor to the substantive checkpoint');
+      // (a) A clean checkout AT the substantive commit: the tree still declares
+      //     the previous anchor, so HEAD !== the certified checkpoint.
+      expect(repo.produce(repo.worktree('substantive', substantive), 'root-compile')).toMatchObject({ status: 3, json: { code: 'CERTIFY_HEAD_NOT_CHECKPOINT' } });
+      // (b) A clean checkout AT the anchor-advance descendant: the anchor now
+      //     names the substantive commit, but HEAD is the documentary descendant.
+      expect(repo.produce(repo.worktree('anchor', anchor), 'root-compile')).toMatchObject({ status: 3, json: { code: 'CERTIFY_HEAD_NOT_CHECKPOINT' } });
+    } finally {
+      repo.cleanup();
+    }
+  });
+
+  test('18. a receipt that claimed a measurement it did not make is refused by the verifier', () => {
+    // The receipt schema ALREADY carries sourceHead and observedAtHead
+    // separately, so a two-phase measurement needs no schema change; what it
+    // must never do is claim a sourceHead the command did not run against.
+    const fx = fixture();
+    try {
+      fx.verdict([]);
+      expect(fx.run(['produce', '--subject', 'root-compile']).status).toBe(0);
+      const staged = JSON.parse(fs.readFileSync(path.join(fx.root, 'artifacts', 'certification-staging', fx.head, 'root-compile.json'), 'utf8')) as Record<string, unknown>;
+      const claimed = { ...staged, observedAtHead: 'c'.repeat(40) } as Record<string, unknown>;
+      // The digest covers observedAtHead, so the forged pair does not re-derive.
+      expect(staged.sourceHead).toBe(fx.head);
+      expect(verifyPersistedReceipt(fx.root, 'root-compile', String(claimed.receiptDigest), fx.head).verified).toBe(false);
+    } finally {
+      fx.cleanup();
+    }
+  });
+});

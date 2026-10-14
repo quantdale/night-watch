@@ -21,13 +21,17 @@ export interface LaneStateReportEntry {
   readonly laneId: string;
   readonly classes: readonly string[];
   readonly class: LaneStateClass;
-  readonly reportedClass: string;
+  readonly reportedClass: LaneStateClass | 'PROVEN (STALE_EVIDENCE)';
   readonly command: string | null;
   readonly evidence: string | null;
   readonly evidenceSha: string | null;
   readonly unblockCondition: string | null;
   readonly revisitDate: string | null;
   readonly staleEvidence: boolean;
+  // D-172: true when this lane is judged as an owner DISPOSITION record rather
+  // than as an execution claim, so its evidence SHA is never compared against
+  // the substantive checkpoint.
+  readonly dispositionRecord: boolean;
 }
 
 export interface LaneStateDiagnostic {

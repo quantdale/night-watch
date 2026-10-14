@@ -8,6 +8,30 @@
 // resolve to exactly one lane entry, and a non-PROVEN lane must name a
 // non-empty unblock condition and a revisit date.
 //
+// R5-14 / D-172 — THE TWO KINDS OF BINDING. A lane's `evidenceSha` means one
+// of two different things, and conflating them made condition 1 unsatisfiable:
+//
+//   PROVEN lanes bind an EXECUTION SHA: the commit at which the lane's command
+//   actually ran and exited 0. That claim decays — a substantive descendant
+//   changes the measured source — so an ancestral execution SHA is STALE
+//   EVIDENCE and the lane is demoted.
+//
+//   Non-PROVEN lanes bind a DISPOSITION record: the commit at which the owner
+//   recorded that this capability is BLOCKED_EXTERNAL or UNAVAILABLE_CAPABILITY.
+//   It is NOT an execution claim and it does not decay with the source: the
+//   disposition's currency is its `revisitDate` (expiry, enforced by
+//   `collectRevisitDue` -> REVISIT_DUE) and its named `unblockCondition`
+//   (presence, enforced by `validateLaneState` -> LANE_STATE_CONDITION_MISSING).
+//
+// So `staleEvidence` is computed ONLY for a PROVEN lane. Deriving it for a
+// non-PROVEN lane demanded an execution receipt for a capability the owner has
+// documented as unavailable — precisely the confusion the release condition
+// forbids ("every declared validation lane resolves PROVEN, or BLOCKED_EXTERNAL
+// / UNAVAILABLE_CAPABILITY with a current unexpired record naming its owner
+// action"). This is NOT an equivalence: a non-PROVEN lane is still counted as
+// never-attempted, still needs a real unblock condition and revisit date, and
+// can never be reported as PROVEN here.
+//
 // Read-only over the filesystem; staleness is computed from an injected
 // ancestor predicate so the module stays deterministic and testable.
 
@@ -30,6 +54,7 @@ const SHA_RE = /^[0-9a-f]{40}$/i;
  * @typedef {{ laneId: string, classes: readonly string[] | undefined, class: string | undefined, command: string | undefined, evidence: string | undefined, evidenceSha: string | null | undefined, unblockCondition: string | null | undefined, revisitDate: string | null | undefined }} LaneStateRecord
  * @typedef {{ code: string, detail: string }} LaneStateDiagnostic
  */
+
 
 /**
  * @param {unknown} value
@@ -163,13 +188,20 @@ export function validateLaneState(lanes, declaredClasses) {
  * Report state per lane. `isAncestor(a, b)` answers whether commit `a` is an
  * ancestor of `b`; the fourth state is report-only and never stored.
  *
+ * R5-14 / D-172: staleness is judged for a PROVEN lane ONLY. A non-PROVEN lane
+ * carries an owner disposition, not an execution measurement, so its historical
+ * record SHA is never compared against the substantive checkpoint. Its currency
+ * is judged by `collectRevisitDue` (expiry) and by `validateLaneState` (a named
+ * unblock condition and a revisit date), never by source decay.
+ *
  * @param {readonly LaneStateRecord[]} lanes
  * @param {string | null} lastSubstantiveSha
  * @param {(left: string, right: string) => boolean} isAncestor
  */
 export function reportLaneState(lanes, lastSubstantiveSha, isAncestor) {
   return lanes.map((lane) => {
-    const staleEvidence = typeof lane.evidenceSha === 'string'
+    const staleEvidence = lane.class === 'PROVEN'
+      && typeof lane.evidenceSha === 'string'
       && typeof lastSubstantiveSha === 'string'
       && lane.evidenceSha !== lastSubstantiveSha
       && typeof isAncestor === 'function'
@@ -186,6 +218,9 @@ export function reportLaneState(lanes, lastSubstantiveSha, isAncestor) {
       unblockCondition: lane.unblockCondition ?? null,
       revisitDate: lane.revisitDate ?? null,
       staleEvidence,
+      // Reported (never stored, never consulted by the judge) so a reader can
+      // see that this lane is judged as a DISPOSITION, not as an execution.
+      dispositionRecord: lane.class !== 'PROVEN',
     };
   });
 }

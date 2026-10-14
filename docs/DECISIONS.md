@@ -6746,3 +6746,102 @@ new authority, no provider call was made, no spend occurred and no run count or
 budget was raised. Repository visibility stays PUBLIC (Decision C) and no
 Alphaus DEV/NEXT/production, database, authenticated or sibling-repository
 access occurred (Decision D).
+
+## D-172 — a lane's evidence SHA is an execution SHA or a disposition, never both (2026-10-15)
+
+Source: owner instruction "NIGHTWATCH — FINAL CERTIFICATION RECOVERY AND
+PROVIDER READINESS", release condition #1 defect A, under the terminal campaign
+`nightwatch-final-product-completion-v1` (task 15.3).
+
+**Defect.** `reportLaneState` derived `staleEvidence` from the lane's evidence
+SHA for EVERY lane, including non-PROVEN ones. The `owner-manual` lane is
+intentionally `UNAVAILABLE_CAPABILITY`, and its binding in
+`config/release-evidence.v1.json` is a historical disposition pointer
+(`36bd4930…`) with `receiptDigest: null` and `certifying: false`; no producer
+exists for it (`bin/lib/certification-subjects.mjs` route `NONE`, producer
+`UNAVAILABLE`). Comparing that disposition record against the substantive
+checkpoint therefore emitted `STALE_EVIDENCE:owner-manual` and demanded an
+execution receipt for a capability the owner has documented as unavailable —
+which release condition #1 explicitly does not require.
+
+**Decision.** `staleEvidence` is computed for a PROVEN lane ONLY. A PROVEN lane
+binds an EXECUTION SHA, which decays when the source changes; a non-PROVEN lane
+binds a DISPOSITION record, which does not. The disposition's currency is judged
+by `collectRevisitDue` (expiry → `REVISIT_DUE`) and by `validateLaneState`
+(presence of `unblockCondition` and `revisitDate` →
+`LANE_STATE_CONDITION_MISSING` / `LANE_STATE_REVISIT_MISSING`), exactly as
+before. Implemented in `bin/lib/validation-lane-state.mjs`; the module's header
+states the distinction so a future edit cannot re-conflate them.
+
+**What this decision is not.** It is NOT an equivalence between
+`UNAVAILABLE_CAPABILITY` and `PROVEN`: a non-PROVEN lane is still counted as
+never-attempted, still requires a named unblock condition and a revisit date,
+and is never reported PROVEN by this path. A PROVEN lane still requires a
+non-null evidence SHA (`LANE_STATE_EVIDENCE_SHA_MISSING`), is still demoted by
+an ancestral execution SHA, and is still demoted by a declared artifact absent
+at its bound SHA. No receipt was fabricated and no unexecuted check was
+declared passing.
+
+**Measured consequence.** The reproduced condition-1 detail went from
+`STALE_EVIDENCE:root-compile; …; STALE_EVIDENCE:owner-manual; evidence artifact
+… absent at bound SHA 88e3c3fb…` to
+`STALE_EVIDENCE:root-compile; bin-parse; structural-invariants; full-regression;
+clean-checkout; ui; browser-workflow; evidence artifact … absent at bound SHA
+88e3c3fb…`. The `owner-manual` finding is gone; the condition stays UNMET for
+the independent reason recorded in D-173. Regression coverage: 13 new negative
+tests in `tests/unit/productionCompletionLaneState.test.ts` (current disposition
+accepted, 2026-11-14 preserved, 2026-11-15 overdue, missing condition rejected,
+forged approval rejected, no promotion without execution evidence, stale PROVEN
+lane still stale, missing PROVEN evidence SHA rejected, live record still
+carries exactly one non-PROVEN lane, the lane record is still not a
+documentation-only path, and the module cannot rewrite a class).
+
+## D-173 — the COMMAND-lane checkpoint cycle is structurally unreachable (2026-10-15)
+
+Source: owner instruction "NIGHTWATCH — FINAL CERTIFICATION RECOVERY AND
+PROVIDER READINESS", release condition #1 defect B, under the terminal campaign
+`nightwatch-final-product-completion-v1` (task 15.3).
+
+**Defect.** A COMMAND producer in `bin/lib/certify-producers.mjs` refuses
+anything but `head === checkpoint`, where BOTH values come from the SAME root:
+HEAD from `git rev-parse HEAD`, and the checkpoint from the verdict that the
+real `bin/project-state-check.mjs` derives from that root's
+`docs/CURRENT_STATE.md` `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA`. The authorized
+choreography puts HEAD at the substantive commit S while S's tree still declares
+the previous anchor, or puts the anchor at S while HEAD is the documentary
+anchor-advance descendant. The conjunction is unsatisfiable in a real
+repository: a commit whose tree declared its own SHA as the anchor would be a
+SHA-1 fixed point of its own content.
+
+**Proof (executable, not asserted).** `tests/unit/certifyEvidence.test.ts`
+regression set R5-15/D-173 now carries five tests: no commit in the
+certify-evidence era declares its own SHA as the anchor (bounded sweep);
+amending the anchor to the commit SHA changes the SHA, forever (measured
+non-convergence); neither a clean checkout AT the substantive commit nor a clean
+checkout AT the anchor-advance descendant can produce a COMMAND receipt (both
+refuse `CERTIFY_HEAD_NOT_CHECKPOINT` in a real synthetic Git repository); the
+live repository refuses a COMMAND receipt at HEAD; and a receipt that claimed a
+`sourceHead`/`observedAtHead` pair it did not measure does not re-derive.
+
+**Consequence for release condition #1.** The six command lanes (`root-compile`,
+`bin-parse`, `structural-invariants`, `full-regression`, `ui`,
+`browser-workflow`) cannot be re-earned at a new checkpoint, so they remain
+`STALE_EVIDENCE` and condition #1 stays UNMET. This is a genuine architectural
+contradiction, not a missing step: the smallest proposed extension is a GUARDED
+MEASUREMENT ROOT — the producer accepts an explicitly supplied measurement root
+only after proving it is an exact, clean checkout of the certified checkpoint
+(`rev-parse HEAD` equals the checkpoint, `status --porcelain` empty, and
+`HEAD^{tree}` equals `<checkpoint>^{tree}`), and only while the observer root is
+a descendant of the checkpoint; the command then runs in the measurement root and
+the receipt records `sourceHead: <checkpoint>` with the observer as
+`observedAtHead`. That extension needs NO receipt-schema change (the schema
+already carries `sourceHead` and `observedAtHead` separately, and the digest
+covers both), but it DOES change the text pinned by behavioural mutant BM-078
+("a command producer measures only at HEAD == S"), so its mutant pin and its
+focused refusal test must be re-issued together. NOT taken here: it is recorded
+as the smallest next correction and requires a separate owner authorization.
+
+**What this decision is not.** It does NOT remove `head === checkpoint`, does
+NOT accept an untracked receipt, does NOT let a documentary descendant inherit a
+green command result for different source, and does NOT fabricate or refresh
+any command-lane evidence.
