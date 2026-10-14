@@ -92,4 +92,11 @@ The canonical documentary window is closed at its last commit. The successor is
 the implementation session that applies the owner 2026-10-14 manual-validation
 disposition, which is a substantive lane-state change.
 
-CLAIM: sess-6e666451e658 | role=SESSION | task=nightwatch-final-product-completion-v1 | created=2026-10-14T05:02:59Z | released=OPEN | base=4b400935c138cc74cf08608adf65233a370a3db6 | tip=OPEN
+CLAIM: sess-6e666451e658 | role=SESSION | task=nightwatch-final-product-completion-v1 | created=2026-10-14T05:02:59Z | released=2026-10-14T15:19:40Z | base=4b400935c138cc74cf08608adf65233a370a3db6 | tip=4e60bc913a372b5863f8f9f7d19fbd7dff617c07
+
+
+The implementation session for the owner manual-validation disposition is closed at
+its last commit. The successor is the canonical MAINTENANCE window that carries
+the documentary close-out of the campaign.
+
+CLAIM: sess-fcd99670f679 | role=MAINTENANCE | task=nightwatch-final-product-completion-v1 | created=2026-10-14T15:19:40Z | released=OPEN | base=4e60bc913a372b5863f8f9f7d19fbd7dff617c07 | tip=OPEN

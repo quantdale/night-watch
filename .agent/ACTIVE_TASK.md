@@ -48,23 +48,23 @@ No new campaign or additional paid provider proof is authorized by this recovery
 ```text
 CAMPAIGN: nightwatch-final-product-completion-v1
 CHILD TASK: NONE
-SESSION WORKTREE: session/nightwatch-final-product-complet-1ddf0dfe
+SESSION WORKTREE: NONE
 
 CURRENT STATUS:
-  IN_PROGRESS — M14. The owner's 2026-10-14 manual-validation disposition
-  (D-171) is applied: the twelve MANUAL_OWNER harnesses stay
-  UNAVAILABLE_CAPABILITY and the lane's review date moves to 2026-11-14. The
-  lane-state file is not an approved documentation-only path, so this is a
-  substantive change and requires a new genuine checkpoint S with its own
-  executed CI and its own evidence. The campaign stays NOT_COMPLETE under
-  D-129: condition 3 remains owner-gated and condition 1 stays UNMET until the
-  owner authorizes the executable lanes:manual route or a bounded binding-rule
-  change for non-PROVEN lanes.
+  IN_PROGRESS — M14. The owner manual-validation disposition (D-171) is applied
+  and certified at the new substantive checkpoint S=efae50ce: the twelve
+  MANUAL_OWNER harnesses stay UNAVAILABLE_CAPABILITY with the approved revisit
+  date 2026-11-14, exact-head CI run 38553902449 passed at S, 17 S-bound
+  receipts are published and bound values-only, and canonical and a fresh clone
+  agree exactly on 14/16 with one evaluation digest. Condition 1 stays UNMET
+  because the lane-evidence binding rules cannot advance a non-PROVEN lane and
+  no schema certifies the owner-manual subject; condition 3 stays owner-gated
+  pending a separately approved paid provider run. Canonical main is again the
+  sole checkout and the campaign remains NOT_COMPLETE under D-129.
 
 IMPLEMENTATION AUTHORIZED:
-  One bounded substantive change: the owner-approved owner-manual disposition
-  in config/validation-lane-state.v1.json plus the decision record that
-  documents it. No rule, guard, bound or exemption is weakened.
+  None outstanding. The approved disposition is integrated, validated and
+  certified; this window covers documentary close-out only.
 
 EXTERNAL CONTACT AUTHORIZED:
   GitHub Actions read/observe; validated fast-forward Nightwatch pushes.

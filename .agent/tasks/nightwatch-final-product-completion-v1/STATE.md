@@ -14,8 +14,8 @@ Last validated implementation SHA: efae50ce5516d0d919bb8c5a6463dbb51caf3dc8
 Last substantive checkpoint SHA: efae50ce5516d0d919bb8c5a6463dbb51caf3dc8
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
-Branch: session/nightwatch-final-product-complet-1ddf0dfe
-Last checkpoint: 2026-10-14 — owner disposition S=efae50ce certified (run 38553902449); S-bound evidence being re-earned.
+Branch: main
+Last checkpoint: 2026-10-14 — owner disposition certified at S=efae50ce (CI 38553902449 green; 14/16; routing back to canonical).
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
