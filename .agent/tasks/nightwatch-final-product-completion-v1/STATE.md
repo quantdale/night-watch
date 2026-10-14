@@ -14,8 +14,8 @@ Last validated implementation SHA: 70f4b8269eae0c08e4a28c22f87b82c4958bbb92
 Last substantive checkpoint SHA: 70f4b8269eae0c08e4a28c22f87b82c4958bbb92
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
-Branch: main
-Last checkpoint: 2026-10-13 — HC-177 probe-fixture repair S'=70f4b826 with green exact-head CI and 14/16 S'-bound conditions; session released, canonical-routed.
+Branch: session/nightwatch-final-product-complet-1ddf0dfe
+Last checkpoint: 2026-10-14 — owner manual-validation disposition (D-171) applied; new substantive checkpoint S pending its own CI and evidence.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
@@ -36,12 +36,13 @@ ledger, and end at `PROJECT_COMPLETE_AND_CI_CERTIFIED` under D-129 with a
 
 ## Current Milestone
 
-M14 (group 15): the HC-177 probe-fixture defect is repaired at S'=70f4b826,
-which executed green on GitHub (run 38461538853), and the S'-bound evidence is
-produced, published, bound and pushed. Canonical and a fresh clone now agree
-exactly: 14/16 effective MET with an identical evaluation digest. The two
-remaining conditions are owner gates, so the campaign stays IN_PROGRESS /
-NOT_COMPLETE under D-129.
+M14 (group 15): the owner's manual-validation disposition is applied as a new
+substantive checkpoint. The twelve MANUAL_OWNER harnesses stay
+UNAVAILABLE_CAPABILITY with the approved revisit date 2026-11-14; the six
+PROVEN lanes and every other subject are re-earned at the new checkpoint so
+condition 1's only remaining finding is `STALE_EVIDENCE:owner-manual`, whose
+binding the current machinery cannot legitimately advance. Condition 3 stays
+owner-gated. The campaign remains IN_PROGRESS / NOT_COMPLETE under D-129.
 
 ## Completed Milestones
 

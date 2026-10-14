@@ -48,20 +48,23 @@ No new campaign or additional paid provider proof is authorized by this recovery
 ```text
 CAMPAIGN: nightwatch-final-product-completion-v1
 CHILD TASK: NONE
-SESSION WORKTREE: NONE
+SESSION WORKTREE: session/nightwatch-final-product-complet-1ddf0dfe
 
 CURRENT STATUS:
-  IN_PROGRESS — M14. The HC-177 probe-fixture defect is repaired at
-  S'=70f4b826, which executed green on GitHub (run 38461538853), and every
-  locally actionable subject is measured, published and bound at S'. Canonical
-  and a fresh clone agree exactly: 14/16 effective MET, one identical
-  evaluation digest, zero per-condition differences. The two remaining
-  conditions are owner gates, so the campaign is NOT_COMPLETE under D-129 and
-  canonical main is again the sole checkout.
+  IN_PROGRESS — M14. The owner's 2026-10-14 manual-validation disposition
+  (D-171) is applied: the twelve MANUAL_OWNER harnesses stay
+  UNAVAILABLE_CAPABILITY and the lane's review date moves to 2026-11-14. The
+  lane-state file is not an approved documentation-only path, so this is a
+  substantive change and requires a new genuine checkpoint S with its own
+  executed CI and its own evidence. The campaign stays NOT_COMPLETE under
+  D-129: condition 3 remains owner-gated and condition 1 stays UNMET until the
+  owner authorizes the executable lanes:manual route or a bounded binding-rule
+  change for non-PROVEN lanes.
 
 IMPLEMENTATION AUTHORIZED:
-  None outstanding. The substantive repair is integrated and validated; this
-  window covers documentary close-out only.
+  One bounded substantive change: the owner-approved owner-manual disposition
+  in config/validation-lane-state.v1.json plus the decision record that
+  documents it. No rule, guard, bound or exemption is weakened.
 
 EXTERNAL CONTACT AUTHORIZED:
   GitHub Actions read/observe; validated fast-forward Nightwatch pushes.

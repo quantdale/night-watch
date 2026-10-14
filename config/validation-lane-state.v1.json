@@ -91,9 +91,9 @@
       ],
       "class": "UNAVAILABLE_CAPABILITY",
       "command": "owner-authorized manual harness execution under one-shot authorization (the executable lanes:manual route remains production-completion G2/F-02 work and is not present)",
-      "evidence": "the 12 MANUAL_OWNER harnesses are declared and remain UNAVAILABLE_CAPABILITY until the owner-authorized executable route runs",
+      "evidence": "the 12 MANUAL_OWNER harnesses remain declared and unexecuted; the owner disposition of 2026-10-14 keeps them UNAVAILABLE_CAPABILITY, explicitly accepts the continued documented unavailability for this review period, does not claim they passed and does not authorize their execution",
       "unblockCondition": "DEV authentication plus a separate one-shot owner authorization for the named checks (lanes:manual)",
-      "revisitDate": "2026-10-11"
+      "revisitDate": "2026-11-14"
     },
     {
       "laneId": "exact-checkpoint-ci",

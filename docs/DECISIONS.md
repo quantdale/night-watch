@@ -6701,3 +6701,48 @@ signature, secret, provider campaign or new authority is introduced. A new S
 requires executed green CI at that SHA before documentary observation. An old
 paid proof cannot certify the new S; another paid proof, repository visibility
 and campaign archival remain separate owner actions.
+
+---
+
+## D-171 — the owner's manual-validation disposition (2026-10-14)
+
+Source: the owner's release-closure decision of 2026-10-14, applied under the
+terminal campaign `nightwatch-final-product-completion-v1` (task 15.3).
+
+**Decision.** The twelve `MANUAL_OWNER` harnesses stay classified
+`UNAVAILABLE_CAPABILITY` in `config/validation-lane-state.v1.json` and the
+lane's review date moves from the expired `2026-10-11` to `2026-11-14`. The
+owner explicitly accepts continued *documented* unavailability for this review
+period. The owner does **not** claim that the twelve checks passed, does **not**
+authorize their execution, and does **not** authorize DEV authentication or any
+Alphaus access. `UNAVAILABLE_CAPABILITY` therefore remains an honest, visible
+classification, the lane's `unblockCondition` still names the executable
+`lanes:manual` route plus a one-shot owner authorization, and the record's
+`evidence` text now names the disposition itself rather than implying a
+pending execution.
+
+**What this decision is not.** It is a disposition and a revisit-date renewal,
+not a validation bypass and not evidence of execution. `config/validation-lane-state.v1.json`
+is not an approved documentation-only checkpoint path and carries no diff
+guard, so this change is substantive by the production classifier and requires
+a new genuine checkpoint S with its own executed CI and its own evidence.
+
+**Measured consequence at the checkpoint (recorded honestly).** Renewing the
+date clears `REVISIT_DUE:owner-manual` and nothing else: the lane's evidence
+binding is a historical pointer that the values-only binding guard refuses to
+advance without a verifying receipt, and no declared receipt schema certifies
+the `owner-manual` subject (`bin/lib/certification-subjects.mjs` route `NONE`,
+producer `UNAVAILABLE`). `STALE_EVIDENCE:owner-manual` therefore remains a
+finding and condition 1 stays UNMET until either (a) the owner authorizes the
+executable `lanes:manual` route named by the archived
+`validation-lane-closure` capability spec, which would make the lane genuinely
+PROVEN with a real receipt, or (b) the owner authorizes a bounded change to the
+lane-evidence binding rules for non-PROVEN lanes. Neither is taken here.
+
+**Provider proof (Decision B) and the other boundaries.** A fresh paid
+provider-run authorization is proposal-only in this phase: the historical
+`parent-12.3` GRANTED record in `config/yield-run-authorization.v1.json` is not
+new authority, no provider call was made, no spend occurred and no run count or
+budget was raised. Repository visibility stays PUBLIC (Decision C) and no
+Alphaus DEV/NEXT/production, database, authenticated or sibling-repository
+access occurred (Decision D).

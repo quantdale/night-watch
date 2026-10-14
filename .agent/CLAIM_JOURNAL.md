@@ -85,4 +85,11 @@ The implementation session is closed at its last commit. The successor is the
 canonical MAINTENANCE window that carries the documentary close-out and stands
 open for the campaign while the two owner gates remain.
 
-CLAIM: sess-79cd00033cd8 | role=MAINTENANCE | task=nightwatch-final-product-completion-v1 | created=2026-10-13T22:35:15Z | released=OPEN | base=05e5a7aee9469dcd8be733e1c68aab1334fcbac0 | tip=OPEN
+CLAIM: sess-79cd00033cd8 | role=MAINTENANCE | task=nightwatch-final-product-completion-v1 | created=2026-10-13T22:35:15Z | released=2026-10-14T05:02:59Z | base=05e5a7aee9469dcd8be733e1c68aab1334fcbac0 | tip=4b400935c138cc74cf08608adf65233a370a3db6
+
+
+The canonical documentary window is closed at its last commit. The successor is
+the implementation session that applies the owner 2026-10-14 manual-validation
+disposition, which is a substantive lane-state change.
+
+CLAIM: sess-6e666451e658 | role=SESSION | task=nightwatch-final-product-completion-v1 | created=2026-10-14T05:02:59Z | released=OPEN | base=4b400935c138cc74cf08608adf65233a370a3db6 | tip=OPEN
