@@ -273,6 +273,13 @@
       "oldLineSha256": "sha256:6bd0e13436f14c7141a924fa",
       "oldLineExcerpt": "> Durable memory for the next agent/session. Last updated: **2026-10-12**",
       "reason": "The clean-clone certification repair (2026-10-13) rebinds the certified checkpoint to the SHA whose exact-head CI is green, so the header date must cover the document's own last change; the statement is unchanged."
+    },
+    {
+      "id": "CORR-M14-003",
+      "path": "docs/CURRENT_STATE.md",
+      "oldLineSha256": "sha256:893b76d9854e31e3023b068b",
+      "oldLineExcerpt": "> Durable memory for the next agent/session. Last updated: **2026-10-13**",
+      "reason": "The owner manual-validation disposition checkpoint (2026-10-14) appended its record and advanced the governed machine-block anchors, so the durable-memory header date must cover the archive own last change; the statement itself is unchanged (same pattern as CORR-M13-004)."
     }
   ]
 }
