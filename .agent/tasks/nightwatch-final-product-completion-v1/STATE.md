@@ -1281,3 +1281,75 @@ unauthorized-unexecuted (task 15.4).
   action required) and condition 3 (no qualifying paid provider campaign at S';
   a fresh owner authorization is required). No agent may refresh the owner
   approval or launch a paid run.
+
+## Owner manual-validation disposition — implementation record (2026-10-14)
+
+- **Owner decision (D-171, applied).** `owner-manual` stays
+  `UNAVAILABLE_CAPABILITY`; its revisit date moves from the expired
+  `2026-10-11` to `2026-11-14`; the owner accepts continued documented
+  unavailability, does not claim the twelve checks passed, does not authorize
+  their execution and does not authorize DEV authentication.
+- **Classification.** The production classifier judges
+  `config/validation-lane-state.v1.json` neither approved nor guarded, so the
+  change is SUBSTANTIVE (`checkpointRoleViolations` on the commit returns that
+  one path). The checkpoint therefore advanced and every subject's evidence was
+  re-earned at it rather than rebound by text.
+- **S = `efae50ce5516d0d919bb8c5a6463dbb51caf3dc8`**, integrated alone through
+  C-00 (`sess-6e666451e658`). Exact-head CI run `38553902449` (job
+  `115818175336`, 10 steps) completed/success.
+- **Validation at S.** `gate:milestone` PASS (affected shards 6204/0, 274
+  structural probes, 117 behavioural mutants, 0 survivors); `prepush` PASS
+  (6204/0, 472 selected); `typecheck` clean; `typecheck:bin` PASS
+  `77/77 BLOCKING` with 0 exemptions/errors/ceilings; `hardening:check` PASS;
+  a qualified clean-mode gate outside the sibling root PASSED all fifteen
+  groups (`TOPOLOGY` PROVEN, `UI_CONTROL_CENTER` PASS); browser lane 9/9;
+  `openspec validate --all --strict` 80/80; the ten negative cases of the owner
+  disposition were re-proved (expired date fails, missing unblock condition
+  fails, class flip fails, false/tampered receipts fail, untracked receipts
+  cannot certify, wrong-SHA evidence fails, non-documentary changes invalidate
+  older measurements, the twelve harnesses remain unexecuted, 2026-11-14 is
+  current today and 2026-11-15 makes it revisit-due again).
+- **Evidence at S.** 17 tracked receipts verified (`certify:evidence verify`
+  ok, 0 invalid), published and bound values-only: the thirteen MET condition
+  receipts, the `dependency-advisory` and `exact-checkpoint-ci` lanes, the
+  imported UI-harness and `authoritative-gate` receipts from the qualified
+  clean-mode gate, and the accessibility certification receipt from the
+  S-bound browser-lane record. `authoritative-gate.json` again needed an
+  explicit stage because the defensive `auth*.json` rule matches it; no ignore
+  rule changed.
+- **Verdict.** `OPERATIONALLY_ACCEPTED`, 14/16 effective MET at S, all EXACT,
+  `certificationRefused: true`, `advanceClaimed: false`, digest
+  `sha256:a0b1b731796fd9bce613edb35ef76cf98bcb2570028f6fc86a015e163d0b4e8c`.
+  Canonical and a fresh clone agree exactly (identical digest, zero
+  per-condition differences).
+- **Repair on the way.** The first two documentary pushes (`ee905117`,
+  `c2800cad`) were red: `checkDocumentationFreshness` requires the
+  CURRENT_STATE header date to cover the document's own last change, so the
+  appended record made the header stale and the HARDENING group failed with
+  every later group NOT_RUN. `36e5c7d4` bumps the header to 2026-10-14 and
+  registers the replaced line as `CORR-M14-003` in
+  `config/document-role-corrections.v1.json` (the same sanctioned pattern as
+  CORR-M13-004). CI at `36e5c7d4` is green, all 15 groups PASS, receipt
+  `receipt:sha256:f53c9cc286732f049b5a7247`.
+- **Condition 1's exact remaining blocker.** `REVISIT_DUE:owner-manual` is
+  gone, and condition 1 now reports only `STALE_EVIDENCE` for eight lanes
+  (`root-compile`, `bin-parse`, `structural-invariants`, `full-regression`,
+  `clean-checkout`, `ui`, `browser-workflow`, `owner-manual`) plus the
+  condition-level note that `config/validation-lane-state.v1.json` is absent at
+  its bound `88e3c3fb`. Two independent machinery limits cause it: a lane
+  binding cannot be advanced without a verifying receipt (the values-only
+  guard), and `owner-manual` is certifiable by no declared schema
+  (`bin/lib/certification-subjects.mjs` route `NONE`, producer `UNAVAILABLE`),
+  while the six COMMAND lanes can no longer be produced at a fresh checkpoint
+  at all (`CERTIFY_HEAD_NOT_CHECKPOINT`: the producer requires
+  `HEAD == certifiedCheckpointSha`, which needs the anchor to name the checked
+  out commit). Resolving it needs an owner-authorized decision: either the
+  executable `lanes:manual` route the archived spec requires, or a bounded
+  change to the lane-evidence binding rules for non-PROVEN lanes.
+- **Condition 3.** Still UNMET. A fresh paid provider-run authorization is
+  proposed but NOT executed (see the session's authorization proposal): no
+  provider call, no spend, no grant change, no run-count or budget increase.
+- **Safety.** No Alphaus DEV/NEXT/production contact, no database or
+  cloud operation, no sibling write, no credential publication, no visibility
+  change, no force push, no published-history rewrite. External activity was
+  GitHub CI read/observe and validated fast-forward pushes.
