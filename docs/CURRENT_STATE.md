@@ -889,11 +889,11 @@ RELEASE_CERTIFICATION_PROTOCOL_VERSION: nightwatch.release-certification.v1
 PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 RELEASE_CHECKPOINT_SHA: 2576c5751d33bb40046246e8fcf57c7cc5c30a57
 LIVE_HEAD_SHA: DISCOVER_FROM_GIT
-LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 70f4b8269eae0c08e4a28c22f87b82c4958bbb92
+LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: efae50ce5516d0d919bb8c5a6463dbb51caf3dc8
 LAST_LOCALLY_VALIDATED_SHA: 6066390511dcf5d2744515624be9dbf1b537b5f4
-LAST_CLEAN_VALIDATED_SHA: 70f4b8269eae0c08e4a28c22f87b82c4958bbb92
-CI_OBSERVED_SHA: 70f4b8269eae0c08e4a28c22f87b82c4958bbb92
-CI_EXECUTED_SHA: 70f4b8269eae0c08e4a28c22f87b82c4958bbb92
+LAST_CLEAN_VALIDATED_SHA: efae50ce5516d0d919bb8c5a6463dbb51caf3dc8
+CI_OBSERVED_SHA: efae50ce5516d0d919bb8c5a6463dbb51caf3dc8
+CI_EXECUTED_SHA: efae50ce5516d0d919bb8c5a6463dbb51caf3dc8
 CI_STATUS: EXECUTED_PASS
 FINAL_DOCUMENTATION_SHA: DISCOVER_FROM_GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
@@ -4480,3 +4480,32 @@ receipts are bound only after this executed pass. No new paid proof was run,
 no Alphaus environment or database was accessed, and no visibility change or
 archive was performed. Manual-lane review and a current authorized proof at
 the final S remain owner decisions; full release advancement is not claimed.
+
+### Owner manual-validation disposition checkpoint (2026-10-14)
+
+The substantive checkpoint is `efae50ce5516d0d919bb8c5a6463dbb51caf3dc8`, which
+applies the owner's 2026-10-14 manual-validation disposition (D-171): the twelve
+`MANUAL_OWNER` harnesses stay `UNAVAILABLE_CAPABILITY` and `owner-manual`'s
+review date moves to `2026-11-14`. The owner accepts the continued documented
+unavailability, does not claim the checks passed, does not authorize their
+execution and does not authorize DEV authentication; the lane's unblock
+condition still names the executable `lanes:manual` route plus a one-shot owner
+authorization.
+
+`config/validation-lane-state.v1.json` is not an approved documentation-only
+path and carries no diff guard, so the change is substantive by the production
+classifier: the checkpoint advances and every subject's evidence is re-earned at
+it rather than rebound by text. Local validation at the checkpoint:
+`gate:milestone` PASS (affected shards 6204/0, 274 structural probes, 117
+behavioural mutants), `prepush` PASS (6204/0), `typecheck` and `typecheck:bin`
+PASS (77/77 BLOCKING, zero exemptions), `hardening:check` PASS, and a qualified
+clean-mode gate outside the sibling root PASSED all fifteen groups with
+`TOPOLOGY` PROVEN and `UI_CONTROL_CENTER` PASS. GitHub Actions run `38553902449`
+executed the authoritative gate at exactly this SHA and completed successfully.
+
+Renewing the date clears `REVISIT_DUE:owner-manual` and nothing more. The lane's
+evidence pointer cannot legitimately advance without a verifying receipt and no
+declared schema certifies the `owner-manual` subject, so
+`STALE_EVIDENCE:owner-manual` remains a finding and condition 1 stays UNMET until
+the owner authorizes the executable `lanes:manual` route or a bounded
+binding-rule change. Condition 3 remains owner-gated.

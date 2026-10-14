@@ -10,17 +10,17 @@ TASK_GROUPS_COMPLETE: 1,2,3,4,5,6,7,8,9,10,11,12,13,14
 TASK_GROUP_NEXT: 15
 TASK_NEXT_ID: 15.3
 Starting SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
-Last validated implementation SHA: 70f4b8269eae0c08e4a28c22f87b82c4958bbb92
-Last substantive checkpoint SHA: 70f4b8269eae0c08e4a28c22f87b82c4958bbb92
+Last validated implementation SHA: efae50ce5516d0d919bb8c5a6463dbb51caf3dc8
+Last substantive checkpoint SHA: efae50ce5516d0d919bb8c5a6463dbb51caf3dc8
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-final-product-complet-1ddf0dfe
-Last checkpoint: 2026-10-14 — owner manual-validation disposition (D-171) applied; new substantive checkpoint S pending its own CI and evidence.
+Last checkpoint: 2026-10-14 — owner disposition S=efae50ce certified (run 38553902449); S-bound evidence being re-earned.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
-LAST_VALIDATED_IMPLEMENTATION_SHA: 70f4b8269eae0c08e4a28c22f87b82c4958bbb92
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 70f4b8269eae0c08e4a28c22f87b82c4958bbb92
+LAST_VALIDATED_IMPLEMENTATION_SHA: efae50ce5516d0d919bb8c5a6463dbb51caf3dc8
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: efae50ce5516d0d919bb8c5a6463dbb51caf3dc8
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 PHASE_FINAL_PRODUCT_COMPLETION_V1_STATUS: IN_PROGRESS

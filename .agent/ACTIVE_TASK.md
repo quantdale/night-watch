@@ -10,7 +10,7 @@ TASK_GROUP_NEXT: 15
 TASK_NEXT_ID: 15.3
 Task directory: .agent/tasks/nightwatch-final-product-completion-v1
 Starting SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
-Last validated implementation SHA: 70f4b8269eae0c08e4a28c22f87b82c4958bbb92
+Last validated implementation SHA: efae50ce5516d0d919bb8c5a6463dbb51caf3dc8
 Last checkpoint: 2026-10-13 — HC-177 probe fixture repaired forward in a
 C-00 session worktree (S' pending exact-S' CI and S'-bound evidence).
 Current milestone: M14 — land the probe-fixture repair as a genuine
@@ -24,8 +24,8 @@ PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
-LAST_VALIDATED_IMPLEMENTATION_SHA: 70f4b8269eae0c08e4a28c22f87b82c4958bbb92
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 70f4b8269eae0c08e4a28c22f87b82c4958bbb92
+LAST_VALIDATED_IMPLEMENTATION_SHA: efae50ce5516d0d919bb8c5a6463dbb51caf3dc8
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: efae50ce5516d0d919bb8c5a6463dbb51caf3dc8
 LIVE_HEAD_AUTHORITY: GIT
 PHASE_FINAL_PRODUCT_COMPLETION_V1_STATUS: IN_PROGRESS
 
