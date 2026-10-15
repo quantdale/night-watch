@@ -126,9 +126,9 @@ intended consequence, not a gate failure: unmet and stale conditions fail
 
 ## Producing and committing the evidence (review-5, D-152)
 
-Evidence is produced at the certified checkpoint S, on a clean tree with `HEAD == S`,
-by `npm run certify:evidence`. `produce --subject <id>` measures one subject (a
-condition's live check, a fixed command, or the GitHub Actions run at S) and STAGES
+Evidence is produced at the certified checkpoint S by `npm run certify:evidence`; a COMMAND subject never measures the observing
+checkout but a GUARDED MEASUREMENT ROOT — an exact clean checkout of S that the producer verifies (object identity, `HEAD == S`, tree, cleanliness) before the declared command executes there — while the observer is a documentary descendant of S (D-174).
+`produce --subject <id>` measures one subject (a condition's live check, a fixed command run in the measurement root, or the GitHub Actions run at S) and STAGES
 one allowlisted receipt under the git-ignored `artifacts/certification-staging/<S>/`;
 a non-MET measurement writes a `NOT_MET` receipt that never verifies. `import
 --subject <id>` stages an existing host receipt byte-for-byte once the real verifier

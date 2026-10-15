@@ -6845,3 +6845,91 @@ as the smallest next correction and requires a separate owner authorization.
 NOT accept an untracked receipt, does NOT let a documentary descendant inherit a
 green command result for different source, and does NOT fabricate or refresh
 any command-lane evidence.
+
+## D-174 — the guarded measurement root: a command lane measures S, the observer certifies it (2026-10-15)
+
+Source: owner instruction "NIGHTWATCH — TERMINAL PRODUCT COMPLETION / FINAL
+EXECUTION MISSION" (2026-10-15, Decision A), under the terminal campaign
+`nightwatch-final-product-completion-v1` (task 15.4). This decision IMPLEMENTS
+the extension D-173 recorded as the smallest sound correction and did not take.
+
+**Root cause.** The COMMAND producer refused anything but `head === checkpoint`,
+where both values were derived from the same root: HEAD from `git rev-parse
+HEAD`, and the checkpoint from the anchor that root's own tree declares. A
+commit cannot declare its own SHA (a hash fixed point), and the authorized
+choreography is necessarily a substantive commit S followed by a documentary
+anchor-advance descendant, so the conjunction was structurally unsatisfiable and
+the six command lanes (`root-compile`, `bin-parse`, `structural-invariants`,
+`full-regression`, `ui`, `browser-workflow`) could never be re-earned.
+
+**Decision.** The OBSERVER ROOT and the MEASUREMENT ROOT are separated, and the
+impossible same-root assumption is replaced by a verified exact-checkpoint
+execution invariant — not deleted:
+
+1. The observer is the checkout holding the certification anchor and the
+   governing evidence policy. It must be clean, must sit ON the checkpoint S or
+   on a descendant of it, and the whole `S..observer-HEAD` range must classify
+   `SAME` or `DOCUMENTARY_DESCENDANT` under the EXISTING checkpoint-role rules
+   (the same `collectCheckpointBindingFacts` / `classifyCheckpointRange`
+   machinery the release evaluator uses). Anything else — a substantive
+   descendant, an unclassifiable range, an unreachable S — refuses
+   (`CERTIFY_CHECKPOINT_NOT_ANCESTOR` / `CERTIFY_CHECKPOINT_RANGE_INVALID` /
+   `CERTIFY_CHECKPOINT_UNRESOLVED`).
+2. The measurement root is an EXPLICITLY supplied checkout of S
+   (`certify-evidence produce --subject <lane> --measurement-root <path>`). The
+   producer independently verifies, before any command exists: the declared
+   path is a real, canonicalized directory and not a symlink substitution
+   (`realpath`, `lstat`), it is its own repository top level; S resolves as a
+   commit in the measurement repository AND in the observer's object database;
+   `HEAD` equals S EXACTLY; `HEAD^{tree}` and `S^{tree}` both equal the tree the
+   OBSERVER attributes to S (cross-repository object identity — a foreign or
+   forged repository cannot present the authorized source's objects); the
+   tracked tree is clean; and every ignored/untracked-input entry is inside a
+   closed disposable allowlist (`node_modules/`, `dist/`, `artifacts/`,
+   `coverage/`, `test-results/`, `playwright-report/`, and the
+   `ui/control-center` equivalents) — a local override, scratch file or
+   injected fixture refuses (`CERTIFY_MEASUREMENT_IGNORED_INPUT`).
+3. The declared command then executes INSIDE the verified measurement root,
+   with the measurement identity re-verified immediately before spawn (a
+   substituted directory refuses instead of executing,
+   `CERTIFY_MEASUREMENT_RACE`). Exit 0 is MET, anything else — including a
+   killed or timed-out command — is NOT_MET, never MET.
+4. The receipt keeps the EXISTING schema (no schema change): `sourceHead: S`
+   (the measured source) and `observedAtHead: <observer HEAD>` (who observed
+   it), plus the existing `commandDigest`; its digest covers both SHAs.
+
+**Mutation contract.** BM-078 is REISSUED — its former mutation deleted the
+literal `head === checkpoint` refusal, a target that no longer exists — and now
+attacks the corrected invariant: deleting the exact-checkpoint verification
+(`CERTIFY_MEASUREMENT_NOT_CHECKPOINT`) must make focused tests fail. Five new
+behavioural mutants extend the closed registry so every new guard is
+behaviourally detected: BM-118 (tree identity), BM-119 (measurement
+cleanliness), BM-120 (observer ancestry + checkpoint-role range), BM-121
+(ignored-input policy), BM-122 (the time-of-check/time-of-use guard). The
+census moves 117 -> 122 behavioural mutants (274 structural probes unchanged);
+nothing is reduced, and BM-079 (clean-tree) and BM-080 (command-exit) keep
+their exact guards and remain detected. The adversarial regression set
+(`tests/unit/certifyEvidence.test.ts`, 24 tests) proves the positive route
+(documentary descendant + verified measurement root -> real PASS receipt),
+wrong source identity (wrong SHA, different branch tip, foreign repository,
+untrusted path, symlinked root), dirty/tampered/overlaid checkouts, the
+ignored-input policy in both directions, substantive-descendant refusal, the
+TOCTOU guard, and that PASS is impossible without one real execution.
+
+**What this decision is not.** It does NOT let an arbitrary directory certify;
+it does NOT remove the checkpoint identity rule (it relocates it to the
+measurement root and strengthens it with tree and object identity); it does NOT
+let a substantive descendant inherit evidence for different source; it does NOT
+create a second certification system or a new release authority; and it does
+NOT fabricate or refresh any evidence by itself — every receipt still requires
+the real command to execute successfully against the verified checkout.
+
+**Alternative considered.** The producer could create its own disposable clone
+(as `gate:clean` does) instead of accepting a declared root. That is stronger
+against a pre-staged measurement directory but moves clone creation, package
+installation and checkout policy INTO the producer, contradicting D-173's
+recorded design and this repository's injection-only producer core (which has
+no filesystem or process authority of its own). The chosen design keeps the
+verification in the producer and the effects in the CLI, and its trust demand
+is no weaker for the accepted use: the measurement root is proven to BE the
+authorized source at S by object identity before anything executes in it.

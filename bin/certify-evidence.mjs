@@ -13,6 +13,15 @@
 // executor) of each binding that has a verified tracked receipt of S. `verify` re-derives every
 // tracked receipt of S offline.
 //
+// D-173: a COMMAND subject is measured against an EXPLICIT `--measurement-root`
+// — a checkout of the substantive source checkpoint S that the producer verifies
+// (object identity, exact HEAD == S, tree identity, cleanliness, ignored-input
+// policy, observer ancestry and checkpoint-role range) before the declared
+// command executes INSIDE it. The receipt records `sourceHead: S` (measured) and
+// `observedAtHead: <observer HEAD>` (this checkout). The measurement root is
+// canonicalized here and re-verified immediately before each spawn, so a
+// substituted directory cannot execute between validation and measurement.
+//
 // Receipts are tamper-evident, not tamper-proof (OD-5): no signature, key or
 // MAC. Nothing here contacts an Alphaus system; the only external read is the
 // GitHub Actions observation of the run at S (OD-3), by the read-only `gh`.
@@ -27,6 +36,7 @@ import { OPERATOR_CLI_SCHEMA, defineOperatorCli } from './lib/operator-cli.mjs';
 import { CERTIFICATION_EVIDENCE_DIRECTORY, certificationReceiptPath } from './lib/certification-evidence.mjs';
 import { certificationSubject } from './lib/certification-subjects.mjs';
 import { produceCertificationReceipt, selectCiObservation } from './lib/certify-producers.mjs';
+import { collectCheckpointBindingFacts } from './lib/checkpoint-binding.mjs';
 import { RECEIPT_KINDS, verifyReceiptBody } from './lib/release-evidence.mjs';
 import { gitReadOnly } from './lib/probe-io.mjs';
 
@@ -44,7 +54,7 @@ const CLI_METADATA = {
   purpose: 'Produce, publish and verify certification evidence receipts for the release-certification conditions and lanes at the certified checkpoint.',
   group: 'validate',
   commands: [
-    { name: 'produce', summary: 'measure one subject at the certified checkpoint and stage its receipt (git-ignored)' },
+    { name: 'produce', summary: 'measure one subject at the certified checkpoint and stage its receipt (git-ignored); a COMMAND subject requires --measurement-root' },
     { name: 'import', summary: 'stage a verified host receipt (gate, clean checkout or UI harness) of the certified checkpoint verbatim' },
     { name: 'publish', summary: 'copy the staged verified receipts of the certified checkpoint into the tracked evidence directory' },
     { name: 'bind', summary: 'rebind each subject of config/release-evidence.v1.json to its verified tracked receipt of the certified checkpoint (values only)' },
@@ -53,7 +63,8 @@ const CLI_METADATA = {
   commandRequired: true,
   flags: [
     { name: '--subject', shape: 'string', summary: 'the subject to produce (a condition or lane id)' },
-    { name: '--root', shape: 'path', summary: 'operate on a different repository root' },
+    { name: '--root', shape: 'path', summary: 'operate on a different repository root (the observer)' },
+    { name: '--measurement-root', shape: 'path', summary: 'the guarded measurement checkout of the substantive source checkpoint a COMMAND subject measures against' },
   ],
   json: true,
   authorization: 'LOCAL_ONLY',
@@ -105,35 +116,96 @@ function observeCi(root, sha) {
 }
 
 /**
+ * The existing checkpoint-role classification of the observer range `from..to`
+ * (`SAME` / `DOCUMENTARY_DESCENDANT` / `SUBSTANTIVE_DESCENDANT` / `UNRELATED` /
+ * `UNKNOWN`), derived by the SAME collector the release evaluator uses, so a
+ * COMMAND measurement can never outrun the rules that decide whether the
+ * observing checkout may still certify the checkpoint it observes.
  * @param {string} root
- * @param {readonly string[]} argv
- * @returns {{ status: number | null }}
+ * @param {string} from
+ * @param {string} to
+ * @returns {string | null}
  */
-function runCommand(root, argv) {
-  const [program, ...args] = argv;
-  if (program === undefined) return { status: null };
-  const result = spawnSync(program, args, {
-    cwd: root,
-    env: buildChildEnvironment(process.env, {}),
-    shell: false,
-    stdio: ['ignore', 'ignore', 'ignore'],
-    timeout: COMMAND_TIMEOUT_MS,
-  });
-  return { status: result.status };
+function checkpointRangeClass(root, from, to) {
+  try {
+    const facts = collectCheckpointBindingFacts({ root, substantiveSha: from, git: (args) => gitReadOnly(root, args) });
+    return facts.headSha === to ? facts.rangeClass : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The guarded measurement root as REAL effects for the producer to verify
+ * (D-173). The declared directory is resolved and canonicalized ONCE here; every
+ * read and the command execution itself use that canonical path, and the runner
+ * re-verifies the measurement identity immediately before spawn — a substitution
+ * between validation and execution refuses instead of executing.
+ * @param {string} declared
+ * @returns {import('./lib/certify-producers.mjs').MeasurementRoot}
+ */
+function buildMeasurementRoot(declared) {
+  const root = path.resolve(declared);
+  /** @type {string | null} */
+  let realpath = null;
+  let rootIsSymlink = true;
+  try {
+    rootIsSymlink = fs.lstatSync(root).isSymbolicLink();
+    realpath = fs.realpathSync(root);
+  } catch {
+    realpath = null;
+  }
+  /** @param {string[]} args */
+  const measurementGit = (args) => gitReadOnly(realpath ?? root, args);
+  const topLevelText = realpath === null ? null : measurementGit(['rev-parse', '--show-toplevel']);
+  const topLevel = topLevelText === null ? null : topLevelText.trim() || null;
+  return {
+    root,
+    realpath,
+    rootIsSymlink,
+    topLevel,
+    git: measurementGit,
+    runCommand: (argv, expect) => {
+      // TOCTOU: re-measure the identity against the SAME canonical path right
+      // before spawn; never execute in a root that no longer measures S.
+      const headNow = measurementGit(['rev-parse', 'HEAD']);
+      const treeNow = measurementGit(['rev-parse', 'HEAD^{tree}']);
+      if (headNow === null || treeNow === null || headNow.trim() !== expect.head || treeNow.trim() !== expect.tree) return { status: null, preVerified: false };
+      const [program, ...args] = argv;
+      if (program === undefined) return { status: null, preVerified: false };
+      const result = spawnSync(program, args, {
+        cwd: realpath ?? root,
+        env: buildChildEnvironment(process.env, {}),
+        shell: false,
+        stdio: ['ignore', 'ignore', 'ignore'],
+        timeout: COMMAND_TIMEOUT_MS,
+      });
+      return { status: result.status, preVerified: true };
+    },
+  };
 }
 
 /**
  * @param {string} root
  * @param {string} subject
+ * @param {string | null} measurementRoot
  */
-function produce(root, subject) {
+function produce(root, subject, measurementRoot) {
+  const entry = certificationSubject(subject);
+  const wantsMeasurement = entry !== null && entry.producer === 'COMMAND';
+  if (measurementRoot !== null && !wantsMeasurement) {
+    process.stdout.write(`${JSON.stringify({ ok: false, subject, code: 'CERTIFY_MEASUREMENT_ROOT_UNEXPECTED' })}\n`);
+    process.exitCode = 3;
+    return;
+  }
   const outcome = produceCertificationReceipt({
     subject,
     io: {
       git: (args) => gitReadOnly(root, args),
       projectVerdict: () => readProjectVerdict(root),
-      runCommand: (argv) => runCommand(root, argv),
       observeCi: (sha) => observeCi(root, sha),
+      checkpointRangeClass: (from, to) => checkpointRangeClass(root, from, to),
+      measurement: wantsMeasurement && measurementRoot !== null ? buildMeasurementRoot(measurementRoot) : null,
     },
   });
   if (!outcome.ok || outcome.receipt === null) {
@@ -330,10 +402,12 @@ if (cli.ok === true && cli.stop !== true) {
   const root = typeof rootFlag === 'string' && rootFlag !== '' ? path.resolve(rootFlag) : ROOT;
   if (cli.command === 'produce') {
     const subject = cli.flags['--subject'];
+    const measurementFlag = cli.flags['--measurement-root'];
+    const measurementRoot = typeof measurementFlag === 'string' && measurementFlag !== '' ? measurementFlag : null;
     if (typeof subject !== 'string' || subject === '') {
       process.stdout.write(`${JSON.stringify({ ok: false, code: 'CERTIFY_SUBJECT_REQUIRED' })}\n`);
       process.exitCode = 2;
-    } else produce(root, subject);
+    } else produce(root, subject, measurementRoot);
   } else if (cli.command === 'import') {
     const subject = cli.flags['--subject'];
     if (typeof subject !== 'string' || subject === '') {

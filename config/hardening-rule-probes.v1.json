@@ -3136,7 +3136,12 @@
     "R5-15/auth-granted-full-identity",
     "R5-15/auth-not-granted-empty",
     "R5-12/bind-executor",
-    "R5-13/bind-verified"
+    "R5-13/bind-verified",
+    "R5-15/command-measurement-tree",
+    "R5-15/command-measurement-clean",
+    "R5-15/command-observer-position",
+    "R5-15/command-ignored-input",
+    "R5-15/command-toctou-guard"
   ],
   "behaviouralMutants": [
     {
@@ -4490,11 +4495,11 @@
     {
       "id": "BM-078",
       "finding": "R5-12/command-at-checkpoint",
-      "guard": "a command producer measures only at HEAD == S",
+      "guard": "a command producer executes only against a verified exact-checkpoint measurement root",
       "ops": [
         {
           "file": "bin/lib/certify-producers.mjs",
-          "search": "    if (head !== checkpoint) return refuse('CERTIFY_HEAD_NOT_CHECKPOINT');\n",
+          "search": "  if (measuredHead !== checkpoint) return deny('CERTIFY_MEASUREMENT_NOT_CHECKPOINT');\n",
           "replace": "\n"
         }
       ],
@@ -5264,6 +5269,111 @@
         {
           "file": "tests/unit/releaseReceiptProbes.test.ts",
           "grep": "the lifecycle receipt exception"
+        }
+      ]
+    },
+    {
+      "id": "BM-118",
+      "finding": "R5-15/command-measurement-tree",
+      "guard": "the measurement root presents the exact tree the observer attributes to the checkpoint",
+      "ops": [
+        {
+          "file": "bin/lib/certify-producers.mjs",
+          "search": "  if (measuredTree !== expectedTree || measuredCommitTree !== expectedTree) return deny('CERTIFY_MEASUREMENT_TREE_MISMATCH');\n",
+          "replace": "\n"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/certificationEvidence.test.ts"
+        },
+        {
+          "file": "tests/unit/certifyEvidence.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-119",
+      "finding": "R5-15/command-measurement-clean",
+      "guard": "the measurement root is clean before any command executes",
+      "ops": [
+        {
+          "file": "bin/lib/certify-producers.mjs",
+          "search": "  if (measurementPorcelain.trim() !== '') return deny('CERTIFY_MEASUREMENT_DIRTY');\n",
+          "replace": "\n"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/certificationEvidence.test.ts"
+        },
+        {
+          "file": "tests/unit/certifyEvidence.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-120",
+      "finding": "R5-15/command-observer-position",
+      "guard": "the observer sits on the checkpoint or on a documentary descendant of it",
+      "ops": [
+        {
+          "file": "bin/lib/certify-producers.mjs",
+          "search": "  return head === checkpoint || io.git(['merge-base', '--is-ancestor', checkpoint, head]) !== null;\n",
+          "replace": "  return true;\n"
+        },
+        {
+          "file": "bin/lib/certify-producers.mjs",
+          "search": "  if (rangeClass !== 'SAME' && rangeClass !== 'DOCUMENTARY_DESCENDANT') return deny('CERTIFY_CHECKPOINT_RANGE_INVALID');\n",
+          "replace": "\n"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/certificationEvidence.test.ts"
+        },
+        {
+          "file": "tests/unit/certifyEvidence.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-121",
+      "finding": "R5-15/command-ignored-input",
+      "guard": "the measurement root carries no ignored input outside the disposable allowlist",
+      "ops": [
+        {
+          "file": "bin/lib/certify-producers.mjs",
+          "search": "  for (const entry of ignoredEntries(ignoredStatus)) if (!allowedIgnoredInput(entry)) return deny('CERTIFY_MEASUREMENT_IGNORED_INPUT');\n",
+          "replace": "\n"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/certificationEvidence.test.ts"
+        },
+        {
+          "file": "tests/unit/certifyEvidence.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-122",
+      "finding": "R5-15/command-toctou-guard",
+      "guard": "a command executes only in the measurement root verified immediately before spawn",
+      "ops": [
+        {
+          "file": "bin/lib/certify-producers.mjs",
+          "search": "  if (outcome.preVerified !== true) return refuse('CERTIFY_MEASUREMENT_RACE');\n",
+          "replace": "\n"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/certificationEvidence.test.ts"
+        },
+        {
+          "file": "tests/unit/certifyEvidence.test.ts"
         }
       ]
     }

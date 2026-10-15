@@ -14,10 +14,11 @@ Last validated implementation SHA: efae50ce5516d0d919bb8c5a6463dbb51caf3dc8
 Last substantive checkpoint SHA: efae50ce5516d0d919bb8c5a6463dbb51caf3dc8
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
-Branch: main
-Last checkpoint: 2026-10-15 — D-172 lane-evidence semantics repaired and
-D-173 command-lane blocker proven in a C-00 session worktree (S2 pending gates,
-condition 1 UNMET with an exact proven blocker).
+Branch: session/nightwatch-final-product-complet-5054d550
+Last checkpoint: 2026-10-15 — D-173's guarded measurement root implemented
+(D-174) in the C-00 session worktree
+`nightwatch-final-product-complet-5054d550` (session `sess-158bca2d98a8`, base
+`907ebbcd`); S3 gates pending.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
@@ -38,41 +39,38 @@ ledger, and end at `PROJECT_COMPLETE_AND_CI_CERTIFIED` under D-129 with a
 
 ## Current Milestone
 
-M15 (group 15, task 15.4): the owner's 2026-10-15 "FINAL CERTIFICATION RECOVERY
-AND PROVIDER READINESS" instruction opened the targeted certification-machinery
-repair. Two of the four confirmed defects are resolved and proven:
+M15 (group 15, task 15.4): the owner's 2026-10-15 "TERMINAL PRODUCT
+COMPLETION / FINAL EXECUTION MISSION" instruction explicitly authorized
+completing the D-173 certification-machinery repair (including the narrowly
+necessary BM-078 replacement) and all subsequent Nightwatch-local validation,
+receipt production, evidence binding and governed GitHub integration needed
+for certification. State of the four defects of the previous instruction:
 
-- **DEFECT A / D-172 — non-PROVEN lane evidence semantics.** `reportLaneState`
-  derived `staleEvidence` for every lane, including non-PROVEN ones, so the
-  `owner-manual` UNAVAILABLE_CAPABILITY disposition record emitted
-  `STALE_EVIDENCE:owner-manual` and demanded an execution receipt for a
-  capability the owner documented as unavailable. Staleness is now computed for
-  a PROVEN lane ONLY: a PROVEN lane binds an execution SHA that decays, while a
-  non-PROVEN lane binds a disposition record whose currency is its revisit date
-  (`collectRevisitDue`) and its named unblock condition (`validateLaneState`).
-  Nothing else changed. Measured: the condition-1 raw detail went from eight
-  `STALE_EVIDENCE:` findings (including `owner-manual`) to seven.
-- **DEFECT B / D-173 — COMMAND-lane checkpoint cycle, PROVEN UNREACHABLE.** A
-  COMMAND producer refuses anything but `head === checkpoint`, and both values
-  come from the same root: HEAD from Git and the checkpoint from
-  `LAST_SUBSTANTIVE_IMPLEMENTATION_SHA` in that root's `docs/CURRENT_STATE.md`.
-  The authorized choreography therefore either checks out the substantive
-  commit (whose tree still declares the previous anchor) or the documentary
-  anchor-advance descendant (whose anchor names the substantive commit). No
-  commit in the whole certify-evidence era declares its own SHA as the anchor,
-  and amending the anchor to a commit's SHA changes that SHA, so the
-  conjunction is unsatisfiable. Executable proof: five new regressions in
-  `tests/unit/certifyEvidence.test.ts`.
-
-DEFECT C (condition-level binding at a SHA whose declared artifact is absent)
-and DEFECT D (clean-checkout currency) are downstream of B for the six command
-lanes: `root-compile`, `bin-parse`, `structural-invariants`, `full-regression`,
-`ui`, `browser-workflow`. They remain `STALE_EVIDENCE`, so condition 1's raw
-check stays UNMET and its effective state stays
-`EVIDENCE_ARTIFACT_ABSENT_AT_SHA`. The smallest sound extension — a GUARDED
-MEASUREMENT ROOT, needing no receipt-schema change — is recorded in D-173 and
-NOT implemented: it changes the text pinned by behavioural mutant BM-078, so it
-requires its own owner authorization.
+- **DEFECT A / D-172 — RESOLVED (S2, `f064fa0d`).** Staleness is computed for
+  a PROVEN lane ONLY (`bin/lib/validation-lane-state.mjs`).
+- **DEFECT B / D-173 — RESOLVED HERE (D-174, pending S3 gates).** The COMMAND
+  producer's same-root `head === checkpoint` guard was structurally
+  unsatisfiable (a commit cannot declare its own SHA as its anchor). The
+  correction separates the OBSERVER ROOT from the MEASUREMENT ROOT: a command
+  lane measures against an explicitly supplied exact checkout of the
+  substantive checkpoint S, verified by the producer before anything executes
+  (real canonicalized non-symlink repository top level; S resolves in both
+  object databases; `HEAD == S` exactly; `HEAD^{tree} == S^{tree}` == the
+  observer's `S^{tree}`; clean tracked tree; ignored inputs inside a closed
+  disposable allowlist; observer on S or a documentary descendant whose
+  `S..HEAD` range invalidates no certification; execution re-verified at
+  spawn). The receipt keeps its schema: `sourceHead: S`, `observedAtHead: <observer>`. BM-078 is REISSUED against the corrected
+  invariant and five new behavioural mutants cover the new guards (BM-118
+  tree identity, BM-119 measurement cleanliness, BM-120 observer position,
+  BM-121 ignored-input policy, BM-122 TOCTOU guard); census 117 -> 122, 274
+  structural probes unchanged, BM-079/BM-080 untouched and still detected.
+  24 focused regressions pass (`tests/unit/certifyEvidence.test.ts`),
+  including the real-Git positive route: the documentary anchor-advance
+  descendant produces a genuine PASS receipt for the six command lanes
+  against the verified measurement root at S.
+- **DEFECT C / DEFECT D** were downstream of B for the six command lanes and
+  are re-measured by the S3 certification choreography rather than patched:
+  their receipts, bindings and artifact checks are re-earned at S3.
 
 Condition 3 (autonomous yield proof) stays UNMET and owner-gated. The provider
 investigation of the same instruction is complete and read-only (verified
@@ -164,49 +162,38 @@ MET, `certificationRefused=true`, `advanceClaimed=false`.
 
 ## Work In Progress
 
-S is `70f4b8269eae0c08e4a28c22f87b82c4958bbb92` (the HC-177 probe-fixture
-repair), integrated alone through C-00 and executed green
-on GitHub in run `38382773612` (job `115247033554`, 15/15 groups).
-Milestone and prepush each passed all 472 selected files (6204 passed / 0
-failed), including all 274 structural probes and 117 mutants at S. UI 105/105,
-browser 9/9, and fresh clean-checkout gates passed at S. Canonical gate:local
-and topology failed closed on CHECKOUT_INSIDE_SIBLING_ROOT; they are not PASS.
-The same host's independent checkout qualified S as PROVEN/BUBBLEWRAP.
-
-The implementation worktree and branch are removed. Canonical main holds the
-explicit maintenance claim `sess-af150610aa5f`. Only eligible verified S
-receipts will be published and bound. Historical receipts remain unchanged;
-autonomous proof at S is UNMET and the manual-lane revisit is overdue.
+The D-174 guarded-measurement-root repair is implemented in the owned session
+worktree `nightwatch-final-product-complet-5054d550` (session
+`sess-158bca2d98a8`, base `907ebbcd`) and awaits its S3 gates
+(`npm run gate:milestone`, `npm run prepush`), the C-00 integrate, and the
+exact-S3 CI observation. After the anchor advance in a documentary descendant,
+the S3 certification choreography re-earns every lane: the six command lanes
+through the verified measurement root at S3, the gate/clean copy-through
+imports, the OBSERVE_CI evidence for the observed run at S3, and the
+values-only binding — targeting 15/16 effective MET with condition #3
+owner-gated and the manual lane preserved.
 
 ## Exact Next Action
 
-Task 15.4. The validated repair is committed at
-`5ac54614398817c0af30ef07b8f6f3770131b5de` in the owned session worktree
-`nightwatch-final-product-complet-81c79680`. Next action: repair the five
-continuity errors the in-flight records produced (STATE branch, the 15.4
-mention in this section, the released canonical MAINTENANCE claim), amend the
-checkpoint, run `npm run gate:milestone` and `npm run prepush` at that exact
-HEAD, integrate through C-00 (`integrate --expect-session sess-7e4166ba3b14
---expect-head <S2>`), and observe the run at S2.
+Task 15.4. Commit the validated repair (bin/tests/config plus these continuity
+records and the D-174 entry) as the substantive checkpoint S3 (discovered from
+Git, never predicted), run `npm run gate:milestone` and `npm run prepush` at
+that exact HEAD, integrate through C-00
+(`integrate --expect-session sess-158bca2d98a8 --expect-head <S3>`), observe
+the GitHub run at S3, then advance the anchor and rebuild the certification
+evidence at S3 per the Current Milestone.
 
-Task 15.3 remains complete for every locally actionable subject, and the owner
-boundary is unchanged, each item an explicit owner decision: (1) condition 1
-needs the `owner-manual` lane resolved — either the owner-authorized executable
-`lanes:manual` route (DEV authentication plus a separate one-shot
-authorization) making it PROVEN, or an owner-renewed UNAVAILABLE_CAPABILITY
-record with a new revisit date; the revisit is now the owner-approved
-2026-11-14, re-affirmed by the owner's DECISION B of 2026-10-15. (2) Condition
-1 ALSO needs the D-173 extension: the six command lanes cannot be re-earned at
-any checkpoint until a guarded measurement root is authorized, because the
-COMMAND producer's `head === checkpoint` guard is unsatisfiable in a real
-repository. (3) Condition 3 needs a fresh, separately authorized paid provider
-campaign at the certified checkpoint under
-`config/yield-run-authorization.v1.json`; the existing GRANTED record belongs to
-historical parent task 12.3 and authorizes nothing here. (4) Repository
-visibility (PUBLIC) and the eventual campaign archive are owner/admin actions.
-No further local engineering work is authorized or outstanding: the probe
-campaign detects 274/274, all 117 behavioural mutants are detected, and no
-unexecuted check has been declared passing.
+Task 15.3's owner boundaries are unchanged, each item an explicit owner
+decision: (1) the `owner-manual` lane stays UNAVAILABLE_CAPABILITY with the
+owner-approved revisit date 2026-11-14 (DECISION B of 2026-10-15); its
+executable `lanes:manual` route would need DEV authentication plus a separate
+one-shot authorization. (2) Condition 3 needs a fresh, separately authorized
+paid provider campaign under `config/yield-run-authorization.v1.json`; the
+existing GRANTED record belongs to historical parent task 12.3 and authorizes
+nothing here. (3) Repository visibility (PUBLIC) and the eventual campaign
+archive are owner/admin actions. The D-173 extension itself is now authorized
+and implemented (D-174) — the remaining local work is the S3 gates and the
+S3 certification choreography.
 
 ## Superseded Next Action (8.1, complete)
 
@@ -240,8 +227,41 @@ exactly as in M4/M5.
 | `.agent/EXECUTION_PROMPT.md` | planner-executor handoff for this campaign | rewritten (M1) |
 | `bin/`, `src/`, `config/`, `tests/`, `ui/control-center/`, `docs/` (M2-M9) | the certification spine, hunt integrity, finding truth, narrowed claims, contained-DEV lane and CLI contract work | committed and integrated; see `git log 1f786a4e..1d47e2ee` |
 | `openspec/changes/nightwatch-final-product-completion-v1/tasks.md` | stable IDs restored (VA-01), reopened-by-corrections annotations | corrected by the child campaign (task 5.1) |
+| `bin/lib/certify-producers.mjs` + `.d.mts`, `bin/certify-evidence.mjs` | D-174 guarded measurement root (observer/measurement separation, verified exact-checkpoint execution) | updated this session (pending S3) |
+| `config/hardening-rule-probes.v1.json` | BM-078 reissue + BM-118..122, requirement tags (census 117 -> 122) | updated this session (pending S3) |
+| `tests/unit/certifyEvidence.test.ts` | 24 regressions: corrected invariant + adversarial set | updated this session (pending S3) |
+| `docs/DECISIONS.md`, `.agent/ACTIVE_TASK.md`, this file | D-174 record and continuity | updated this session (pending S3) |
 
 ## Validation Ledger
+- 2026-10-15 — M15 D-173/D-174 GUARDED MEASUREMENT ROOT (this session, owner
+  instruction "TERMINAL PRODUCT COMPLETION / FINAL EXECUTION MISSION",
+  Decision A). Implementation and focused validation, all in the C-00 session
+  worktree `nightwatch-final-product-complet-5054d550` (session
+  `sess-158bca2d98a8`, base `907ebbcd`):
+  - D-173 REPRODUCED first: `tests/unit/certifyEvidence.test.ts` 18/18 at
+    `907ebbcd`, including the five R5-15/D-173 proofs (test 17: both the
+    substantive checkout and the anchor-advance descendant refuse
+    `CERTIFY_HEAD_NOT_CHECKPOINT` in a real synthetic Git repository).
+  - `npm run typecheck` clean; `npm run typecheck:bin` PASS (conformance 77/77,
+    mode BLOCKING, errors 0, exemptions 0, ceilings 0); `npm run
+    hardening:check` PASS.
+  - Focused regressions `tests/unit/certifyEvidence.test.ts` 24/24 (real CLI,
+    real Git): positive execution (documentary descendant + verified
+    measurement root -> PASS receipt with `sourceHead: S`, `observedAtHead: D`;
+    all six command lanes reproducible; failing lane honest NOT_MET), wrong
+    source identity (wrong SHA, different branch tip, foreign repository,
+    untrusted path, symlinked root — all categorical refusals), dirty/tampered
+    checkouts and overlays, the ignored-input policy in both directions,
+    substantive-descendant refusal (`CERTIFY_CHECKPOINT_RANGE_INVALID`), the
+    TOCTOU guard (`CERTIFY_MEASUREMENT_RACE`), forged tree identity, and PASS
+    impossible without one real execution. `certificationEvidence` +
+    `productionCompletionLaneState` + `validationClassification` 61/61.
+  - Mutation census: BM-078 REISSUED (DETECTED_BY_TESTS), BM-118..122 added
+    (each DETECTED_BY_TESTS), BM-079/BM-080 unchanged and re-verified
+    DETECTED; registry now 122 mutants / 121 requirement tags, 274 structural
+    probes unchanged. Full `hardening:mutants` run recorded at the S3 gates.
+  - No provider call, no spend, no new grant, no visibility change, no Alphaus
+    contact, no sibling write in this session.
 - 2026-10-15 — M15 MILESTONE GATE AND PREPUSH AT S2=f064fa0d (this session).
   `npm run gate:milestone` at S2: 13 of 14 steps exit=0 — validation-universe,
   execution-classes, typecheck, hardening-check (PASS), agent-check (PASS),
@@ -942,8 +962,13 @@ lanes, the gate pair at 5625/0 and exact-head CI green.
 
 ## Blockers
 
-- Current: owner-manual revisit 2026-10-11 is overdue; no renewal or
-  authenticated manual execution was authorized in this recovery.
+- RESOLVED (implementation pending gates) 2026-10-15: the D-173 command-lane
+  checkpoint cycle. The guarded measurement root (D-174) is implemented and
+  regression-proven; the S3 gates and the S3 certification choreography remain
+  to be executed (Current Milestone / Exact Next Action).
+- Current: owner-manual revisit 2026-10-11 is overdue; the owner-approved
+  revisit date is 2026-11-14 (DECISION B of 2026-10-15) and no authenticated
+  manual execution is authorized.
 - Current: no qualifying autonomous paid proof exists at the new S. The
   existing proof is historical and another paid campaign is expressly
   forbidden here. Fresh owner authorization is required at the final S.
@@ -1004,11 +1029,11 @@ from an old authorization line.
 
 ## Completion Snapshot
 
-NOT_COMPLETE. Implementation S `efbb277348a3d756036b2568ca02bb45a5a2018f` has genuine executed
-GitHub CI PASS; no PROJECT_COMPLETE_AND_CI_CERTIFIED advance is claimed.
-M13 remains complete; M14 remains in progress while eligible evidence is
-bound and the owner prerequisites are resolved. The campaign is unarchived,
-the repository is PUBLIC, and changing visibility remains owner/admin-only.
+NOT_COMPLETE. The latest substantive checkpoint with genuine executed GitHub
+CI PASS is recorded in the anchors above; no PROJECT_COMPLETE_AND_CI_CERTIFIED
+advance is claimed. M15 is in progress while the D-173/D-174 repair earns its
+S3 gates and the S3 certification evidence. The campaign is unarchived, the
+repository is PUBLIC, and changing visibility remains owner/admin-only.
 Live/final documentary HEADs are DISCOVER_FROM_GIT, never predicted.
 
 ## Certification session record (2026-10-11) — the two terminal blockers repaired

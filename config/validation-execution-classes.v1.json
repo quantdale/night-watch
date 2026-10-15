@@ -424,8 +424,9 @@
       ]
     },
     "tests/unit/certifyEvidence.test.ts": {
-      "class": "PROCESS_ISOLATED_ONLY",
+      "class": "SERIAL_REQUIRED",
       "signals": [
+        "git-mutation",
         "artifacts-write",
         "isolated-scratch"
       ]
