@@ -4541,3 +4541,27 @@ and completed successfully. The S-bound certification evidence is produced and
 bound in the following documentary descendants. Condition 3 stays owner-gated
 (no provider call, no spend), the manual lane keeps its `2026-11-14` revisit,
 and no visibility change or campaign archive is performed.
+
+### Checkpoint certification state (2026-10-15, S=`94adf9db`)
+
+The S-bound certification evidence is produced and bound: 25 tracked receipts
+under `evidence/certification/94adf9db…/` (six COMMAND lanes through the
+guarded measurement root — each declared command really executed at S and
+exited 0; thirteen live-check condition receipts; the `dependency-advisory`
+lane; the OBSERVE_CI receipt for GitHub Actions run `38756116063`; the
+`validation-lane-closure` receipt produced after the lanes were bound; and the
+three copy-through receipts — authoritative-gate `receipt:sha256:a59af0c3893a911c8d7a1855`,
+clean-checkout `clean-receipt:sha256:1453cc0789dd4475b57bbb9e`,
+ui-error-taxonomy-rendering `receipt:sha256:e6678d98bae4eb2b060891f6`).
+The effective production evaluator reports **15/16 MET, 1 UNMET** at S: every
+condition is MET except `autonomous-yield-proof` (condition 3), which stays
+owner-gated with no provider run and no spend. The independent fresh-clone
+comparison agrees per condition (zero differences). The project status remains
+`OPERATIONALLY_ACCEPTED`: no `PROJECT_COMPLETE_AND_CI_CERTIFIED` advance is
+claimed while condition 3 is UNMET (D-129). The twelve MANUAL_OWNER harnesses
+remain unexecuted (`UNAVAILABLE_CAPABILITY`, revisit `2026-11-14`), repository
+visibility remains PUBLIC (task 15.8 is the owner's privacy action), and the
+campaign remains open. D-175 records the measurement-root execution topology
+and the two execution-time defects (the missing scratch-root allowlist entry,
+repaired at S; the `auth*.json` glob swallowing the tracked authoritative-gate
+receipt, repaired forward) that this choreography exposed and closed.

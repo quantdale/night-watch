@@ -22,11 +22,13 @@ Current milestone: M15 — execute the S4 certification choreography (six comman
 lanes through the guarded measurement root, gate/clean/topology/UI imports,
 OBSERVE_CI, values-only binding, then the validation-lane-closure round) toward
 15/16 effective MET, then finish provider readiness and the terminal record.
-Next action: produce the S4 command-lane and condition receipts from this
-observer with `--measurement-root`, import the host receipts, publish and bind
-them in documentary descendants, produce `validation-lane-closure` once the
-lanes are bound, recompute the sixteen-condition matrix, and compare the
-canonical checkout with an independent fresh clone.
+Next action: the S-bound evidence is produced and bound (15/16 effective MET
+at `94adf9db`, fresh-clone agreement proven). The campaign's only remaining
+terminal dependency is the owner's explicit authorization for one bounded
+qualifying PRINT_CLI_PROVIDER run (proposal `parent-12.4`, prepared, NOT
+granted); after such a run earns condition #3, verify 16/16 and apply the
+D-129 advance. Owner/admin actions in parallel: task 15.8 (privacy) and the
+eventual campaign archive.
 Authorization class: FINAL_PRODUCT_COMPLETION_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2

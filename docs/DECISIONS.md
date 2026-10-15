@@ -6933,3 +6933,61 @@ no filesystem or process authority of its own). The chosen design keeps the
 verification in the producer and the effects in the CLI, and its trust demand
 is no weaker for the accepted use: the measurement root is proven to BE the
 authorized source at S by object identity before anything executes in it.
+
+## D-175 — the measurement-root execution topology, and two execution-time defects (2026-10-15)
+
+Source: owner instruction "NIGHTWATCH — TERMINAL PRODUCT COMPLETION / FINAL
+EXECUTION MISSION" (2026-10-15), Phase G execution, under the terminal campaign
+`nightwatch-final-product-completion-v1` (task 15.4). D-174 implemented the
+guarded measurement root; this decision records how the S-choreography assigns
+the two checkout roles and the two real defects executing it exposed.
+
+**The role assignment.** The OBSERVER (certification anchor + evidence
+publisher) is the canonical checkout, carrying the bounded documentary
+maintenance commits; the MEASUREMENT ROOT is the owned session worktree frozen
+at the substantive checkpoint S. That assignment is forced by the lane
+semantics, not convenience: `full-regression` runs `npm test`, whose suite
+carries live-topology self-checks (DEF-FC-04) that execute under run-shards'
+`SHARDS` lane label — the D-04 CI/CLEAN fresh-checkout escape is deliberately
+never reachable there (`buildShardChildEnvironment` pins the label, and
+`buildSemanticCompatibilityEnvironment` documents that a callee must never
+self-upgrade its classification). A lane whose evidence text says "in the
+default canonical runner" can therefore only be honestly measured in a
+checkout that shares the live worktree registry — which is exactly a
+registered, owned session worktree at S. A fresh clone qualifies for every
+other lane and for the gate:clean-family certification (and must: the protocol
+is reproducible from a qualified fresh checkout), but `npm test` in an isolated
+clone fails the live-topology self-check BY DESIGN, and the honest outcome is
+an NOT_MET receipt — which is precisely what the first attempt recorded before
+the role assignment was corrected. The producer's verification is SHA-based
+and accepts both checkout kinds; nothing in the security model changed.
+
+**Defect 1 (repaired forward at `94adf9db`): the allowlist omitted the
+repository's own scratch root.** The measurement root's ignored-input policy
+listed the dependency/build/staging classes but not `.tmp-nightwatch/` — the
+DECLARED test-scratch root (`SCRATCH_ROOT` in
+`src/core/workspace/ephemeralLayout.ts`) that the suites themselves write, so
+the policy would have refused the product's own legitimate outputs between
+command-lane measurements. Fixed with a regression (test 22d carries both a
+build output and the scratch root and must PASS; undeclared ignored input is
+still refused under BM-121).
+
+**Defect 2 (repaired forward at `72dc5666`): the secret glob swallowed a
+tracked receipt.** `.gitignore` line 32 (`auth*.json`) matches
+`authoritative-gate.json`, so an ordinary `git add evidence` silently skipped
+that published receipt — the same force-add history the earlier checkpoints
+recorded. The independent fresh-clone comparison exposed it while the host
+artifact directory masked it locally: `verifyPersistedReceipt` scans the
+host-local directory first, so a verified host copy hides a MISSING tracked
+copy. This is the strongest concrete argument for the clean-clone agreement
+check: per-condition equality between the canonical checkout and a genuinely
+independent fresh clone is a first-class certification requirement, not a
+formality.
+
+**What this decision is not.** It does not weaken the measurement-root
+identity verification (still SHA/tree/cleanliness/ignored-input based, BM-078
+and BM-118..BM-123-class guards unchanged); it does not relax the live-topology
+self-check; it does not relabel any NOT_MET receipt as MET — the failed
+`full-regression` attempts remain recorded as honestly produced NOT_MET
+receipts superseded by genuine PASS receipts from later measurement attempts
+at the same S.

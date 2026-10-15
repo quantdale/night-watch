@@ -229,3 +229,23 @@ The last exact-head CI run that is GREEN is `38220009838` @ `7871b463`
 (`receipt:sha256:6ed3233390fd484b828905f7`, 15/15 groups, both skip policies
 `undeclared: 0`). `origin/main` is `4a56bf25` and is red; no force push or history
 rewrite was used.
+
+## Addendum (2026-10-15) — D-173/D-174 implemented; 15/16 effective MET at `94adf9db`
+
+The above 2026-10-12 record stays history. The current terminal state: the
+guarded measurement root (D-174) is implemented and the S-bound certification
+evidence is produced and bound at the certified checkpoint
+`94adf9db70565630e5b636ab32065c995ac81c1b` (D-175 records the execution
+topology and the two execution-time defects it exposed and closed). The
+effective production evaluator reports **15/16 MET / 1 UNMET** — only
+`autonomous-yield-proof` (condition 3) is UNMET, owner-gated with no provider
+run and no spend. Exact-head CI run `38756116063` (job `116494865791`)
+completed successfully at S; the independent fresh clone agrees per condition
+(zero differences); `origin/main` = `HEAD` = `72dc5666`. The project status
+stays `OPERATIONALLY_ACCEPTED` — no advance is claimed while condition 3 is
+UNMET (D-129). The twelve MANUAL_OWNER harnesses remain unexecuted
+(`UNAVAILABLE_CAPABILITY`, revisit `2026-11-14`); repository visibility stays
+PUBLIC pending the owner's task-15.8 action. The single remaining dependency
+for `PROJECT_COMPLETE_AND_CI_CERTIFIED` is the owner authorization for one
+bounded qualifying PRINT_CLI_PROVIDER run (proposal `parent-12.4`, prepared
+and NOT granted).

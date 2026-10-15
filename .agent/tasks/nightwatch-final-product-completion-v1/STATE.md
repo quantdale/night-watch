@@ -15,11 +15,12 @@ Last substantive checkpoint SHA: 94adf9db70565630e5b636ab32065c995ac81c1b
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-final-product-complet-5054d550
-Last checkpoint: 2026-10-15 — anchor advanced to the guarded-measurement-root
-checkpoint `94adf9db70565630e5b636ab32065c995ac81c1b` (D-174; S3 `6765aabc`
-plus the S4 allowlist repair-forward) with exact-head CI run `38756116063`
-EXECUTED_PASS at the checkpoint; the S-bound certification evidence follows in
-documentary descendants.
+Last checkpoint: 2026-10-15 — the S-bound certification evidence at
+`94adf9db70565630e5b636ab32065c995ac81c1b` is produced, published and bound
+(25 tracked receipts): the effective evaluator reports 15/16 MET with only
+`autonomous-yield-proof` UNMET (owner-gated), the fresh-clone comparison
+agrees per condition, and `72dc5666` records the tracked authoritative-gate
+receipt repair (D-175).
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
@@ -235,6 +236,39 @@ exactly as in M4/M5.
 | `docs/DECISIONS.md`, `.agent/ACTIVE_TASK.md`, this file | D-174 record and continuity | updated this session (pending S3) |
 
 ## Validation Ledger
+- 2026-10-15 — M15 S-CHOREOGRAPHY, EVIDENCE PRODUCTION AND 15/16 (this
+  session, Phase F/G of the terminal mission). Checkpoint
+  `94adf9db70565630e5b636ab32065c995ac81c1b` (S3 `6765aabc` = D-174 guarded
+  measurement root; S4 `94adf9db` = the allowlist repair-forward), exact-head
+  CI run `38756116063` (job `116494865791`, 10 steps) EXECUTED_PASS at S.
+  Roles (D-175): observer = canonical checkout carrying the documentary
+  maintenance commits (`685fd674` anchor+CI observation, `f70c8a12`/`b64db891`
+  publish+bind, `f1b05f18`/`2b9f200a` the validation-lane-closure round,
+  `72dc5666` the tracked-receipt repair); measurement root = this owned
+  session worktree frozen at S.
+  - Six COMMAND lanes genuinely measured at S through the verified
+    measurement root: root-compile `receipt:sha256:48fdd79c94cd8fb89d059481`,
+    bin-parse `1b886c6f2108d60fd66ba1f7`, structural-invariants
+    `9a5fe1758d38f195d762f481`, full-regression `9aa28040d3beba93f978c225`,
+    ui `691fd5dd2a21fc47af48cfd8`, browser-workflow `8e2c2255e8f46edf61f19508`.
+    The first full-regression attempts were honestly NOT_MET (one fresh-clone
+    attempt failed the live-topology self-check by design; one measurement
+    attempt tripped test 14 on stale staging scratch) — both recorded, both
+    diagnosed, neither hidden; `npm test` then measured 6228 passed / 0 failed
+    / 56 skipped at S in the qualified root.
+  - Thirteen condition receipts + dependency-advisory + exact-checkpoint-ci
+    (run 38756116063) + validation-lane-closure (`561ae3467a260e4846889e12`)
+    produced PASS; copy-throughs imported: authoritative-gate
+    `receipt:sha256:a59af0c3893a911c8d7a1855` (clean-mode gate, 15/15 groups),
+    clean-checkout `clean-receipt:sha256:1453cc0789dd4475b57bbb9e`,
+    ui-error-taxonomy-rendering `receipt:sha256:e6678d98bae4eb2b060891f6`.
+  - Effective evaluator at S: **15/16 MET / 1 UNMET** (only
+    `autonomous-yield-proof`, owner-gated). Independent fresh clone at
+    `72dc5666`: per-condition agreement, zero differences (the comparison
+    caught the gitignore-masked missing tracked receipt first).
+  - prepush PASS at every pushed head (`685fd674`, `2b9f200a`, `72dc5666`;
+    affected-shards 6228/0 each). No provider call, no spend, no new grant,
+    no visibility change, no Alphaus contact, no sibling write.
 - 2026-10-15 — M15 S3 GATES, INTEGRATION AND EXACT-S3 CI; S4 REPAIR-FORWARD
   (this session). S3=`6765aabc7368a402c4c076ce1da2ff96409cbc5a` (the D-174
   repair): `npm run gate:milestone` PASS at S3 (13/13 steps; hardening-rules
