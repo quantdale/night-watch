@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "nightwatch.certification-evidence-receipt.v1",
+  "subject": "validation-lane-closure",
+  "subjects": [
+    "validation-lane-closure"
+  ],
+  "sourceHead": "94adf9db70565630e5b636ab32065c995ac81c1b",
+  "observedAtHead": "b64db89106a9425a25be0cc024129d9152a0d996",
+  "sourceRootCleanAtEmit": true,
+  "checkId": "validation-lane-state",
+  "checkState": "MET",
+  "result": "PASS",
+  "producer": "PROJECT_CHECK",
+  "environmentClass": "HOST_LOCAL",
+  "receiptDigest": "receipt:sha256:561ae3467a260e4846889e12"
+}
