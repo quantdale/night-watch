@@ -242,6 +242,26 @@ exactly as in M4/M5.
 | `openspec/changes/nightwatch-final-product-completion-v1/tasks.md` | stable IDs restored (VA-01), reopened-by-corrections annotations | corrected by the child campaign (task 5.1) |
 
 ## Validation Ledger
+- 2026-10-15 — M15 MILESTONE GATE AND PREPUSH AT S2=f064fa0d (this session).
+  `npm run gate:milestone` at S2: 13 of 14 steps exit=0 — validation-universe,
+  execution-classes, typecheck, hardening-check (PASS), agent-check (PASS),
+  handoff-check (PASS), typecheck-bin (PASS, 77/77, 0 errors), hardening-rules
+  (rules=96 probes=274 detected=274 undetected=0 restored=136
+  statusUnchanged=true), mutation-harness (mutants=117 detected=117 survived=0
+  errors=0), project-check (PASS), workspace-check (PASS), affected-tests
+  (selected=472). `affected-shards` reported passed=6221 failed=1. A re-run of
+  the same 472-file universe at the same HEAD returned result=PASS with totals
+  planned=6278 passed=6222 failed=0 skipped=56 (shard-1 2957/0, shard-2
+  2829/0, exclusive 436/0), and the immediately preceding `npm run prepush` at
+  the same HEAD reported affected-shards passed=6222 failed=0. The single
+  failure is therefore intermittent and NOT reproduced; the shard receipt
+  records only counts and the lane does not persist the captured child output,
+  so the specific location could not be identified and is NOT hidden — it is
+  recorded here as an unidentified intermittent, consistent with the earlier
+  FLAKE-002/D-147 watch item.
+  `npm run prepush` at S2: PASS, every step exit=0, affected-shards passed=6222
+  failed=0 in 985.6s.
+
 - 2026-10-15 — M15 CERTIFICATION-MACHINERY REPAIR (this session, owner
   instruction "FINAL CERTIFICATION RECOVERY AND PROVIDER READINESS"). Newly
   authorized scope recorded in `.agent/ACTIVE_TASK.md` and here; the previous
