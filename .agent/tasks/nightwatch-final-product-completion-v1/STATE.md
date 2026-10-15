@@ -230,9 +230,47 @@ exactly as in M4/M5.
 | `bin/lib/certify-producers.mjs` + `.d.mts`, `bin/certify-evidence.mjs` | D-174 guarded measurement root (observer/measurement separation, verified exact-checkpoint execution) | updated this session (pending S3) |
 | `config/hardening-rule-probes.v1.json` | BM-078 reissue + BM-118..122, requirement tags (census 117 -> 122) | updated this session (pending S3) |
 | `tests/unit/certifyEvidence.test.ts` | 24 regressions: corrected invariant + adversarial set | updated this session (pending S3) |
+| `bin/lib/certify-producers.mjs`, `tests/unit/certifyEvidence.test.ts` (S4) | allowlist adds the declared `.tmp-nightwatch/` scratch root (defect found at S3 qualification) | repaired forward (this session) |
 | `docs/DECISIONS.md`, `.agent/ACTIVE_TASK.md`, this file | D-174 record and continuity | updated this session (pending S3) |
 
 ## Validation Ledger
+- 2026-10-15 — M15 S3 GATES, INTEGRATION AND EXACT-S3 CI; S4 REPAIR-FORWARD
+  (this session). S3=`6765aabc7368a402c4c076ce1da2ff96409cbc5a` (the D-174
+  repair): `npm run gate:milestone` PASS at S3 (13/13 steps; hardening-rules
+  344s; mutation-harness 2431s with the full 122-mutant census DETECTED;
+  affected-shards 6228 passed / 0 failed); `npm run prepush` PASS at the same
+  HEAD (6228/0). Integrated through C-00 (`SESSION_INTEGRATED`), exact-head CI
+  run `38732120873` (job `116412175619`, 10 steps) at `6765aabc` completed
+  `success`. Measurement-side qualification at S3 in the qualified checkout
+  outside the sibling root: `gate:topology` PASS (PROVEN/BUBBLEWRAP, certifying,
+  receipt at `6765aabc`); `gate:clean-exec` (clean mode) PASS all fifteen
+  groups (receipt `receipt:sha256:130473cb924284ac3a7b0c8d`); `gate:clean`
+  PASS on retry (clean receipt `clean-receipt:sha256:ffc9cb478cc7eb1b29b315f9`,
+  sourceHead `6765aabc`, siblingMode ABSENT); the F-18 UI-harness receipt
+  recorded at `6765aabc` with all 16 harness tests PASS.
+  - FLAKE IDENTIFIED (the previously unidentified intermittent): the
+    SEMANTIC_COMPATIBILITY single failure is load/order-sensitive assertions
+    over spawned probes — captured twice: `tests/unit/phase23QualityGate.test.ts:197
+    ("the push-before tip is forwarded...") EXPECT_EQUAL` in the first clean
+    gate, and `tests/unit/activeTaskRoutingBinding.test.ts:149 ("the current
+    active task satisfies the rule it introduces") EXPECT_EQUAL` in a direct
+    semantic-compat run. Both pass standalone; the second additionally fails
+    DETERMINISTICALLY in a plain clone (a live-tree test that requires the
+    declared session worktree to be registered, excused only in the CI/CLEAN
+    gate contexts). Recorded as monitored test debt under the flake policy
+    with both identities; the first clean-gate attempt (`clean-receipt:...8993e79e...`)
+    is preserved as the failed attempt and the retry passed honestly.
+  - DEFECT FOUND IN IMPLEMENTATION (repaired forward as S4): the guarded
+    measurement root's ignored-input allowlist omitted the repository's
+    DECLARED test-scratch root `.tmp-nightwatch/`
+    (`SCRATCH_ROOT` in `src/core/workspace/ephemeralLayout.ts`), which the
+    suites themselves write — the policy would have refused the product's own
+    legitimate outputs. Fixed in `bin/lib/certify-producers.mjs`
+    (ALLOWED_IGNORED_INPUTS) with the regression extended (test 22d now
+    carries both `artifacts/` output and the declared scratch root and must
+    still PASS); BM-121 still detects the refusal of undeclared ignored input.
+  - No provider call, no spend, no new grant, no visibility change, no Alphaus
+    contact, no sibling write in this window.
 - 2026-10-15 — M15 D-173/D-174 GUARDED MEASUREMENT ROOT (this session, owner
   instruction "TERMINAL PRODUCT COMPLETION / FINAL EXECUTION MISSION",
   Decision A). Implementation and focused validation, all in the C-00 session

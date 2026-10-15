@@ -103,7 +103,10 @@ export function commandDigest(argv) {
  * Disposable inputs a qualified measurement checkout may carry BESIDE its tracked
  * tree: dependency installs and build/staging outputs only. Anything else that Git
  * reports as ignored/untracked-input — a local override, a scratch file, an injected
- * fixture, a credential-shaped artifact — invalidates the measurement.
+ * fixture, a credential-shaped artifact — invalidates the measurement. The named
+ * scratch root `.tmp-nightwatch/` is the repository's DECLARED test-scratch class
+ * (`SCRATCH_ROOT` in `src/core/workspace/ephemeralLayout.ts`): the suites write it
+ * themselves, so refusing it would refuse the product's own legitimate outputs.
  */
 export const ALLOWED_IGNORED_INPUTS = Object.freeze([
   'node_modules/',
@@ -115,6 +118,7 @@ export const ALLOWED_IGNORED_INPUTS = Object.freeze([
   'ui/control-center/node_modules/',
   'ui/control-center/dist/',
   'ui/control-center/coverage/',
+  '.tmp-nightwatch/',
 ]);
 
 /**

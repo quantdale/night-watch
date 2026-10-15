@@ -464,7 +464,7 @@ interface CycleRepo {
 /** A real Git repository carrying a real docs/CURRENT_STATE.md anchor and a REAL project-state-check. */
 function cycleRepo(scripts: Record<string, string> = { typecheck: 'node -e "process.exit(0)"' }): CycleRepo {
   const root = fs.mkdtempSync(path.join(TMP_BASE, 'nw-cycle-'));
-  fs.writeFileSync(path.join(root, '.gitignore'), 'artifacts/\n*.local.json\n');
+  fs.writeFileSync(path.join(root, '.gitignore'), 'artifacts/\n*.local.json\n.tmp-*/\n');
   fs.mkdirSync(path.join(root, 'config'), { recursive: true });
   fs.mkdirSync(path.join(root, 'bin'), { recursive: true });
   // A verdict source that derives the certified checkpoint the SAME way the
@@ -766,10 +766,13 @@ test.describe('the guarded measurement root (D-173 correction)', () => {
       fs.writeFileSync(path.join(overridden, 'override.local.json'), '{"injected": true}\n');
       expect(repo.produce(repo.root, 'root-compile', ['--measurement-root', overridden])).toMatchObject({ status: 3, json: { code: 'CERTIFY_MEASUREMENT_IGNORED_INPUT' } });
       // (d) A disposable build/staging input is TOLERATED: the qualified
-      //     checkout may carry its dependency and staging classes.
+      //     checkout may carry its dependency and staging classes, including
+      //     the repository's declared test-scratch root (.tmp-nightwatch/).
       const disposable = repo.worktree('disposable', substantive);
       fs.mkdirSync(path.join(disposable, 'artifacts'), { recursive: true });
       fs.writeFileSync(path.join(disposable, 'artifacts', 'scratch.txt'), 'build output\n');
+      fs.mkdirSync(path.join(disposable, '.tmp-nightwatch'), { recursive: true });
+      fs.writeFileSync(path.join(disposable, '.tmp-nightwatch', 'campaign-scratch.json'), '{}\n');
       expect(repo.produce(repo.root, 'root-compile', ['--measurement-root', disposable])).toMatchObject({ status: 0, json: { code: 'CERTIFY_PASS' } });
     } finally {
       repo.cleanup();
