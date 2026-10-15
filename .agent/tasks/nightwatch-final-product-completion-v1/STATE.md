@@ -14,7 +14,7 @@ Last validated implementation SHA: efae50ce5516d0d919bb8c5a6463dbb51caf3dc8
 Last substantive checkpoint SHA: efae50ce5516d0d919bb8c5a6463dbb51caf3dc8
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
-Branch: session/nightwatch-final-product-complet-81c79680
+Branch: main
 Last checkpoint: 2026-10-15 — D-172 lane-evidence semantics repaired and
 D-173 command-lane blocker proven in a C-00 session worktree (S2 pending gates,
 condition 1 UNMET with an exact proven blocker).

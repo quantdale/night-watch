@@ -50,7 +50,7 @@ No new campaign or additional paid provider proof is authorized by this recovery
 ```text
 CAMPAIGN: nightwatch-final-product-completion-v1
 CHILD TASK: NONE
-SESSION WORKTREE: session/nightwatch-final-product-complet-81c79680
+SESSION WORKTREE: NONE
 
 CURRENT STATUS:
   IN_PROGRESS — M15. NEW OWNER AUTHORIZATION (2026-10-15, "FINAL CERTIFICATION
