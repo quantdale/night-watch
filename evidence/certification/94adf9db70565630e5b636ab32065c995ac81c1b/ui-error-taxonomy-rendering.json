@@ -1,0 +1,109 @@
+{
+  "schemaVersion": "nightwatch.ui-harness-receipt.v1",
+  "subject": "ui-error-taxonomy-rendering",
+  "nightwatchSha": "94adf9db70565630e5b636ab32065c995ac81c1b",
+  "treeClean": true,
+  "result": "PASS",
+  "executedAt": "2026-10-15T15:18:01.857Z",
+  "harness": {
+    "file": "src/contractRender.test.tsx",
+    "tests": [
+      {
+        "suite": "control center render truth",
+        "title": "generates a non-vacuous fixture universe",
+        "status": "PASS"
+      },
+      {
+        "suite": "control center render truth",
+        "title": "renders identically for identical fixtures",
+        "status": "PASS"
+      },
+      {
+        "suite": "control center render truth",
+        "title": "observably renders every non-exempt field of every covered view",
+        "status": "PASS"
+      },
+      {
+        "suite": "control center render truth",
+        "title": "preserves the rendered DOM of every view across the decomposition",
+        "status": "PASS"
+      },
+      {
+        "suite": "F-18 failure-path differential render harness",
+        "title": "drives every view through every ApiErrorKind member and requires distinct renderings",
+        "status": "PASS"
+      },
+      {
+        "suite": "F-18 failure-path differential render harness",
+        "title": "derives the coverage assertion from the members of ApiErrorKind, with no fallback",
+        "status": "PASS"
+      },
+      {
+        "suite": "F-18 failure-path differential render harness",
+        "title": "offers retry only for NETWORK, TIMEOUT, 408 and 429",
+        "status": "PASS"
+      },
+      {
+        "suite": "F-18 failure-path differential render harness",
+        "title": "presents INVALID_RESPONSE as a contract mismatch naming the contract, with no retry",
+        "status": "PASS"
+      },
+      {
+        "suite": "F-18 failure-path differential render harness",
+        "title": "presents a deliberate 404 as a capability that is not enabled, not an outage",
+        "status": "PASS"
+      },
+      {
+        "suite": "F-18 failure-path differential render harness",
+        "title": "renders no server-supplied message, stack, header or path in any failure state",
+        "status": "PASS"
+      },
+      {
+        "suite": "F-18 failure-path differential render harness",
+        "title": "renders the successful source and names the failed one in a partial composition",
+        "status": "PASS"
+      },
+      {
+        "suite": "F-18 failure-path differential render harness",
+        "title": "reserves the Campaign whole-view error for the case where nothing answered",
+        "status": "PASS"
+      },
+      {
+        "suite": "F-18 failure-path differential render harness",
+        "title": "renders the successful Overview sources and names each failed source",
+        "status": "PASS"
+      },
+      {
+        "suite": "F-18 failure-path differential render harness",
+        "title": "mutation proof: a collapsed generic error state fails naming the view and the conflated kinds",
+        "status": "PASS"
+      },
+      {
+        "suite": "F-18 failure-path differential render harness",
+        "title": "mutation proof: an exemption for a pair that renders differently fails as stale",
+        "status": "PASS"
+      },
+      {
+        "suite": "F-18 failure-path differential render harness",
+        "title": "keeps the system-map harness exclusion honest in both directions",
+        "status": "PASS"
+      }
+    ]
+  },
+  "harnessDigest": "sha256:5a0606e2e07dc185781194b3",
+  "suiteTotals": {
+    "files": 8,
+    "tests": 105,
+    "passed": 105,
+    "failed": 0,
+    "skipped": 0
+  },
+  "apiErrorKinds": [
+    "NETWORK",
+    "HTTP",
+    "INVALID_RESPONSE",
+    "TIMEOUT",
+    "ABORTED"
+  ],
+  "receiptDigest": "receipt:sha256:e6678d98bae4eb2b060891f6"
+}

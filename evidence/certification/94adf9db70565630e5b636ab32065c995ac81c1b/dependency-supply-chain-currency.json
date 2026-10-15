@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "nightwatch.certification-evidence-receipt.v1",
+  "subject": "dependency-supply-chain-currency",
+  "subjects": [
+    "dependency-supply-chain-currency"
+  ],
+  "sourceHead": "94adf9db70565630e5b636ab32065c995ac81c1b",
+  "observedAtHead": "685fd674ee7783b0ce7aa14e857c908101f4b9ff",
+  "sourceRootCleanAtEmit": true,
+  "checkId": "dependency-advisory-lane",
+  "checkState": "MET",
+  "result": "PASS",
+  "producer": "PROJECT_CHECK",
+  "environmentClass": "HOST_LOCAL",
+  "receiptDigest": "receipt:sha256:8034dcdc3e86da3accabc21d"
+}

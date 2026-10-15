@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "nightwatch.certification-evidence-receipt.v1",
+  "subject": "full-regression",
+  "subjects": [
+    "full-regression"
+  ],
+  "sourceHead": "94adf9db70565630e5b636ab32065c995ac81c1b",
+  "observedAtHead": "685fd674ee7783b0ce7aa14e857c908101f4b9ff",
+  "sourceRootCleanAtEmit": true,
+  "checkId": "cmd-full-regression",
+  "checkState": "MET",
+  "result": "PASS",
+  "producer": "COMMAND",
+  "environmentClass": "HOST_LOCAL",
+  "commandDigest": "sha256:527c484bcc3bb219e92ed61f",
+  "receiptDigest": "receipt:sha256:9aa28040d3beba93f978c225"
+}
