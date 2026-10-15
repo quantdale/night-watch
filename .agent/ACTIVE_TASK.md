@@ -10,29 +10,30 @@ TASK_GROUP_NEXT: 15
 TASK_NEXT_ID: 15.4
 Task directory: .agent/tasks/nightwatch-final-product-completion-v1
 Starting SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
-Last validated implementation SHA: efae50ce5516d0d919bb8c5a6463dbb51caf3dc8
-Last checkpoint: 2026-10-15 — D-173's guarded measurement root implemented
-(D-174) in the C-00 session worktree
-`nightwatch-final-product-complet-5054d550` (session `sess-158bca2d98a8`, base
-`907ebbcd`): the COMMAND producer measures S through a verified exact-checkout
-measurement root, BM-078 is reissued against the corrected invariant with five
-new behavioural mutants (census 117 -> 122), and 24 focused regressions pass.
-Current milestone: M15 — land the D-173/D-174 certification-machinery repair as
-substantive checkpoint S3, validate and integrate it through C-00, observe
-exact-S3 CI, then rebuild the certification evidence at S3 (six command lanes
-re-earned through the guarded measurement root, gate/clean imports, fresh
-receipts, values-only binding) toward 15/16 effective MET.
-Next action: commit the validated repair with its continuity records and
-regressions, run `npm run gate:milestone` and `npm run prepush` at that exact
-HEAD S3, integrate through C-00, observe the run at S3, advance the anchor in a
-documentary descendant, and execute the S3 certification choreography.
+Last validated implementation SHA: 94adf9db70565630e5b636ab32065c995ac81c1b
+Last checkpoint: 2026-10-15 — the D-173/D-174 guarded measurement root is the
+substantive checkpoint `94adf9db70565630e5b636ab32065c995ac81c1b` (S3
+`6765aabc` landed the repair; S4 `94adf9db` repaired the allowlist's missing
+declared scratch root forward). Exact-head CI run `38756116063` (job
+`116494865791`) is EXECUTED_PASS at the checkpoint; the anchor advances here
+and the S-bound certification evidence is produced and bound in the following
+documentary descendants.
+Current milestone: M15 — execute the S4 certification choreography (six command
+lanes through the guarded measurement root, gate/clean/topology/UI imports,
+OBSERVE_CI, values-only binding, then the validation-lane-closure round) toward
+15/16 effective MET, then finish provider readiness and the terminal record.
+Next action: produce the S4 command-lane and condition receipts from this
+observer with `--measurement-root`, import the host receipts, publish and bind
+them in documentary descendants, produce `validation-lane-closure` once the
+lanes are bound, recompute the sixteen-condition matrix, and compare the
+canonical checkout with an independent fresh clone.
 Authorization class: FINAL_PRODUCT_COMPLETION_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
-LAST_VALIDATED_IMPLEMENTATION_SHA: efae50ce5516d0d919bb8c5a6463dbb51caf3dc8
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: efae50ce5516d0d919bb8c5a6463dbb51caf3dc8
+LAST_VALIDATED_IMPLEMENTATION_SHA: 94adf9db70565630e5b636ab32065c995ac81c1b
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 94adf9db70565630e5b636ab32065c995ac81c1b
 LIVE_HEAD_AUTHORITY: GIT
 PHASE_FINAL_PRODUCT_COMPLETION_V1_STATUS: IN_PROGRESS
 

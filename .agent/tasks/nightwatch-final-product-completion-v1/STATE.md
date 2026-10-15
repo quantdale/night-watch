@@ -10,20 +10,21 @@ TASK_GROUPS_COMPLETE: 1,2,3,4,5,6,7,8,9,10,11,12,13,14
 TASK_GROUP_NEXT: 15
 TASK_NEXT_ID: 15.4
 Starting SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
-Last validated implementation SHA: efae50ce5516d0d919bb8c5a6463dbb51caf3dc8
-Last substantive checkpoint SHA: efae50ce5516d0d919bb8c5a6463dbb51caf3dc8
+Last validated implementation SHA: 94adf9db70565630e5b636ab32065c995ac81c1b
+Last substantive checkpoint SHA: 94adf9db70565630e5b636ab32065c995ac81c1b
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
 Branch: session/nightwatch-final-product-complet-5054d550
-Last checkpoint: 2026-10-15 — D-173's guarded measurement root implemented
-(D-174) in the C-00 session worktree
-`nightwatch-final-product-complet-5054d550` (session `sess-158bca2d98a8`, base
-`907ebbcd`); S3 gates pending.
+Last checkpoint: 2026-10-15 — anchor advanced to the guarded-measurement-root
+checkpoint `94adf9db70565630e5b636ab32065c995ac81c1b` (D-174; S3 `6765aabc`
+plus the S4 allowlist repair-forward) with exact-head CI run `38756116063`
+EXECUTED_PASS at the checkpoint; the S-bound certification evidence follows in
+documentary descendants.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 1f786a4e1b7e4967d06c930946f1107e32931e8a
-LAST_VALIDATED_IMPLEMENTATION_SHA: efae50ce5516d0d919bb8c5a6463dbb51caf3dc8
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: efae50ce5516d0d919bb8c5a6463dbb51caf3dc8
+LAST_VALIDATED_IMPLEMENTATION_SHA: 94adf9db70565630e5b636ab32065c995ac81c1b
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 94adf9db70565630e5b636ab32065c995ac81c1b
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
 PHASE_FINAL_PRODUCT_COMPLETION_V1_STATUS: IN_PROGRESS

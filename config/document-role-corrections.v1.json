@@ -280,6 +280,13 @@
       "oldLineSha256": "sha256:893b76d9854e31e3023b068b",
       "oldLineExcerpt": "> Durable memory for the next agent/session. Last updated: **2026-10-13**",
       "reason": "The owner manual-validation disposition checkpoint (2026-10-14) appended its record and advanced the governed machine-block anchors, so the durable-memory header date must cover the archive own last change; the statement itself is unchanged (same pattern as CORR-M13-004)."
+    },
+    {
+      "id": "CORR-M15-001",
+      "path": "docs/CURRENT_STATE.md",
+      "oldLineSha256": "sha256:1aef82334874a9c22679bb83",
+      "oldLineExcerpt": "> Durable memory for the next agent/session. Last updated: **2026-10-14**",
+      "reason": "The guarded-measurement-root checkpoint (2026-10-15) appended its record and advanced the governed machine-block anchors, so the durable-memory header date must cover the archive's own last change; the statement itself is unchanged (same pattern as CORR-M14-003)."
     }
   ]
 }

@@ -2,11 +2,11 @@
   "schemaVersion": "nightwatch.ci-block-record.v1",
   "definitionName": "Nightwatch exact-head CI block record (F-02)",
   "note": "The block is RETIRED: GitHub Actions executes the hardening workflow on every push, and the record's top level is the latest observed executed run (D-03 / R2-61). The block-record judgements stay load-bearing as the single CI authority shared by agent:check, project:check and gate:topology; the revisit date keeps the record from going stale. Candidate routes remain recorded with their trade-offs, and the materialised owner route is the restored GitHub-hosted execution.",
-  "runId": "38553902449",
-  "jobId": "115818175336",
-  "observedSha": "efae50ce5516d0d919bb8c5a6463dbb51caf3dc8",
+  "runId": "38756116063",
+  "jobId": "116494865791",
+  "observedSha": "94adf9db70565630e5b636ab32065c995ac81c1b",
   "blockClass": "EXECUTED_PASS",
-  "observedDate": "2026-10-14",
+  "observedDate": "2026-10-15",
   "ownerAction": "None required while the hardening workflow executes on every push; re-observe the next exact-head run and refresh this record before the revisit date.",
   "revisitCondition": "Re-observe each push: refresh runId, jobId, observedSha and observedDate from the latest hardening run, and record any red run with its classification.",
   "revisitDate": "2026-12-31",
@@ -447,6 +447,15 @@
       "classification": "EXECUTED_PASS",
       "detail": "Exact-head execution at the owner manual-validation disposition checkpoint (D-171): all 15 groups PASS at the new substantive checkpoint.",
       "runCreatedAt": "2026-10-14T05:12:00Z"
+    },
+    {
+      "runId": "38756116063",
+      "jobId": "116494865791",
+      "observedSha": "94adf9db70565630e5b636ab32065c995ac81c1b",
+      "observedDate": "2026-10-15",
+      "classification": "EXECUTED_PASS",
+      "detail": "Exact-head execution at the guarded-measurement-root checkpoint (D-174): all 15 groups PASS at the new substantive checkpoint.",
+      "runCreatedAt": "2026-10-15T14:57:59Z"
     }
   ],
   "routeSelection": {

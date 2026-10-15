@@ -1,6 +1,6 @@
 # Nightwatch — CURRENT STATE
 
-> Durable memory for the next agent/session. Last updated: **2026-10-14**
+> Durable memory for the next agent/session. Last updated: **2026-10-15**
 > during the autonomous bug-hunting programme (Wave 0 protocol freeze and
 > Wave 1 lanes A–E integrated). RS-1 close-out remains
 > COMPLETE: DEF-FC-04 continuity repair, the Control Center reviewer
@@ -889,11 +889,11 @@ RELEASE_CERTIFICATION_PROTOCOL_VERSION: nightwatch.release-certification.v1
 PROJECT_COMPLETION_STATUS: OPERATIONALLY_ACCEPTED
 RELEASE_CHECKPOINT_SHA: 2576c5751d33bb40046246e8fcf57c7cc5c30a57
 LIVE_HEAD_SHA: DISCOVER_FROM_GIT
-LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: efae50ce5516d0d919bb8c5a6463dbb51caf3dc8
-LAST_LOCALLY_VALIDATED_SHA: 6066390511dcf5d2744515624be9dbf1b537b5f4
-LAST_CLEAN_VALIDATED_SHA: efae50ce5516d0d919bb8c5a6463dbb51caf3dc8
-CI_OBSERVED_SHA: efae50ce5516d0d919bb8c5a6463dbb51caf3dc8
-CI_EXECUTED_SHA: efae50ce5516d0d919bb8c5a6463dbb51caf3dc8
+LAST_SUBSTANTIVE_IMPLEMENTATION_SHA: 94adf9db70565630e5b636ab32065c995ac81c1b
+LAST_LOCALLY_VALIDATED_SHA: 94adf9db70565630e5b636ab32065c995ac81c1b
+LAST_CLEAN_VALIDATED_SHA: 94adf9db70565630e5b636ab32065c995ac81c1b
+CI_OBSERVED_SHA: 94adf9db70565630e5b636ab32065c995ac81c1b
+CI_EXECUTED_SHA: 94adf9db70565630e5b636ab32065c995ac81c1b
 CI_STATUS: EXECUTED_PASS
 FINAL_DOCUMENTATION_SHA: DISCOVER_FROM_GIT
 FINAL_CI_AUTHORITY: GITHUB_ACTIONS_FOR_RELEASE_CHECKPOINT
@@ -4509,3 +4509,35 @@ declared schema certifies the `owner-manual` subject, so
 `STALE_EVIDENCE:owner-manual` remains a finding and condition 1 stays UNMET until
 the owner authorizes the executable `lanes:manual` route or a bounded
 binding-rule change. Condition 3 remains owner-gated.
+
+### Guarded-measurement-root checkpoint (2026-10-15)
+
+The substantive checkpoint is `94adf9db70565630e5b636ab32065c995ac81c1b`,
+which implements the GUARDED MEASUREMENT ROOT (D-174) that D-173 recorded as
+the smallest sound correction to the structurally unsatisfiable command-lane
+checkpoint cycle: a COMMAND lane measures the substantive source checkpoint S
+through an explicitly supplied, producer-verified exact checkout (object
+identity across both repositories, `HEAD == S` exactly, tree identity, clean
+tracked tree, a closed ignored-input allowlist, observer ancestry and
+checkpoint-role range checks, and spawn-time re-verification), while the
+observer is a documentary descendant of S. The receipt keeps its schema:
+`sourceHead: S` (measured) and `observedAtHead` (the observing checkout).
+BM-078 is reissued against the corrected invariant and BM-118..BM-122 cover the
+new guards (mutation census 122 behavioural mutants, 274 structural probes
+unchanged). The S3 qualification run found one implementation defect — the
+allowlist omitted the repository's own declared `.tmp-nightwatch/` test-scratch
+root — which is repaired forward in this checkpoint.
+
+Local validation at the checkpoint: `gate:milestone` PASS (affected shards
+6228 passed / 0 failed, 274 structural probes detected, all 122 behavioural
+mutants DETECTED), `prepush` PASS (6228/0), `typecheck` and `typecheck:bin`
+PASS (77/77 BLOCKING, zero exemptions), `hardening:check` PASS, a qualified
+clean-mode gate outside the sibling root PASSED all fifteen groups
+(`receipt:sha256:a59af0c3893a911c8d7a1855`), `gate:clean` PASS
+(`clean-receipt:sha256:1453cc0789dd4475b57bbb9e`) and `gate:topology`
+PROVEN/BUBBLEWRAP at the checkpoint. GitHub Actions run `38756116063` (job
+`116494865791`, 10 steps) executed the authoritative gate at exactly this SHA
+and completed successfully. The S-bound certification evidence is produced and
+bound in the following documentary descendants. Condition 3 stays owner-gated
+(no provider call, no spend), the manual lane keeps its `2026-11-14` revisit,
+and no visibility change or campaign archive is performed.
