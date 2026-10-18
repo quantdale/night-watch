@@ -1,6 +1,6 @@
 {
   "schemaVersion": "nightwatch.yield-run-authorization.v1",
-  "note": "The record of the SINGLE authorized paid provider run. NOT_GRANTED is the repository default: while it holds, no run can satisfy the autonomous-yield-proof condition. At execution the PARENT campaign sets state GRANTED and declares the exact print-CLI digest, provider and model of the run BEFORE the run's checkpoint is certified; a receipt then qualifies only when it carries exactly that identity, and at most maxQualifyingRuns qualifying runs may exist at the certified checkpoint. This child campaign never grants it.",
+  "note": "The record of the SINGLE authorized paid provider run. NOT_GRANTED is the repository default: while it holds, no run can satisfy the autonomous-yield-proof condition. At execution the PARENT campaign sets state GRANTED and declares the exact print-CLI digest, provider and model of the run BEFORE the run's checkpoint is certified; a receipt then qualifies only when it carries exactly that identity, and at most maxQualifyingRuns qualifying runs may exist at the certified checkpoint. This child campaign never grants it. parent-12.4 records the owner's 2026-10-19 approval of at most US$0.09 of existing OpenDesign credits for one qualifying PRINT_CLI_PROVIDER campaign through Pi 1.3.0 (provider open-design, model deepseek-v4.1-flash), with no cash charge, no top-up, no paid fallback and no model substitution.",
   "grantId": "parent-12.4",
   "state": "GRANTED",
   "maxQualifyingRuns": 1,
