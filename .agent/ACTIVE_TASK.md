@@ -22,18 +22,21 @@ Current milestone: M15 — execute the S4 certification choreography (six comman
 lanes through the guarded measurement root, gate/clean/topology/UI imports,
 OBSERVE_CI, values-only binding, then the validation-lane-closure round) toward
 15/16 effective MET, then finish provider readiness and the terminal record.
-Next action: the provider model switch is verified and the exact parent-12.4
-authorization is proposed (D-177: Pi print mode against
-`open-design`/`deepseek-v4.1-flash` at `https://amr-link.open-design.ai/v1`,
-print CLI digest `sha256:da0c6a49…5cfbb`, metered prepaid plan credits,
-grant config SUBSTANTIVE so the grant lands at a new checkpoint S5). The
-Phase-2 billing gate STOPPED the run before inference: prepaid credits would
-be consumed and no credit amount or hard cap is authorized (worst case
-≤ $0.09; realistic ≈ $0.005–$0.01), and the account-side controls are not
-readable with the local model-plane credentials. Await the owner's credit
-decision; then execute the S5 workflow, the one provider campaign, and the
-D-129 advance. Owner/admin actions in parallel: task 15.8 (privacy) and
-the eventual campaign archive.
+Next action: STOPPED AT TWO EXTERNAL BLOCKERS (D-178) after the owner's
+US$0.09 credit approval. (1) The OpenDesign key Pi resolves is byte-identical
+to the value disclosed in the previous session and shows no rotation, so the
+credential-security precondition is unmet and the agent may not rotate an
+account key. (2) No genuine hard credit ceiling exists: the engine has no
+monetary field and its HOUR_1 bounds are byte/call budgets derived from
+measured averages, conserved reactively after each call; balance/window/
+auto-top-up state is unreadable with a model-plane key. No grant applied, no
+S5, no provider call, no credit consumed; condition #3 UNMET and 15/16
+effective MET at `94adf9db` (tip `9da4a19f`) preserved. Unblock: rotate+revoke
+the key and confirm `pi auth check` ready with a changed fingerprint, and
+supply one genuine enforced ceiling (control-plane credential or an account-
+side per-key spend limit at or below US$0.09); then run D-177's S5 sequence
+unchanged. Owner/admin actions in parallel: task 15.8 (privacy) and the
+eventual campaign archive.
 Authorization class: FINAL_PRODUCT_COMPLETION_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2

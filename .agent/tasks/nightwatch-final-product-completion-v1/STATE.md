@@ -178,21 +178,35 @@ occurred.
 
 ## Exact Next Action
 
-Task 15.4. STOPPED AT AN OWNER DECISION (D-177): approve the maximum credit
-consumption for the single authorised run (computed worst case ≤ $0.09,
-realistic ≈ $0.005–$0.01, under the fail-closed HOUR_1 ceilings) and confirm
-the account-side controls (auto-top-up off / spend limit, or accept the wallet
-as the hard stop). On that approval, in order: apply the exact `parent-12.4`
-grant (`printCliDigest sha256:da0c6a49…5cfbb`, provider `open-design`, model
-`deepseek-v4.1-flash`) as the sole substantive change of a new checkpoint S5;
-run `gate:milestone` and `prepush` at S5; integrate through C-00 and observe
-exact-S5 GitHub CI; re-earn every checkpoint-bound condition at S5 (six
-COMMAND lanes through the guarded measurement root, gate/clean/topology/UI
-imports, OBSERVE_CI, values-only binding) to 15/16; then execute exactly one
-PRINT_CLI_PROVIDER campaign with the prepared configuration (D-177) from a
-clean checkout at S5; and only if its receipt qualifies (exact identity,
-`COMPLETED_SUCCESSFULLY`, ≥1 completed provider call and case, clean leak
-scan) bind condition #3 and apply the D-129 advance to 16/16.
+Task 15.4. STOPPED AT TWO EXTERNAL BLOCKERS (D-178), after the owner's
+2026-10-19 approval of US$0.09 of existing OpenDesign credits for ONE
+PRINT_CLI_PROVIDER campaign:
+
+1. **Credential rotation is not evidenced.** The key Pi actually resolves is
+   byte-identical to the value disclosed in the previous session's tool output
+   (verified by an in-memory boolean comparison that prints no value and no
+   partial value). `models.json` is untouched since 2026-10-13 20:35,
+   `auth.json.bak` holds the same value, and all three local entries are that
+   same 39-character `sk-amr-…` key. Account-side revocation cannot be checked
+   locally: the control plane takes `vela_ctrl_…` keys and none exists locally.
+   Rotating an account key is account-owner authority, not the agent's.
+2. **No genuine hard credit ceiling exists.** The engine has no monetary field
+   of any kind; its `HOUR_1` bounds are byte/call budgets derived from measured
+   averages with ×2 headroom and are conserved reductively after each call
+   (`CONSERVED_BUDGET_DIMENSIONS`; `wallTimeMs` is documented as advisory). The
+   gateway refuses only on insufficient balance, and balance/window/auto-top-up
+   state is unreadable with a model-plane key. Presenting the ≤ $0.085 token
+   estimate as the cap is the estimate-as-hard-cap substitution the instruction
+   forbids.
+
+No grant was applied, no S5 exists, no provider call was made and no credit was
+consumed. On unblock (rotate + revoke the key, confirm `pi auth check` `ready`
+with a changed fingerprint, and supply one genuinely enforced ceiling at or
+below US$0.09), resume D-177's sequence unchanged: apply `parent-12.4`
+(`printCliDigest sha256:da0c6a49…5cfbb`, provider `open-design`, model
+`deepseek-v4.1-flash`) as the sole substantive change of S5 → S5 gates → C-00
+integrate → exact-S5 CI → re-earn the 15 conditions at S5 → ONE campaign at
+clean S5 → bind condition #3 → 16/16 → D-129.
 
 Task 15.3's owner boundaries are unchanged, each item an explicit owner
 decision: (1) the `owner-manual` lane stays UNAVAILABLE_CAPABILITY with the
@@ -202,9 +216,7 @@ one-shot authorization. (2) Condition 3 needs a fresh, separately authorized
 paid provider campaign under `config/yield-run-authorization.v1.json`; the
 existing GRANTED record belongs to historical parent task 12.3 and authorizes
 nothing here. (3) Repository visibility (PUBLIC) and the eventual campaign
-archive are owner/admin actions. The D-173 extension is authorized and
-implemented (D-174) and its S-bound evidence is earned; the remaining local
-work is gated only on the D-177 credit decision.
+archive are owner/admin actions.
 
 ## Superseded Next Action (8.1, complete)
 
@@ -245,6 +257,26 @@ exactly as in M4/M5.
 | `docs/DECISIONS.md`, `.agent/ACTIVE_TASK.md`, this file | D-174 record and continuity | updated this session (pending S3) |
 
 ## Validation Ledger
+- 2026-10-19 — M15 OWNER CREDIT APPROVAL AND THE TWO REMAINING BLOCKERS
+  (D-178, this session; Phases 1-6 of the owner-approved proof instruction).
+  Pre-billable re-verification: HEAD = `origin/main` =
+  `9da4a19f4debd1791a27d84e9fdfba10187b103d`, clean, canonical only; Pi
+  launcher digest RECOMPUTED and equal (`sha256:da0c6a49…5cfbb`), v1.3.0,
+  provider `open-design`, model `deepseek-v4.1-flash`, endpoint
+  `https://amr-link.open-design.ai/v1`; `config/yield-run-authorization.v1.json`
+  still the historical `parent-12.3` record, so no grant and no S5 exist.
+  Blocker 1: the key Pi resolves is byte-identical to the previously disclosed
+  value (in-memory boolean comparison only; no value recorded), with no
+  rotation evidence — `models.json` unchanged since 2026-10-13, `auth.json.bak`
+  the same value, all three local entries the same key; account-side revocation
+  unreadable (no `vela_ctrl_…` credential, no vela/magpie CLI, no `~/.amr`).
+  Blocker 2: no monetary ceiling exists (no `spendLimit`/`creditCeiling` field);
+  `HOUR_1` bounds are byte/call budgets derived from measured averages ×2
+  headroom and conserved reactively after each call with no pre-request
+  affordability admission; gateway refuses only on insufficient balance and
+  account controls are unreadable with a model-plane key. Zero provider calls,
+  zero credit consumed; no key rotated and no billing setting touched.
+  Condition #3 UNMET; 15/16 effective MET preserved at `94adf9db`.
 - 2026-10-18 — M15 PI/OPENDESIGN PROVIDER READINESS AND THE BILLING STOP
   (D-177, this session; Phases 1-4 of the Pi/open-design instruction). Verified
   read-only, with no inference: Pi 1.3.0 at `~/.pi/agent/bin/pi`

@@ -302,3 +302,42 @@ non-inference wrong-model probe reached the gateway and was refused
 `404 model_not_found` with zero consumption; it is disclosed rather than
 omitted, and it proves Pi cannot serve as the wrong-model guard — the
 authorization identity match remains the enforcement.
+
+## Addendum (2026-10-19) — owner credit approval, and the two blockers that still stop inference (D-178)
+
+The owner approved US$0.09 of existing OpenDesign credits for one
+`PRINT_CLI_PROVIDER` campaign, superseding D-177's STOP for that expenditure
+only, and explicitly required before execution both a genuine hard credit
+ceiling and confirmation that the previously disclosed key was rotated. After
+re-verifying Git (`HEAD` = `origin/main` = `9da4a19f`, clean, canonical only),
+the Pi launcher digest (recomputed, equal: `sha256:da0c6a49…5cfbb`), version
+1.3.0, provider/model and endpoint, and that the authorization record is still
+the historical `parent-12.3` record (no grant, no S5), **neither precondition
+holds**:
+
+1. **The disclosed credential was not rotated.** The key Pi resolves is
+   byte-identical to the earlier disclosed value — verified by an in-memory
+   boolean comparison that prints no value and no partial value. There is no
+   rotation evidence (`models.json` untouched since 2026-10-13 20:35,
+   `auth.json.bak` the same value, all three local entries that same
+   `sk-amr-…` key), and account-side revocation is unreadable locally (the
+   control plane takes `vela_ctrl_…` keys; none exists; no `vela`/`magpie`
+   CLI and no `~/.amr` state). Rotating an account key is account-owner
+   authority.
+2. **No genuine hard credit ceiling exists.** Nightwatch has no monetary
+   ceiling of any kind, and its `HOUR_1` bounds are byte/call budgets derived
+   from measured averages with ×2 headroom, conserved reactively after each
+   call with no pre-request affordability admission; the gateway refuses only
+   on insufficient balance and its balance/window/auto-top-up state is
+   unreadable with a model-plane key. Presenting the ≤ $0.085 token estimate
+   as the cap is exactly the estimate-as-hard-cap substitution the instruction
+   forbids.
+
+Outcome: **no provider call, no credit consumed, no key rotated, no billing
+setting touched, no grant applied, no S5 created.** Condition #3 remains
+UNMET; the 15/16 effective MET certification at S4 `94adf9db` and the
+documentation tip are preserved, every tip's CI is green, and the repository
+stays PUBLIC. Unblock requires the owner to rotate and revoke the key
+(confirming `pi auth check` `ready` with a changed fingerprint) and to supply
+one genuinely enforced ceiling at or below US$0.09; D-177's S5 sequence then
+resumes unchanged.
