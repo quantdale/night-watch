@@ -456,6 +456,15 @@
       "classification": "EXECUTED_PASS",
       "detail": "Exact-head execution at the guarded-measurement-root checkpoint (D-174): all 15 groups PASS at the new substantive checkpoint.",
       "runCreatedAt": "2026-10-15T14:57:59Z"
+    },
+    {
+      "runId": "39154713101",
+      "jobId": "117755434136",
+      "observedSha": "2c7d044b375498e6171178d2a881f3d66171fc5c",
+      "observedDate": "2026-10-19",
+      "classification": "EXECUTED_PASS",
+      "detail": "Exact-head execution at the authorized-provider-grant checkpoint (S5, parent-12.4): all 15 groups PASS.",
+      "runCreatedAt": "2026-10-19T02:40:00Z"
     }
   ],
   "routeSelection": {
