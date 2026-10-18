@@ -6991,3 +6991,87 @@ self-check; it does not relabel any NOT_MET receipt as MET — the failed
 `full-regression` attempts remain recorded as honestly produced NOT_MET
 receipts superseded by genuine PASS receipts from later measurement attempts
 at the same S.
+
+## D-176 — provider model switch: OpenCode Zen DeepSeek V4.1 Flash Free, and the grant is checkpoint-substantive (2026-10-15)
+
+Source: owner instruction "NIGHTWATCH — FINAL PROVIDER MODEL SWITCH AND
+COMPLETION", Phases 1-3, under the terminal campaign
+`nightwatch-final-product-completion-v1`. The obsolete Step 5 Preview Free
+proposal (limited-time Go promotion) is replaced by a verified OpenCode Zen
+identity. No provider request was made and no record was granted.
+
+**Selected model (priority A):** `opencode/deepseek-v4.1-flash-free` (model id
+`deepseek-v4.1-flash-free`), OpenCode Zen. Verified AVAILABLE in the live
+authenticated local registry (`opencode models`, read-only, no inference): the
+Zen provider enumerates 18 models including this one and the backup
+`opencode/mimo-v2.6-flash-free`. Provider identity: the CLI's built-in
+OpenCode Zen provider (authenticated `opencode` credential present locally;
+values never read into any record); endpoint `https://opencode.ai/zen/v1`
+(`…/zen/v1/chat/completions` for these model ids per provider metadata),
+openai-compatible chat-completions protocol. **Verified pricing** from
+independent current sources (opencode.ai Console model docs, models.dev,
+airatecard, llmdir): input $0/1M, output $0/1M, cache read $0, cache write
+n/a — genuinely zero for all applicable inference charges, but explicitly a
+LIMITED-TIME offer with no published end date. The paid twin
+`opencode/deepseek-v4.1-flash` ($0.14/$0.28-class metered pricing) is present
+in the same registry and is EXCLUDED: never substitute it under a zero-spend
+authorization. **Backup (priority B):** `opencode/mimo-v2.6-flash-free` —
+verified available, $0/$0/cache-read-$0, equally limited-time.
+
+**What is NOT established (fail closed):** the OpenCode account-side controls
+— Zen prepaid "use balance" behaviour, monthly spend limits, paid-routing or
+fallback defaults — are account settings and cannot be verified from local
+read-only configuration or public documentation. A "free" name is not a cost
+guarantee: if the free window expires or routing falls to a metered path,
+charges are possible. Therefore the zero-spend ceiling is enforced by
+composition, not by one switch: (1) the pinned model id with verified $0
+pricing at authorization time; (2) the authorization's exact identity
+(`printCliDigest`, `provider`, `model`) which the product-run receipt must
+carry exactly — a substitution receipt cannot qualify; (3) explicit refusal of
+paid fallback and billing fallback; (4) abort on any nonzero price signal
+mid-run; and (5) an owner-verified account configuration (spend limit $0 /
+balance fallback disabled) captured BEFORE the run. Nightwatch's own engine
+enforces only the bounded run budgets (wall 3,600,000 ms / HOUR_1, ≤200
+provider calls, ≤400 tool actions, ≤5,000,000 input bytes, ≤160,000 output
+bytes) and `maxQualifyingRuns: 1`; it has no monetary ceiling field, which is
+why items (1)-(5) are conditions of the grant rather than assumed
+protections.
+
+**Checkpoint sequencing (the real classifier, not assumption).**
+`config/yield-run-authorization.v1.json` is **SUBSTANTIVE**: it is neither an
+approved checkpoint path nor a diff-guarded binding file, and the production
+classifier (`checkpointRoleViolations` with the production binding-receipt
+verifier) reports the file itself as a violation for a commit touching only
+it. Applying any grant — even a prepared one — therefore REQUIRES a new
+substantive checkpoint S5 through the governed workflow (C-00 session work,
+gate:milestone + prepush, fast-forward integrate, exact-S5 GitHub CI green,
+full checkpoint-bound evidence re-earning at S5 including the six command
+lanes through the guarded measurement root, canonical-vs-fresh-clone parity),
+and S4 receipts can never prove S5 source. Because a GRANTED record may not be
+created without the owner's separate exact one-run authorization, this session
+does NOT touch the file: the 15/16 effective MET state at `94adf9db` is
+preserved intact, and the grant application is sequenced as: owner grants
+parent-12.4 → S5 carries the grant record and nothing else substantive →
+exact-S5 CI → re-earn 15 conditions' evidence at S5 (condition #3 stays UNMET
+until the proof runs) → execute the one authorized provider campaign → its
+qualifying receipt binds at S5 → 16/16 → D-129 terminal transition.
+
+**Exact authorization proposal `parent-12.4` (PROPOSED — not granted):** one
+qualifying campaign only (`maxQualifyingRuns: 1`); declared identity
+`printCliDigest: sha256:a233de331f4438336e604d8e006fdab18e5911c4ece16de8e502eb61394c3586`,
+`provider: opencode` (OpenCode Zen), `model: deepseek-v4.1-flash-free`
+(expressed as the exact CLI model id `opencode/deepseek-v4.1-flash-free`);
+run bounds wall ≤ 3,600,000 ms, ≤200 provider calls, ≤400 tool actions,
+≤5,000,000 input / ≤160,000 output bytes; **maximum additional monetary spend
+$0.00**, no paid fallback, no billing fallback, no model substitution
+(including the paid twin), abort on any nonzero price signal; no Alphaus
+contact, no sibling-repository writes, no credential publication; outputs:
+campaign manifest, summary, product-run receipt with the exact identity,
+clean leak scan; qualification requires `campaignKind=PRINT_CLI_PROVIDER`,
+`campaignTermination=COMPLETED_SUCCESSFULLY`, ≥1 completed provider call and
+≥1 genuinely completed case, checkpoint-bound at S5 — BUDGET_EXHAUSTED,
+NO_PROGRESS, PAUSED, PROVIDER_DEGRADED, SAFETY_BLOCKED, CANCELLED or
+fabricated execution cannot qualify. The historical `parent-12.3` GRANTED
+record authorizes nothing new. The grant is valid only after the owner also
+confirms the account-side zero-spend controls (spend limit / fallback off)
+captured read-only in the run record.

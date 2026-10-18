@@ -22,13 +22,13 @@ Current milestone: M15 — execute the S4 certification choreography (six comman
 lanes through the guarded measurement root, gate/clean/topology/UI imports,
 OBSERVE_CI, values-only binding, then the validation-lane-closure round) toward
 15/16 effective MET, then finish provider readiness and the terminal record.
-Next action: the S-bound evidence is produced and bound (15/16 effective MET
-at `94adf9db`, fresh-clone agreement proven). The campaign's only remaining
-terminal dependency is the owner's explicit authorization for one bounded
-qualifying PRINT_CLI_PROVIDER run (proposal `parent-12.4`, prepared, NOT
-granted); after such a run earns condition #3, verify 16/16 and apply the
-D-129 advance. Owner/admin actions in parallel: task 15.8 (privacy) and the
-eventual campaign archive.
+Next action: the provider model switch is verified and the exact parent-12.4
+authorization is proposed (D-176: `opencode/deepseek-v4.1-flash-free`, $0
+verified, account controls fail-closed, grant config SUBSTANTIVE so the grant
+lands at a new checkpoint S5). Await the owner's separate exact one-run
+authorization; then execute the S5 workflow, the one provider campaign, and
+the D-129 advance. Owner/admin actions in parallel: task 15.8 (privacy) and
+the eventual campaign archive.
 Authorization class: FINAL_PRODUCT_COMPLETION_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2

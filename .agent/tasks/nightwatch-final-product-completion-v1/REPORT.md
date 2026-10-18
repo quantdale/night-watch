@@ -249,3 +249,15 @@ PUBLIC pending the owner's task-15.8 action. The single remaining dependency
 for `PROJECT_COMPLETE_AND_CI_CERTIFIED` is the owner authorization for one
 bounded qualifying PRINT_CLI_PROVIDER run (proposal `parent-12.4`, prepared
 and NOT granted).
+
+## Addendum (2026-10-15, later) — provider model switch verified (D-176)
+
+The Step 5 Preview Free proposal is superseded by the verified OpenCode Zen
+identity `opencode/deepseek-v4.1-flash-free` ($0/$0/cache-$0, limited-time;
+backup `opencode/mimo-v2.6-flash-free`; paid twin excluded), with the CLI
+digest re-verified and the account-side controls recorded UNKNOWN/fail-closed.
+The real classifier proves the authorization record is SUBSTANTIVE, so the
+grant application is sequenced as a new checkpoint S5 (full workflow in
+D-176) and `config/yield-run-authorization.v1.json` was NOT touched: the
+15/16 state at `94adf9db` stands. The exact parent-12.4 authorization is
+proposed and NOT granted; no provider request and no spend occurred.

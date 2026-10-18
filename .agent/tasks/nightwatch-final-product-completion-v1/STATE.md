@@ -236,6 +236,22 @@ exactly as in M4/M5.
 | `docs/DECISIONS.md`, `.agent/ACTIVE_TASK.md`, this file | D-174 record and continuity | updated this session (pending S3) |
 
 ## Validation Ledger
+- 2026-10-15 — M15 PROVIDER MODEL SWITCH VERIFIED (D-176, this session; Phases
+  1-3 of the model-switch instruction). Selected `opencode/deepseek-v4.1-flash-free`
+  (OpenCode Zen): AVAILABLE in the live authenticated registry (`opencode
+  models`, 18 Zen models, no inference made), endpoint `https://opencode.ai/zen/v1`,
+  verified $0/$0/cache-$0 across independent current sources (limited-time, no
+  end date published). Backup `opencode/mimo-v2.6-flash-free` verified
+  likewise. The paid twin `opencode/deepseek-v4.1-flash` is EXCLUDED. CLI
+  digest re-verified `sha256:a233de331f4438336e604d8e006fdab18e5911c4ece16de8e502eb61394c3586`
+  (v2.0.23). Account-side spend/fallback controls are NOT locally verifiable
+  (UNKNOWN, fail closed). The real classifier proves
+  `config/yield-run-authorization.v1.json` is SUBSTANTIVE (not path-approved,
+  no guard class; the production classifier flags it as a violation), so any
+  grant application requires a new substantive checkpoint S5 + exact-S5 CI +
+  full evidence re-earning at S5; the file was NOT touched, preserving the
+  15/16 state at `94adf9db`. The exact parent-12.4 authorization is proposed
+  in D-176 and NOT granted; no provider request, no spend, no record change.
 - 2026-10-15 — M15 S-CHOREOGRAPHY, EVIDENCE PRODUCTION AND 15/16 (this
   session, Phase F/G of the terminal mission). Checkpoint
   `94adf9db70565630e5b636ab32065c995ac81c1b` (S3 `6765aabc` = D-174 guarded
