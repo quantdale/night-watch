@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "nightwatch.certification-evidence-receipt.v1",
+  "subject": "browser-workflow",
+  "subjects": [
+    "browser-workflow"
+  ],
+  "sourceHead": "0743798f1310f719c0f158678f225373a01bf3e8",
+  "observedAtHead": "2552e1e53d0271ea403a613f739ce021c9ab189b",
+  "sourceRootCleanAtEmit": true,
+  "checkId": "cmd-browser-workflow",
+  "checkState": "MET",
+  "result": "PASS",
+  "producer": "COMMAND",
+  "environmentClass": "HOST_LOCAL",
+  "commandDigest": "sha256:094128c38a5a539db3dc04de",
+  "receiptDigest": "receipt:sha256:703380e75438ba00c59c18c4"
+}
