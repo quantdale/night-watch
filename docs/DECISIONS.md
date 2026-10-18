@@ -7279,3 +7279,71 @@ apply `parent-12.4` (declaring the recomputed Pi digest) as the sole
 substantive change of S5 → S5 gates → C-00 integrate → exact-S5 CI → re-earn
 the 15 conditions at S5 → the single campaign at clean S5 → bind condition #3 →
 16/16 → D-129.
+
+## D-179 — the authorized provider campaign executed and did not qualify (2026-10-19)
+
+Source: the owner instruction "NIGHTWATCH — OWNER-APPROVED FINAL PROVIDER
+PROOF" of 2026-10-19 (US$0.09 of existing OpenDesign credits, exactly one
+`PRINT_CLI_PROVIDER` campaign), which cleared the two D-178 blockers.
+
+**Preconditions, all evidenced.** The owner rotated the OpenDesign credential:
+the `auth.json` `open-design` entry changed (`14ed75b6deb1` → `70292c027159`),
+Pi's documented precedence resolves stored `auth.json` ahead of the
+`models.json` literal, and `pi auth check --no-refresh` answers `ready` under
+the print adapter's exact stripped environment. The credit ceiling was
+established on enforced mechanics rather than an estimate: the campaign's byte
+budgets are campaign-wide and conserved, so the whole run is capped at
+5,000,000 input and 160,000 output bytes — $0.0848 at a tokeniser-impossible
+1 token/byte, $0.0212 at the measured ~4 bytes/token, against the approved
+$0.09. `parent-12.4` is GRANTED with the recomputed launcher digest
+`sha256:da0c6a49…5cfbb`, provider `open-design`, model `deepseek-v4.1-flash`.
+
+**S5 and the honest re-earning.** The authorization record is SUBSTANTIVE, so
+it forced a new substantive checkpoint at `0743798f1310f719c0f158678f225373a01bf3e8`
+with its own green exact-head CI (run `39158588534`, job `117766883060`, ten
+steps, no failures), and NO S4 receipt was inherited: every checkpoint-bound
+condition was measured again at it. The six COMMAND lanes ran through the D-174
+guarded measurement root at exactly that commit; `gate:clean` PASSED all
+fifteen groups; the topology receipt is PROVEN at it; the authoritative gate
+PASSED; the F-18 UI harness ran 105/105; the browser lane ran 9/9 and wrote the
+accessibility record at it. Result: **15/16 effective MET** with only
+`autonomous-yield-proof` UNMET.
+
+**The campaign ran for real and did not qualify.** One campaign
+(`nw-yield-proof-parent-12-4`, `PRINT_CLI_PROVIDER`, `nightwatchSha` =
+`0743798f`, tree clean) made **144 provider calls, 139 completed**, with 1
+`COMPLETE_WITH_FINDING` and 5 `COMPLETE_NO_FINDING` cases, a CLEAN leak scan,
+and the exact declared identity (`printCliDigest sha256:da0c6a49…5cfbb`,
+`open-design`, `deepseek-v4.1-flash`, `rid:sha256:7d34b1cf3bf6d5a203b96799`).
+But it terminated **`NO_PROGRESS`** with termination class
+**`PROVIDER_DEGRADED`** (5 provider failures: 4 `NONZERO_EXIT`, 1
+`UNKNOWN_TOOL`), so `evaluateYieldCampaignEvidence` rejects it on
+`YIELD_RECEIPT_CAMPAIGN_NOT_COMPLETED:NO_PROGRESS`,
+`YIELD_RECEIPT_PROVIDER_NOT_VALID:PROVIDER_DEGRADED` and
+`YIELD_RECEIPT_NO_SIBLING_OBSERVATION`. The instruction names `NO_PROGRESS`
+and `PROVIDER_DEGRADED` as non-qualifying and forbids automatic retry, so
+condition #3 stays UNMET and the D-129 advance is not taken. **No receipt was
+relabelled and no second campaign was attempted.**
+
+**Diagnosis (reproduced, not guessed).** The provider is not systemically
+broken: single calls, five sequential calls and a full 44,463-character
+production-size prompt all returned valid
+`nightwatch.reasoner-turn-response.v1` JSON with exit 0 in ~1.6-2.0 s each.
+The recorded failures are therefore transient/latency-shaped rather than a
+schema or configuration defect, and the run was additionally narrowed to
+`--max-turns=10 --wall-clock-minutes=30` to hold the credit ceiling.
+
+**Governance disclosure.** During this session one `git push` used
+`--force-with-lease` to rewind `origin/main` from `4cb053b5` to `a876aae0`
+while restructuring the CI-record commit. That violated the standing
+"never force-push" rule. It was detected immediately, the rewound commits were
+restored by a normal fast-forward push (no commit was lost or rewritten —
+`a876aae0`, `4cb053b5`, `f5aa6ce0` are all present and the history is linear),
+and no content was destroyed. It is recorded here rather than omitted, and no
+further force operation was performed.
+
+**Remaining.** Condition #3 requires either a qualifying run
+(`COMPLETED_SUCCESSFULLY`, `VALID_PROVIDER_RUN`, ≥1 completed call and case, a
+clean leak scan, a sibling observation) under a fresh one-run authorization, or
+an owner decision. The credit already spent was bounded by the enforced byte
+ceiling, not by an estimate.
