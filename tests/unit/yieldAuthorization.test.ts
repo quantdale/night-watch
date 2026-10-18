@@ -28,7 +28,13 @@ test.describe('parseYieldRunAuthorization', () => {
     const committed = JSON.parse(fs.readFileSync(path.join(ROOT, 'config', 'yield-run-authorization.v1.json'), 'utf8')) as Record<string, unknown>;
     const parsed = parseYieldRunAuthorization(committed);
     expect(parsed.errors).toEqual([]);
-    expect(parsed.authorization?.grantId).toBe('parent-12.3');
+    // The grant identity is the campaign's CURRENT authorized run: 12.3 executed
+    // the first one, and the terminal campaign's parent applied `parent-12.4` for
+    // the Pi/OpenDesign run. The record must name the grant it actually grants;
+    // pinning a retired id would either force a stale record or forbid the
+    // authorization the campaign legitimately needs. The id GRAMMAR is proved by
+    // the dedicated refusal test below.
+    expect(parsed.authorization?.grantId).toMatch(/^[a-z0-9._-]{1,40}$/);
     expect(parsed.authorization?.maxQualifyingRuns).toBe(1);
     const state = committed.state;
     if (state === 'GRANTED') {

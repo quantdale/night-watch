@@ -257,6 +257,41 @@ exactly as in M4/M5.
 | `docs/DECISIONS.md`, `.agent/ACTIVE_TASK.md`, this file | D-174 record and continuity | updated this session (pending S3) |
 
 ## Validation Ledger
+- 2026-10-19 — M15 S5 GRANT APPLIED AND S5 GATES (this session; owner approved
+  US$0.09 of existing OpenDesign credits for ONE `PRINT_CLI_PROVIDER` run).
+  Credential precondition CLEARED: the owner rotated the OpenDesign key; the
+  `auth.json` `open-design` entry is a NEW value (fingerprint changed,
+  `14ed75b6deb1` -> `70292c027159`) and Pi's documented precedence is runtime
+  `--api-key` > stored `auth.json` > `models.json` `apiKey`, so the rotated
+  credential is what Pi resolves; `pi auth check --provider open-design
+  --model deepseek-v4.1-flash --json --no-refresh` = `ready` under the print
+  adapter's exact stripped environment, launcher digest unchanged
+  (`sha256:da0c6a49…5cfbb`). The stale `models.json` literal is outranked and
+  was not edited (Pi's file, not Nightwatch's).
+  Credit-ceiling precondition CLEARED on enforced mechanics, not an estimate:
+  the campaign's byte budgets are CAMPAIGN-WIDE and conserved
+  (`acc.inputBytes += usage.inputBytes` then `remainingPolicyFor` subtracts it
+  from the next investigation's allowance), so the enforced HOUR_1 caps are
+  input <= 5,000,000 B and output <= 160,000 B for the WHOLE campaign. Bound
+  including one overshoot of a measured call (13,200 B in / 400 B out): at a
+  tokeniser-impossible 1 token/byte that is $0.0848 <= the approved $0.09;
+  at the measured ~4 bytes/token it is $0.0212. Measured reality from the
+  historical `w13-repository-07` campaign: 64 calls, 840,010 input bytes,
+  22,903 output bytes = $0.000055/call. The approved $0.09 therefore bounds
+  the run by a genuine enforced ceiling, and `--max-turns` is NOT relied on for
+  the monetary bound (it is per-investigation, not per-campaign).
+  Grant applied: `parent-12.4`, GRANTED, `maxQualifyingRuns: 1`, declared
+  `printCliDigest sha256:da0c6a49…5cfbb` / `open-design` /
+  `deepseek-v4.1-flash`; strict closed-schema parse OK with zero errors.
+  S5 gates at the pre-commit tree: `typecheck` clean; `typecheck:bin` PASS
+  77/77 BLOCKING 0 exemptions; `hardening:check` PASS; `hardening:rules` PASS;
+  mutation harness `mutants=122 detected=122 survived=0 errors=0`;
+  focused suites (`yieldAuthorization`, `releaseReceiptProbes`,
+  `projectState`) 156/156 PASS. `tests/unit/yieldAuthorization.test.ts` was
+  updated because it pinned the retired `parent-12.3` id: the committed record
+  must name the grant it actually grants (id grammar is still proved by the
+  dedicated refusal test), otherwise the record could never legitimately
+  advance.
 - 2026-10-19 — M15 OWNER CREDIT APPROVAL AND THE TWO REMAINING BLOCKERS
   (D-178, this session; Phases 1-6 of the owner-approved proof instruction).
   Pre-billable re-verification: HEAD = `origin/main` =

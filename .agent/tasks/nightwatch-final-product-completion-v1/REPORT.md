@@ -341,3 +341,32 @@ stays PUBLIC. Unblock requires the owner to rotate and revoke the key
 (confirming `pi auth check` `ready` with a changed fingerprint) and to supply
 one genuinely enforced ceiling at or below US$0.09; D-177's S5 sequence then
 resumes unchanged.
+
+## Addendum (2026-10-19, S5) — the grant is applied at a new substantive checkpoint (D-179)
+
+The owner rotated the OpenDesign credential and confirmed the US$0.09 credit
+approval, so both D-178 blockers are resolved and `parent-12.4` is now GRANTED
+in `config/yield-run-authorization.v1.json` with the recomputed Pi digest
+(`sha256:da0c6a49…5cfbb`), provider `open-design`, model
+`deepseek-v4.1-flash`, `maxQualifyingRuns: 1`.
+
+Blocker 1 clearance is evidenced, not assumed: the `auth.json` `open-design`
+entry carries a NEW value (fingerprint `14ed75b6deb1` → `70292c027159`), Pi's
+documented precedence resolves stored `auth.json` ahead of the `models.json`
+literal, and `pi auth check --no-refresh` answers `ready` under the print
+adapter's exact stripped environment with the launcher digest unchanged.
+
+Blocker 2 clearance rests on enforced mechanics rather than an estimate: the
+byte budgets are campaign-wide and conserved, so the whole campaign is capped
+at 5,000,000 input bytes and 160,000 output bytes. With one measured-call
+overshoot (13,200 B / 400 B) the tokeniser-impossible 1-token-per-byte bound is
+$0.0848 against the approved $0.09; the measured ~4-bytes-per-token reality is
+$0.0212, and the historical reference campaign spent $0.000055 per call over
+64 calls. The monetary bound therefore does not depend on `--max-turns`, which
+governs one investigation rather than the campaign.
+
+Because the authorization file is SUBSTANTIVE, this commit is the new
+substantive checkpoint S5: the six command lanes, the gate/clean/topology/UI
+imports, OBSERVE_CI and every other checkpoint-bound condition must be
+re-earned at S5 before the single campaign may run, and no S4 receipt is
+inherited.

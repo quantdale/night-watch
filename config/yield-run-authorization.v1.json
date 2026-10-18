@@ -1,12 +1,12 @@
 {
   "schemaVersion": "nightwatch.yield-run-authorization.v1",
-  "note": "The record of the SINGLE authorized paid provider run (parent task 12.3). NOT_GRANTED is the repository default: while it holds, no run can satisfy the autonomous-yield-proof condition. At execution the PARENT campaign sets state GRANTED and declares the exact print-CLI digest, provider and model of the run BEFORE the run's checkpoint is certified; a receipt then qualifies only when it carries exactly that identity, and at most maxQualifyingRuns qualifying runs may exist at the certified checkpoint. This child campaign never grants it.",
-  "grantId": "parent-12.3",
+  "note": "The record of the SINGLE authorized paid provider run. NOT_GRANTED is the repository default: while it holds, no run can satisfy the autonomous-yield-proof condition. At execution the PARENT campaign sets state GRANTED and declares the exact print-CLI digest, provider and model of the run BEFORE the run's checkpoint is certified; a receipt then qualifies only when it carries exactly that identity, and at most maxQualifyingRuns qualifying runs may exist at the certified checkpoint. This child campaign never grants it.",
+  "grantId": "parent-12.4",
   "state": "GRANTED",
   "maxQualifyingRuns": 1,
   "declared": {
-    "printCliDigest": "sha256:a233de331f4438336e604d8e006fdab18e5911c4ece16de8e502eb61394c3586",
-    "provider": "opencode-go",
-    "model": "step-5-preview-free"
+    "printCliDigest": "sha256:da0c6a49fe94aadc9765cc7afc6ba6b17e553eed0247d0385c160bc188f5cfbb",
+    "provider": "open-design",
+    "model": "deepseek-v4.1-flash"
   }
 }
