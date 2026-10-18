@@ -2,9 +2,9 @@
   "schemaVersion": "nightwatch.ci-block-record.v1",
   "definitionName": "Nightwatch exact-head CI block record (F-02)",
   "note": "The block is RETIRED: GitHub Actions executes the hardening workflow on every push, and the record's top level is the latest observed executed run (D-03 / R2-61). The block-record judgements stay load-bearing as the single CI authority shared by agent:check, project:check and gate:topology; the revisit date keeps the record from going stale. Candidate routes remain recorded with their trade-offs, and the materialised owner route is the restored GitHub-hosted execution.",
-  "runId": "39154713101",
-  "jobId": "117755434136",
-  "observedSha": "2c7d044b375498e6171178d2a881f3d66171fc5c",
+  "runId": "39158588534",
+  "jobId": "117766883060",
+  "observedSha": "0743798f1310f719c0f158678f225373a01bf3e8",
   "blockClass": "EXECUTED_PASS",
   "observedDate": "2026-10-19",
   "ownerAction": "None required while the hardening workflow executes on every push; re-observe the next exact-head run and refresh this record before the revisit date.",
@@ -465,6 +465,15 @@
       "classification": "EXECUTED_PASS",
       "detail": "Exact-head execution at the authorized-provider-grant checkpoint (S5, parent-12.4): all 15 groups PASS.",
       "runCreatedAt": "2026-10-19T02:40:00Z"
+    },
+    {
+      "runId": "39158588534",
+      "jobId": "117766883060",
+      "observedSha": "0743798f1310f719c0f158678f225373a01bf3e8",
+      "observedDate": "2026-10-19",
+      "classification": "EXECUTED_PASS",
+      "detail": "Exact-head execution at the authorized-provider-grant checkpoint whose record documents the owner credit approval: all 15 groups PASS.",
+      "runCreatedAt": "2026-10-19T03:10:00Z"
     }
   ],
   "routeSelection": {
