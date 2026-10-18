@@ -7196,3 +7196,86 @@ maximum credit consumption (≤ $0.09 worst case as computed, or a tighter
 figure) and confirm the account-side controls (no auto-top-up / spend limit,
 or accept the wallet as the hard stop); after that, the S5 workflow and the
 single campaign in D-176's sequence run as already specified.
+
+## D-178 — the owner's credit approval, and the two security/financial blockers that still stop inference (2026-10-19)
+
+Source: the owner instruction "NIGHTWATCH — OWNER-APPROVED FINAL PROVIDER
+PROOF" of 2026-10-19. It supersedes D-177's STOP solely for a bounded credit
+expenditure: **US$0.09 equivalent of EXISTING OpenDesign credits**, one
+qualifying `PRINT_CLI_PROVIDER` campaign, Pi 1.3.0 / `open-design` /
+`deepseek-v4.1-flash`, no cash charge, no top-up, no fallback, no second run.
+It explicitly does NOT waive credential-security checks, cost controls, source
+integrity or certification, and it requires the agent to stop and report the
+exact blocker if a genuine hard ceiling cannot be established —
+"do not describe estimated token costs as a hard spending cap".
+
+**Git and identity re-verified before anything billable.** HEAD =
+`origin/main` = `9da4a19f4debd1791a27d84e9fdfba10187b103d`, clean, canonical
+only (0 live session worktrees). Pi launcher digest **recomputed and equal** to
+`sha256:da0c6a49fe94aadc9765cc7afc6ba6b17e553eed0247d0385c160bc188f5cfbb`,
+version 1.3.0, provider `open-design`, model `deepseek-v4.1-flash`, endpoint
+`https://amr-link.open-design.ai/v1`. `config/yield-run-authorization.v1.json`
+is still the historical `parent-12.3` record (untouched since `04bf0135`); no
+grant has been applied, so **no S5 exists yet**.
+
+**BLOCKER 1 — the disclosed credential was NOT rotated.** The instruction
+makes rotation a precondition of provider execution ("Require confirmation that
+the exposed key was rotated. Confirm the old key is no longer authorized.").
+The key that Pi actually resolves is **byte-identical to the value disclosed**
+in the previous session's tool output — verified by an in-memory boolean
+comparison that prints no value and no partial value. There is no rotation
+evidence anywhere: `models.json` is untouched since 2026-10-13 20:35,
+`auth.json.bak` (2026-10-13) holds the same value, and all three local entries
+(`models.json` `providers['open-design'].apiKey`, `auth.json` `open-design`,
+`auth.json` `amr`) are the same 39-character `sk-amr-…` key. The account-side
+revocation state cannot be checked from here (the control plane takes
+`vela_ctrl_…` keys; none exists locally, no `vela`/`magpie` CLI or `~/.amr`
+state is present). The agent may NOT rotate an account key or alter billing
+settings without account-owner authority, so the precondition is unsatisfiable
+locally. Executing now would spend the owner's credits on a credential the
+owner has already been told to treat as compromised, and would attach that
+credential's identity to the certified run.
+
+**BLOCKER 2 — no genuine hard credit ceiling exists, and the instruction's own
+test forbids substituting an estimate.** The approved US$0.09 is a *monetary*
+authorisation; nothing in the system enforces it. Nightwatch's engine has **no
+monetary ceiling of any kind** (no `spendLimit`/`creditCeiling`/`maxUsd` field
+exists — D-176 recorded the same absence). Its `HOUR_1` bounds are byte and
+call budgets derived from *measured averages with ×2 headroom* — the source
+comment states they are "calls x 12_200 B x 2 headroom" and "rounded UP from
+measured … with a further x2 headroom". They bound transport volume, not
+credit: the input-byte ceiling alone admits up to 5,000,000 bytes, whose
+token cost depends entirely on the tokeniser, and the engine's conservation
+model is reactive — budgets are debited from *observed usage after a call*,
+with no pre-request affordability admission (`CONSERVED_BUDGET_DIMENSIONS` is
+a post-hoc ledger; `wallTimeMs` is documented as "advisory rather than
+conserved"). The platform side is equally non-enforcing for us: the gateway
+refuses only on *insufficient balance*, and balance/window/auto-top-up state is
+unreadable with a model-plane key. So the one thing the instruction requires —
+a ceiling that stops the campaign *before* a request that could exceed the
+authorised budget — is not implementable from the available surfaces. Stating
+"≤ $0.085 worst case" as the cap would be precisely the estimate-as-hard-cap
+substitution the instruction prohibits.
+
+**What this decision is.** A refusal to manufacture a green result: no API key
+was rotated, no billing setting was touched, no grant was applied, **no S5 was
+created, no provider call was made and no credit was consumed**. Condition #3
+remains UNMET and the 15/16 effective MET certification at S4 `94adf9db`
+(documentation tip `9da4a19f`) is preserved exactly. Nothing was published
+that would bind a compromised-credential run to the certificate.
+
+**Exact unblock conditions (either order, both required before S5).**
+(1) The owner (or account owner) rotates the OpenDesign key, revokes the old
+one, stores the replacement through Pi's normal local mechanism
+(`/login` or `~/.pi/agent/auth.json`), and confirms revocation; a fresh
+`pi auth check --provider open-design --model deepseek-v4.1-flash --no-refresh`
+answering `ready`, plus a fingerprint change, is the acceptance evidence.
+(2) One genuine hard ceiling is provided and is one of: a control-plane
+`vela_ctrl_…` credential so the account's spend limit / auto-top-up state can
+be read and set, or a per-key/model spend limit configured account-side to
+≤ US$0.09, or an owner statement of a platform-enforced cap together with
+evidence of it. With (1)+(2) satisfied the D-177 sequence resumes unchanged:
+apply `parent-12.4` (declaring the recomputed Pi digest) as the sole
+substantive change of S5 → S5 gates → C-00 integrate → exact-S5 CI → re-earn
+the 15 conditions at S5 → the single campaign at clean S5 → bind condition #3 →
+16/16 → D-129.
