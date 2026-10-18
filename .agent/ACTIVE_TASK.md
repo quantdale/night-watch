@@ -23,11 +23,16 @@ lanes through the guarded measurement root, gate/clean/topology/UI imports,
 OBSERVE_CI, values-only binding, then the validation-lane-closure round) toward
 15/16 effective MET, then finish provider readiness and the terminal record.
 Next action: the provider model switch is verified and the exact parent-12.4
-authorization is proposed (D-176: `opencode/deepseek-v4.1-flash-free`, $0
-verified, account controls fail-closed, grant config SUBSTANTIVE so the grant
-lands at a new checkpoint S5). Await the owner's separate exact one-run
-authorization; then execute the S5 workflow, the one provider campaign, and
-the D-129 advance. Owner/admin actions in parallel: task 15.8 (privacy) and
+authorization is proposed (D-177: Pi print mode against
+`open-design`/`deepseek-v4.1-flash` at `https://amr-link.open-design.ai/v1`,
+print CLI digest `sha256:da0c6a49…5cfbb`, metered prepaid plan credits,
+grant config SUBSTANTIVE so the grant lands at a new checkpoint S5). The
+Phase-2 billing gate STOPPED the run before inference: prepaid credits would
+be consumed and no credit amount or hard cap is authorized (worst case
+≤ $0.09; realistic ≈ $0.005–$0.01), and the account-side controls are not
+readable with the local model-plane credentials. Await the owner's credit
+decision; then execute the S5 workflow, the one provider campaign, and the
+D-129 advance. Owner/admin actions in parallel: task 15.8 (privacy) and
 the eventual campaign archive.
 Authorization class: FINAL_PRODUCT_COMPLETION_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
@@ -58,7 +63,7 @@ No new campaign or additional paid provider proof is authorized by this recovery
 ```text
 CAMPAIGN: nightwatch-final-product-completion-v1
 CHILD TASK: NONE
-SESSION WORKTREE: session/nightwatch-final-product-complet-5054d550
+SESSION WORKTREE: NONE
 
 CURRENT STATUS:
   IN_PROGRESS — M15. The owner's 2026-10-15 "TERMINAL PRODUCT COMPLETION /

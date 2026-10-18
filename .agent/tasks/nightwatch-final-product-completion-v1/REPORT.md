@@ -261,3 +261,44 @@ grant application is sequenced as a new checkpoint S5 (full workflow in
 D-176) and `config/yield-run-authorization.v1.json` was NOT touched: the
 15/16 state at `94adf9db` stands. The exact parent-12.4 authorization is
 proposed and NOT granted; no provider request and no spend occurred.
+
+## Addendum (2026-10-18) — Pi/OpenDesign route and the billing stop (D-177)
+
+The owner's 2026-10-18 instruction replaced the D-176 provider selection: the
+run identity is the locally installed Pi harness (version 1.3.0,
+`~/.pi/agent/bin/pi`, `sha256:da0c6a49…5cfbb`) in print mode
+against provider `open-design` and model `deepseek-v4.1-flash` at
+`https://amr-link.open-design.ai/v1`; the OpenCode Zen/Go and
+`opencode/deepseek-v4.1-flash-free` routes are explicitly excluded.
+
+Readiness was verified read-only and non-billably: the provider is GLOBAL
+`~/.pi/agent/models.json` configuration (not extension- or project-registered),
+`pi auth check` reports `ready`, and both `pi --list-models` and the full
+candidate argv resolve the exact provider/model under the print adapter's
+stripped child environment. Print mode writes only the final assistant text to
+stdout and exits non-zero on error, matching the adapter's single-document
+extraction; `--mode json` is deliberately unused (its JSONL shape is not the
+adapter's stream shape). Focused regressions (`reasonerPrint`,
+`printAdapterLifecycle`, `reasonerIdentityBinding`) pass 25/25 at HEAD.
+
+Billing is route B — metered drawdown of the prepaid Design Plan allowance and
+then the wallet, priced in the local catalog at $0.015/$0.06/$0.00375/$0.015
+per million tokens — and the account-side controls (balance, allowance
+windows, auto-top-up) are NOT readable with the local model-plane `sk-amr-…`
+keys (the control plane takes `vela_ctrl_…` keys only, and none exists
+locally). Under the instruction's own safeguard, prepaid credits consumed
+without an authorised amount or hard cap require owner approval BEFORE a
+provider call, so the session stopped before inference: worst-case consumption
+is bounded at ≤ $0.09 (realistic ≈ $0.005–$0.01) under the fail-closed HOUR_1
+ceilings, and that figure is the approval request.
+
+Nothing was granted or run: `config/yield-run-authorization.v1.json` is
+untouched, `parent-12.4` remains PROPOSED (now with the Pi identity and
+additionally gated on the credit decision), no S5 checkpoint exists, no
+campaign receipt exists, and condition #3 stays UNMET. The 15/16 effective MET
+state at `94adf9db` (documentation tip `85637d46`) stands, `project:check`
+reports 15/16 with no advance claimed, and every tip's CI run is green. One
+non-inference wrong-model probe reached the gateway and was refused
+`404 model_not_found` with zero consumption; it is disclosed rather than
+omitted, and it proves Pi cannot serve as the wrong-model guard — the
+authorization identity match remains the enforcement.

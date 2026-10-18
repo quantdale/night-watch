@@ -7075,3 +7075,124 @@ fabricated execution cannot qualify. The historical `parent-12.3` GRANTED
 record authorizes nothing new. The grant is valid only after the owner also
 confirms the account-side zero-spend controls (spend limit / fallback off)
 captured read-only in the run record.
+
+## D-177 — the owner's Pi/OpenDesign provider route, and the billing gate that stops before inference (2026-10-18)
+
+Source: the owner instruction "NIGHTWATCH — FINAL AUTONOMOUS PROVIDER PROOF /
+PI HARNESS + OPEN-DESIGN + DEEPSEEK V4.1 FLASH" of 2026-10-18, under the
+terminal campaign `nightwatch-final-product-completion-v1` (task 15.4). It
+SUPERSEDES D-176's provider selection: the run identity is the locally
+installed **Pi** coding-agent harness in print mode against provider
+**`open-design`** and model **`deepseek-v4.1-flash`** at
+`https://amr-link.open-design.ai/v1`, and the instruction explicitly FORBIDS
+the OpenCode Zen / OpenCode Go / `opencode/deepseek-v4.1-flash-free` routes
+D-176 had selected. D-176's machinery findings are unchanged and still govern:
+`config/yield-run-authorization.v1.json` is SUBSTANTIVE, so any grant lands at
+a new checkpoint S5 with its own exact-head CI and its own evidence re-earning;
+the run bounds, the identity-match qualification and the fail-closed rejection
+vocabulary are as recorded there. Only the run identity moved.
+
+**Verified identity (read-only; no inference, no spend).** Executable
+`~/.pi/agent/bin/pi` (the `command -v pi` launcher, a POSIX
+shell script, `sha256:da0c6a49fe94aadc9765cc7afc6ba6b17e553eed0247d0385c160bc188f5cfbb`),
+version **1.3.0**. It reads `install/current-version`, sets
+`PI_MANAGED_INSTALL_ROOT` and the managed-node `PATH` itself, then execs
+`install/releases/1.3.0/node_modules/.bin/pi` → `…/pi-coding-agent/dist/bundle/cli.js`
+(`sha256:e79626f2dd6f94aa45d30f3fa63cd84319a6eefcd150b353cfaf274366926774`, a
+160-byte shim that loads `cli-runtime.js`). Provider registration is GLOBAL
+user configuration in `~/.pi/agent/models.json`
+(`providers['open-design'] = { name: OpenDesign, baseUrl:
+https://amr-link.open-design.ai/v1, api: openai-completions, apiKey:
+<host-local, never recorded> }`) with model `deepseek-v4.1-flash` — it is
+neither extension-registered nor project-scoped, and it SURVIVES the print
+adapter's stripped child environment because the adapter preserves `HOME`
+(and the launcher supplies its own install root and node `PATH`). `~/.pi/agent/auth.json`
+carries an `open-design` api_key entry, and
+`pi auth check --provider open-design --model deepseek-v4.1-flash --json --no-refresh`
+answers `{"status":"ready"}` under that exact stripped environment.
+
+**Print-mode contract fit.** Pi's print mode "runs the supplied prompts,
+writes the final assistant text to stdout, and exits", writes diagnostics to
+stderr, and exits non-zero on an error or aborted stop reason. That is the
+Nightwatch adapter's single-document path exactly (stdout = the model's final
+text = the `nightwatch.reasoner-turn-response.v1` document, or fenced/braced
+JSON which `parseJsonObject` already recovers; a non-zero exit is refused by
+`child.status !== 0`). `--mode json` is deliberately NOT used: its JSONL event
+shape (`message_end.message.content`) is not the OpenCode-shaped `part.text`
+stream the adapter's recovery path was built for.
+
+**Phase-2 billing determination (the gate).** Billing route is **B**, metered
+drawdown of the existing prepaid Design Plan allowance (5-hour and 7-day
+windows) and, after a window is exhausted, the prepaid wallet balance. It is
+NOT route A: the local catalog carries metered rates — input $0.015, output
+$0.06, cache-read $0.00375, cache-write $0.015, USD **per million tokens** per
+Pi's documented `cost` semantics — and it is not a direct cash charge, because
+the gateway refuses on insufficient balance and the recharge destination is a
+manual owner action. The account-side controls are NOT verifiable from
+available read-only means: plan, wallet balance, allowance windows and any
+auto-top-up configuration live on the control plane
+(`amr-api.open-design.ai`), which "doesn't take API keys"; the only local
+credentials are model-plane `sk-amr-…` keys (both the `open-design` and `amr`
+entries), no `vela_ctrl_…` control-plane credential exists locally, and no
+local OpenDesign/vela CLI state exists to read. Wallet balance, window
+utilisation and auto-top-up therefore stay UNKNOWN.
+
+**Decision — STOP BEFORE INFERENCE.** The instruction's own safeguard governs:
+"if existing prepaid credits would be consumed but the amount or hard cap is
+not authorized, report the precise proposed maximum credit consumption and
+obtain owner approval before making a provider call". Prepaid credits WOULD be
+consumed, and no monetary amount or credit hard cap has been authorized for
+this metered route: the only prior hard cap ($0.00, D-176's proposal) was
+bound to the now-forbidden free model, the instruction authorises no spending
+figure, and it forbids inventing a monetary budget. Independently, "verified
+billing controls" cannot be completed at the one account-side control that
+matters — auto-top-up / spend limit — with the credentials on hand, so a cash
+charge outside the authorisation cannot be excluded with evidence. Both
+prongs fail closed, so no provider call was made.
+
+**Precise proposed maximum credit consumption.** Computed under the engine's
+fail-closed HOUR_1 ceilings (≤200 provider calls, ≤5,000,000 input bytes,
+≤160,000 output bytes, ≤3,600,000 ms wall, ≤400 tool actions, 1 qualifying
+run), priced at the worst case (every input token at the $0.015/1M input
+class, 1 token per byte): input ≤ $0.075 plus output ≤ $0.0096, i.e.
+**≤ $0.085 — bounded at ≤ $0.09 USD-equivalent of prepaid plan credit/wallet**
+for the whole authorised run. A realistic bounded proof (25 turns, ~300K input
+/ ~25K output tokens) draws ≈ $0.005–$0.01. These are ceilings, not targets.
+
+**Prepared and identity-verified run configuration — NOT executed.**
+`NIGHTWATCH_PRINT_CLI=~/.pi/agent/bin/pi` (expanded to the absolute launcher path at run time);
+`NIGHTWATCH_PRINT_ARGS=["-p","--no-session","--no-tools","--no-extensions","--no-mcp","--no-skills","--no-context-files","--provider","open-design","--model","deepseek-v4.1-flash","--thinking","off","--","__PROMPT__"]`;
+`NIGHTWATCH_REASONER_PROVIDER=open-design`;
+`NIGHTWATCH_REASONER_MODEL=deepseek-v4.1-flash`; `NIGHTWATCH_REASONER_CLI`
+unset (the adapter runs under `process.execPath`, node v22.22.1); launch
+`npm run agent:campaign -- run --reasoner=cli --duration=1h
+--wall-clock-minutes=30 --max-turns=25 --model=deepseek-v4.1-flash --id=<id>`.
+The repository's own resolver records `printCliDigest
+sha256:da0c6a49…5cfbb`, `printArgsDigest rpa:sha256:3796d60c12a7efa85bc17960`,
+`identityDigest rid:sha256:8664b94463382c9aa45da3a9`, labels `open-design` /
+`deepseek-v4.1-flash`, adapter digest `sha256:630806aa…51c10`. The launcher is
+the declared print CLI because it is the exact file the adapter spawns and the
+file whose bytes the identity digests; the version-pinned release chain is
+recorded above as corroboration.
+
+**Disclosure — one non-inference probe reached the provider.** The
+wrong-model negative test proved Pi does NOT refuse an unknown model id: it
+warns `Model … not found for provider "open-design". Using custom model id`
+and sends the request, and the gateway answered
+`404 model_not_found`. That single authenticated request produced no
+completion, no tokens and no consumption, and it is recorded here rather than
+omitted. Its operational consequence is that Pi cannot be the wrong-model
+guard: the exact-identity match in `evaluateYieldCampaignEvidence`
+(`printCliDigest`/`provider`/`model` against the GRANTED record) remains the
+only enforcement, exactly as designed.
+
+**NOT taken.** No grant change — `config/yield-run-authorization.v1.json` is
+untouched and `parent-12.4` stays PROPOSED, now additionally gated on the
+owner's credit approval — no S5 checkpoint, no provider campaign, no
+inference, no spend, no visibility change, no archive. The 15/16 effective MET
+state at `94adf9db` (documentation tip `85637d46`) stands intact and condition
+#3 remains UNMET. The exact remaining action is one owner decision: approve a
+maximum credit consumption (≤ $0.09 worst case as computed, or a tighter
+figure) and confirm the account-side controls (no auto-top-up / spend limit,
+or accept the wallet as the hard stop); after that, the S5 workflow and the
+single campaign in D-176's sequence run as already specified.

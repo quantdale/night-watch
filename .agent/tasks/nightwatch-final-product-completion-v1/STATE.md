@@ -14,7 +14,7 @@ Last validated implementation SHA: 94adf9db70565630e5b636ab32065c995ac81c1b
 Last substantive checkpoint SHA: 94adf9db70565630e5b636ab32065c995ac81c1b
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
-Branch: session/nightwatch-final-product-complet-5054d550
+Branch: main
 Last checkpoint: 2026-10-15 — the S-bound certification evidence at
 `94adf9db70565630e5b636ab32065c995ac81c1b` is produced, published and bound
 (25 tracked receipts): the effective evaluator reports 15/16 MET with only
@@ -164,26 +164,35 @@ MET, `certificationRefused=true`, `advanceClaimed=false`.
 
 ## Work In Progress
 
-The D-174 guarded-measurement-root repair is implemented in the owned session
-worktree `nightwatch-final-product-complet-5054d550` (session
-`sess-158bca2d98a8`, base `907ebbcd`) and awaits its S3 gates
-(`npm run gate:milestone`, `npm run prepush`), the C-00 integrate, and the
-exact-S3 CI observation. After the anchor advance in a documentary descendant,
-the S3 certification choreography re-earns every lane: the six command lanes
-through the verified measurement root at S3, the gate/clean copy-through
-imports, the OBSERVE_CI evidence for the observed run at S3, and the
-values-only binding — targeting 15/16 effective MET with condition #3
-owner-gated and the manual lane preserved.
+Nothing is in flight. The S-bound certification choreography is COMPLETE at
+`94adf9db70565630e5b636ab32065c995ac81c1b` (15/16 effective MET, every evidence
+binding EXACT, canonical and fresh-clone agreement proven), and the
+2026-10-18 provider-readiness session closed at the billing gate BEFORE any
+inference (D-177): the Pi print-mode identity against
+`open-design`/`deepseek-v4.1-flash` is verified and the run configuration is
+prepared, but the metered prepaid-credit route has no owner-authorized
+monetary or credit cap and its account-side controls (wallet balance,
+allowance windows, auto-top-up) are not readable with the local model-plane
+credentials. No grant was applied, no provider campaign ran, no spend
+occurred.
 
 ## Exact Next Action
 
-Task 15.4. Commit the validated repair (bin/tests/config plus these continuity
-records and the D-174 entry) as the substantive checkpoint S3 (discovered from
-Git, never predicted), run `npm run gate:milestone` and `npm run prepush` at
-that exact HEAD, integrate through C-00
-(`integrate --expect-session sess-158bca2d98a8 --expect-head <S3>`), observe
-the GitHub run at S3, then advance the anchor and rebuild the certification
-evidence at S3 per the Current Milestone.
+Task 15.4. STOPPED AT AN OWNER DECISION (D-177): approve the maximum credit
+consumption for the single authorised run (computed worst case ≤ $0.09,
+realistic ≈ $0.005–$0.01, under the fail-closed HOUR_1 ceilings) and confirm
+the account-side controls (auto-top-up off / spend limit, or accept the wallet
+as the hard stop). On that approval, in order: apply the exact `parent-12.4`
+grant (`printCliDigest sha256:da0c6a49…5cfbb`, provider `open-design`, model
+`deepseek-v4.1-flash`) as the sole substantive change of a new checkpoint S5;
+run `gate:milestone` and `prepush` at S5; integrate through C-00 and observe
+exact-S5 GitHub CI; re-earn every checkpoint-bound condition at S5 (six
+COMMAND lanes through the guarded measurement root, gate/clean/topology/UI
+imports, OBSERVE_CI, values-only binding) to 15/16; then execute exactly one
+PRINT_CLI_PROVIDER campaign with the prepared configuration (D-177) from a
+clean checkout at S5; and only if its receipt qualifies (exact identity,
+`COMPLETED_SUCCESSFULLY`, ≥1 completed provider call and case, clean leak
+scan) bind condition #3 and apply the D-129 advance to 16/16.
 
 Task 15.3's owner boundaries are unchanged, each item an explicit owner
 decision: (1) the `owner-manual` lane stays UNAVAILABLE_CAPABILITY with the
@@ -193,9 +202,9 @@ one-shot authorization. (2) Condition 3 needs a fresh, separately authorized
 paid provider campaign under `config/yield-run-authorization.v1.json`; the
 existing GRANTED record belongs to historical parent task 12.3 and authorizes
 nothing here. (3) Repository visibility (PUBLIC) and the eventual campaign
-archive are owner/admin actions. The D-173 extension itself is now authorized
-and implemented (D-174) — the remaining local work is the S3 gates and the
-S3 certification choreography.
+archive are owner/admin actions. The D-173 extension is authorized and
+implemented (D-174) and its S-bound evidence is earned; the remaining local
+work is gated only on the D-177 credit decision.
 
 ## Superseded Next Action (8.1, complete)
 
@@ -236,6 +245,32 @@ exactly as in M4/M5.
 | `docs/DECISIONS.md`, `.agent/ACTIVE_TASK.md`, this file | D-174 record and continuity | updated this session (pending S3) |
 
 ## Validation Ledger
+- 2026-10-18 — M15 PI/OPENDESIGN PROVIDER READINESS AND THE BILLING STOP
+  (D-177, this session; Phases 1-4 of the Pi/open-design instruction). Verified
+  read-only, with no inference: Pi 1.3.0 at `~/.pi/agent/bin/pi`
+  (`sha256:da0c6a49…5cfbb`), launcher → `install/releases/1.3.0/…/.bin/pi` →
+  `cli.js` (`sha256:e79626f2…6774`); provider `open-design` and model
+  `deepseek-v4.1-flash` present in the global `~/.pi/agent/models.json`
+  registration at `https://amr-link.open-design.ai/v1` (openai-completions);
+  `pi auth check --no-refresh` = `ready` (api_key) and `pi --list-models`
+  resolves the model under the print adapter's EXACT stripped child
+  environment (`PATH`,`HOME`,`TMPDIR`,`LANG`) — registration and credentials
+  survive isolation. The full candidate argv parses without inference, and
+  print mode's contract (final assistant text on stdout, diagnostics on
+  stderr, non-zero exit on error/abort) matches the adapter's single-document
+  extraction. Focused regressions at HEAD: `reasonerPrint`, 
+  `printAdapterLifecycle`, `reasonerIdentityBinding` = 25/25 PASS. Billing is
+  route B (metered prepaid Design Plan allowance + wallet; catalog
+  $0.015/$0.06/$0.00375/$0.015 per 1M tokens) with the account-side controls
+  unreadable through the available model-plane `sk-amr-…` keys (no
+  `vela_ctrl_…` control credential exists locally), so the instruction's own
+  safeguard (`approval before a provider call when prepaid credits would be
+  consumed without an authorized amount or hard cap`) STOPS the run before
+  inference. Worst-case credit consumption ≤ $0.09. `project:check` = 15/16
+  effective MET (only `autonomous-yield-proof` UNMET), `certificationRefused`,
+  no advance; `config/yield-run-authorization.v1.json` untouched; no provider
+  campaign, no spend. Disclosed: one non-inference wrong-model probe reached
+  the gateway and was refused `404 model_not_found` with zero consumption.
 - 2026-10-15 — M15 PROVIDER MODEL SWITCH VERIFIED (D-176, this session; Phases
   1-3 of the model-switch instruction). Selected `opencode/deepseek-v4.1-flash-free`
   (OpenCode Zen): AVAILABLE in the live authenticated registry (`opencode
