@@ -117,7 +117,7 @@
       "id": "CORR-PERF-001",
       "path": "docs/CURRENT_STATE.md",
       "oldLineSha256": "sha256:8c6c2e74663d9af7d5c27984",
-      "oldLineExcerpt": "| `TEST_INFRASTRUCTURE_PERFORMANCE_V1_STATUS` | `IN_PROGRESS` — owner-authorized test/gate performance campaign activated from `8dd8b163b567b939b977649d6ba7c371cf230ee6`; W13 remains a frozen read-o",
+      "oldLineExcerpt": "| `TEST_INFRASTRUCTURE_PERFORMANCE_V1_STATUS` | `IN_PROGRESS` \u2014 owner-authorized test/gate performance campaign activated from `8dd8b163b567b939b977649d6ba7c371cf230ee6`; W13 remains a frozen read-o",
       "reason": "The performance campaign close-out advanced its governed status row from IN_PROGRESS to the terminal measured verdict; the campaign body after the status word is unchanged."
     },
     {
@@ -287,6 +287,13 @@
       "oldLineSha256": "sha256:1aef82334874a9c22679bb83",
       "oldLineExcerpt": "> Durable memory for the next agent/session. Last updated: **2026-10-14**",
       "reason": "The guarded-measurement-root checkpoint (2026-10-15) appended its record and advanced the governed machine-block anchors, so the durable-memory header date must cover the archive's own last change; the statement itself is unchanged (same pattern as CORR-M14-003)."
+    },
+    {
+      "id": "CORR-M15-002",
+      "path": "docs/CURRENT_STATE.md",
+      "oldLineSha256": "sha256:5f8cd1ecc48af032e77d2a5e",
+      "oldLineExcerpt": "> Durable memory for the next agent/session. Last updated: **2026-10-15**",
+      "reason": "The S5 authorized-provider-grant checkpoint (2026-10-19) advanced the governed machine-block anchors to that substantive commit, so the durable-memory header date must cover the document's own last change; the statement itself is unchanged (same pattern as CORR-M15-001)."
     }
   ]
 }
