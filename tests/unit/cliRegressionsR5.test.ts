@@ -59,8 +59,32 @@ test.describe('R5-07 nightwatch-agent', () => {
   });
 
   test('the declared flags are exactly the ones the campaign runner consumes', () => {
+    // D-183: the R6 declarations (--expected-investigations, the declared
+    // plan; --observe-repository, the observation scope) were referenced and
+    // documented but never DECLARED, so the strict parser refused them and
+    // this pin's old seven-flag list could not see the gap. The metered
+    // campaign surface now declares exactly what it consumes: the original
+    // seven, the two R6 declarations, and the seven spend-enforcement flags
+    // the launcher parses and admits.
     const names = metadata('nightwatch-agent.mjs').flags.map((flag) => flag.name).sort();
-    expect(names).toEqual(['--duration', '--id', '--max-turns', '--model', '--reasoner', '--repository', '--wall-clock-minutes'].sort());
+    expect(names).toEqual([
+      '--account-side-hard-stop',
+      '--duration',
+      '--expected-investigations',
+      '--id',
+      '--max-turns',
+      '--model',
+      '--observe-repository',
+      '--reasoner',
+      '--repository',
+      '--spend-ceiling-usd',
+      '--spend-input-usd-per-mt',
+      '--spend-max-output-tokens',
+      '--spend-model',
+      '--spend-output-usd-per-mt',
+      '--spend-provider',
+      '--wall-clock-minutes',
+    ].sort());
   });
 
   test('a campaign subcommand outside the declared set is refused by the parser', () => {
