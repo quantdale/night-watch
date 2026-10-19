@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "nightwatch.certification-evidence-receipt.v1",
+  "subject": "exact-head-ci-authority",
+  "subjects": [
+    "exact-head-ci-authority"
+  ],
+  "sourceHead": "d78e6c55b5c79ccb97e958e777a9c54e0dbcb742",
+  "observedAtHead": "fd3a78c16c08e76bc6fa80b9c8d967f2722a2085",
+  "sourceRootCleanAtEmit": true,
+  "checkId": "ci-block-record",
+  "checkState": "MET",
+  "result": "PASS",
+  "producer": "PROJECT_CHECK",
+  "environmentClass": "HOST_LOCAL",
+  "receiptDigest": "receipt:sha256:a455b880525da91b53a3936a"
+}
