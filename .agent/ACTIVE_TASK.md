@@ -10,7 +10,7 @@ TASK_GROUP_NEXT: 3
 TASK_NEXT_ID: 3.1
 Task directory: .agent/tasks/nightwatch-release-success-contract-v1
 Starting SHA: ac0cc600473a6a133636d07eecc36ed535c4fcca
-Last validated implementation SHA: 0743798f1310f719c0f158678f225373a01bf3e8
+Last validated implementation SHA: d78e6c55b5c79ccb97e958e777a9c54e0dbcb742
 Current milestone: M5 — gates and governed integration: run the full gate set on
 the R6 + C-00-recovery implementation, integrate it through the C-00
 fast-forward protocol at exact HEAD, observe exact-head GitHub CI, then execute
@@ -32,8 +32,8 @@ PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: ac0cc600473a6a133636d07eecc36ed535c4fcca
-LAST_VALIDATED_IMPLEMENTATION_SHA: 0743798f1310f719c0f158678f225373a01bf3e8
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 0743798f1310f719c0f158678f225373a01bf3e8
+LAST_VALIDATED_IMPLEMENTATION_SHA: d78e6c55b5c79ccb97e958e777a9c54e0dbcb742
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: d78e6c55b5c79ccb97e958e777a9c54e0dbcb742
 LIVE_HEAD_AUTHORITY: GIT
 PHASE_RELEASE_SUCCESS_CONTRACT_V1_STATUS: IN_PROGRESS
 
