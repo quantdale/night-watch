@@ -90,6 +90,7 @@ import {
   envelopeFromBudgetPolicy,
   type RuntimeBudgetEnvelope,
 } from './runtimeBudgetEnvelope';
+import type { SpendCeiling } from './spendCeiling';
 import { AgentCheckpointError, assertCheckpointHasNoSecrets, boundedFoundVersion, finalizeCheckpoint, parseCheckpoint } from './checkpoint';
 import { AGENT_RUNTIME_DEFAULT_MAX_TURNS, AgentRuntime } from './runtime';
 import {
@@ -204,6 +205,14 @@ export interface LocalCampaignInput {
    * the campaign is already pausing.
    */
   readonly pauseSignal?: AbortSignal;
+  /**
+   * D-178 / §9G: the authorized monetary ceiling for this campaign. When
+   * present, every reasoner call of every investigation is admitted BEFORE
+   * dispatch against the cumulative worst-case spend; a request that could
+   * exceed the ceiling is refused without being sent. A metered run must
+   * supply one (see `admitRunSpendCeiling`).
+   */
+  readonly spendCeiling?: SpendCeiling;
   readonly stateDirectory?: string;
   /**
    * M5 (C-01): owner-local findings root override. Absent means the private
@@ -1446,6 +1455,7 @@ async function runOneInvestigation(engine: CampaignEngine, investigationId: stri
       now: engine.now,
       priorStrategy: engine.acc.strategy,
       backoff: engine.input.backoff,
+      spendCeiling: engine.input.spendCeiling,
     });
     const disposePause = bindPauseSignal(engine.input.pauseSignal, resumedRuntime);
     try {
@@ -1468,6 +1478,7 @@ async function runOneInvestigation(engine: CampaignEngine, investigationId: stri
       // investigation re-learns executability from zero, which is the
       // cross-investigation memory W10 exists to remove.
       priorSurface: [...engine.acc.reproductionSurface.values()],
+      spendCeiling: engine.input.spendCeiling,
     });
     const disposePause = bindPauseSignal(engine.input.pauseSignal, freshRuntime);
     try {

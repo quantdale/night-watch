@@ -415,9 +415,13 @@ test('pause and resume preserves the campaign strategy without double counting',
   // inv2/3/4, with all five completed.
   expect(resumed.investigationsStarted).toBe(5);
   expect(resumed.investigationsCompleted).toBe(5);
-  expect(resumed.terminationCounts.PAUSED).toBe(1);
+  // R6-04: the suspension placeholder is retired when its investigation
+  // finishes, so termination counts reconcile with the completed population.
+  expect(resumed.terminationCounts.PAUSED).toBe(0);
   // inv0 completed pre-pause, so its COMPLETE_NO_FINDING counts as well.
   expect(resumed.terminationCounts.COMPLETE_NO_FINDING).toBe(5);
+  const totalTerminations = Object.values(resumed.terminationCounts).reduce((sum, count) => sum + count, 0);
+  expect(totalTerminations).toBe(resumed.investigationsCompleted);
   // Pre-pause history survived the resume and the resumed work folded in.
   expect(resumed.campaignStrategy.inspectedTargets).toContain('alpha.ts');
   expect(resumed.campaignStrategy.inspectedTargets).toContain('beta.ts');

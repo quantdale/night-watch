@@ -95,6 +95,12 @@ choreography.
   records, worktree confinement, revision CAS refusal, concurrent single
   transition) passes, and `checkC00WorkspaceIntegrity` now requires the new
   admission controls.
+- M4e complete (D-181): the pre-request monetary admission is implemented
+  (`nightwatch.spend-ceiling.v1` + the `AgentRuntime` pre-dispatch seam +
+  campaign plumbing) and validated end to end: a refused request never reaches
+  the provider, a one-call-sized ceiling admits exactly one dispatch, and a
+  metered run without a declared ceiling fails closed. Two stale R6-04 test
+  pins the original repair missed are corrected with the population invariant.
 
 ## Work In Progress
 
@@ -126,11 +132,23 @@ Source (C-00 recovery, commit 9084cff7):
   the `AFTER_RETARGET_OBSERVE` bounded test seam, CLI metadata/parser entries.
 - `bin/lib/hardening/rules/workspace-and-layout.mjs` — required control tokens.
 
+Source (D-181 monetary admission):
+- `src/core/agentRuntime/spendCeiling.ts` (new) — the pure pre-request
+  admission (`nightwatch.spend-ceiling.v1`).
+- `src/core/agentRuntime/runtime.ts` — the pre-dispatch admission seam.
+- `src/core/agentRuntime/localCampaign.ts`, `types.ts`, `index.ts` — plumbing.
+
 Tests:
 - `tests/unit/campaignCompletionSuccess.test.ts` (new, 19 tests) and the
   receipt/evaluator integration tests (21 total new).
 - `tests/unit/sessionMutationAuthority.test.ts` — the 9-case `retarget-task`
   matrix.
+- `tests/unit/spendCeiling.test.ts` (new, 7 tests) — the D-181 admission and
+  its runtime enforcement.
+- `tests/unit/campaignStrategyMemory.test.ts`,
+  `tests/unit/w10LongRunResilience.test.ts` — the two stale R6-04 phantom
+  PAUSED pins corrected to the reconciled semantics (the repair had already
+  corrected `campaignEndurance` and `localCampaign`).
 - `tests/unit/workspaceIsolation.test.ts` — dry-run totality extraction widened
   to the operator-CLI command-name vocabulary (both directions unchanged).
 
@@ -157,6 +175,19 @@ At 9084cff7 (implementation + governance tests, 2026-10-19):
 - `npm run workspace:check` — PASS (one ATTENTION cleared by this commit's
   status update).
 
+At the D-181 commit (monetary admission + ledger registration, 2026-10-19):
+- `tests/unit/spendCeiling.test.ts` — 7/7 PASS, incl. the provider-never-
+  invoked proof and the one-call-sized ceiling refusing the second dispatch.
+- The 109-test agent-runtime batch (agentRuntime, localCampaign,
+  campaignEndurance, campaignCompletionSuccess, productRunReceipt,
+  providerAttribution, byteAccounting, agentRuntimeW9, w10LongRunResilience,
+  huntModeComparison, campaignStrategyMemory, reasonerIdentityBinding,
+  schemaLifecycle) — PASS after correcting the two stale R6-04 phantom
+  PAUSED pins.
+- `npm run hardening:check`, `npm run schema:check`, `npm run hardening:rules`
+  — PASS (274/274 probes; the spend-ceiling schema family is declared
+  IN_MEMORY under D-130).
+
 Earlier R6 staged validation (fe193a3a/ba84217d, recorded in the previous
 milestones): 21/21 new tests, 114 focused tests, 13 localCampaign/endurance
 tests, 77/77 blocking binary checks, 274/274 hardening probes, 122/122
@@ -167,6 +198,9 @@ behavioural mutants.
 - D-180: the owner-approved `retarget-task` recovery — the one narrow
   correction for a misassigned live claim, its exact admission bounds, its
   mutation contract, and its single authorized use (this session's claim).
+- D-181: the pre-request monetary admission — a metered call is admitted
+  BEFORE dispatch only when its cumulative worst-case spend fits the declared
+  ceiling; a metered run without a ceiling fails closed.
 - The R6 completion semantics (host-computed verdict over a declared finite
   plan; no success through stagnation, NO_PROGRESS or budget exhaustion) are
   recorded in `REPORT.md` §2.
@@ -183,6 +217,9 @@ behavioural mutants.
   STARTING_SHA lineage.
 - The workspace checker reports its ERROR lines on stdout (renderText), while
   the session CLI's own refusals go to stderr.
+- The R6-04 PAUSED-placeholder repair had corrected two of the four tests that
+  pinned the phantom count; `campaignStrategyMemory` and `w10LongRunResilience`
+  still pinned it and failed once the full agent-runtime suites ran.
 
 ## Blockers
 

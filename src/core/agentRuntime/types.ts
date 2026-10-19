@@ -26,6 +26,7 @@ import {
   type UntrustedEnvelope,
 } from '../agentProtocol';
 import type { CampaignStrategyState } from '../investigationMemory/types';
+import type { SpendCeiling } from './spendCeiling';
 
 export type { ReasonerDriver };
 export type { CampaignStrategyState };
@@ -280,6 +281,14 @@ export interface AgentRuntimeDeps {
     readonly sleep?: (ms: number) => Promise<void>;
     readonly random?: () => number;
   };
+  /**
+   * D-178 / §9G pre-request monetary admission. When present, every provider
+   * call is admitted BEFORE dispatch against the authorized worst-case spend
+   * and a request that could exceed the ceiling is refused without being sent.
+   * A metered run must supply one (see `admitRunSpendCeiling`); synthetic
+   * LOCAL-only fixtures without a provider may omit it.
+   */
+  readonly spendCeiling?: SpendCeiling;
 }
 
 export interface RestoredRuntimeData {

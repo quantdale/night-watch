@@ -21,3 +21,4 @@
 - [ ] 3.1 Pass prepush and the milestone gate at the substantive tip, integrate through C-00, and observe exact-head CI
 - [ ] 3.2 Establish S6 and re-earn every checkpoint-bound release condition at it
 - [ ] 3.3 Prepare the parent-12.5 provider-readiness package without any provider call or spend
+- [x] 3.4 Implement and validate the pre-request monetary admission (D-181) so an authorized spend ceiling is enforced before every provider request

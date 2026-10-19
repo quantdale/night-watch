@@ -109,6 +109,17 @@ secret, credential or customer value enters source, records or artifacts.
 - [x] Correct this session's mistaken claim to this task through the governed
       operation; preserve the predecessor's record and worktree untouched.
 
+### M4e — the pre-request monetary admission (D-181)
+- [x] `spendCeiling.ts`: the pure `nightwatch.spend-ceiling.v1` admission over
+      a declared ceiling, rate card and conservative worst-case bounds.
+- [x] The `AgentRuntime` pre-dispatch seam: a request whose cumulative
+      worst-case spend could exceed the ceiling is refused WITHOUT reaching the
+      provider (cause record + `BUDGET_EXHAUSTED`, never a relabel).
+- [x] Campaign plumbing and the fail-closed run admission for metered runs.
+- [x] `tests/unit/spendCeiling.test.ts` (7 tests) incl. the provider-never-
+      invoked proof; correct the two stale R6-04 phantom-PAUSED pins the
+      original repair missed.
+
 ### M5 — gates and governed integration
 - [x] `typecheck`, `typecheck:bin`
 - [x] `hardening:check`, `hardening:rules` (274/274)

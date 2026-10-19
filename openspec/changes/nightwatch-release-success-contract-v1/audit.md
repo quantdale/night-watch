@@ -40,10 +40,14 @@ duplicated here.)
   `nightwatch-final-product-completion-v1` to this task, with the predecessor's
   claim and worktree preserved byte-for-byte.
 
-## D. The hard monetary ceiling (open)
+## D. The hard monetary ceiling (substantially closed; account-side backstop open)
 
 - Claim: the engine conserves byte budgets reactively after each call and has
   no monetary ceiling field, so no pre-request affordability admission exists
   (D-178). A metered provider run therefore has no enforced spend cap.
-- Disposition: open, owner-gated with the provider run itself; this change
-  makes no claim to have closed it (see the task REPORT §6/§8).
+- Disposition: FIX (D-181) for the engine half — the pre-request admission
+  refuses a dispatch whose cumulative worst-case spend could exceed the
+  authorized ceiling, and a metered run without a declared ceiling fails
+  closed. The account-side backstop (auto-top-up state, per-key spend limit)
+  remains an owner/account-side fact and is tracked with the parent-12.5
+  approval.

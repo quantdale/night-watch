@@ -55,6 +55,7 @@ import {
 } from '../agentProtocol';
 import { createCheckpoint, AgentCheckpointError, parseCheckpoint, parseResumeCursor } from './checkpoint';
 import { boundedBackoffMs, providerFailureNature } from './providerAttribution';
+import { admitProviderCall, type SpendCeiling } from './spendCeiling';
 import { deriveInvestigationMemory } from '../investigationMemory/derive';
 import { MEMORY_CAPS, type CampaignStrategyState } from '../investigationMemory/types';
 import type { ReproductionSurfaceEntry } from '../reproductionSurface/contracts';
@@ -148,6 +149,8 @@ export class AgentRuntime {
    */
   private reproductionSurface = new Map<string, ReproductionSurfaceEntry>();
   private readonly priorStrategy: CampaignStrategyState | null;
+  /** D-178 / §9G: absent for non-metered fixtures; present for a metered run. */
+  private readonly spendCeiling: SpendCeiling | undefined;
 
   constructor(deps: AgentRuntimeDeps | AgentRuntimeResumeDeps) {
     if (typeof deps.campaignId !== 'string' || deps.campaignId.length === 0) {
@@ -164,6 +167,7 @@ export class AgentRuntime {
     this.random = deps.backoff?.random ?? Math.random;
     this.now = deps.now ?? Date.now;
     this.priorStrategy = deps.priorStrategy ?? null;
+    this.spendCeiling = deps.spendCeiling;
     if (isResumeDeps(deps)) {
       const restored = deps.restored;
       if (restored.state.campaignId !== this.campaignId) {
@@ -360,6 +364,32 @@ export class AgentRuntime {
     const renderedInputBytes = utf8Bytes(JSON.stringify(request));
     const requestMemoryBytes = utf8Bytes(JSON.stringify(request.observation.memory));
     const requestUntrustedBytes = utf8Bytes(JSON.stringify(request.observation.untrusted));
+    // D-178 / §9G pre-request monetary admission. Decided BEFORE the request
+    // is dispatched (and before its input is committed to the byte ledger): a
+    // request whose cumulative worst-case spend could exceed the authorized
+    // ceiling is refused without ever reaching the provider. The refusal is a
+    // budget exhaustion with its own cause record — never a relabel, never a
+    // silent skip.
+    if (this.spendCeiling !== undefined) {
+      const admission = admitProviderCall({
+        ceiling: this.spendCeiling,
+        requestBytes: renderedInputBytes,
+        committedInputBytes: chargedInputBytes(this.byteLedger),
+        committedOutputBytes: chargedOutputBytes(this.byteLedger),
+      });
+      if (!admission.ok) {
+        this.record({
+          turnId,
+          phase: this.phase,
+          intentKind: 'BLOCKED',
+          toolId: null,
+          argumentDigest: null,
+          resultClass: 'SPEND_CEILING_REFUSED_BEFORE_REQUEST',
+          evidenceRefs: [],
+        });
+        return { reason: 'BUDGET_EXHAUSTED', withCheckpoint: true };
+      }
+    }
     this.byteLedger = {
       ...this.byteLedger,
       renderedInputBytes: this.byteLedger.renderedInputBytes + renderedInputBytes,

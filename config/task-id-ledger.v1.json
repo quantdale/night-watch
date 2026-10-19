@@ -5,6 +5,10 @@
     {
       "changeId": "nightwatch-final-product-completion-v1",
       "bootstrapSha": "ec6010a229db03749f8d22f7312b7bf2d0f328aa"
+    },
+    {
+      "changeId": "nightwatch-release-success-contract-v1",
+      "bootstrapSha": "771fa3c672966699b7b52b127015accf89a0598a"
     }
   ]
 }

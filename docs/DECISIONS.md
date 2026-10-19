@@ -7423,3 +7423,63 @@ history — the record transition is the only mutation.
 `nightwatch-release-success-contract-v1` (the task its own work actually
 implements), followed by ordinary tracked ACTIVE_TASK/STATE corrections. The
 owner explicitly does not authorize retargeting any other session.
+
+## D-181 — the pre-request monetary admission: a metered call is affordable before it is dispatched (2026-10-19)
+
+Source: owner instruction "NIGHTWATCH — FINAL END-TO-END COMPLETION MISSION"
+(2026-10-19), §9G, under the active campaign
+`nightwatch-release-success-contract-v1`. D-178's blocker 2 stands: the engine
+has no monetary ceiling field, its HOUR_1 byte/call budgets are conserved
+reactively after each call, and "a post-request usage ledger is not a
+pre-request credit admission mechanism" — so no authorized monetary amount was
+enforceable before a request that could exceed it.
+
+**Decision.** A versioned, pure pre-request admission
+(`nightwatch.spend-ceiling.v1`, `src/core/agentRuntime/spendCeiling.ts`) is the
+single affordability authority for metered provider calls:
+
+- a run declares a hard monetary ceiling (`maxSpendUsd`), a metered rate card,
+  a hard per-call output-token bound, a conservative bytes-per-token bound and
+  a conservative tokens-per-request-byte bound;
+- before EVERY dispatch, the cumulative WORST-CASE spend (recorded usage at
+  the conservative tokenizer bound, plus this request's exact rendered input
+  plus the FULL per-call output bound at the full rates) must fit the ceiling;
+  a request that could exceed it is refused BEFORE it is dispatched, recorded
+  as `SPEND_CEILING_REFUSED_BEFORE_REQUEST`, and terminates the campaign
+  `BUDGET_EXHAUSTED` — never a relabel and never a silent skip;
+- `admitRunSpendCeiling` fails closed for a metered run with no valid declared
+  ceiling; an absent ceiling never reads as "free".
+
+**Why this is genuine rather than an estimate.** The admission decides before
+the request exists on the wire, over a conservative upper bound (1 token per
+request byte is tokenizer-impossible; output is charged at the full per-call
+bound; every input token is charged at the full input rate, so cache discounts
+can only over-reserve). Admitted calls therefore cannot jointly exceed the
+authorized amount under the declared bounds; the residual exposure is exactly
+the honesty of `maxOutputTokensPerCall`/`maxBytesPerToken`, which the run
+authorization declares and which the account-side hard stop (a per-key spend
+limit) backstops. This is NOT the reactive byte ledger and NOT a token-cost
+projection presented as a cap: it is a fail-closed pre-dispatch refusal.
+
+**Validation.** `tests/unit/spendCeiling.test.ts` proves the worst-case
+arithmetic against the D-177 verified rate card, the equality boundary, the
+fail-closed malformed/missing-ceiling behavior, and — through the real
+`AgentRuntime` — that a refused request NEVER reaches the provider (the stub
+driver records zero calls), that a ceiling sized for one call admits exactly
+one and refuses the next before dispatch, and that a generous ceiling runs the
+campaign to completion. Two stale R6-04 test pins that the original repair
+missed (`campaignStrategyMemory`, `w10LongRunResilience` resumed-PAUSED
+phantom counts) are corrected to the reconciled semantics with the explicit
+population invariant, matching the two the repair already fixed.
+
+**What this decision is not.** It does not spend anything, contact any
+provider, or apply a grant; it does not weaken the R6 completion contract (a
+spend refusal is `BUDGET_EXHAUSTED`, still strictly non-qualifying); it does
+not claim the account-side controls are verified — auto-top-up state, wallet
+balance and any per-key limit remain owner/account-side facts, and the
+parent-12.5 grant must declare the ceiling values the engine enforces.
+
+**Consequence.** The parent-12.5 grant record carries `maxSpendUsd` and the
+rate card as enforced fields (not estimates), the run refuses to dispatch past
+them, and the owner's remaining ceiling action shrinks to the account-side
+hard stop that backstops the declared output bound.

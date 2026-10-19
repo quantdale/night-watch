@@ -27,3 +27,15 @@ export {
   type LocalCampaignResult,
 } from './localCampaign';
 export type { AgentRuntimeDeps, AgentRuntimeResumeDeps, AgentRunOptions, AgentRunResult } from './types';
+export {
+  SPEND_CEILING_VERSION,
+  admitProviderCall,
+  admitRunSpendCeiling,
+  committedSpendUsd,
+  validateSpendCeiling,
+  worstCaseCallCostUsd,
+  worstCaseTokensForBytes,
+  type SpendAdmission,
+  type SpendCeiling,
+  type SpendRateCard,
+} from './spendCeiling';
