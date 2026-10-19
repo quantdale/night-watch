@@ -52,8 +52,13 @@ exact-head CI, which is owner-gated.
   through the receipt diagnostics block.
 - M3 complete (R6-03): `--observe-repository` separates the observation scope
   from the investigation scope; no arbitrary observation is manufactured.
-- M4 complete: 19 deterministic tests cover A-I plus J (the real G12 probe grades
-  a genuinely completed receipt MET).
+- M4 complete: 21 deterministic tests cover A-I, J (the real G12 probe grades a
+  genuinely completed receipt MET) and K (a resumed campaign can complete).
+- M4b complete (R6-04): found and fixed during staged validation — a campaign that
+  paused mid-investigation then resumed could never complete, because the PAUSED
+  suspension placeholder was never retired when that slot finished. Two
+  pre-existing tests had pinned the phantom count (6 terminations for 5
+  investigations) and were corrected to the reconciled semantics.
 
 ## Work In Progress
 
@@ -61,7 +66,11 @@ None. Local validation is complete and green.
 
 ## Blockers
 
-BLOCKED_BY_TOPOLOGY_CLAIM — `npm run agent:check` fails with
+BLOCKED_BY_TOPOLOGY_CLAIM — this session cannot be integrated. The ownership
+record created by this session's own `claim --adopt` names
+`nightwatch-final-product-completion-v1`, whose `STATE.md` records
+`Branch: main`, so `integrate` answers `SESSION_CONTINUITY_MISMATCH` and
+`npm run agent:check` fails with
 `WORKSPACE_DUPLICATE_TASK_CLAIM: task nightwatch-final-product-completion-v1 is
 live in worktrees nightwatch-final-product-complet-12cbddff and
 nightwatch-final-product-complet-ded25ab6`. This was introduced by this

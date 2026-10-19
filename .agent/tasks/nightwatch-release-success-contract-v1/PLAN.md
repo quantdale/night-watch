@@ -26,10 +26,22 @@
       investigation scope are no longer the same derived value.
 
 ## M4 — deterministic proof (A-I) and integration proof (J)
-- [x] 19 tests in `tests/unit/campaignCompletionSuccess.test.ts`.
+- [x] 21 tests in `tests/unit/campaignCompletionSuccess.test.ts`.
 - [x] Negative controls retained: NO_PROGRESS, PROVIDER_DEGRADED, missing
       siblings, wrong identity, wrong checkpoint, tampering, budget exhaustion.
 - [x] The REAL G12 probe grades a genuinely completed receipt MET.
+
+## M4b — resume-path defect found during staged validation (R6-04)
+- [x] Reproduced: a campaign that paused mid-investigation then resumed could
+      NEVER complete, because `absorbPausedInvestigationPrefix` counted `PAUSED`
+      for the slot and `absorbInvestigation` added the finished reason without
+      retiring that placeholder. Repeated resumes inflate it further.
+- [x] Fixed: retire one `PAUSED` placeholder when a resumed slot finishes, and
+      add a sticky `suspendedProviderFailure` flag so a provider failure that
+      occurred before the suspension is not erased by the retirement.
+- [x] Updated two pre-existing tests that had pinned the phantom count
+      (`campaignEndurance`, `localCampaign`); both asserted 6 terminations for 5
+      investigations. Added an explicit population-reconciliation invariant.
 
 ## M5 — gates
 - [x] `typecheck`, `typecheck:bin`
