@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "nightwatch.certification-evidence-receipt.v1",
+  "subject": "structural-invariants",
+  "subjects": [
+    "structural-invariants"
+  ],
+  "sourceHead": "d78e6c55b5c79ccb97e958e777a9c54e0dbcb742",
+  "observedAtHead": "c3e5f22291c4673dad2d8e3c8fc943283a4fe1a4",
+  "sourceRootCleanAtEmit": true,
+  "checkId": "cmd-structural-invariants",
+  "checkState": "MET",
+  "result": "PASS",
+  "producer": "COMMAND",
+  "environmentClass": "HOST_LOCAL",
+  "commandDigest": "sha256:39ae54114872d36e6140d03f",
+  "receiptDigest": "receipt:sha256:5ab9c2a351c37a5a8429cb8d"
+}

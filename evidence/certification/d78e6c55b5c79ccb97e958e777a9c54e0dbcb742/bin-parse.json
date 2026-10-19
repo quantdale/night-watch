@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "nightwatch.certification-evidence-receipt.v1",
+  "subject": "bin-parse",
+  "subjects": [
+    "bin-parse"
+  ],
+  "sourceHead": "d78e6c55b5c79ccb97e958e777a9c54e0dbcb742",
+  "observedAtHead": "c3e5f22291c4673dad2d8e3c8fc943283a4fe1a4",
+  "sourceRootCleanAtEmit": true,
+  "checkId": "cmd-bin-parse",
+  "checkState": "MET",
+  "result": "PASS",
+  "producer": "COMMAND",
+  "environmentClass": "HOST_LOCAL",
+  "commandDigest": "sha256:318ba64beb4f58f6d259bdf3",
+  "receiptDigest": "receipt:sha256:b6daed5aabc7fef7da4b16db"
+}
