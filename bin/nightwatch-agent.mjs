@@ -162,7 +162,7 @@ function parseSpendDeclaration(flags) {
  * provider calls) otherwise. The metered class is the resolved adapter
  * identity (the repository's own provider print adapter), never a label.
  *
- * @param {{ admitMeteredRunSpendCeiling: (input: { ceiling: unknown, provider: string | null | undefined, model: string | null | undefined, accountSideHardStop: string | null | undefined }) => { ok: boolean, code?: string, detail?: string, projectedUsd?: number } }} spendMod
+ * @param {{ admitMeteredRunSpendCeiling: (input: { ceiling: unknown, provider: string | null | undefined, model: string | null | undefined, accountSideHardStop: string | null | undefined }) => { ok: true, projectedUsd: number } | { ok: false, code: string, detail: string } }} spendMod
  * @param {boolean} metered
  * @param {{ ok: true, ceiling: import('../src/core/agentRuntime/spendCeiling').SpendCeiling | null, accountSideHardStopRef: string | null } | { ok: false, code: string, detail: string }} declaration
  * @param {{ provider: string | null, model: string | null }} identity
@@ -171,14 +171,12 @@ function parseSpendDeclaration(flags) {
 function admitLaunchSpend(spendMod, metered, declaration, identity) {
   if (declaration.ok !== true) return declaration;
   if (!metered) return declaration;
-  const admission = /** @type {{ ok: true, code?: undefined, detail?: undefined } | { ok: false, code: string, detail: string }} */ (
-    spendMod.admitMeteredRunSpendCeiling({
-      ceiling: declaration.ceiling,
-      provider: identity.provider,
-      model: identity.model,
-      accountSideHardStop: declaration.accountSideHardStopRef,
-    })
-  );
+  const admission = spendMod.admitMeteredRunSpendCeiling({
+    ceiling: declaration.ceiling,
+    provider: identity.provider,
+    model: identity.model,
+    accountSideHardStop: declaration.accountSideHardStopRef,
+  });
   if (admission.ok !== true) return { ok: false, code: admission.code, detail: admission.detail };
   return declaration;
 }
