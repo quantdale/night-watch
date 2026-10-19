@@ -2176,6 +2176,10 @@
       "class": "PARALLEL_SAFE",
       "signals": []
     },
+    "tests/unit/spendCeiling.test.ts": {
+      "class": "PARALLEL_SAFE",
+      "signals": []
+    },
     "tests/unit/statusLocalAuthHeading.test.ts": {
       "class": "PARALLEL_SAFE",
       "signals": []
