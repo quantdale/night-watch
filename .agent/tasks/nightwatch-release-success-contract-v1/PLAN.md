@@ -139,14 +139,14 @@ secret, credential or customer value enters source, records or artifacts.
 ### M5 — gates and governed integration
 - [x] `typecheck`, `typecheck:bin`
 - [x] `hardening:check`, `hardening:rules` (274/274)
-- [x] `hardening:mutants` (122/122 detected, 0 survived)
+- [x] `hardening:mutants` (126/126 detected, 0 survived, incl. the four new-guard mutants)
 - [x] `agent-check` / `workspace:check` after the D-180 recovery
-- [ ] `prepush` / `gate:milestone` at the corrected-continuity tip
-- [ ] Governed C-00 fast-forward integration and exact-head CI observation
-- [ ] S6 substantive-checkpoint certification choreography and evidence
-      re-earning (15/16 effective MET expected; condition #3 stays UNMET)
-- [ ] Parent-12.5 provider readiness package (prepared, never executed here)
-- **Status:** IN_PROGRESS
+- [x] `prepush` / `gate:milestone` at the corrected-continuity tip (6265/6265)
+- [x] Governed C-00 fast-forward integration and exact-head CI observation (run 39254273491 green at S6)
+- [x] S6 substantive-checkpoint certification choreography and evidence
+      re-earning (15/16 effective MET reached; condition #3 UNMET as expected)
+- [x] Parent-12.5 provider readiness package (prepared, never executed here)
+- **Status:** COMPLETE
 
 
 ## Validation Strategy

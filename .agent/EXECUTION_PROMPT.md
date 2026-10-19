@@ -1,7 +1,7 @@
 # EXECUTION PROMPT — Release success contract (R6) and governed completion path
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: IN_PROGRESS
+Status: COMPLETE
 Campaign ID: nightwatch-release-success-contract-v1
 OpenSpec: openspec/changes/nightwatch-release-success-contract-v1/
 Planned-From: ac0cc600473a6a133636d07eecc36ed535c4fcca

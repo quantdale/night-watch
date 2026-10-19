@@ -4,26 +4,24 @@
 
 Task ID: nightwatch-release-success-contract-v1
 Phase: RELEASE_SUCCESS_CONTRACT_V1
-Status: IN_PROGRESS
+Status: COMPLETE
 TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1
-TASK_GROUPS_COMPLETE: 1,2
-TASK_GROUP_NEXT: 3
-TASK_NEXT_ID: 3.1
+TASK_GROUPS_COMPLETE: 1,2,3
+TASK_GROUP_NEXT: NONE
+TASK_NEXT_ID: NONE
 Starting SHA: ac0cc600473a6a133636d07eecc36ed535c4fcca
 Last validated implementation SHA: d78e6c55b5c79ccb97e958e777a9c54e0dbcb742
 Last substantive checkpoint SHA: d78e6c55b5c79ccb97e958e777a9c54e0dbcb742
 Live HEAD authority: GIT
 Current local/remote HEAD: DISCOVER_FROM_GIT
-Branch: session/nightwatch-final-product-complet-12cbddff
-Last checkpoint: 2026-10-19 — the release success contract is IMPLEMENTED and
-gated locally, and the C-00 claim deadlock is resolved through the D-180
-owner-approved `retarget-task` recovery: this session's record now names this
-task, the predecessor session's claim and S5 worktree are preserved
-byte-for-byte, and `workspace:check` is green again. The campaign lane can now
-reach COMPLETED_SUCCESSFULLY through a host-computed completion verdict over a
-declared, finite investigation plan, while NO_PROGRESS, BUDGET_EXHAUSTED,
-PAUSED, SAFETY_BLOCKED, CANCELLED, REASONER_FAILURE and PROVIDER_DEGRADED
-remain strictly distinct and non-qualifying.
+Branch: main
+Last checkpoint: 2026-10-19 — S6 `d78e6c55b5c79ccb97e958e777a9c54e0dbcb742`
+is certified: exact-head CI green (run 39254273491), the full checkpoint-bound
+evidence set re-earned at it (25 receipts verified 25/25 offline), and the
+canonical and independent fresh-clone evaluators agree per-condition exactly
+(15/16 effective MET, `autonomous-yield-proof` UNMET by design). The D-175-2
+swallowed-receipt defect class was exposed by the fresh clone and repaired
+forward for both S5 and S6.
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: ac0cc600473a6a133636d07eecc36ed535c4fcca
@@ -31,16 +29,12 @@ LAST_VALIDATED_IMPLEMENTATION_SHA: d78e6c55b5c79ccb97e958e777a9c54e0dbcb742
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: d78e6c55b5c79ccb97e958e777a9c54e0dbcb742
 LIVE_HEAD_AUTHORITY: GIT
 PROJECT_VERDICT_EFFECT: PRESERVE
-PHASE_RELEASE_SUCCESS_CONTRACT_V1_STATUS: IN_PROGRESS
+PHASE_RELEASE_SUCCESS_CONTRACT_V1_STATUS: COMPLETE
 
-The two implementation anchors are deliberately CARRIED FORWARD from the task
-base at this stage of the choreography: the anchor advances to the new
-substantive checkpoint S6 only in the post-integration anchor-advance commit,
-after S6's own exact-head green CI run is observed (the S5 pattern: a
-substantive push, its exact-head run, then the documentary binding commits).
-The implementation work that has passed the focused gates at `9084cff7` is
-recorded in the Validation Ledger below as measurement, not as an anchor
-claim.
+The implementation anchors name S6 `d78e6c55b5c79ccb97e958e777a9c54e0dbcb742`
+— the substantive checkpoint established by the anchor-advance commit after
+its exact-head green run (39254273491) was observed, exactly the S5 pattern
+(substantive push, exact-head run, documentary binding commits).
 
 ## Objective
 
@@ -52,14 +46,13 @@ readiness) around it.
 
 ## Current Milestone
 
-M5 — gates and governed integration (task group 3). Implementation, diagnostics,
-sibling-scope separation, the A-J proof set and the C-00 `retarget-task`
-recovery with its governance matrix are complete and green on the focused
-gates. Remaining in this milestone: the full prepush/milestone gate set at the
-corrected-continuity tip, the C-00 fast-forward integration at exact HEAD,
-exact-head CI observation, and the S6 substantive-checkpoint certification
-choreography.
-
+COMPLETE — the governed engineering path is closed at S6. The release success
+contract (R6) is implemented and proven, the C-00 claim deadlock is resolved
+through the D-180 recovery, the D-181 pre-request spend admission is
+implemented and detected by its mutants, and the S6 checkpoint
+`d78e6c55b5c79ccb97e958e777a9c54e0dbcb742` is certified with its green
+exact-head run (39254273491) and 15/16 effective MET (condition #3 UNMET by
+design until a qualifying provider run).
 ## Completed Milestones
 
 - **M0 COMPLETE** — defect confirmed against source; the campaign loop had six
@@ -108,17 +101,14 @@ choreography.
 
 ## Work In Progress
 
-M5 execution: the full gate set (prepush, milestone gate) at the
-corrected-continuity tip, then governed integration and exact-head CI, then the
-S6 certification choreography.
-
+None. Task complete; no work is open in this task's scope.
 ## Exact Next Action
 
-Task 3.1: run `npm run prepush` at this tip, then the milestone quality gate,
-then `node bin/nightwatch-session.mjs integrate --expect-session
-sess-6d6ce5780dfc --expect-head <tip>` (no force, no rebase), observe exact-head
-GitHub CI, and continue M5 with the S6 checkpoint evidence re-earning.
-
+STOP — task complete. The release success contract is closed at S6 with 15/16
+effective MET and condition #3 honestly UNMET. The one remaining step — a
+single qualifying provider campaign — belongs to a future task under a
+separate fresh owner authorization (the parent-12.5 grant with its monetary
+cap) and is not in scope here.
 ## Files Changed
 
 Source (R6, commits fe193a3a):
@@ -192,6 +182,19 @@ At the D-181 commit (monetary admission + ledger registration, 2026-10-19):
   — PASS (274/274 probes; the spend-ceiling schema family is declared
   IN_MEMORY under D-130).
 
+At S6 `d78e6c55` (the certified checkpoint, 2026-10-19):
+- Exact-head GitHub Actions run `39254273491` (job `118065505236`) — SUCCESS
+  at exactly the checkpoint.
+- `npm run prepush` at the substantive tip — PASS (11 steps; 6265/6265 tests).
+- `npm run gate:local` (authoritative gate) at S6 — PASS, 15/15 groups,
+  topology PROVEN under BUBBLEWRAP, UI 105/105.
+- `npm run gate:clean` (pristine fresh clone of S6) — PASS, 15/15 groups,
+  sibling identity unchanged before/after.
+- The six COMMAND lanes through the guarded measurement root — all PASS;
+  `certify-evidence verify` — 25/25 tracked receipts valid, 0 invalid.
+- Canonical vs independent fresh-clone evaluator — EXACT per-condition
+  agreement (15/16 MET; condition #3 UNMET).
+
 At the S6 candidate tip (task-record coherence + mutation contract, 2026-10-19):
 - The NW-07 PLAN/STATE milestone-coherence failure found by the prepush
   affected-shards run is fixed at its root: the completed milestones are
@@ -243,14 +246,10 @@ behavioural mutants.
 
 ## Blockers
 
-None at the governance or implementation level. The D-180 recovery resolved
-the C-00 claim deadlock that previously stopped integration. The remaining
-external owner actions (fresh parent-12.5 provider approval with its monetary
-cap, an enforceable hard ceiling, and the account-side credential-revocation
-confirmation) gate ONLY the paid provider proof and are tracked under
-Deferred / Follow-Up; the engineering and certification work does not wait on
-them.
-
+None in this task's scope. The provider proof is gated on the owner/account-
+side actions recorded under Deferred / Follow-Up and D-182 (the parent-12.5
+approval with its monetary cap, the account-side revocation and auto-top-up
+confirmations, and the prepared stale-credential-copy removal).
 ## Safety Events
 
 - D-180 recovery executed with the exact expectations
@@ -280,16 +279,21 @@ them.
 
 ## Resume Recipe
 
-Resume from M5: run `npm run prepush` and the milestone gate at the current
-tip, integrate through the C-00 command with the exact session and HEAD
-expectations, observe exact-head CI, then run the S6 certification
-choreography (six command lanes through the guarded measurement root,
-gate:clean/topology/UI/browser lanes, values-only receipt binding, canonical
-and fresh-clone evaluation) and prepare the parent-12.5 provider readiness
-package without spending.
-
+Task complete. Do not resume this task. Any future provider proof requires a
+separate fresh owner authorization (the parent-12.5 grant with its monetary
+cap) and belongs to a new task; nothing here is resumed or left mid-flight.
+The certification state at closure is S6 `d78e6c55` with 15/16 effective MET.
 ## Completion Snapshot
 
-Not complete — the task is IN_PROGRESS at M5. The snapshot records the
-terminal state when M5, the S6 re-earning and the provider-readiness package
-are closed.
+Complete — the task is closed at S6 `d78e6c55b5c79ccb97e958e777a9c54e0dbcb742`.
+R6 completion reachable and proven (21 deterministic tests plus the resumed
+population invariant); the C-00 `retarget-task` recovery implemented, tested
+(9 governance cases) and applied to this session with the predecessor
+preserved byte-for-byte; the D-181 pre-request spend admission implemented and
+behaviourally detected (BM-123..BM-126; 126/126 mutants); prepush and the
+milestone gate green at the substantive tip (6265/6265 tests); governed
+fast-forward integration of all seven repair commits; exact-head CI green at
+S6 (run 39254273491); the full checkpoint-bound evidence set re-earned at S6
+(25 receipts, verify 25/25) with the canonical and independent fresh-clone
+evaluators in exact per-condition agreement (15/16, condition #3 UNMET); the
+parent-12.5 provider package prepared without any provider call or spend.

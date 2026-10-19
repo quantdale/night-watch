@@ -1,5 +1,7 @@
 # Report — release success contract v1
 
+Status: COMPLETE
+
 ## 1. Original defect and source proof
 
 `evaluateYieldCampaignEvidence` (`src/core/agentRuntime/productRunReceipt.ts`)
@@ -119,3 +121,39 @@ ceiling gap is open.
    `nightwatch-final-product-completion-v1`) keeps its live claim and S5
    measurement-root worktree untouched by owner decision. Releasing or
    removing that predecessor claim remains an OWNER/ADMIN topology action.
+
+## 9. Certification at S6 (2026-10-19)
+
+The substantive checkpoint is `d78e6c55b5c79ccb97e958e777a9c54e0dbcb742`,
+derived from Git as the last substantive commit of the integrated range. Its
+exact-head GitHub Actions run is green (run `39254273491`, job `118065505236`).
+Every checkpoint-bound condition was measured again at it — six COMMAND lanes
+through the guarded measurement root, the authoritative gate (15/15 groups,
+topology PROVEN under BUBBLEWRAP), the pristine clean-checkout run (15/15,
+sibling identity unchanged), the F-18 UI harness (105/105) and the browser
+lane — and the 25 tracked receipts verify offline (25/25). The canonical and
+an independent fresh clone agree per-condition exactly: 15/16 effective MET
+with `autonomous-yield-proof` the only UNMET condition. The fresh-clone
+comparison also exposed and repaired forward the D-175-2 swallowed-receipt
+class at both S5 and S6 (the `auth*.json` secret glob skips
+`authoritative-gate.json`; the host artifact directory masks the missing
+tracked copy).
+
+## 10. Provider readiness and the consolidated owner actions
+
+The parent-12.5 package is prepared and NOT executed (D-182): the launcher
+digest was recomputed and equals the D-177 identity, the sibling scope
+(`mobingilabs/ripple-api`) is authorized and observable read-only, and the
+D-181 spend admission enforces any approved monetary ceiling before every
+dispatch. The credential picture is recorded as fingerprints only: the active
+credential is the rotated value; five stale copies of the exposed value remain
+at known local paths for the owner's one-time removal. Exactly these
+owner/account-side actions gate the single remaining step: (1) approve
+parent-12.5 with its monetary cap; (2) confirm account-side revocation of the
+exposed key and that auto-top-up is disabled; (3) confirm the account-side
+hard stop (per-key spend limit at or below the approved cap) or accept the
+D-181 enforced ceiling with the declared output bound; (4) run the prepared
+stale-copy removal; (5) reconcile the prior campaign's actual billing against
+its local accounting. Until then the verdict is
+`OPERATIONALLY_ACCEPTED — EXTERNAL OWNER ACTION REQUIRED`; D-129's advance is
+not taken and is not claimed.

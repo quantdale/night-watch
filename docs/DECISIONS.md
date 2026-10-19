@@ -7483,3 +7483,101 @@ parent-12.5 grant must declare the ceiling values the engine enforces.
 rate card as enforced fields (not estimates), the run refuses to dispatch past
 them, and the owner's remaining ceiling action shrinks to the account-side
 hard stop that backstops the declared output bound.
+
+## D-182 — the S6 checkpoint certification, the swallowed-receipt repair, and the prepared parent-12.5 proof (2026-10-19)
+
+Source: owner instruction "NIGHTWATCH — FINAL END-TO-END COMPLETION MISSION"
+(2026-10-19), sections 7-11, under the active campaign
+`nightwatch-release-success-contract-v1`. This record establishes the S6
+substantive checkpoint, closes the certification re-earning at it, and
+prepares — without executing — the one remaining provider proof.
+
+**S6 and its exact-head CI.** The substantive checkpoint is
+`d78e6c55b5c79ccb97e958e777a9c54e0dbcb742`, derived from Git as the last
+substantive commit of the integrated range (the R6 campaign-completion
+implementation, the D-180 C-00 recovery, the D-181 spend admission, their
+governance tests and the registry extensions). Its exact-head GitHub Actions
+run is green: run `39254273491`, job `118065505236`, 20 minutes, 0 failures.
+The anchor-advance commit binds record and anchor to that same identity.
+
+**The re-earned evidence set.** Every checkpoint-bound condition was measured
+again at S6; no S5 measurement was inherited. The six COMMAND lanes executed
+through the D-174 guarded measurement root (the owned session worktree frozen
+at S6): root-compile, bin-parse, structural-invariants, full-regression
+(full `npm test`), ui, browser-workflow — all PASS. The authoritative gate
+(15/15 groups; topology PROVEN under the BUBBLEWRAP envelope), the pristine
+clean-checkout run (15/15 groups in a disposable clone; sibling identity
+unchanged before/after) and the F-18 UI harness (105/105, accessibility record
+written at S6) ran at the checkpoint and were imported verbatim. Twenty-five
+verified receipts are tracked under `evidence/certification/d78e6c55…/`, bound
+values-only in `config/release-evidence.v1.json`, and re-derived offline by
+`certify-evidence verify` (25/25 valid, 0 invalid). Result: **15/16 effective
+MET**, with `autonomous-yield-proof` (condition #3) the only UNMET condition,
+and the canonical evaluator and an independent fresh clone agree
+**per-condition exactly** (15/16 each, same checkpoint). D-129's advance is
+therefore not taken: `PROJECT_COMPLETION_STATUS` stays
+`OPERATIONALLY_ACCEPTED`.
+
+**The swallowed receipt, exposed by the fresh clone (defect class D-175-2,
+repaired forward here).** The `.gitignore` secret glob `auth*.json` matches
+`authoritative-gate.json`, so the ordinary add of the published receipts
+silently skipped that one file at BOTH S5 and S6; the local verifier masked
+the missing tracked copies because `verifyPersistedReceipt` scans the
+host-local artifact directory first. Only the independent fresh-clone
+evaluation exposed it: the S6 range classified SUBSTANTIVE_DESCENDANT in a
+clean clone because the values-only binding guard could not verify the bound
+receipt from tracked content alone. Both receipts are byte-identical to their
+verified host copies and are force-added exactly as `72dc5666` recorded for
+`94adf9db`, so every clean clone verifies them. The clean-clone agreement
+check is confirmed as a first-class requirement, not a formality.
+
+**Parent-12.5 provider proof — PROPOSED, NOT granted, NOT executed.** The
+spent `parent-12.4` approval is not reused. The successor grant proposal is:
+one qualifying `PRINT_CLI_PROVIDER` campaign only (`maxQualifyingRuns: 1`);
+identity `printCliDigest sha256:da0c6a49fe94aadc9765cc7afc6ba6b17e553eed0247d0385c160bc188f5cfbb`
+(recomputed 2026-10-19 and equal to the D-177 identity), provider
+`open-design`, model `deepseek-v4.1-flash`, harness Pi 1.3.0; run bounds wall
+≤ 3,600,000 ms, ≤ 200 provider calls, ≤ 400 tool actions, ≤ 5,000,000 input
+bytes, ≤ 160,000 output bytes; **a declared monetary ceiling (D-181
+`nightwatch.spend-ceiling.v1`) enforced before every dispatch**, no paid
+fallback, no billing fallback, no model substitution, abort on any nonzero
+price signal; local repository scope `mobingilabs/ripple-api` observed
+read-only (preflight verified 2026-10-19: the repository resolves at the
+sibling root, origin `https://github.com/mobingilabs/ripple-api.git`, HEAD
+`51311fd8`, never mutated); qualification requires the R6 completion contract
+(`COMPLETED_SUCCESSFULLY`), `VALID_PROVIDER_RUN`, ≥ 1 completed provider call,
+≥ 1 genuinely completed case, a clean leak scan, a genuine sibling
+observation (`siblingsBefore.length ≥ 1`, `siblingIdentityChanged === false`),
+and checkpoint binding at S6. It is valid ONLY after a NEW explicit owner
+approval naming the monetary cap. The proposal is documentation; the grant
+record `config/yield-run-authorization.v1.json` is untouched.
+
+**Credential hygiene (fingerprints only; no value was ever displayed).** The
+active credential is the rotated value (fingerprint `70292c027159`, `auth.json`
+`open-design`), distinct from the exposed value (fingerprint `14ed75b6deb1`).
+Stale copies of the exposed value remain in five local places: `auth.json`
+entry `amr`; `auth.json.bak` entries `open-design` and `amr`; `models.json`
+`providers['open-design'].apiKey`; `models.json.bak` the same. Account-side
+revocation of the old key and the auto-top-up state are control-plane facts
+and remain owner confirmations. The prepared one-time removal (owner-run)
+neutralizes the `models.json`/`models.json.bak` literals and removes the two
+`.bak` files; nothing was deleted here so the owner keeps the exposure
+evidence.
+
+**Billing reconciliation status.** The prior campaign's local accounting
+(D-179: 144 provider calls, 139 completed, within the enforced byte ceiling)
+is the only usage evidence available locally; the actual billing ledger is
+account-side and its reconciliation is included in the consolidated owner
+request. No claim of actual spend is made from estimates.
+
+**Consequence.** The engineering, governance and certification work is
+complete at S6 (15/16 effective MET, condition #3 honestly UNMET). The single
+remaining step — one qualifying provider campaign — is gated on exactly these
+owner/account-side actions, gathered in one consolidated request: the
+parent-12.5 approval with its monetary cap; confirmation that the exposed key
+is revoked account-side and auto-top-up is disabled; the account-side hard
+stop (per-key spend limit ≤ the approved cap) or acceptance of the D-181
+enforced ceiling plus the declared output bound; and the prepared stale-copy
+removal. The twelve unexecuted manual harnesses remain
+`UNAVAILABLE_CAPABILITY` with the approved revisit date 2026-11-14, and the
+repository stays PUBLIC.

@@ -3,30 +3,26 @@
 Task ID: nightwatch-release-success-contract-v1
 Phase: RELEASE_SUCCESS_CONTRACT_V1
 Title: Release success contract (R6) and the governed C-00 claim recovery
-Status: IN_PROGRESS
+Status: COMPLETE
 TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1
-TASK_GROUPS_COMPLETE: 1,2
-TASK_GROUP_NEXT: 3
-TASK_NEXT_ID: 3.1
+TASK_GROUPS_COMPLETE: 1,2,3
+TASK_GROUP_NEXT: NONE
+TASK_NEXT_ID: NONE
 Task directory: .agent/tasks/nightwatch-release-success-contract-v1
 Starting SHA: ac0cc600473a6a133636d07eecc36ed535c4fcca
 Last validated implementation SHA: d78e6c55b5c79ccb97e958e777a9c54e0dbcb742
-Current milestone: M5 — gates and governed integration: run the full gate set on
-the R6 + C-00-recovery implementation, integrate it through the C-00
-fast-forward protocol at exact HEAD, observe exact-head GitHub CI, then execute
-the S6 substantive-checkpoint certification choreography (re-earn every
-checkpoint-bound release condition at S6) and prepare the parent-12.5 provider
-readiness package without spending anything.
-Last checkpoint: 2026-10-19 — the C-00 owner-approved `retarget-task` recovery
-corrected this session's misassigned claim
-(`nightwatch-final-product-completion-v1` → `nightwatch-release-success-contract-v1`)
-through the governed record transition; the predecessor session's claim and S5
-worktree are preserved byte-for-byte. The R6 release-success-contract
-implementation (fe193a3a) and its diagnostics/resume repairs are complete and
-green on the focused gates.
-Next action: run the full prepush/milestone gate set at the corrected-continuity
-tip, then `integrate --expect-session sess-6d6ce5780dfc --expect-head <tip>`,
-observe exact-head CI, and continue M5.
+Current milestone: COMPLETE — the governed engineering path is closed at S6
+`d78e6c55b5c79ccb97e958e777a9c54e0dbcb742` with its green exact-head run
+(39254273491) and 15/16 effective MET; the release success contract (R6), the
+D-180 C-00 recovery and the D-181 spend admission are implemented, validated
+and certified there.
+Last checkpoint: 2026-10-19 — S6 certified: 25 checkpoint-bound receipts
+re-earned and verified offline (25/25), canonical and independent fresh-clone
+evaluators in exact per-condition agreement (15/16; `autonomous-yield-proof`
+UNMET by design until a qualifying provider run).
+Next action: STOP — task complete. Any further provider proof belongs to a new
+task under a separate fresh owner authorization (parent-12.5 with its monetary
+cap); nothing here is open.
 Authorization class: RELEASE_SUCCESS_CONTRACT_V1
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
@@ -35,7 +31,7 @@ STARTING_SHA: ac0cc600473a6a133636d07eecc36ed535c4fcca
 LAST_VALIDATED_IMPLEMENTATION_SHA: d78e6c55b5c79ccb97e958e777a9c54e0dbcb742
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: d78e6c55b5c79ccb97e958e777a9c54e0dbcb742
 LIVE_HEAD_AUTHORITY: GIT
-PHASE_RELEASE_SUCCESS_CONTRACT_V1_STATUS: IN_PROGRESS
+PHASE_RELEASE_SUCCESS_CONTRACT_V1_STATUS: COMPLETE
 
 ## Mission
 
@@ -51,9 +47,9 @@ qualifying provider campaign runs under a fresh owner authorization.
 
 ## Read order
 
-1. `.agent/tasks/nightwatch-release-success-contract-v1/{SPEC,PLAN,STATE}.md`
+1. `.agent/tasks/nightwatch-release-success-contract-v1/{SPEC,PLAN,STATE,REPORT}.md`
 2. `AGENTS.md`, `docs/CURRENT_STATE.md`, `docs/SAFETY_MODEL.md`, `docs/DECISIONS.md`
-   (especially D-129, D-174 through D-180)
+   (especially D-129, D-174 through D-182)
 3. `docs/RELEASE-ADVANCE-CONDITIONS.md`, `config/release-certification.v1.json`
 4. Current ledgers and the cited live evidence
 
@@ -62,46 +58,35 @@ qualifying provider campaign runs under a fresh owner authorization.
 ```text
 CAMPAIGN: nightwatch-release-success-contract-v1
 CHILD TASK: NONE
-SESSION WORKTREE: session/nightwatch-final-product-complet-12cbddff
+SESSION WORKTREE: NONE
 
 CURRENT STATUS:
-  IN_PROGRESS — M5. The owner's 2026-10-19 "FINAL END-TO-END COMPLETION
-  MISSION" instruction EXPLICITLY AUTHORIZES Nightwatch-local engineering,
-  the C-00 session-governance repair (the one narrow owner-approved
-  mistaken-claim correction recorded in D-180), testing, governed
-  integration, checkpoint certification and documentation closure. The R6
-  release-success-contract implementation and the C-00 `retarget-task`
-  recovery are IMPLEMENTED and locally validated. The twelve
+  COMPLETE — the governed engineering path is closed at S6
+  `d78e6c55b5c79ccb97e958e777a9c54e0dbcb742`: exact-head CI green (run
+  39254273491), 25 checkpoint-bound receipts re-earned and verified, and the
+  canonical and independent fresh-clone evaluators agree per-condition
+  exactly (15/16 effective MET; condition #3 UNMET by design). The twelve
   MANUAL_OWNER harnesses remain UNAVAILABLE_CAPABILITY with the approved
-  revisit date 2026-11-14 (Decision B, unchanged). Condition 3 stays
-  owner-gated: no provider call, no spend and no new grant without the fresh
-  parent-12.5 owner approval and its monetary cap. Repository visibility
-  stays PUBLIC (Decision D): the privacy change is an OWNER/ADMIN action and
-  is NOT authorized here.
+  revisit date 2026-11-14. Repository visibility stays PUBLIC. The one
+  remaining step — a single qualifying provider campaign — requires the fresh
+  parent-12.5 owner approval with its monetary cap and is a future task.
 
-IMPLEMENTATION AUTHORIZED (owner instruction 2026-10-19):
-  The R6 release-success-contract work (campaign completion verdict,
-  diagnostics, sibling-scope separation, resume-path repair), the narrow C-00
-  `retarget-task` recovery with its governance tests, all subsequent
-  Nightwatch-local validation, governed Nightwatch commits, authorized
-  fast-forward integration, exact-head CI observation, the S6 substantive
-  checkpoint with full checkpoint-bound evidence re-earning, canonical and
-  fresh-clone verification, provider-readiness preparation that spends
-  nothing, and accurate campaign/decision documentation. NOT authorized:
-  executing a paid provider campaign without the fresh parent-12.5 owner
-  approval and an enforceable monetary ceiling, reusing the spent parent-12.4
-  approval, unexecuted manual harnesses or DEV authentication, repository
-  visibility changes, Alphaus contact, sibling-repository mutations, campaign
-  archive, force pushes, history rewriting, deleting another live session's
-  work, fabricating certification evidence, or any general weakening of the
-  certification rules.
+AUTHORIZATION HISTORY (owner instructions 2026-10-15 / 2026-10-18 /
+2026-10-19):
+  The terminal programme's engineering, governance repair (D-180), spend
+  enforcement (D-181), certification re-earning (D-182) and provider-readiness
+  preparation were authorized and are complete. NOT authorized and NOT done:
+  paid provider execution without the fresh parent-12.5 approval and an
+  enforced monetary ceiling; reuse of the spent parent-12.4 approval;
+  unexecuted manual harnesses or DEV authentication; repository visibility
+  changes; Alphaus contact; sibling-repository mutations; campaign archive;
+  force pushes; history rewriting; deleting another live session's work;
+  fabricating certification evidence.
 
-EXTERNAL CONTACT AUTHORIZED:
+EXTERNAL CONTACT PERFORMED:
   GitHub Actions read/observe; validated fast-forward Nightwatch pushes;
-  public read-only provider documentation and npm advisory queries for the
-  provider-readiness preparation (no authenticated provider call without the
-  fresh approval). No provider execution, no spend, no repository visibility
-  change and no campaign archive is authorized here.
+  one read-only sibling-scope preflight observation (no inference, no
+  mutation). No provider call, no spend, no credential disclosure.
 
 ALPHAUS DEV / NEXT / PRODUCTION CONTACT:   NOT AUTHORIZED
 AUTHENTICATED ALPHAUS RUNTIME:             NOT AUTHORIZED
@@ -113,6 +98,6 @@ FORCE PUSH / HISTORY REWRITE:              NOT AUTHORIZED
 LOCAL READ-ONLY COMMANDS AND TESTS:        AUTHORIZED
 ```
 
-Live HEAD and ownership are discovered from Git and `session:status`. Do not
-claim release completion, run paid proof, change visibility or archive without
-the required owner actions and verified evidence.
+Live HEAD and ownership are discovered from Git and the session status tooling.
+The terminal record is closed; the successor provider campaign opens only
+after the owner's parent-12.5 approval and its monetary cap.
