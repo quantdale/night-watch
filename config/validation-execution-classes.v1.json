@@ -499,6 +499,13 @@
       "class": "PARALLEL_SAFE",
       "signals": []
     },
+    "tests/unit/cliSpendEnforcement.test.ts": {
+      "class": "PROCESS_ISOLATED_ONLY",
+      "signals": [
+        "owner-local-state",
+        "isolated-scratch"
+      ]
+    },
     "tests/unit/committedMeasurement.test.ts": {
       "class": "PARALLEL_SAFE",
       "signals": [
