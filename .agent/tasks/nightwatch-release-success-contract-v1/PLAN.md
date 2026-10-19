@@ -63,12 +63,16 @@ secret, credential or customer value enters source, records or artifacts.
 - [x] Record the population evidence (33/33 receipts `NO_PROGRESS`).
 - [x] Create a distinct task identity so the remediation is not conflated with
       the completion campaign's own long-lived session.
+- **Status:** COMPLETE
+
 
 ### M1 — implement the campaign-level success path (R6-01)
 - [x] `campaignCompletion.ts`: pure, fail-closed completion verdict.
 - [x] `localCampaign.ts`: declared plan input, plan persistence in the progress
       envelope, the SUCCESS exit, the refusal exit, and the stagnation flag.
 - [x] `bin/nightwatch-agent.mjs`: `--expected-investigations` with validation.
+- **Status:** COMPLETE
+
 
 ### M2 — preserve diagnostics (R6-02)
 - [x] `campaignDiagnostics.ts`: per-investigation termination cause
@@ -77,16 +81,22 @@ secret, credential or customer value enters source, records or artifacts.
 - [x] Capture per investigation before any checkpoint deletion; expose on the
       result; persist through the receipt `diagnostics` block.
 - [x] Record the launch parameters and usage accounting.
+- **Status:** COMPLETE
+
 
 ### M3 — separate the sibling-observation scope (R6-03)
 - [x] `--observe-repository` independent of `--repository`; observations and
       investigation scope are no longer the same derived value.
+- **Status:** COMPLETE
+
 
 ### M4 — deterministic proof (A-I) and integration proof (J)
 - [x] 21 tests in `tests/unit/campaignCompletionSuccess.test.ts`.
 - [x] Negative controls retained: NO_PROGRESS, PROVIDER_DEGRADED, missing
       siblings, wrong identity, wrong checkpoint, tampering, budget exhaustion.
 - [x] The REAL G12 probe grades a genuinely completed receipt MET.
+- **Status:** COMPLETE
+
 
 ### M4b — resume-path defect found during staged validation (R6-04)
 - [x] Reproduced: a campaign that paused mid-investigation then resumed could
@@ -99,6 +109,8 @@ secret, credential or customer value enters source, records or artifacts.
 - [x] Updated two pre-existing tests that had pinned the phantom count
       (`campaignEndurance`, `localCampaign`); both asserted 6 terminations for 5
       investigations. Added an explicit population-reconciliation invariant.
+- **Status:** COMPLETE
+
 
 ### M4c — the C-00 claim recovery (D-180)
 - [x] Implement the owner-approved `retarget-task` recovery with its pure
@@ -108,6 +120,8 @@ secret, credential or customer value enters source, records or artifacts.
       hardening probe/mutant censuses fully detected.
 - [x] Correct this session's mistaken claim to this task through the governed
       operation; preserve the predecessor's record and worktree untouched.
+- **Status:** COMPLETE
+
 
 ### M4e — the pre-request monetary admission (D-181)
 - [x] `spendCeiling.ts`: the pure `nightwatch.spend-ceiling.v1` admission over
@@ -119,6 +133,8 @@ secret, credential or customer value enters source, records or artifacts.
 - [x] `tests/unit/spendCeiling.test.ts` (7 tests) incl. the provider-never-
       invoked proof; correct the two stale R6-04 phantom-PAUSED pins the
       original repair missed.
+- **Status:** COMPLETE
+
 
 ### M5 — gates and governed integration
 - [x] `typecheck`, `typecheck:bin`
@@ -130,6 +146,8 @@ secret, credential or customer value enters source, records or artifacts.
 - [ ] S6 substantive-checkpoint certification choreography and evidence
       re-earning (15/16 effective MET expected; condition #3 stays UNMET)
 - [ ] Parent-12.5 provider readiness package (prepared, never executed here)
+- **Status:** IN_PROGRESS
+
 
 ## Validation Strategy
 

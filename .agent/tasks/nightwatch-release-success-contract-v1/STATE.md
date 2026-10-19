@@ -62,45 +62,49 @@ choreography.
 
 ## Completed Milestones
 
-- M0 complete: defect confirmed against source; the campaign loop had six exits
-  and none could emit a campaign-level COMPLETE_* reason, while the evaluator
-  requires COMPLETED_SUCCESSFULLY. Population evidence: 33/33 receipts
-  NO_PROGRESS, 32 with a healthy provider.
-- M1 complete (R6-01): `campaignCompletion.ts` added; `localCampaign.ts` gains the
-  declared plan, its persistence, the SUCCESS exit and the refusal exit, and a
-  stagnation flag; `--expected-investigations` validated in the launcher.
-- M2 complete (R6-02): `campaignDiagnostics.ts` added; per-investigation causes
-  captured before checkpoint deletion; launch parameters and usage persisted
-  through the receipt diagnostics block.
-- M3 complete (R6-03): `--observe-repository` separates the observation scope
-  from the investigation scope; no arbitrary observation is manufactured.
-- M4 complete: 21 deterministic tests cover A-I, J (the real G12 probe grades a
-  genuinely completed receipt MET) and K (a resumed campaign can complete).
-- M4b complete (R6-04): found and fixed during staged validation — a campaign that
-  paused mid-investigation then resumed could never complete, because the PAUSED
-  suspension placeholder was never retired when that slot finished. Two
-  pre-existing tests had pinned the phantom count (6 terminations for 5
-  investigations) and were corrected to the reconciled semantics.
-- M4c complete (C-00): the owner-approved `retarget-task` recovery is
+- **M0 COMPLETE** — defect confirmed against source; the campaign loop had six
+  exits and none could emit a campaign-level COMPLETE_* reason, while the
+  evaluator requires COMPLETED_SUCCESSFULLY. Population evidence: 33/33
+  receipts NO_PROGRESS, 32 with a healthy provider.
+- **M1 COMPLETE** — R6-01: `campaignCompletion.ts` added; `localCampaign.ts`
+  gains the declared plan, its persistence, the SUCCESS exit and the refusal
+  exit, and a stagnation flag; `--expected-investigations` validated in the
+  launcher.
+- **M2 COMPLETE** — R6-02: `campaignDiagnostics.ts` added;
+  per-investigation causes captured before checkpoint deletion; launch
+  parameters and usage persisted through the receipt diagnostics block.
+- **M3 COMPLETE** — R6-03: `--observe-repository` separates the observation
+  scope from the investigation scope; no arbitrary observation is
+  manufactured.
+- **M4 COMPLETE** — 21 deterministic tests cover A-I, J (the real G12 probe
+  grades a genuinely completed receipt MET) and K (a resumed campaign can
+  complete).
+- **M4b COMPLETE** — R6-04: found and fixed during staged validation — a
+  campaign that paused mid-investigation then resumed could never complete,
+  because the PAUSED suspension placeholder was never retired when that slot
+  finished. Two pre-existing tests had pinned the phantom count (6
+  terminations for 5 investigations) and were corrected to the reconciled
+  semantics.
+- **M4c COMPLETE** — the owner-approved `retarget-task` recovery is
   implemented in the session CLI with its pure admission core
   (`admitTaskRetarget`, `admitRetargetReplacement`), the bounded audit line,
   and the D-180 decision record; this session's mistaken claim
   `nightwatch-final-product-completion-v1` was corrected to this task through
   the governed transition (record revision CAS under the transition lock), and
   `workspace:check` is green with the predecessor preserved byte-for-byte.
-- M4d complete (governance proof): the NW-AUD-006 `retarget-task` matrix
+- **M4e COMPLETE** — D-181: the pre-request monetary admission is implemented
+  (`nightwatch.spend-ceiling.v1` + the `AgentRuntime` pre-dispatch seam +
+  campaign plumbing) and validated end to end: a refused request never reaches
+  the provider, a one-call-sized ceiling admits exactly one dispatch, and a
+  metered run without a declared ceiling fails closed. Two stale R6-04 test
+  pins the original repair missed are corrected with the population invariant.
+- **M4d COMPLETE** — governance proof: the NW-AUD-006 `retarget-task` matrix
   (9 cases: atomic correction with identity preservation, stale/missing
   expectations, destination refusals, untracked/symlinked replacement STATE,
   unexpected branch, ambiguous active task, non-held and malformed/symlinked
   records, worktree confinement, revision CAS refusal, concurrent single
   transition) passes, and `checkC00WorkspaceIntegrity` now requires the new
   admission controls.
-- M4e complete (D-181): the pre-request monetary admission is implemented
-  (`nightwatch.spend-ceiling.v1` + the `AgentRuntime` pre-dispatch seam +
-  campaign plumbing) and validated end to end: a refused request never reaches
-  the provider, a one-call-sized ceiling admits exactly one dispatch, and a
-  metered run without a declared ceiling fails closed. Two stale R6-04 test
-  pins the original repair missed are corrected with the population invariant.
 
 ## Work In Progress
 
@@ -187,6 +191,22 @@ At the D-181 commit (monetary admission + ledger registration, 2026-10-19):
 - `npm run hardening:check`, `npm run schema:check`, `npm run hardening:rules`
   — PASS (274/274 probes; the spend-ceiling schema family is declared
   IN_MEMORY under D-130).
+
+At the S6 candidate tip (task-record coherence + mutation contract, 2026-10-19):
+- The NW-07 PLAN/STATE milestone-coherence failure found by the prepush
+  affected-shards run is fixed at its root: the completed milestones are
+  recorded as `**M<N> COMPLETE**` markers and every PLAN milestone section
+  carries its `- **Status:**` line, so the live records satisfy the enforced
+  coherence rule (5/5 nw07 tests pass).
+- The mutation contract for the new guards (D-174's standard: every new guard
+  is behaviourally detected) registers BM-123..BM-126 under findings
+  R5-16/task-retarget-recovery and R5-16/spend-pre-request-admission; the
+  census pin moves 122 -> 126 exactly as its own documented procedure
+  prescribes. `npm run hardening:mutants` — 126/126 detected, 0 survived.
+- `npm run gate:milestone` — every step green (validation-universe,
+  execution-classes, typecheck, hardening-check, agent-check, handoff-check,
+  typecheck-bin, hardening-rules 274/274, mutation-harness 122/122 at the
+  time, project-check); the full prepush lane is re-run at the committed tip.
 
 Earlier R6 staged validation (fe193a3a/ba84217d, recorded in the previous
 milestones): 21/21 new tests, 114 focused tests, 13 localCampaign/endurance

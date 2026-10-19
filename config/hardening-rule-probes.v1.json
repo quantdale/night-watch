@@ -3141,7 +3141,9 @@
     "R5-15/command-measurement-clean",
     "R5-15/command-observer-position",
     "R5-15/command-ignored-input",
-    "R5-15/command-toctou-guard"
+    "R5-15/command-toctou-guard",
+    "R5-16/task-retarget-recovery",
+    "R5-16/spend-pre-request-admission"
   ],
   "behaviouralMutants": [
     {
@@ -5374,6 +5376,74 @@
         },
         {
           "file": "tests/unit/certifyEvidence.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-123",
+      "finding": "R5-16/task-retarget-recovery",
+      "guard": "the owner-approved task recovery refuses without the explicit owner-recovery intent",
+      "ops": [
+        {
+          "file": "bin/lib/session-authority.mjs",
+          "search": "if (ownerRecovery !== true) {",
+          "replace": "if (false) {"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/sessionMutationAuthority.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-124",
+      "finding": "R5-16/task-retarget-recovery",
+      "guard": "the replacement task must exist as a tracked STATE that identifies it before any retarget",
+      "ops": [
+        {
+          "file": "bin/lib/session-authority.mjs",
+          "search": "if (stateTaskId !== input.replacementTaskId) {",
+          "replace": "if (false) {"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/sessionMutationAuthority.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-125",
+      "finding": "R5-16/spend-pre-request-admission",
+      "guard": "a request whose cumulative worst-case spend could exceed the authorized ceiling is refused",
+      "ops": [
+        {
+          "file": "src/core/agentRuntime/spendCeiling.ts",
+          "search": "if (projectedUsd > ceiling.maxSpendUsd) {",
+          "replace": "if (false) {"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/spendCeiling.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "BM-126",
+      "finding": "R5-16/spend-pre-request-admission",
+      "guard": "a refused spend admission never reaches the provider",
+      "ops": [
+        {
+          "file": "src/core/agentRuntime/runtime.ts",
+          "search": "if (!admission.ok) {",
+          "replace": "if (false) {"
+        }
+      ],
+      "focusedTests": [
+        {
+          "file": "tests/unit/spendCeiling.test.ts"
         }
       ]
     }

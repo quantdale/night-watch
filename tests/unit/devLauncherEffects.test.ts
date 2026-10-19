@@ -206,8 +206,10 @@ test.describe('15.A the guard-try evasion class is closed', () => {
     // The census may only grow transparently (a new guard gets a new mutant and
     // this pin is updated in the same change), never shrink. D-174 reissued
     // BM-078 and added BM-118..BM-122 for the guarded measurement root: 122.
-    expect(ids.length).toBe(122);
-    expect([...ids].sort()).toEqual(Array.from({ length: 122 }, (_, index) => `BM-${String(index + 1).padStart(3, '0')}`));
+    // D-180/D-181's mutation contract added BM-123..BM-126 for the owner-
+    // approved task recovery and the pre-request spend admission: 126.
+    expect(ids.length).toBe(126);
+    expect([...ids].sort()).toEqual(Array.from({ length: 126 }, (_, index) => `BM-${String(index + 1).padStart(3, '0')}`));
     expect(new Set(ids).size).toBe(ids.length);
     // The five previously-surviving mutants are all still registered.
     for (const id of ['BM-026', 'BM-029', 'BM-030', 'BM-034', 'BM-035']) expect(ids).toContain(id);
