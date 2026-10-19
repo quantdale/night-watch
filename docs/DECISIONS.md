@@ -7347,3 +7347,79 @@ further force operation was performed.
 clean leak scan, a sibling observation) under a fresh one-run authorization, or
 an owner decision. The credit already spent was bounded by the enforced byte
 ceiling, not by an estimate.
+
+## D-180 — the owner-approved `retarget-task` recovery: one governed correction for a misassigned session claim (2026-10-19)
+
+Source: owner instruction "NIGHTWATCH — FINAL END-TO-END COMPLETION MISSION"
+(2026-10-19), C-00 governance recovery, under the terminal campaign
+`nightwatch-final-product-completion-v1`. The instruction authorizes exactly
+one class of ownership-record correction and forbids the manual workarounds.
+
+**The deadlock.** The repair session `sess-6d6ce5780dfc` (worktree
+`nightwatch-final-product-complet-12cbddff`, branch
+`session/nightwatch-final-product-complet-12cbddff`, base `ac0cc600`) was
+registered by `start` under the terminal campaign id and adopted its claim
+with `claim --adopt`, so its record names `nightwatch-final-product-completion-v1`
+— the same task the predecessor session `sess-6d3b85cd198c` (worktree
+`nightwatch-final-product-complet-ded25ab6`, HEAD `0743798f`, the certified
+S5 measurement root) still holds live. The result is genuine and fail-closed:
+`WORKSPACE_DUPLICATE_TASK_CLAIM` fails `workspace:check`/`agent:check`, and
+`integrate` answers `SESSION_CONTINUITY_MISMATCH` because the record's task
+STATE records `Branch: main`, not this session branch. C-00 exposed no
+supported way to correct the task of a LIVE self-claim (`claim` creates a new
+session identity and refuses a live holder; `recover` only removes a crashed
+transition lock), and hand-editing the record or deleting either worktree is
+forbidden.
+
+**Decision.** The C-00 session CLI gains ONE narrow, owner-approved recovery
+command, `retarget-task`, which corrects the task id of the CURRENT OWNED
+record and nothing else. Its admission is exact and fail-closed:
+
+- it runs only inside the exact current owned session worktree (the record
+  file is derived from the invoking checkout; no target can be named);
+- it requires the exact current session id, the exact expected HEAD, the exact
+  previous task id (`--expect-task`), the exact replacement task id (`--task`)
+  and the explicit owner-recovery intent (`--owner-recovery`);
+- it verifies the record is the live holder's, on the branch the record names,
+  and refuses a foreign, stale, released or differently-branched record;
+- it verifies the replacement task exists as a normal TRACKED continuity file
+  whose STATE identifies it, and that the active-task identity names the task
+  being corrected or the replacement (a third identity is ambiguous and
+  refused);
+- it verifies no other live worktree owns the replacement task;
+- it preserves the session id, base SHA, branch, commits, worktree and history:
+  only `taskId` (and a defaulted `campaignId`) changes;
+- it publishes through the existing transition-locked, revision-checked,
+  atomic durable record publication, and refuses on any concurrent
+  modification;
+- it records one sanitized audit line (public identity values only — no path,
+  no credential) in the worktree's private, untracked, regenerable Git
+  directory;
+- it never edits a tracked file: the ACTIVE_TASK/STATE routing corrections are
+  ordinary commits the owning session makes afterwards;
+- it never disables continuity, workspace uniqueness or any fail-closed
+  admission check, and there is no unrestricted owner override.
+
+**Mutation contract.** The refusal paths are covered by the NW-AUD-006 suite
+(new `retarget-task` block: atomic correction with identity preservation,
+wrong session/HEAD/previous-task/missing-owner-intent, nonexistent/same/
+escaping/already-live destination, untracked and symlinked replacement STATE,
+unexpected branch, ambiguous active task, non-held record, malformed and
+symlinked records, worktree confinement, the revision compare-and-swap
+refusal, and concurrent recoveries committing exactly one transition). The
+hardening rule `checkC00WorkspaceIntegrity` now requires the new admission
+controls to exist in the shipped source. The structural probe census (274) and
+the behavioural-mutant registry (122) are unchanged and fully detected.
+
+**What this decision is not.** It does not create a second ownership system,
+an owner override for arbitrary records, or any route to retarget a FOREIGN
+session (the predecessor's claim and its S5 worktree are preserved
+byte-for-byte); it does not weaken `WORKSPACE_DUPLICATE_TASK_CLAIM`,
+continuity admission or the mutation-root/script binding; and it corrects no
+history — the record transition is the only mutation.
+
+**Authorized use.** Exactly one: retarget `sess-6d6ce5780dfc` from
+`nightwatch-final-product-completion-v1` to
+`nightwatch-release-success-contract-v1` (the task its own work actually
+implements), followed by ordinary tracked ACTIVE_TASK/STATE corrections. The
+owner explicitly does not authorize retargeting any other session.

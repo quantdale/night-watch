@@ -21,6 +21,8 @@ import crypto from 'node:crypto';
 export const SESSION_LOCK_SCHEMA = 'nightwatch.session-transition-lock.v1';
 export const SESSION_ID_PATTERN = /^sess-[0-9a-f]{12}$/;
 export const FULL_SHA_PATTERN = /^[0-9a-f]{40}$/;
+/** A task id is a safe `.agent/tasks` directory name: no separators, no `..`. */
+export const TASK_ID_PATTERN = /^[a-z0-9][a-z0-9._-]*$/;
 
 export const SESSION_COMMAND_SET = Object.freeze([
   'status',
@@ -32,6 +34,7 @@ export const SESSION_COMMAND_SET = Object.freeze([
   'integrate',
   'remove',
   'recover',
+  'retarget-task',
 ]);
 
 /**
@@ -60,6 +63,11 @@ export const SESSION_COMMAND_AUTHORITY = Object.freeze({
   integrate: Object.freeze({ mutates: true, explicitRoot: 'REFUSED', checkout: 'CURRENT', expectSession: 'REQUIRED', expectHead: true, lock: true, continuity: true }),
   remove: Object.freeze({ mutates: true, explicitRoot: 'REFUSED', checkout: 'CANONICAL', expectSession: 'REQUIRED', expectHead: false, lock: true, continuity: false }),
   recover: Object.freeze({ mutates: true, explicitRoot: 'REFUSED', checkout: 'CURRENT', expectSession: 'REQUIRED', expectHead: false, lock: false, continuity: false }),
+  // The owner-approved mistaken-task recovery. It changes ONLY the task the
+  // current record names, so it binds the exact session, the exact HEAD, the
+  // exact previous task and the exact replacement task, and it never runs for
+  // a holder other than the live one of the current worktree.
+  'retarget-task': Object.freeze({ mutates: true, explicitRoot: 'REFUSED', checkout: 'CURRENT', expectSession: 'REQUIRED', expectHead: true, lock: true, continuity: false }),
 });
 
 /**
@@ -76,6 +84,11 @@ export const SESSION_COMMAND_STATUS_COMPATIBILITY = Object.freeze({
 /** @param {unknown} value */
 export function isSessionId(value) {
   return typeof value === 'string' && SESSION_ID_PATTERN.test(value);
+}
+
+/** @param {unknown} value */
+export function isTaskId(value) {
+  return typeof value === 'string' && TASK_ID_PATTERN.test(value);
 }
 
 /** @param {unknown} value */
@@ -352,4 +365,74 @@ export function admitLockRecovery(input) {
     return { ok: false, code: 'SESSION_RECOVER_REFUSED', detail: 'the transition process may still be live; recovery never reclaims by age or PID alone' };
   }
   return { ok: true, stale: true, reason: sameBoot ? 'PROCESS_NOT_ALIVE' : 'BOOT_IDENTITY_CHANGED' };
+}
+
+/**
+ * Admit the identity half of the owner-approved mistaken-task recovery
+ * (`retarget-task`). The operation corrects ONLY the task a live record names;
+ * every other identity — session, base, branch, HEAD, worktree — is preserved,
+ * so each of them is an explicit expectation the caller must echo. This is the
+ * confused-deputy boundary for the one recorded misclaim correction class:
+ * the recovery intent is explicit, the current and replacement task identities
+ * are exact, and a foreign, stale, released or differently-branched record is
+ * never retargeted.
+ * @param {{ authority: { expectSession: string, expectHead: boolean }, record: { sessionId: string, taskId: string, role: string, branch: string, ownershipState: string } | null, head: string | null, expectSession: string | null, expectHead: string | null, expectTask: string | null, replacementTaskId: string | null, ownerRecovery: boolean, currentBranch: string | null, holderLive: boolean }} input
+ * @returns {{ ok: true } | { ok: false, code: string, detail: string }}
+ */
+export function admitTaskRetarget(input) {
+  const { authority, record, head, expectSession, expectHead, expectTask, replacementTaskId, ownerRecovery, currentBranch, holderLive } = input;
+  if (ownerRecovery !== true) {
+    return { ok: false, code: 'SESSION_RETARGET_OWNER_INTENT_MISSING', detail: 'pass --owner-recovery to declare the owner-approved mistaken-task recovery intent' };
+  }
+  if (record === null || typeof record !== 'object') {
+    return { ok: false, code: 'SESSION_RECORD_ABSENT', detail: 'no valid ownership record exists to retarget' };
+  }
+  if (record.ownershipState !== 'OWNED') {
+    return { ok: false, code: 'SESSION_RETARGET_REFUSED_NOT_HOLDER', detail: 'the current record is not an owned claim; adopt it explicitly before any recovery' };
+  }
+  if (holderLive !== true) {
+    return { ok: false, code: 'SESSION_RETARGET_REFUSED_NOT_HOLDER', detail: 'the current record holder is not live; a stale claim is recovered by claim --adopt, never by retargeting' };
+  }
+  // The exact session and HEAD expectations are the same admission every
+  // mutator uses; a stale or missing expectation refuses before any effect.
+  const expectations = /** @type {{ ok: true } | { ok: false, code: string, detail: string }} */ (
+    admitExpectations({ authority, record, head, expectSession, expectHead, adopting: false })
+  );
+  if (!expectations.ok) return expectations;
+  if (!isTaskId(expectTask) || expectTask !== record.taskId) {
+    return { ok: false, code: 'SESSION_RETARGET_FROM_TASK_MISMATCH', detail: `pass --expect-task ${record.taskId} (the exact task the record names today)` };
+  }
+  if (!isTaskId(replacementTaskId)) {
+    return { ok: false, code: 'SESSION_RETARGET_TASK_ID_INVALID', detail: 'the replacement task id must be a safe .agent/tasks directory name' };
+  }
+  if (replacementTaskId === record.taskId) {
+    return { ok: false, code: 'SESSION_RETARGET_SAME_TASK', detail: 'the replacement task is the task the record already names' };
+  }
+  if (typeof currentBranch !== 'string' || currentBranch === '' || currentBranch !== record.branch) {
+    return { ok: false, code: 'SESSION_RETARGET_BRANCH_MISMATCH', detail: 'the worktree branch does not match the ownership record branch; the recovery binds one exact branch' };
+  }
+  return { ok: true };
+}
+
+/**
+ * Admit that the replacement task's tracked continuity files can be made
+ * coherent with this branch through normal tracked-file edits. The task must
+ * actually exist (its STATE identifies it) and the active-task identity must
+ * name the task being corrected or the replacement — a third identity is an
+ * ambiguous ownership state, never silently adopted. The recovery itself
+ * edits no tracked file: the ACTIVE_TASK/STATE corrections are ordinary
+ * commits performed by the owning session afterwards.
+ * @param {{ replacementTaskId: string, fromTaskId: string, stateTaskId: string | null | undefined, activeTaskId: string | null | undefined }} input
+ * @returns {{ ok: true } | { ok: false, code: string, detail: string }}
+ */
+export function admitRetargetReplacement(input) {
+  const stateTaskId = input.stateTaskId ?? null;
+  const activeTaskId = input.activeTaskId ?? null;
+  if (stateTaskId !== input.replacementTaskId) {
+    return { ok: false, code: 'SESSION_RETARGET_TASK_ABSENT', detail: `the replacement task must exist as a readable .agent/tasks/${input.replacementTaskId}/STATE.md that identifies it` };
+  }
+  if (activeTaskId === null || (activeTaskId !== input.fromTaskId && activeTaskId !== input.replacementTaskId)) {
+    return { ok: false, code: 'SESSION_RETARGET_ROUTING_INCOHERENT', detail: 'the active task identity names neither the task being corrected nor the replacement; its routing cannot be made coherent by this recovery' };
+  }
+  return { ok: true };
 }

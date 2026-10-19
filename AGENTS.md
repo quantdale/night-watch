@@ -144,6 +144,20 @@ inspect it with `recover --dry-run`, then recover it exactly with
 `recover --expect-session <id> --expect-operation <id>` (never by editing or
 deleting a record by hand).
 
+A mistakenly assigned task id is corrected ONLY by the owner-approved
+recovery `retarget-task`, run inside the exact current owned session worktree:
+`retarget-task --expect-session <id> --expect-head <40-hex-head>
+--expect-task <current-task-id> --task <replacement-task-id>
+--owner-recovery`. It changes only the task the record names (and a defaulted
+campaign id), preserves the session identity, base SHA, branch, commits,
+worktree and history, refuses a foreign, stale, released, ambiguous or
+already-claimed target, publishes through the same transition-locked,
+revision-checked atomic record publication, and records one sanitized audit
+line in the worktree's private Git directory. It never edits a tracked file —
+the ACTIVE_TASK/STATE routing corrections are ordinary commits the owning
+session makes afterwards — it never disables continuity, workspace uniqueness
+or any fail-closed admission check, and it never retargets another session.
+
 `start` admits the candidate registration before it mutates anything: the
 worktree it is about to create is measured against the same
 `maxWorktrees` bound the `WORKSPACE_WORKTREE_METADATA` invariant uses, so an

@@ -214,6 +214,12 @@ export function checkC00WorkspaceIntegrity() {
     'admitContinuity',
     'admitCheckoutRole',
     'admitLockRecovery',
+    'admitTaskRetarget',
+    'admitRetargetReplacement',
+    'SESSION_RETARGET_OWNER_INTENT_MISSING',
+    'SESSION_RETARGET_FROM_TASK_MISMATCH',
+    'SESSION_RETARGET_BRANCH_MISMATCH',
+    'SESSION_RETARGET_TASK_ALREADY_CLAIMED',
     'withTransitionLock',
     'recordRevision',
   ]) {

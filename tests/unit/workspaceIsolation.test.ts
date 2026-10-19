@@ -1737,15 +1737,18 @@ test.describe('NW-07 — the --dry-run contract mutates nothing', () => {
   test('12. the declared dry-run contract covers every dispatchable command', () => {
     // Totality: a command added to COMMANDS without a DRY_RUN_SUPPORT entry
     // would fall through the dispatch guard and silently ignore the flag
-    // again. Proven against the shipped source, not a copy of the list.
+    // again. Proven against the shipped source, not a copy of the list. Both
+    // extraction regexes span the operator-CLI command-name vocabulary
+    // ([a-z0-9-], e.g. the `retarget-task` recovery command, whose table key is
+    // therefore quoted); the check is unchanged in both directions.
     const source = fs.readFileSync(SESSION, 'utf8');
     const commands = /const COMMANDS = new Set\(\[([^\]]*)\]\)/.exec(source)?.[1];
     expect(commands).toBeTruthy();
-    const names = [...commands!.matchAll(/'([a-z]+)'/g)].map((match) => match[1]);
+    const names = [...commands!.matchAll(/'([a-z0-9-]+)'/g)].map((match) => match[1]);
     expect(names.length).toBeGreaterThanOrEqual(8);
     const table = /const DRY_RUN_SUPPORT = Object\.freeze\(\{([\s\S]*?)\}\);/.exec(source)?.[1];
     expect(table).toBeTruthy();
-    const declared = new Map([...table!.matchAll(/^\s*(\w+):\s*'(SUPPORTED|NOT_APPLICABLE)',/gm)].map((match) => [match[1], match[2]]));
+    const declared = new Map([...table!.matchAll(/^\s*'?([\w-]+)'?:\s*'(SUPPORTED|NOT_APPLICABLE)',/gm)].map((match) => [match[1], match[2]]));
     const missing = names.filter((name) => !declared.has(name));
     expect(missing, `commands with no declared --dry-run contract: ${missing.join(', ')}`).toEqual([]);
     const extra = [...declared.keys()].filter((name) => !names.includes(name));

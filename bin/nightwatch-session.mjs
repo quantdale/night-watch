@@ -39,8 +39,12 @@ import {
   admitExpectations,
   admitInvocationBinding,
   admitLockRecovery,
+  admitRetargetReplacement,
+  admitTaskRetarget,
   isSessionId,
+  parseActiveTaskIdentity,
   parseExpectation,
+  parseStateIdentity,
   recordRevision,
 } from './lib/session-authority.mjs';
 import { normalizeTaskStatus } from './agent-continuity-protocol.mjs';
@@ -98,11 +102,11 @@ const TRANSITION_LOCK_MAX_BYTES = 4096;
  * present because the parser always initializes it; a flag that was not
  * supplied keeps its documented default.
  *
- * @typedef {{ command: SessionCommandName, root: string | null, rootExplicit: boolean, json: boolean, taskId: string | null, campaignId: string | null, role: string, baseSha: string | null, anchorPid: number | null, directory: string | null, name: string | null, adopt: boolean, dryRun: boolean, offline: boolean, allowDrift: boolean, deleteBranch: boolean, abandonUnmerged: boolean, expectSession: string | null, expectHead: string | null, expectOperation: string | null }} SessionCommandOptions
+ * @typedef {{ command: SessionCommandName, root: string | null, rootExplicit: boolean, json: boolean, taskId: string | null, campaignId: string | null, role: string, baseSha: string | null, anchorPid: number | null, directory: string | null, name: string | null, adopt: boolean, dryRun: boolean, offline: boolean, allowDrift: boolean, deleteBranch: boolean, abandonUnmerged: boolean, expectSession: string | null, expectHead: string | null, expectOperation: string | null, expectTask: string | null, ownerRecovery: boolean }} SessionCommandOptions
  */
 
 /** The one command-name vocabulary this CLI dispatches. */
-/** @typedef {'status' | 'check' | 'start' | 'claim' | 'release' | 'reconcile' | 'integrate' | 'remove' | 'recover'} SessionCommandName */
+/** @typedef {'status' | 'check' | 'start' | 'claim' | 'release' | 'reconcile' | 'integrate' | 'remove' | 'recover' | 'retarget-task'} SessionCommandName */
 
 /**
  * One ownership-record holder: the boot identity, the ISO instant the claim
@@ -633,9 +637,11 @@ function withTransitionLock(recordFile, options, body) {
 // seam is deliberately narrow: exactly one environment variable, an exact
 // allowlisted token, a loud announcement whenever it is active, and a hard
 // CONFIG_INVALID for any other value — an unrecognised token never degrades
-// into "no injection". It can only cause a start to fail and roll back; it
-// grants no authority and reaches no other command.
-const SESSION_FAULT_INJECTION_POINTS = new Set(['AFTER_WORKTREE_ADD', 'AFTER_RECORD_WRITE', 'AFTER_INTEGRATION_VERIFY']);
+// into "no injection". Each token reaches exactly one command's own
+// post-admission failure path (start rollback, integrate's uncertain outcome,
+// retarget-task's revision compare-and-swap), grants no authority and changes
+// no recorded state beyond what that documented failure path already reports.
+const SESSION_FAULT_INJECTION_POINTS = new Set(['AFTER_WORKTREE_ADD', 'AFTER_RECORD_WRITE', 'AFTER_INTEGRATION_VERIFY', 'AFTER_RETARGET_OBSERVE']);
 
 /**
  * @param {Record<string, string | undefined>} [environment]
@@ -1309,6 +1315,171 @@ function commandRecover(context, options) {
 }
 
 /**
+ * Append one sanitized recovery-audit line to the session's PRIVATE, untracked,
+ * regenerable git-dir log. The entry carries only public identity values (the
+ * exact transition it records): no path, no credential, no customer value ever
+ * enters it, and it is never durable project truth.
+ *
+ * @param {SessionContext} context
+ * @param {{ operationId: string, sessionId: string, fromTask: string, toTask: string, branch: string, head: string, baseSha: string }} entry
+ * @returns {{ ok: true } | { ok: false, code: string, detail: string }}
+ */
+function appendRetargetAudit(context, entry) {
+  const file = path.join(context.gitDir, 'nightwatch-session-audit.v1.jsonl');
+  const line = `${JSON.stringify({ schemaVersion: 'nightwatch.session-task-retarget-audit.v1', appliedAtIso: new Date().toISOString(), ...entry })}\n`;
+  try {
+    fs.appendFileSync(file, line, { encoding: 'utf8', mode: 0o600 });
+  } catch (error) {
+    // The ownership record was already published, so this outcome is reported
+    // uncertain rather than dropped or retried.
+    return { ok: false, code: 'SESSION_RETARGET_AUDIT_UNCERTAIN', detail: String(errnoCodeOf(error) ?? 'UNKNOWN') };
+  }
+  return { ok: true };
+}
+
+/**
+ * The owner-approved mistaken-task recovery (`retarget-task`). It corrects the
+ * ONE identity a misassigned claim got wrong — the task the current record
+ * names — and preserves everything else: session id, base SHA, branch, HEAD,
+ * commits, worktree and repository history. It runs only inside the exact
+ * current owned session worktree, binds the exact session, HEAD, previous task
+ * and replacement task, requires the explicit owner-recovery intent, refuses
+ * every foreign or ambiguous ownership state, and publishes the corrected
+ * record through the same transition-locked, revision-checked, atomic
+ * publication every other transition uses. It never edits a tracked file: the
+ * ACTIVE_TASK/STATE routing corrections are ordinary commits the owning
+ * session makes afterwards.
+ *
+ * @param {SessionContext} context
+ * @param {SessionCommandOptions} options
+ */
+function commandRetargetTask(context, options) {
+  const authority = SESSION_COMMAND_AUTHORITY['retarget-task'];
+  const roleAdmission = /** @type {SessionAdmissionResult} */ (admitCheckoutRole({
+    authority,
+    isLinked: context.isLinked,
+    worktreeCount: 1,
+    role: options.role,
+  }));
+  if (!roleAdmission.ok) return fail(roleAdmission.code, roleAdmission.detail);
+  const fault = resolveFaultInjection();
+  if (fault.invalid !== null) {
+    return fail('SESSION_FAULT_INJECTION_INVALID', `NIGHTWATCH_SESSION_FAULT_INJECTION must be one of ${[...SESSION_FAULT_INJECTION_POINTS].join(', ')}`);
+  }
+  if (fault.point !== null) emit('SESSION_FAULT_INJECTION_ACTIVE', fault.point);
+  const replacementTaskId = options.taskId;
+  if (replacementTaskId === null) return fail('SESSION_RETARGET_TASK_ID_REQUIRED', 'pass --task <replacement-task-id>');
+  const fromTaskId = options.expectTask;
+  if (fromTaskId === null) return fail('SESSION_RETARGET_TASK_ID_REQUIRED', 'pass --expect-task <current-task-id>');
+  const file = currentRecordFile(context);
+  const observed = readRecordDocument(file, context.policy);
+  if (observed.state !== 'PRESENT') {
+    return fail(observed.state === 'ABSENT' ? 'SESSION_RECORD_ABSENT' : 'SESSION_RECORD_UNREADABLE', `the ownership record is ${observed.state}`);
+  }
+  const record = observed.parsed;
+  const head = gitValue(context.root, ['rev-parse', 'HEAD']);
+  const currentBranch = currentBranchOf(context);
+  const admission = /** @type {SessionAdmissionResult} */ (admitTaskRetarget({
+    authority,
+    record,
+    head,
+    expectSession: options.expectSession,
+    expectHead: options.expectHead,
+    expectTask: fromTaskId,
+    replacementTaskId,
+    ownerRecovery: options.ownerRecovery,
+    currentBranch,
+    holderLive: holderIsLive(record),
+  }));
+  if (!admission.ok) return fail(admission.code, admission.detail);
+  // The recovery is confined to the exact current owned session worktree: the
+  // record file is derived from the invoking checkout and no target can be
+  // named. A foreign worktree's record is unreachable by construction.
+  const report = inspectWorkspace({ root: context.root });
+  if (report.self?.class !== 'OWNED_SESSION') {
+    return fail('SESSION_RETARGET_REFUSED_NOT_HOLDER', 'retarget-task runs only inside the exact current owned session worktree');
+  }
+  // The replacement task must exist as a normal TRACKED continuity file whose
+  // identity is the replacement, and the active-task identity must name the
+  // task being corrected or the replacement. Both files are corrected only by
+  // ordinary tracked commits after this recovery. Existence and identity are
+  // admitted first, so a missing task reports exactly that.
+  const stateRelative = `.agent/tasks/${replacementTaskId}/STATE.md`;
+  const activeRelative = '.agent/ACTIVE_TASK.md';
+  const stateText = readBoundedText(path.join(context.root, '.agent', 'tasks', replacementTaskId, 'STATE.md'), CONTINUITY_MAX_BYTES);
+  const activeText = readBoundedText(path.join(context.root, '.agent', 'ACTIVE_TASK.md'), CONTINUITY_MAX_BYTES);
+  const coherence = /** @type {SessionAdmissionResult} */ (admitRetargetReplacement({
+    replacementTaskId,
+    fromTaskId,
+    stateTaskId: stateText === null ? null : parseStateIdentity(stateText)?.taskId ?? null,
+    activeTaskId: activeText === null ? null : parseActiveTaskIdentity(activeText)?.taskId ?? null,
+  }));
+  if (!coherence.ok) return fail(coherence.code, coherence.detail);
+  const trackedListing = gitValue(context.root, ['ls-files', '--', activeRelative, stateRelative]) ?? '';
+  const tracked = new Set(trackedListing.split(/\r?\n/).map((line) => line.trim()).filter(Boolean));
+  if (!tracked.has(activeRelative) || !tracked.has(stateRelative)) {
+    return fail('SESSION_RETARGET_TASK_NOT_TRACKED', `${activeRelative} and ${stateRelative} must both be tracked continuity files`);
+  }
+  // No other live worktree may already own the replacement task.
+  for (const worktree of report.worktrees ?? []) {
+    if (worktree.name === (context.worktreeName ?? 'canonical')) continue;
+    if (worktree.holderLive !== true) continue;
+    if (worktree.taskId === replacementTaskId) {
+      return fail('SESSION_RETARGET_TASK_ALREADY_CLAIMED', `task ${replacementTaskId} is live in worktree ${worktree.name}; never take another session's task`);
+    }
+  }
+  if (options.dryRun) {
+    plan('SESSION_RETARGET_PLAN', `session=${record.sessionId} task=${record.taskId} -> ${replacementTaskId} branch=${record.branch} head=${head ?? 'UNKNOWN'}`);
+    plan('SESSION_RETARGET_RECORD', `REPLACE ${file} (taskId${record.campaignId === record.taskId ? ' and defaulted campaignId' : ''} only; session, base, branch, holder, worktree and history unchanged)`);
+    plan('SESSION_RETARGET_CONTINUITY', `then correct ${activeRelative} and ${stateRelative} through ordinary tracked commits`);
+    dryRunComplete('retarget-task');
+    return { retargeted: false, dryRun: true, record };
+  }
+  // The transition lock is held through the revision compare-and-swap and the
+  // durable publication; a concurrent transition refuses instead of racing.
+  const transition = withTransitionLock(file, { command: 'retarget-task', sessionId: record.sessionId }, (acquired) => {
+    const current = readRecordDocument(file, context.policy);
+    if (current.state !== 'PRESENT') {
+      return { ok: false, code: 'SESSION_RECORD_ABSENT', detail: `the ownership record became ${current.state}` };
+    }
+    // NW-06 seam AFTER_RETARGET_OBSERVE proves the revision compare-and-swap
+    // refusal without fabricating a concurrent writer: it only substitutes the
+    // revision this invocation compares against, so the guarded path is the
+    // real one and nothing may be published.
+    const expectedRevision = fault.point === 'AFTER_RETARGET_OBSERVE' ? `stale:${observed.revision}` : observed.revision;
+    if (current.revision !== expectedRevision) {
+      return { ok: false, code: 'SESSION_RECORD_REVISION_CHANGED', detail: 'the ownership record changed during the recovery; nothing was published' };
+    }
+    const headNow = gitValue(context.root, ['rev-parse', 'HEAD']);
+    if (headNow !== options.expectHead) {
+      return { ok: false, code: 'SESSION_EXPECTATION_MISMATCH', detail: 'HEAD advanced during the recovery; prepare a fresh recovery intent' };
+    }
+    const updated = {
+      ...current.parsed,
+      taskId: replacementTaskId,
+      campaignId: current.parsed.campaignId === fromTaskId ? replacementTaskId : current.parsed.campaignId,
+    };
+    const published = publishRecordDurable(file, updated, context.policy);
+    if (!published.ok) return published;
+    const audited = appendRetargetAudit(context, {
+      operationId: acquired.lock.operationId,
+      sessionId: record.sessionId,
+      fromTask: fromTaskId,
+      toTask: replacementTaskId,
+      branch: record.branch,
+      head: headNow ?? 'UNKNOWN',
+      baseSha: record.baseSha,
+    });
+    if (!audited.ok) return audited;
+    return { ok: true, record: updated };
+  });
+  if (transition.ok !== true) return fail(transition.code, transition.detail);
+  emit('SESSION_TASK_RETARGETED', `task=${fromTaskId}->${replacementTaskId} session=${record.sessionId} branch=${record.branch} head=${options.expectHead ?? 'UNKNOWN'}`);
+  emit('SESSION_NEXT_ACTION', `correct ${activeRelative} (Task ID / Task directory / CAMPAIGN) and ${stateRelative} through ordinary tracked commits, then run npm run workspace:check and npm run agent:check`);
+  return transition.record;
+}
+
+/**
  * @param {number} pid
  * @returns {boolean}
  */
@@ -1326,7 +1497,7 @@ function processAlive(pid) {
 // CLI
 // ---------------------------------------------------------------------------
 
-const COMMANDS = new Set(['status', 'check', 'start', 'claim', 'release', 'reconcile', 'integrate', 'remove', 'recover']);
+const COMMANDS = new Set(['status', 'check', 'start', 'claim', 'release', 'reconcile', 'integrate', 'remove', 'recover', 'retarget-task']);
 
 /**
  * The `--dry-run` contract, declared once and enforced at dispatch.
@@ -1355,6 +1526,7 @@ const DRY_RUN_SUPPORT = Object.freeze({
   integrate: 'SUPPORTED',
   remove: 'SUPPORTED',
   recover: 'SUPPORTED',
+  'retarget-task': 'SUPPORTED',
 });
 
 /** @type {import('./lib/operator-cli.mjs').OperatorCliMetadata} */
@@ -1374,6 +1546,7 @@ const CLI_METADATA = {
     { name: 'integrate', summary: 'fast-forward push the session to main (requires --expect-head)' },
     { name: 'remove', summary: 'remove an owned session worktree and branch (canonical checkout only)' },
     { name: 'recover', summary: 'inspect or remove an explicitly proven crashed transition lock' },
+    { name: 'retarget-task', summary: "correct this session's mistaken task id to the intended task (owner-approved recovery only)" },
   ],
   defaultCommand: 'status',
   flags: [
@@ -1395,6 +1568,8 @@ const CLI_METADATA = {
     { name: '--expect-session', shape: 'string', summary: 'exact public current session id (sess-<12 hex>)' },
     { name: '--expect-head', shape: 'string', summary: 'exact 40-hex HEAD for integration intent' },
     { name: '--expect-operation', shape: 'string', summary: 'exact transition-lock operation id for recover' },
+    { name: '--expect-task', shape: 'string', summary: 'exact current record task id being corrected (retarget-task)' },
+    { name: '--owner-recovery', shape: 'boolean', summary: 'declare the owner-approved mistaken-task recovery intent (retarget-task)' },
   ],
   json: true,
   authorization: 'LOCAL_ONLY',
@@ -1427,6 +1602,8 @@ function parseArgs(argv) {
     expectSession: null,
     expectHead: null,
     expectOperation: null,
+    expectTask: null,
+    ownerRecovery: false,
   });
   if (!COMMANDS.has(options.command)) return { error: `UNKNOWN_COMMAND:${options.command}` };
   for (let index = 1; index < args.length; index += 1) {
@@ -1474,6 +1651,8 @@ function parseArgs(argv) {
       if (supplied === undefined || !/^[0-9a-f]{16}$/.test(supplied)) return { error: 'EXPECT_OPERATION_INVALID' };
       options.expectOperation = supplied;
     }
+    else if (value === '--expect-task') options.expectTask = next() ?? null;
+    else if (value === '--owner-recovery') options.ownerRecovery = true;
     else return { error: `UNKNOWN_ARGUMENT:${value}` };
   }
   if (!['IMPLEMENTATION', 'MAINTENANCE'].includes(options.role)) return { error: `UNKNOWN_ROLE:${options.role}` };
@@ -1527,6 +1706,7 @@ function main() {
   else if (options.command === 'integrate') commandIntegrate(context, options);
   else if (options.command === 'remove') commandRemove(context, options);
   else if (options.command === 'recover') commandRecover(context, options);
+  else if (options.command === 'retarget-task') commandRetargetTask(context, options);
 }
 
 if (typeof process.argv[1] === 'string' && path.basename(process.argv[1]) === 'nightwatch-session.mjs') {

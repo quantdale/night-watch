@@ -703,3 +703,304 @@ test.describe('NW-AUD-006 — X-08 terminal-closeout branch binding', () => {
     }
   });
 });
+
+// The owner-approved mistaken-task recovery (`retarget-task`): the ONE
+// governed correction for a live claim that was registered under the wrong
+// task id (C-00). It changes only the task field of the current record and
+// preserves the session identity, base, branch, commits, worktree and history;
+// it requires the explicit owner-recovery intent plus the exact session, HEAD,
+// previous-task and replacement-task expectations; and every stale, foreign,
+// ambiguous or concurrent attempt fails without partial record mutation.
+test.describe('NW-AUD-006 — retarget-task owner recovery', () => {
+  function retarget(owned: Owned, from: string, to: string, head: string, extra: readonly string[] = []): readonly string[] {
+    return ['retarget-task', '--expect-session', owned.sessionId, '--expect-head', head, '--expect-task', from, '--task', to, '--owner-recovery', ...extra];
+  }
+
+  function auditFile(canonical: string, name: string): string {
+    return path.join(path.dirname(recordPath(canonical, name)), 'nightwatch-session-audit.v1.jsonl');
+  }
+
+  test('the owner corrects a mistaken task claim atomically and preserves the session identity', () => {
+    const fx = fixture();
+    try {
+      // The real deadlock shape: two live worktrees claim the same task.
+      const alpha = startOwned(fx, 'authority-task');
+      const beta = startOwned(fx, 'authority-task');
+      const branch = gitOk(alpha.path, ['rev-parse', '--abbrev-ref', 'HEAD']);
+      const head = headOf(alpha.path);
+      const before = recordOf(fx.canonical, alpha.name);
+      const betaBefore = fs.readFileSync(recordPath(fx.canonical, beta.name), 'utf8');
+      const commitsBefore = gitOk(alpha.path, ['rev-list', 'HEAD']);
+
+      // The duplicate claim is exactly what the workspace checker refuses.
+      const deadlocked = session(fx.canonical, ['check']);
+      expect(deadlocked.status).toBe(1);
+      expect(deadlocked.stdout).toContain('WORKSPACE_DUPLICATE_TASK_CLAIM');
+
+      // Dry run reports the plan and mutates nothing.
+      const dry = session(alpha.path, retarget(alpha, 'authority-task', 'authority-other', head, ['--dry-run']));
+      expect(dry.status, dry.stderr).toBe(0);
+      expect(dry.stdout).toContain('PLAN SESSION_RETARGET_PLAN');
+      expect(dry.stdout).toContain('task=authority-task -> authority-other');
+      expect(dry.stdout).toContain('SESSION_DRY_RUN_NO_MUTATION: retarget-task');
+      expect(recordOf(fx.canonical, alpha.name).taskId).toBe('authority-task');
+
+      const done = session(alpha.path, retarget(alpha, 'authority-task', 'authority-other', head));
+      expect(done.status, done.stderr).toBe(0);
+      expect(done.stdout).toContain('SESSION_TASK_RETARGETED: task=authority-task->authority-other');
+
+      const after = recordOf(fx.canonical, alpha.name);
+      expect(after.taskId).toBe('authority-other');
+      expect(after.campaignId).toBe('authority-other');
+      // Everything else is preserved exactly: session identity, base, branch,
+      // creation, holder, ownership and integration state.
+      expect(after.sessionId).toBe(before.sessionId);
+      expect(after.baseSha).toBe(before.baseSha);
+      expect(after.branch).toBe(before.branch);
+      expect(after.createdAtIso).toBe(before.createdAtIso);
+      expect(after.holder).toEqual(before.holder);
+      expect(after.ownershipState).toBe('OWNED');
+      expect(after.integrationState).toBe(before.integrationState);
+      // Commits and history are unchanged.
+      expect(headOf(alpha.path)).toBe(head);
+      expect(gitOk(alpha.path, ['rev-list', 'HEAD'])).toBe(commitsBefore);
+      expect(gitOk(alpha.path, ['rev-parse', '--abbrev-ref', 'HEAD'])).toBe(branch);
+      // The other claimant's record and worktree are byte-for-byte untouched.
+      expect(fs.readFileSync(recordPath(fx.canonical, beta.name), 'utf8')).toBe(betaBefore);
+
+      // The sanitized audit trail records the one transition and no path.
+      const audit = fs.readFileSync(auditFile(fx.canonical, alpha.name), 'utf8').trim().split('\n');
+      expect(audit).toHaveLength(1);
+      expect(audit[0]).toContain('"schemaVersion":"nightwatch.session-task-retarget-audit.v1"');
+      expect(audit[0]).toContain('"fromTask":"authority-task"');
+      expect(audit[0]).toContain('"toTask":"authority-other"');
+      expect(audit[0]).not.toContain(fx.base);
+
+      // Workspace uniqueness passes after the recovery.
+      const recovered = session(fx.canonical, ['check']);
+      expect(recovered.status, recovered.stderr).toBe(0);
+
+      // The tracked continuity corrections are ordinary worktree edits; after
+      // them the session lifecycle continues normally.
+      writeContinuity(alpha.path, 'authority-other', branch);
+      const released = session(alpha.path, ['release', '--expect-session', alpha.sessionId]);
+      expect(released.status, released.stderr).toBe(0);
+    } finally {
+      cleanup(fx.base);
+    }
+  });
+
+  test('every stale or missing expectation refuses before any effect', () => {
+    const fx = fixture();
+    try {
+      const alpha = startOwned(fx, 'authority-task');
+      const head = headOf(alpha.path);
+      const before = fs.readFileSync(recordPath(fx.canonical, alpha.name), 'utf8');
+      const cases: readonly { args: readonly string[]; code: string }[] = [
+        { args: ['retarget-task', '--expect-session', alpha.sessionId, '--expect-head', head, '--expect-task', 'authority-task', '--task', 'authority-other'], code: 'SESSION_RETARGET_OWNER_INTENT_MISSING' },
+        { args: retarget({ ...alpha, sessionId: 'sess-000000000000' }, 'authority-task', 'authority-other', head), code: 'SESSION_EXPECTATION_MISMATCH' },
+        { args: retarget(alpha, 'authority-task', 'authority-other', '0'.repeat(40)), code: 'SESSION_EXPECTATION_MISMATCH' },
+        { args: retarget(alpha, 'authority-ghost', 'authority-other', head), code: 'SESSION_RETARGET_FROM_TASK_MISMATCH' },
+        { args: ['retarget-task', '--expect-session', alpha.sessionId, '--expect-head', head, '--task', 'authority-other', '--owner-recovery'], code: 'SESSION_RETARGET_TASK_ID_REQUIRED' },
+      ];
+      for (const entry of cases) {
+        const refused = session(alpha.path, entry.args);
+        expect(refused.status, entry.args.join(' ')).toBe(1);
+        expect(refused.stderr, entry.args.join(' ')).toContain(entry.code);
+        expect(fs.readFileSync(recordPath(fx.canonical, alpha.name), 'utf8')).toBe(before);
+      }
+    } finally {
+      cleanup(fx.base);
+    }
+  });
+
+  test('a nonexistent, same, escaping or already-live destination task refuses without mutation', () => {
+    const fx = fixture();
+    try {
+      const alpha = startOwned(fx, 'authority-task');
+      const beta = startOwned(fx, 'authority-other');
+      const head = headOf(alpha.path);
+      const before = fs.readFileSync(recordPath(fx.canonical, alpha.name), 'utf8');
+      const betaBefore = fs.readFileSync(recordPath(fx.canonical, beta.name), 'utf8');
+      for (const args of [
+        retarget(alpha, 'authority-task', 'authority-ghost', head),
+        retarget(alpha, 'authority-task', 'authority-task', head),
+        retarget(alpha, 'authority-task', '../escape', head),
+        retarget(alpha, 'authority-task', 'authority-other', head),
+      ]) {
+        const refused = session(alpha.path, args);
+        expect(refused.status, args.join(' ')).toBe(1);
+        expect(fs.readFileSync(recordPath(fx.canonical, alpha.name), 'utf8')).toBe(before);
+      }
+      // Distinct refusal codes, including the live collision.
+      expect(session(alpha.path, retarget(alpha, 'authority-task', 'authority-ghost', head)).stderr).toContain('SESSION_RETARGET_TASK_ABSENT');
+      expect(session(alpha.path, retarget(alpha, 'authority-task', 'authority-task', head)).stderr).toContain('SESSION_RETARGET_SAME_TASK');
+      expect(session(alpha.path, retarget(alpha, 'authority-task', '../escape', head)).stderr).toContain('SESSION_RETARGET_TASK_ID_INVALID');
+      const collision = session(alpha.path, retarget(alpha, 'authority-task', 'authority-other', head));
+      expect(collision.stderr).toContain('SESSION_RETARGET_TASK_ALREADY_CLAIMED');
+      // The destination claimant's record is untouched.
+      expect(fs.readFileSync(recordPath(fx.canonical, beta.name), 'utf8')).toBe(betaBefore);
+    } finally {
+      cleanup(fx.base);
+    }
+  });
+
+  test('the replacement task must exist as a tracked continuity file that identifies it', () => {
+    const fx = fixture();
+    try {
+      const alpha = startOwned(fx, 'authority-task');
+      const head = headOf(alpha.path);
+      const before = fs.readFileSync(recordPath(fx.canonical, alpha.name), 'utf8');
+
+      // An untracked task record is never a governed tracked-file correction.
+      fs.mkdirSync(path.join(alpha.path, '.agent/tasks/authority-untracked'), { recursive: true });
+      fs.writeFileSync(path.join(alpha.path, '.agent/tasks/authority-untracked/STATE.md'), '# Task State\n\n## Identity\n\nTask ID: authority-untracked\nStatus: IN_PROGRESS\n');
+      const untracked = session(alpha.path, retarget(alpha, 'authority-task', 'authority-untracked', head));
+      expect(untracked.status).toBe(1);
+      expect(untracked.stderr).toContain('SESSION_RETARGET_TASK_NOT_TRACKED');
+
+      // A symlinked STATE.md is refused by the bounded read even though the
+      // path is tracked: no path escape is ever followed.
+      const statePath = path.join(alpha.path, '.agent/tasks/authority-other/STATE.md');
+      fs.rmSync(statePath);
+      fs.symlinkSync(path.join(fx.base, 'elsewhere.md'), statePath);
+      const symlinked = session(alpha.path, retarget(alpha, 'authority-task', 'authority-other', head));
+      expect(symlinked.status).toBe(1);
+      expect(symlinked.stderr).toContain('SESSION_RETARGET_TASK_ABSENT');
+      expect(fs.readFileSync(recordPath(fx.canonical, alpha.name), 'utf8')).toBe(before);
+    } finally {
+      cleanup(fx.base);
+    }
+  });
+
+  test('an unexpected branch, an ambiguous active task and a non-held record refuse without mutation', () => {
+    const fx = fixture();
+    try {
+      const alpha = startOwned(fx, 'authority-task');
+      const head = headOf(alpha.path);
+      const recordFile = recordPath(fx.canonical, alpha.name);
+
+      // Unexpected branch: the record names a branch the worktree is not on.
+      const branchBroken = JSON.parse(fs.readFileSync(recordFile, 'utf8')) as Record<string, any>;
+      fs.writeFileSync(recordFile, `${JSON.stringify({ ...branchBroken, branch: 'session/someone-else' }, null, 2)}\n`);
+      const branchRefused = session(alpha.path, retarget(alpha, 'authority-task', 'authority-other', head));
+      expect(branchRefused.status).toBe(1);
+      expect(branchRefused.stderr).toContain('SESSION_RETARGET_BRANCH_MISMATCH');
+      fs.writeFileSync(recordFile, `${JSON.stringify(branchBroken, null, 2)}\n`);
+
+      // Ambiguous ownership state: the active task names a third identity.
+      fs.mkdirSync(path.join(alpha.path, '.agent/tasks/authority-ghost'), { recursive: true });
+      writeContinuity(alpha.path, 'authority-ghost', gitOk(alpha.path, ['rev-parse', '--abbrev-ref', 'HEAD']));
+      const routingRefused = session(alpha.path, retarget(alpha, 'authority-task', 'authority-other', head));
+      expect(routingRefused.status).toBe(1);
+      expect(routingRefused.stderr).toContain('SESSION_RETARGET_ROUTING_INCOHERENT');
+      fs.writeFileSync(recordFile, `${JSON.stringify(branchBroken, null, 2)}\n`);
+
+      // A released (non-held) record is never retargeted.
+      fs.writeFileSync(recordFile, `${JSON.stringify({ ...branchBroken, ownershipState: 'RELEASED', holder: null }, null, 2)}\n`);
+      const released = session(alpha.path, retarget(alpha, 'authority-task', 'authority-other', head));
+      expect(released.status).toBe(1);
+      expect(released.stderr).toContain('SESSION_RETARGET_REFUSED_NOT_HOLDER');
+    } finally {
+      cleanup(fx.base);
+    }
+  });
+
+  test('a malformed or symlinked ownership record fails closed and is never overwritten', () => {
+    const fx = fixture();
+    try {
+      const alpha = startOwned(fx, 'authority-task');
+      const head = headOf(alpha.path);
+      const recordFile = recordPath(fx.canonical, alpha.name);
+
+      fs.writeFileSync(recordFile, '{ not json\n');
+      const malformed = session(alpha.path, retarget(alpha, 'authority-task', 'authority-other', head));
+      expect(malformed.status).toBe(1);
+      expect(malformed.stderr).toContain('SESSION_RECORD_UNREADABLE');
+      expect(fs.readFileSync(recordFile, 'utf8')).toBe('{ not json\n');
+      fs.rmSync(recordFile);
+
+      fs.symlinkSync(path.join(fx.base, 'nowhere.json'), recordFile);
+      const symlinked = session(alpha.path, retarget(alpha, 'authority-task', 'authority-other', head));
+      expect(symlinked.status).toBe(1);
+      expect(symlinked.stderr).toContain('SESSION_RECORD_UNREADABLE');
+      expect(fs.lstatSync(recordFile).isSymbolicLink()).toBe(true);
+    } finally {
+      cleanup(fx.base);
+    }
+  });
+
+  test('the recovery is confined to the current worktree and its own session', () => {
+    const fx = fixture();
+    try {
+      const alpha = startOwned(fx, 'authority-task');
+      const beta = startOwned(fx, 'authority-other');
+      const head = headOf(alpha.path);
+      const betaBefore = fs.readFileSync(recordPath(fx.canonical, beta.name), 'utf8');
+
+      // No explicit root override reaches a mutator.
+      const rooted = session(fx.canonical, ['retarget-task', '--root', alpha.path, '--expect-session', alpha.sessionId, '--expect-head', head, '--expect-task', 'authority-task', '--task', 'authority-other', '--owner-recovery']);
+      expect(rooted.status).toBe(1);
+      expect(rooted.stderr).toContain('SESSION_MUTATION_ROOT_OVERRIDE_REFUSED');
+
+      // The canonical checkout holds no record of its own to retarget.
+      const fromCanonical = session(fx.canonical, ['retarget-task', '--expect-session', alpha.sessionId, '--expect-head', head, '--expect-task', 'authority-task', '--task', 'authority-other', '--owner-recovery']);
+      expect(fromCanonical.status).toBe(1);
+      expect(fromCanonical.stderr).toContain('SESSION_RECORD_ABSENT');
+
+      // Another live session's identity can never be used to retarget anything.
+      const foreign = session(alpha.path, ['retarget-task', '--expect-session', beta.sessionId, '--expect-head', head, '--expect-task', 'authority-task', '--task', 'authority-other', '--owner-recovery']);
+      expect(foreign.status).toBe(1);
+      expect(foreign.stderr).toContain('SESSION_EXPECTATION_MISMATCH');
+      expect(fs.readFileSync(recordPath(fx.canonical, beta.name), 'utf8')).toBe(betaBefore);
+    } finally {
+      cleanup(fx.base);
+    }
+  });
+
+  test('a record changed under the recovery is refused by the revision compare-and-swap', () => {
+    const fx = fixture();
+    try {
+      const alpha = startOwned(fx, 'authority-task');
+      const head = headOf(alpha.path);
+      const before = fs.readFileSync(recordPath(fx.canonical, alpha.name), 'utf8');
+      const refused = session(
+        alpha.path,
+        retarget(alpha, 'authority-task', 'authority-other', head),
+        { NIGHTWATCH_SESSION_FAULT_INJECTION: 'AFTER_RETARGET_OBSERVE' },
+      );
+      expect(refused.status).toBe(1);
+      expect(refused.stderr).toContain('SESSION_RECORD_REVISION_CHANGED');
+      // Nothing was published and no audit line was recorded.
+      expect(fs.readFileSync(recordPath(fx.canonical, alpha.name), 'utf8')).toBe(before);
+      expect(fs.existsSync(auditFile(fx.canonical, alpha.name))).toBe(false);
+    } finally {
+      cleanup(fx.base);
+    }
+  });
+
+  test('concurrent recoveries commit exactly one transition', async () => {
+    const fx = fixture();
+    try {
+      const alpha = startOwned(fx, 'authority-task');
+      const head = headOf(alpha.path);
+      const args = retarget(alpha, 'authority-task', 'authority-other', head);
+      const results = await Promise.all([
+        sessionAsync(alpha.path, args),
+        sessionAsync(alpha.path, args),
+        sessionAsync(alpha.path, args),
+      ]);
+      const winners = results.filter((result) => result.status === 0);
+      expect(winners).toHaveLength(1);
+      for (const loser of results.filter((result) => result.status !== 0)) {
+        expect(loser.stderr).toMatch(/SESSION_TRANSITION_LOCKED|SESSION_RECORD_REVISION_CHANGED|SESSION_RETARGET_FROM_TASK_MISMATCH/);
+      }
+      const record = recordOf(fx.canonical, alpha.name);
+      expect(record.taskId).toBe('authority-other');
+      expect(record.ownershipState).toBe('OWNED');
+      expect(results.filter((result) => result.stdout.includes('SESSION_TASK_RETARGETED'))).toHaveLength(1);
+    } finally {
+      cleanup(fx.base);
+    }
+  });
+});
