@@ -111,6 +111,11 @@ ceiling gap is open.
    (account-side per-key spend limit or a control-plane credential).
 4. Confirm old-key revocation in writing and delete the stale `amr` entry and
    `auth.json.bak`.
-5. OWNER/ADMIN topology action: the long-lived predecessor session
-   `nightwatch-final-product-complet-ded25ab6` holds a live-but-stale claim for
-   `nightwatch-final-product-completion-v1` that this session may not release.
+5. The topology blocker recorded earlier is RESOLVED (2026-10-19) through the
+   D-180 owner-approved `retarget-task` recovery: this session's claim now
+   names `nightwatch-release-success-contract-v1`, the duplicate-claim failure
+   is gone, and the long-lived predecessor session
+   `nightwatch-final-product-complet-ded25ab6` (task
+   `nightwatch-final-product-completion-v1`) keeps its live claim and S5
+   measurement-root worktree untouched by owner decision. Releasing or
+   removing that predecessor claim remains an OWNER/ADMIN topology action.

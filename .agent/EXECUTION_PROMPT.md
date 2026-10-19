@@ -1,89 +1,89 @@
-# EXECUTION PROMPT — Final product completion (terminal campaign)
+# EXECUTION PROMPT — Release success contract (R6) and governed completion path
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
 Status: IN_PROGRESS
-Campaign ID: nightwatch-final-product-completion-v1
-OpenSpec: openspec/changes/nightwatch-final-product-completion-v1/
-Planned-From: 1f786a4e1b7e4967d06c930946f1107e32931e8a
+Campaign ID: nightwatch-release-success-contract-v1
+OpenSpec: openspec/changes/nightwatch-release-success-contract-v1/
+Planned-From: ac0cc600473a6a133636d07eecc36ed535c4fcca
 Target Branch: main
 Predecessor Task ID: nightwatch-successor-campaign-engine-v1
 Predecessor Status: COMPLETE
 
 ## Mission
 
-One high-impact campaign: the terminal product-completion programme from
-`openspec/changes/nightwatch-final-product-completion-v1/`. Make an honest
-`PROJECT_COMPLETE_AND_CI_CERTIFIED` verdict reachable and stable — every
-census item dispositioned (OD-1), the certification spine checkpoint-neutral
-and CI-green at the final substantive checkpoint S (OD-2), truthful
-autonomous-hunt results persisted and surfaced, operator-truth surfaces
-reconciled, the ledger closed, and a `main`-only clean terminal topology.
+Close the release-success-contract gap so a qualifying provider campaign is
+genuinely reachable (R6), and complete the governed engineering path around it:
+the C-00 claim recovery (D-180), validated fast-forward integration, exact-head
+CI at the next substantive checkpoint S6, full checkpoint-bound evidence
+re-earning toward 15/16 effective MET, and a fully prepared — never executed —
+parent-12.5 provider proof package. The release status advances only under
+D-129: all sixteen conditions MET at the certified checkpoint with exact-head
+CI green.
+
+Provenance note (DEF-FC-04): this prompt is re-bound to the active campaign it
+actually authorizes. The predecessor field keeps the programme-line predecessor
+of the terminal product-completion programme this task serves; the task the
+prompt authorizes is exactly the Campaign ID above, and every routing fact is
+bound to `nightwatch-release-success-contract-v1`.
 
 ## Scope
 
-Nightwatch source, tests, hardening rules/probes, schemas/configuration,
-synthetic fixtures, OpenSpec/task continuity records, local bounded child
-processes, and C-00 commits/fast-forward integration from the owned session
-only. Item scope is frozen by the change's `tasks.md` (phases 1-15),
-`design.md` (D1-D14), and `audit.md` (228 items with tiers and dispositions).
+Nightwatch source (campaign completion verdict, diagnostics, sibling-scope
+separation, resume-path repair, pre-request spend admission), the C-00 session
+CLI recovery, tests, hardening rules/probes, task continuity records, governed
+Nightwatch-local commits and fast-forward integration, checkpoint
+certification evidence production/binding, and provider-readiness preparation
+that spends nothing.
 
 ## Ordered workstreams
 
-1. M0 owner pre-flight on canonical (A-04/A-06 fixes, drift record) — COMPLETE.
-2. M1 session bootstrap: one owned C-00 worktree; the planning change and
-   task continuity land together in the bootstrap checkpoint.
-3. M2 certification anchors and ratchets (checkpoint-neutral bindings,
-   `LIVE_TASK_STATUS` derivation, disposition-token ledger, ceiling ratchet).
-4. M3 CI-green deterministic hermetic spine (guarded live-source tests, honest
-   skip identity, sibling-hermetic `gate:clean`, pinned CI, HANDOFF_TRUTH
-   classification) — the spine is done only when CI is green.
-5. M4 release-certification machinery (wire G12/G14/G17/G18/G19/G20/G21,
-   demotion semantics, schema DECIDED state, CI block-record wiring).
-6. M5-M7 T1 operator-truth chains: autonomous hunt result integrity; finding
-   truth surfaces and Control Center data; narrowed over-claims.
-7. M8 T2 contained-DEV lane integrity with the DEV-lane precondition registry.
-8. M9 D-129 debt: 76/76 CLI contract and bin type-check BLOCKING 0 exemptions.
-9. M10-M13 residual dispositions, DECISIONS/SAFETY_MODEL/ARCHITECTURE truth,
-   operator proofs (OD-3), adversarial completion audit, ledger closure.
-10. M14 close-out: full authoritative set at S, `integrate --expect-head S`,
-    CI `EXECUTED_PASS` observed at S and ingested, documentary receipt commit,
-    this change archived last, terminal topology proof, 13-section report.
+1. R6 release success contract — COMPLETE (declared finite plan, completion
+   population validation, no success through stagnation/NO_PROGRESS/budget
+   exhaustion, provider-health verification, resume-path PAUSED repair,
+   diagnostics, sibling-scope separation; 21 deterministic tests).
+2. C-00 claim recovery — COMPLETE (the owner-approved `retarget-task`
+   operation, D-180, with its full governance matrix; this session's mistaken
+   claim corrected through the governed transition).
+3. Gates and governed integration at the substantive tip (prepush, milestone
+   gate, C-00 integrate, exact-head CI).
+4. S6 substantive checkpoint: derive the checkpoint SHA from Git, re-earn every
+   checkpoint-bound condition at it (six command lanes through the guarded
+   measurement root, gate:clean, topology, UI harness, browser/accessibility
+   lane, dependency/security, authoritative gate, values-only receipt binding,
+   canonical and independent fresh-clone evaluation). Expected state: 15/16
+   effective MET with only `autonomous-yield-proof` UNMET.
+5. Parent-12.5 provider readiness: credential-hygiene report, launcher-digest
+   recomputation, sibling-observation preflight (no inference), the grant
+   proposal with its monetary cap — prepared and NOT applied.
 
 ## Constraints
 
-LOCAL / OFFLINE / SYNTHETIC only. External contact is exactly OD-3: GitHub
-Actions read/observe, C-00 fast-forward pushes, one bounded paid provider
-proof run, one npm registry advisory query. No Alphaus DEV/NEXT/production
-contact, authenticated Alphaus runtime, credentials, customer data,
-database/data-plane/cloud access, sibling writes, external publication, force
-push, or history rewrite. One writing agent under C-00; Alphaus sibling
-repositories read-only; real findings stay in the owner-only local store.
+LOCAL / OFFLINE / SYNTHETIC only, plus OD-3 external contact: GitHub Actions
+read/observe, validated fast-forward Nightwatch pushes, and public read-only
+provider documentation/npm advisory queries. No provider execution without the
+fresh parent-12.5 owner approval and an enforced monetary ceiling; no reuse of
+the spent parent-12.4 approval; no Alphaus contact; no credentials, customer
+data or secrets in source, artifacts or `.agent` files; no sibling writes; no
+external publication; no force push or history rewrite; no deletion of another
+live session's work; no fabricated evidence.
 
 ## Validation
 
-Focused suites and `npm run gate:dev` during implementation; relevant suites
-plus `npm run gate:milestone` at each milestone commit; `npm run gate:local`
-for groupings; the full authoritative set only at S. Continuity/session truth:
-`npm run session:check`, `npm run agent:check`, `npm run project:check`,
-`npm run workspace:check`, `npm run handoff:check`. Never classify a missing,
-unknown, all-skipped, or zero-executed validation result as PASS.
+Focused suites during implementation; `npm run prepush` before every integrate;
+`npm run gate:milestone` at milestone commits; the full authoritative
+certification set only at S6. Continuity/session truth: `npm run session:check`,
+`npm run agent:check`, `npm run project:check`, `npm run workspace:check`,
+`npm run handoff:check`. Never classify a missing, unknown, all-skipped or
+zero-executed validation result as PASS.
 
 ## Acceptance / completion gates
 
-- Every audit census item carries exactly one recorded disposition (OD-1).
-- All 16 release conditions MET under D-129 with exact-head CI
-  `EXECUTED_PASS` at S; bin type-check BLOCKING 0 exemptions; 76/76 entry
-  points on the shared CLI contract (OD-2).
-- Operator proofs recorded: deterministic synthetic hunt, the bounded paid
-  proof run or `PROVIDER_BLOCKED_BEFORE_SOURCE_ACTION`, clean-clone install.
-- Safety counters zero for unauthorized effects; no optimistic completion claim.
-
-## Git / reporting requirements
-
-C-00 single session; fast-forward integration only; the final substantive
-commit S is pushed alone via `integrate --expect-head S`; never force-push,
-rebase, or amend another agent's commits. Milestone state is recorded in
-`STATE.md` before each milestone commit; durable anchors name SHAs known
-before the recording commit. Final deliverable: the 13-section completion
-report with the terminal verdict, safety counters, external prerequisites,
-and final operator commands.
+- R6 completion reachable and proven by deterministic tests; no weakened
+  certification requirement.
+- The C-00 recovery is narrow, owner-gated, tested and recorded (D-180); the
+  predecessor session's claim and S5 worktree preserved untouched.
+- Governed integration with green exact-head CI at S6; 15/16 effective MET at
+  S6 with `autonomous-yield-proof` honestly UNMET until a qualifying run.
+- The parent-12.5 package prepared without any provider call or spend.
+- Honest terminal record: the final verdict is never manufactured; external
+  owner actions are named exactly.
