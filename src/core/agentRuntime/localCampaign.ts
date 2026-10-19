@@ -90,7 +90,7 @@ import {
   envelopeFromBudgetPolicy,
   type RuntimeBudgetEnvelope,
 } from './runtimeBudgetEnvelope';
-import type { SpendCeiling } from './spendCeiling';
+import { admitMeteredRunSpendCeiling, admitResumedSpendCeiling, validateSpendCeiling, type SpendCeiling } from './spendCeiling';
 import { AgentCheckpointError, assertCheckpointHasNoSecrets, boundedFoundVersion, finalizeCheckpoint, parseCheckpoint } from './checkpoint';
 import { AGENT_RUNTIME_DEFAULT_MAX_TURNS, AgentRuntime } from './runtime';
 import {
@@ -168,6 +168,13 @@ export interface LocalCampaignReasonerIdentity {
   readonly provider?: string | null;
   readonly model?: string | null;
   readonly identityDigest?: string | null;
+  /**
+   * D-183: the resolved adapter path, the mechanical metering boundary. The
+   * metered class is the repository's own provider print adapter — the only
+   * route that can spend — and a user-supplied label never moves a run
+   * across this boundary. Absent on pre-D-183 records.
+   */
+  readonly adapterPath?: string | null;
 }
 
 export interface LocalCampaignInput {
@@ -210,9 +217,16 @@ export interface LocalCampaignInput {
    * present, every reasoner call of every investigation is admitted BEFORE
    * dispatch against the cumulative worst-case spend; a request that could
    * exceed the ceiling is refused without being sent. A metered run must
-   * supply one (see `admitRunSpendCeiling`).
+   * supply one (see `admitMeteredRunSpendCeiling`).
    */
   readonly spendCeiling?: SpendCeiling;
+  /**
+   * D-183: the evidence reference for the account-side hard stop that
+   * backstops the per-call output bound (the harness cannot cap output
+   * tokens on the wire). REQUIRED for the metered class; recorded with the
+   * run.
+   */
+  readonly accountSideHardStopRef?: string | null;
   readonly stateDirectory?: string;
   /**
    * M5 (C-01): owner-local findings root override. Absent means the private
@@ -366,6 +380,60 @@ export interface LocalCampaignListing {
   readonly actionCount: number;
 }
 
+/**
+ * D-183: the persisted projection of a spend ceiling. The checkpoint secret
+ * scanner refuses credential-shaped keys (any key containing `token`, etc.),
+ * so the persisted form carries scanner-safe unit names and maps back to the
+ * exact `SpendCeiling` on read. The scanner is never weakened for this.
+ */
+const SPEND_CEILING_ENVELOPE_VERSION = 'nightwatch.spend-ceiling-envelope.v1' as const;
+
+/** The scanner-safe persisted form of a spend ceiling (see above). */
+interface PersistedSpendCeiling {
+  readonly schemaVersion: typeof SPEND_CEILING_ENVELOPE_VERSION;
+  readonly maxSpendUsd: number;
+  readonly inputUsdPerMillion: number;
+  readonly outputUsdPerMillion: number;
+  readonly maxOutputUnitsPerCall: number;
+  readonly maxBytesPerUnit: number;
+  readonly worstCaseUnitsPerByte: number;
+  readonly provider: string;
+  readonly model: string;
+}
+
+function toPersistedSpendCeiling(ceiling: SpendCeiling): PersistedSpendCeiling {
+  return {
+    schemaVersion: SPEND_CEILING_ENVELOPE_VERSION,
+    maxSpendUsd: ceiling.maxSpendUsd,
+    inputUsdPerMillion: ceiling.rateCard.inputUsdPerMillionTokens,
+    outputUsdPerMillion: ceiling.rateCard.outputUsdPerMillionTokens,
+    maxOutputUnitsPerCall: ceiling.maxOutputTokensPerCall,
+    maxBytesPerUnit: ceiling.maxBytesPerToken,
+    worstCaseUnitsPerByte: ceiling.worstCaseTokensPerByte,
+    provider: ceiling.provider,
+    model: ceiling.model,
+  };
+}
+
+function fromPersistedSpendCeiling(value: unknown): SpendCeiling | null {
+  if (!isRecord(value)) return null;
+  if (value.schemaVersion !== SPEND_CEILING_ENVELOPE_VERSION) return null;
+  const parsed: SpendCeiling = {
+    schemaVersion: 'nightwatch.spend-ceiling.v1',
+    maxSpendUsd: value.maxSpendUsd as number,
+    rateCard: {
+      inputUsdPerMillionTokens: value.inputUsdPerMillion as number,
+      outputUsdPerMillionTokens: value.outputUsdPerMillion as number,
+    },
+    maxOutputTokensPerCall: value.maxOutputUnitsPerCall as number,
+    maxBytesPerToken: value.maxBytesPerUnit as number,
+    worstCaseTokensPerByte: value.worstCaseUnitsPerByte as number,
+    provider: value.provider as string,
+    model: value.model as string,
+  };
+  return validateSpendCeiling(parsed) ? parsed : null;
+}
+
 /** Resume envelope: campaign-level progress the merged checkpoint cannot carry. */
 interface CampaignProgress {
   readonly version: typeof CAMPAIGN_PROGRESS_VERSION;
@@ -408,6 +476,13 @@ interface CampaignProgress {
    * form serializes `byClass` as a list (see `attributionForCheckpoint`).
    */
   readonly providerAttribution: ProviderFailureAttribution | Record<string, unknown> | null;
+  /**
+   * D-183: the monetary ceiling this campaign runs under, persisted so a
+   * resume can never widen or reset it. Absent on pre-D-183 envelopes; a
+   * metered resume of an envelope without one is refused, never assumed
+   * unlimited.
+   */
+  readonly spendCeiling: SpendCeiling | null;
 }
 
 function zeroTerminationCounts(): CampaignTerminationCounts {
@@ -644,6 +719,17 @@ function parseCampaignProgress(value: unknown, campaignId: string): CampaignProg
       identityDigest: optionalDigest(identity.identityDigest, 'identityDigest'),
     };
   }
+  // D-183: the persisted ceiling is validated fail-closed. A malformed value
+  // is corrupt — never "no ceiling", which would let a tampered envelope
+  // resume an unauthorized metered run.
+  let spendCeiling: SpendCeiling | null = null;
+  if (value.spendCeiling !== undefined && value.spendCeiling !== null) {
+    const parsedCeiling = fromPersistedSpendCeiling(value.spendCeiling);
+    if (parsedCeiling === null) {
+      throw new AgentCheckpointError('CORRUPT', 'campaignProgress.spendCeiling is invalid');
+    }
+    spendCeiling = parsedCeiling;
+  }
   return {
     version: CAMPAIGN_PROGRESS_VERSION,
     nextInvestigationIndex: value.nextInvestigationIndex,
@@ -655,6 +741,7 @@ function parseCampaignProgress(value: unknown, campaignId: string): CampaignProg
     reasonerIdentity,
     pausedInvestigation,
     maxTurns,
+    spendCeiling,
     // R6-01: fail closed on a malformed declared plan rather than silently
     // resuming with no plan (which would make the campaign uncompletable).
     expectedInvestigations: (() => {
@@ -1234,8 +1321,17 @@ function buildCampaignCheckpoint(
         providerFailures: acc.providerFailures,
       }),
     ),
+    spendCeiling: engine.input.spendCeiling ?? null,
   };
-  const document: Record<string, unknown> = { ...checkpoint, campaignProgress: { ...progress } };
+  // D-183: the serialized envelope carries the scanner-safe projection of the
+  // ceiling; the in-memory record stays canonical.
+  const document: Record<string, unknown> = {
+    ...checkpoint,
+    campaignProgress: {
+      ...progress,
+      spendCeiling: progress.spendCeiling === null ? null : toPersistedSpendCeiling(progress.spendCeiling),
+    },
+  };
   assertCheckpointHasNoSecrets(document as unknown as AgentCheckpoint);
   return document;
 }
@@ -1695,7 +1791,52 @@ function seedFromCheckpointState(engine: CampaignEngine, state: AgentRuntimeStat
   acc.lastPhase = state.phase;
 }
 
+/**
+ * D-183 — the mechanical metering boundary. The metered class is exactly the
+ * repository's own provider print adapter (the only route that can spend and
+ * the only route that can qualify a provider proof), derived from the
+ * RESOLVED adapter identity. A user-supplied "free" label, a zero rate card
+ * or an environment flag never moves a run across this boundary; a fixture
+ * that merely borrows the adapter basename is held to the metered rules,
+ * which is the safe direction.
+ */
+export function isMeteredProviderRoute(identity: LocalCampaignReasonerIdentity | null | undefined): boolean {
+  const adapter = identity?.adapterPath ?? null;
+  return typeof adapter === 'string' && adapter !== '' && path.basename(adapter) === 'nightwatch-reasoner-print.mjs';
+}
+
+/** The resolved provider/model labels a metered run is held to. */
+function resolvedRunIdentity(input: LocalCampaignInput): { provider: string | null; model: string | null } {
+  return {
+    provider: input.reasonerIdentity?.provider ?? input.provider ?? null,
+    model: input.reasonerIdentity?.model ?? input.model ?? null,
+  };
+}
+
+/**
+ * D-183 — the fail-closed metered admission, applied BEFORE any provider call
+ * exists. A metered run without a valid, identity-bound, metered-rate ceiling
+ * (and the account-side hard stop that backstops the output bound) is refused
+ * here, not after the first dispatch.
+ */
+function assertMeteredSpendEnforcement(input: LocalCampaignInput): void {
+  if (!isMeteredProviderRoute(input.reasonerIdentity)) return;
+  const identity = resolvedRunIdentity(input);
+  const admission = admitMeteredRunSpendCeiling({
+    ceiling: input.spendCeiling ?? null,
+    provider: identity.provider,
+    model: identity.model,
+    accountSideHardStop: input.accountSideHardStopRef ?? null,
+  });
+  if (!admission.ok) {
+    throw new LocalCampaignError('SPEND_ENFORCEMENT_REFUSED', `${admission.code}: ${admission.detail}`);
+  }
+}
+
 export async function runLocalCliCampaign(input: LocalCampaignInput): Promise<LocalCampaignResult> {
+  // D-183: the metered admission precedes every effect — no checkpoint is
+  // superseded and no investigation exists until the ceiling is admitted.
+  assertMeteredSpendEnforcement(input);
   const { reasoner, budgetPolicy } = driverAndPolicy(input);
   assertDeclaredBudgetEnvelope(input.declaredBudgetEnvelope, envelopeFromBudgetPolicy(budgetPolicy), input.campaignId);
   const now = input.now ?? Date.now;
@@ -1846,6 +1987,20 @@ export async function resumeLocalCliCampaign(input: LocalCampaignInput): Promise
   assertDeclaredBudgetEnvelope(input.declaredBudgetEnvelope, envelopeFromBudgetPolicy(policy), input.campaignId);
   const progress = parseCampaignProgress((raw as Record<string, unknown>).campaignProgress, input.campaignId);
   assertScopeContinuity(progress, input);
+  // D-183: a metered resume is held to the ceiling the campaign persisted.
+  // An absent limit (either side), a widened limit or a substituted
+  // provider/model is refused before any provider call resumes; an identical
+  // or purely tightened declaration is admitted and adopted.
+  if (isMeteredProviderRoute(input.reasonerIdentity)) {
+    const resumeAdmission = admitResumedSpendCeiling({
+      persisted: progress?.spendCeiling ?? null,
+      supplied: input.spendCeiling ?? null,
+    });
+    if (!resumeAdmission.ok) {
+      throw new LocalCampaignError('SPEND_ENFORCEMENT_REFUSED', `${resumeAdmission.code}: ${resumeAdmission.detail}`);
+    }
+    assertMeteredSpendEnforcement(input);
+  }
   // M5 (6.5/C-14): the persisted per-investigation turn limit wins over the
   // caller's, so a resumed investigation keeps the budget its prefix was
   // counted under and a `--max-turns` passed at resume time cannot silently
@@ -1863,6 +2018,12 @@ export async function resumeLocalCliCampaign(input: LocalCampaignInput): Promise
         const { expectedInvestigations: _discarded, ...rest } = effective;
         effective = rest as LocalCampaignInput;
       }
+    }
+    // D-183: the resumed run carries the admitted declaration (identical to
+    // the persisted ceiling or a pure tightening of it) so the enforcement
+    // and the re-persisted envelope never widen the authorization.
+    if (isMeteredProviderRoute(input.reasonerIdentity) && input.spendCeiling !== undefined) {
+      effective = { ...effective, spendCeiling: input.spendCeiling };
     }
     return effective;
   })();

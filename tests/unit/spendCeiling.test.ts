@@ -22,8 +22,11 @@ import {
 import { AgentRuntime } from '../../src/core/agentRuntime';
 import {
   SPEND_CEILING_VERSION,
+  admitMeteredRunSpendCeiling,
   admitProviderCall,
+  admitResumedSpendCeiling,
   admitRunSpendCeiling,
+  admitSpendCeilingIdentity,
   committedSpendUsd,
   validateSpendCeiling,
   worstCaseCallCostUsd,
@@ -57,6 +60,8 @@ function openDesignCeiling(maxSpendUsd: number, maxOutputTokensPerCall = 8192): 
     maxOutputTokensPerCall,
     maxBytesPerToken: 16,
     worstCaseTokensPerByte: 1,
+    provider: 'open-design',
+    model: 'deepseek-v4.1-flash',
   };
 }
 
@@ -210,5 +215,97 @@ test.describe('spend ceiling — pre-request enforcement in the runtime', () => 
     const result = await runtime.run({ maxTurns: 3 });
     expect(stub.calls).toBe(1);
     expect(result.terminationReason).toBe('COMPLETE_NO_FINDING');
+  });
+});
+
+test.describe('spend ceiling — metered-run, identity and resume admissions (D-183)', () => {
+  test('a metered run is refused without a valid ceiling, a metered rate card, identity or the hard stop', () => {
+    const ceiling = openDesignCeiling(0.09);
+    const identity = { provider: 'open-design', model: 'deepseek-v4.1-flash' };
+    const hardStop = 'open-design per-key spend limit <= 0.09 USD verified 2026-10-19';
+    expect(admitMeteredRunSpendCeiling({ ceiling, ...identity, accountSideHardStop: hardStop }).ok).toBe(true);
+
+    // Missing / malformed ceiling.
+    for (const bad of [undefined, null, {}, 'free', openDesignCeiling(0)]) {
+      const admission = admitMeteredRunSpendCeiling({ ceiling: bad, ...identity, accountSideHardStop: hardStop });
+      expect(admission.ok).toBe(false);
+      if (!admission.ok) expect(admission.code).toBe('SPEND_CEILING_UNAUTHORISED');
+    }
+
+    // The "free" label bypass: a zero-rate card on a metered run is refused.
+    const free = { ...openDesignCeiling(0.09), rateCard: { inputUsdPerMillionTokens: 0, outputUsdPerMillionTokens: 0 } };
+    const freeAdmission = admitMeteredRunSpendCeiling({ ceiling: free, ...identity, accountSideHardStop: hardStop });
+    expect(freeAdmission.ok).toBe(false);
+    if (!freeAdmission.ok) expect(freeAdmission.code).toBe('SPEND_CEILING_RATE_CARD_INVALID');
+
+    // Identity disagreement / absence.
+    for (const wrong of [{ provider: 'amr', model: 'deepseek-v4.1-flash' }, { provider: 'open-design', model: 'other' }, { provider: null, model: null }]) {
+      const admission = admitMeteredRunSpendCeiling({ ceiling, ...wrong, accountSideHardStop: hardStop });
+      expect(admission.ok).toBe(false);
+      if (!admission.ok) expect(admission.code).toBe('SPEND_CEILING_IDENTITY_MISMATCH');
+    }
+
+    // Unenforceable output bound: no account-side hard stop.
+    for (const stop of [undefined, null, '', '   ']) {
+      const admission = admitMeteredRunSpendCeiling({ ceiling, ...identity, accountSideHardStop: stop });
+      expect(admission.ok).toBe(false);
+      if (!admission.ok) expect(admission.code).toBe('SPEND_OUTPUT_BOUND_UNENFORCEABLE');
+    }
+  });
+
+  test('identity agreement binds exactly one provider and model', () => {
+    const ceiling = openDesignCeiling(0.09);
+    expect(admitSpendCeilingIdentity(ceiling, { provider: 'open-design', model: 'deepseek-v4.1-flash' }).ok).toBe(true);
+    for (const wrong of [{ provider: 'open-design', model: 'x' }, { provider: 'x', model: 'deepseek-v4.1-flash' }, { provider: '', model: 'deepseek-v4.1-flash' }, { provider: 'open-design', model: undefined }]) {
+      const admission = admitSpendCeilingIdentity(ceiling, wrong);
+      expect(admission.ok).toBe(false);
+      if (!admission.ok) expect(admission.code).toBe('SPEND_CEILING_IDENTITY_MISMATCH');
+    }
+  });
+
+  test('a resume is held to the persisted ceiling: absent, widened and substituted are refused', () => {
+    const persisted = openDesignCeiling(0.09);
+    expect(admitResumedSpendCeiling({ persisted, supplied: openDesignCeiling(0.09) }).ok).toBe(true);
+
+    // Absent on either side.
+    for (const input of [
+      { persisted: null, supplied: openDesignCeiling(0.09) },
+      { persisted: openDesignCeiling(0.09), supplied: null },
+      { persisted: openDesignCeiling(0.09), supplied: undefined },
+    ]) {
+      const admission = admitResumedSpendCeiling(input);
+      expect(admission.ok).toBe(false);
+      if (!admission.ok) expect(admission.code).toBe('SPEND_CEILING_RESUME_ABSENT');
+    }
+
+    // Widened in each dimension (any loosening is a widening).
+    const widenings: SpendCeiling[] = [
+      openDesignCeiling(0.10),
+      { ...openDesignCeiling(0.09), rateCard: { inputUsdPerMillionTokens: 0.014, outputUsdPerMillionTokens: 0.06 } },
+      { ...openDesignCeiling(0.09), rateCard: { inputUsdPerMillionTokens: 0.015, outputUsdPerMillionTokens: 0.05 } },
+      openDesignCeiling(0.09, 8193),
+      { ...openDesignCeiling(0.09), worstCaseTokensPerByte: 0.5 },
+      { ...openDesignCeiling(0.09), maxBytesPerToken: 17 },
+    ];
+    for (const widened of widenings) {
+      const admission = admitResumedSpendCeiling({ persisted, supplied: widened });
+      expect(admission.ok).toBe(false);
+      if (!admission.ok) expect(admission.code).toBe('SPEND_CEILING_RESUME_WIDENED');
+    }
+
+    // Provider/model substitution is never a resume.
+    const substituted = { ...openDesignCeiling(0.09), model: 'other' };
+    const substitution = admitResumedSpendCeiling({ persisted, supplied: substituted });
+    expect(substitution.ok).toBe(false);
+    if (!substitution.ok) expect(substitution.code).toBe('SPEND_CEILING_RESUME_MISMATCH');
+
+    // A pure tightening resumes (it can only over-reserve).
+    const tightened = openDesignCeiling(0.08);
+    expect(admitResumedSpendCeiling({ persisted, supplied: tightened }).ok).toBe(true);
+
+    // A malformed persisted envelope is never assumed unlimited.
+    const corrupt = admitResumedSpendCeiling({ persisted: { ...openDesignCeiling(0.09), maxSpendUsd: 'lots' }, supplied: openDesignCeiling(0.09) });
+    expect(corrupt.ok).toBe(false);
+    if (!corrupt.ok) expect(corrupt.code).toBe('SPEND_CEILING_RESUME_ABSENT');
   });
 });

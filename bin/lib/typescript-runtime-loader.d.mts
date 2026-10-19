@@ -26,6 +26,7 @@ export interface TypeScriptRuntimeLoaderModuleMap {
   "src/core/agentProtocol/tools.ts": typeof import("../../src/core/agentProtocol/tools");
   "src/core/agentRuntime/localCampaign.ts": typeof import("../../src/core/agentRuntime/localCampaign");
   "src/core/agentRuntime/productRunReceipt.ts": typeof import("../../src/core/agentRuntime/productRunReceipt");
+  "src/core/agentRuntime/spendCeiling.ts": typeof import("../../src/core/agentRuntime/spendCeiling");
   "src/core/aiReview/localCanary.ts": typeof import("../../src/core/aiReview/localCanary");
   "src/core/aiReview/ownerDecision.ts": typeof import("../../src/core/aiReview/ownerDecision");
   "src/core/aiReview/ownerReview.ts": typeof import("../../src/core/aiReview/ownerReview");

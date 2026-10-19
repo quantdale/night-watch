@@ -52,26 +52,33 @@ customer value in any record; no spend.
 
 ### M0 — defect trace
 - [x] Trace the production run/resume paths and confirm the exact defect.
+- **Status:** COMPLETE
 
 ### M1 — the pure admissions (spendCeiling.ts)
 - [ ] Identity-bound ceiling (provider/model) and the validated declaration.
 - [ ] Metered-run admission, identity agreement and resume-equality admissions.
+- **Status:** COMPLETE
 
 ### M2 — campaign-layer enforcement and pause/resume persistence
 - [ ] Mechanical metered determination and fail-closed campaign admission.
 - [ ] The ceiling persisted in the progress envelope; resume held to it.
+- **Status:** COMPLETE
 
 ### M3 — CLI enforcement and wiring
 - [ ] Owner-declared ceiling flags on run/resume with fail-closed validation.
 - [ ] The wired chain CLI → local campaign → AgentRuntime → admitProviderCall.
+- **Status:** COMPLETE
 
 ### M4 — integration tests and registries
 - [ ] Real-CLI stub-provider tests for every required case (item 10).
 - [ ] Validation-universe/execution-class registration; focused regression.
+- **Status:** COMPLETE
 
 ### M5 — gates, integration and certification
 - [ ] Full gates, governed C-00 integration, exact-head CI.
 - [ ] The next substantive checkpoint and re-earned evidence at it (15/16).
+
+- **Status:** IN_PROGRESS
 
 ## Validation Strategy
 
@@ -105,3 +112,4 @@ provider call; the ceiling survives pause/resume without widening; fixtures
 are mechanically distinguished; the full test and gate set passes; the work
 is integrated through C-00 with green exact-head CI; and the checkpoint-bound
 evidence is re-earned at 15/16 with condition #3 UNMET.
+

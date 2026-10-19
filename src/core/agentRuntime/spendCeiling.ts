@@ -44,6 +44,14 @@ export interface SpendCeiling {
   readonly maxBytesPerToken: number;
   /** Conservative upper bound on tokens per request byte (1 = tokenizer-impossible). */
   readonly worstCaseTokensPerByte: number;
+  /**
+   * D-183: the authorized provider identity. A substitution never inherits
+   * the ceiling — the admission compares the resolved run identity against
+   * this declaration before any dispatch.
+   */
+  readonly provider: string;
+  /** D-183: the authorized model identity (see `provider`). */
+  readonly model: string;
 }
 
 /**
@@ -55,7 +63,15 @@ export type SpendAdmission =
   | { readonly ok: true; readonly projectedUsd: number }
   | {
       readonly ok: false;
-      readonly code: 'SPEND_CEILING_UNAUTHORISED' | 'SPEND_CEILING_REFUSED_BEFORE_REQUEST';
+      readonly code:
+        | 'SPEND_CEILING_UNAUTHORISED'
+        | 'SPEND_CEILING_REFUSED_BEFORE_REQUEST'
+        | 'SPEND_CEILING_RATE_CARD_INVALID'
+        | 'SPEND_CEILING_IDENTITY_MISMATCH'
+        | 'SPEND_OUTPUT_BOUND_UNENFORCEABLE'
+        | 'SPEND_CEILING_RESUME_ABSENT'
+        | 'SPEND_CEILING_RESUME_WIDENED'
+        | 'SPEND_CEILING_RESUME_MISMATCH';
       readonly detail: string;
     };
 
@@ -76,7 +92,9 @@ export function validateSpendCeiling(value: unknown): value is SpendCeiling {
     && nonNegativeFinite(ceiling.rateCard?.outputUsdPerMillionTokens)
     && positiveFinite(ceiling.maxOutputTokensPerCall)
     && positiveFinite(ceiling.maxBytesPerToken)
-    && positiveFinite(ceiling.worstCaseTokensPerByte);
+    && positiveFinite(ceiling.worstCaseTokensPerByte)
+    && typeof ceiling.provider === 'string' && ceiling.provider.trim() !== ''
+    && typeof ceiling.model === 'string' && ceiling.model.trim() !== '';
 }
 
 /** Worst-case token count for a byte volume under this ceiling's tokenizer bound. */
@@ -153,5 +171,100 @@ export function admitRunSpendCeiling(ceiling: unknown): SpendAdmission {
   if (!validateSpendCeiling(ceiling)) {
     return { ok: false, code: 'SPEND_CEILING_UNAUTHORISED', detail: 'a metered run requires a declared monetary ceiling (schema nightwatch.spend-ceiling.v1) before any provider call' };
   }
+  return { ok: true, projectedUsd: 0 };
+}
+
+/**
+ * D-183 — the metered-run admission. A real provider campaign (the metered
+ * class) is refused before any provider call unless it carries a VALID
+ * ceiling, a genuinely metered rate card (a zero-rate card is the "free"
+ * label bypass and is refused here), an identity that agrees with the
+ * resolved run identity, and the account-side hard stop that backstops the
+ * per-call output bound (the harness cannot cap output tokens on the wire).
+ */
+export function admitMeteredRunSpendCeiling(input: {
+  readonly ceiling: unknown;
+  readonly provider: string | null | undefined;
+  readonly model: string | null | undefined;
+  readonly accountSideHardStop: string | null | undefined;
+}): SpendAdmission {
+  const { ceiling, provider, model, accountSideHardStop } = input;
+  if (!validateSpendCeiling(ceiling)) {
+    return { ok: false, code: 'SPEND_CEILING_UNAUTHORISED', detail: 'a metered run requires a valid declared monetary ceiling (schema nightwatch.spend-ceiling.v1) before any provider call' };
+  }
+  if (!(ceiling.rateCard.inputUsdPerMillionTokens > 0) || !(ceiling.rateCard.outputUsdPerMillionTokens > 0)) {
+    return { ok: false, code: 'SPEND_CEILING_RATE_CARD_INVALID', detail: 'a metered run requires a metered rate card with positive input and output rates; a zero-rate declaration never bypasses enforcement' };
+  }
+  const identity = admitSpendCeilingIdentity(ceiling, { provider, model });
+  if (!identity.ok) return identity;
+  if (typeof accountSideHardStop !== 'string' || accountSideHardStop.trim() === '') {
+    return { ok: false, code: 'SPEND_OUTPUT_BOUND_UNENFORCEABLE', detail: 'the harness cannot cap output tokens on the wire, so a metered run requires the account-side hard stop with its evidence reference before any provider call' };
+  }
+  return { ok: true, projectedUsd: 0 };
+}
+
+/**
+ * D-183 — identity agreement. The ceiling authorizes exactly one provider and
+ * model; a run whose resolved identity disagrees is refused before dispatch,
+ * so a substitution can never inherit the authorization.
+ */
+export function admitSpendCeilingIdentity(
+  ceiling: SpendCeiling,
+  identity: { readonly provider: string | null | undefined; readonly model: string | null | undefined },
+): SpendAdmission {
+  if (!validateSpendCeiling(ceiling)) {
+    return { ok: false, code: 'SPEND_CEILING_UNAUTHORISED', detail: 'the declared spend ceiling is malformed' };
+  }
+  const provider = typeof identity.provider === 'string' ? identity.provider.trim() : '';
+  const model = typeof identity.model === 'string' ? identity.model.trim() : '';
+  if (provider === '' || model === '') {
+    return { ok: false, code: 'SPEND_CEILING_IDENTITY_MISMATCH', detail: 'the run identity is absent; a metered run must state the provider and model the ceiling authorizes' };
+  }
+  if (provider !== ceiling.provider || model !== ceiling.model) {
+    return { ok: false, code: 'SPEND_CEILING_IDENTITY_MISMATCH', detail: 'the resolved run identity disagrees with the provider/model this ceiling authorizes; a substitution never inherits the authorization' };
+  }
+  return { ok: true, projectedUsd: 0 };
+}
+
+/**
+ * D-183 — resume equality. The ceiling is preserved across pause/resume and a
+ * resume is held to the original declaration: absent limits (either side) are
+ * refused, a WIDENED limit is refused with its own code, and an identity
+ * change or any other semantic difference is refused. A pure TIGHTENING is
+ * accepted (it can only over-reserve), and an identical declaration resumes.
+ */
+export function admitResumedSpendCeiling(input: {
+  readonly persisted: unknown;
+  readonly supplied: unknown;
+}): SpendAdmission {
+  const { persisted, supplied } = input;
+  if (!validateSpendCeiling(persisted)) {
+    return { ok: false, code: 'SPEND_CEILING_RESUME_ABSENT', detail: 'the checkpoint carries no valid monetary ceiling; a metered resume is refused rather than assumed unlimited' };
+  }
+  if (supplied === null || supplied === undefined) {
+    return { ok: false, code: 'SPEND_CEILING_RESUME_ABSENT', detail: 'a metered resume must re-supply the declared monetary ceiling' };
+  }
+  if (!validateSpendCeiling(supplied)) {
+    return { ok: false, code: 'SPEND_CEILING_UNAUTHORISED', detail: 'the resume declaration is malformed' };
+  }
+  const before = /** @type {SpendCeiling} */ (persisted);
+  const after = /** @type {SpendCeiling} */ (supplied);
+  if (after.provider !== before.provider || after.model !== before.model) {
+    return { ok: false, code: 'SPEND_CEILING_RESUME_MISMATCH', detail: 'the resume declaration names a different provider/model than the persisted ceiling' };
+  }
+  const widened =
+    after.maxSpendUsd > before.maxSpendUsd
+    || after.rateCard.inputUsdPerMillionTokens < before.rateCard.inputUsdPerMillionTokens
+    || after.rateCard.outputUsdPerMillionTokens < before.rateCard.outputUsdPerMillionTokens
+    || after.maxOutputTokensPerCall > before.maxOutputTokensPerCall
+    || after.worstCaseTokensPerByte < before.worstCaseTokensPerByte
+    || after.maxBytesPerToken > before.maxBytesPerToken;
+  if (widened) {
+    return { ok: false, code: 'SPEND_CEILING_RESUME_WIDENED', detail: 'the resume declaration widens the persisted ceiling; a pause never resets or loosens the authorized limits' };
+  }
+  // Past this point no dimension is looser, so the declaration is either an
+  // exact match or a pure tightening (a smaller cap, a higher rate, a smaller
+  // output bound): both are accepted, and neither can spend past the
+  // persisted authorization.
   return { ok: true, projectedUsd: 0 };
 }

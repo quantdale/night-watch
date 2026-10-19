@@ -9,6 +9,10 @@
     {
       "changeId": "nightwatch-release-success-contract-v1",
       "bootstrapSha": "771fa3c672966699b7b52b127015accf89a0598a"
+    },
+    {
+      "changeId": "nightwatch-d181-cli-spend-enforcement-v1",
+      "bootstrapSha": "649a04432ae84b1bd6504f64da872ccf83e11eec"
     }
   ]
 }

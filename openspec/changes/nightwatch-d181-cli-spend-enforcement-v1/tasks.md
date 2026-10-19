@@ -6,23 +6,23 @@
 
 ## 2. Pure admissions (spendCeiling.ts)
 
-- [ ] 2.1 Identity-bound ceiling (provider/model) with a validated declaration
-- [ ] 2.2 Metered-run admission, identity agreement and resume-equality admissions
+- [x] 2.1 Identity-bound ceiling (provider/model) with a validated declaration
+- [x] 2.2 Metered-run admission, identity agreement and resume-equality admissions
 
 ## 3. Campaign-layer enforcement
 
-- [ ] 3.1 Mechanical metered determination and fail-closed campaign admission
-- [ ] 3.2 The ceiling persisted in the progress envelope and enforced on resume
+- [x] 3.1 Mechanical metered determination and fail-closed campaign admission
+- [x] 3.2 The ceiling persisted in the progress envelope and enforced on resume
 
 ## 4. CLI enforcement and wiring
 
-- [ ] 4.1 Owner-declared ceiling flags on run/resume with fail-closed validation
-- [ ] 4.2 The wired chain CLI to local campaign to AgentRuntime to admitProviderCall
+- [x] 4.1 Owner-declared ceiling flags on run/resume with fail-closed validation
+- [x] 4.2 The wired chain CLI to local campaign to AgentRuntime to admitProviderCall
 
 ## 5. Tests and registries
 
-- [ ] 5.1 Real-CLI stub-provider tests for every required enforcement case
-- [ ] 5.2 Validation-universe and execution-class registration
+- [x] 5.1 Real-CLI stub-provider tests for every required enforcement case
+- [x] 5.2 Validation-universe and execution-class registration
 
 ## 6. Gates and certification
 

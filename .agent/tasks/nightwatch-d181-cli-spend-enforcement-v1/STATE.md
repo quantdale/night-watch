@@ -6,9 +6,9 @@ Task ID: nightwatch-d181-cli-spend-enforcement-v1
 Phase: D181_CLI_SPEND_ENFORCEMENT_V1
 Status: IN_PROGRESS
 TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1
-TASK_GROUPS_COMPLETE: 1
-TASK_GROUP_NEXT: 2
-TASK_NEXT_ID: 2.1
+TASK_GROUPS_COMPLETE: 1,2,3,4,5
+TASK_GROUP_NEXT: 6
+TASK_NEXT_ID: 6.1
 Starting SHA: 27223764d42fe23a9f407c062b2e0c4774a34f3d
 Last validated implementation SHA: 27223764d42fe23a9f407c062b2e0c4774a34f3d
 Last substantive checkpoint SHA: 27223764d42fe23a9f407c062b2e0c4774a34f3d
@@ -38,9 +38,11 @@ the grant record, executing inference, or weakening any certification rule.
 
 ## Current Milestone
 
-M2 — campaign-layer enforcement and pause/resume persistence (task group 2).
-The defect is confirmed; the pure admissions are next, then the campaign
-layer, the CLI wiring, the integration tests, and the certification path.
+M5 — gates, integration and certification (task group 6). The enforcement is
+implemented and proven end to end through the real CLI: the pure admissions
+(D-183), the campaign-layer metered boundary and envelope persistence, the
+CLI wiring on both run and resume, and the eight-case stub-provider
+integration suite.
 
 ## Completed Milestones
 
@@ -51,17 +53,41 @@ layer, the CLI wiring, the integration tests, and the certification path.
   admission only when the optional parameter is defined. The Pi harness
   exposes no max-output-token flag, so the output bound is not wire-enforceable
   and the account-side hard stop is the required backstop.
+- **M1 COMPLETE** (D-183) — the pure admissions in `spendCeiling.ts`:
+  identity-bound ceilings (provider/model), the metered-run admission
+  (valid ceiling, genuinely metered rate card, identity agreement, account-side
+  hard stop) and the resume-equality admission (absent/widened/substituted
+  refused; identical or tightened accepted). 10 focused tests.
+- **M2 COMPLETE** — the campaign layer: the mechanical metering boundary
+  (`isMeteredProviderRoute` over the resolved adapter identity), the
+  fail-closed campaign admission before any effect, the ceiling persisted in
+  the progress envelope under the secret-scanner-safe projection
+  (`nightwatch.spend-ceiling-envelope.v1`, declared under D-130), and the
+  resume held to the persisted declaration.
+- **M3 COMPLETE** — the CLI: the owner-declared ceiling flags on `campaign
+  run` and `campaign resume`, fail-closed validation (missing/malformed/zero-
+  rate/identity/hard-stop), the wired chain CLI → local campaign →
+  AgentRuntime → admitProviderCall, and the `--expected-investigations` /
+  `--observe-repository` declarations made reachable (they were referenced and
+  documented but undeclared, so the strict parser refused them).
+- **M4 COMPLETE** — the eight-case real-CLI stub-provider suite (missing
+  ceiling, malformed/zero-rate/partial, substitution, missing hard stop,
+  authorized launch, exhausted budget zero-call refusal, the full
+  pause/resume widen/reset/substitute matrix, and the mechanical fixture
+  distinction) plus the validation-universe/execution-class registration;
+  138/138 focused regression green.
 
 ## Work In Progress
 
-M2 campaign-layer enforcement: the pure admissions first, then the metered
-determination, the envelope persistence and the resume equality rule.
+M5 gate execution: the full regression, hardening, mutants, prepush and
+milestone gates, then the governed C-00 integration and the checkpoint
+certification.
 
 ## Exact Next Action
 
-Task 2.1: implement the identity-bound ceiling and the metered-run, identity
-and resume-equality admissions in `src/core/agentRuntime/spendCeiling.ts`,
-with focused tests.
+Task 6.1: run the full regression, hardening and mutant gates, `npm run
+prepush` and `npm run gate:milestone`, then integrate through C-00 and observe
+exact-head CI.
 
 ## Files Changed
 

@@ -51,6 +51,15 @@ const CLI_METADATA = {
     { name: '--model', shape: 'string', summary: 'reasoner model label' },
     { name: '--repository', shape: 'string', summary: 'approved org/repo target' },
     { name: '--id', shape: 'string', summary: 'campaign run id label' },
+    { name: '--observe-repository', shape: 'string', summary: 'approved org/repo observation scope (R6-03)' },
+    { name: '--expected-investigations', shape: 'integer', summary: 'the declared investigation plan (R6-01)' },
+    { name: '--spend-ceiling-usd', shape: 'string', summary: 'the authorized monetary ceiling, USD (D-183, metered runs)' },
+    { name: '--spend-input-usd-per-mt', shape: 'string', summary: 'metered input rate, USD per million tokens (D-183)' },
+    { name: '--spend-output-usd-per-mt', shape: 'string', summary: 'metered output rate, USD per million tokens (D-183)' },
+    { name: '--spend-max-output-tokens', shape: 'integer', summary: 'declared per-call output-token bound (D-183)' },
+    { name: '--spend-provider', shape: 'string', summary: 'provider identity the ceiling authorizes (D-183)' },
+    { name: '--spend-model', shape: 'string', summary: 'model identity the ceiling authorizes (D-183)' },
+    { name: '--account-side-hard-stop', shape: 'string', summary: 'evidence reference for the account-side spend hard stop (D-183, metered runs)' },
   ],
   json: true,
   authorization: 'OWNER_GATED',
@@ -71,6 +80,108 @@ const strayPositional = !cliStopped && command !== 'campaign' && cli.positionals
  * the value actually used rather than an absent one.
  */
 const DEFAULT_CAMPAIGN_MAX_TURNS = 50;
+
+/**
+ * D-183: parse the owner-declared monetary ceiling from the campaign flags.
+ * Pure parsing and shape validation only (the semantic admissions live in
+ * `spendCeiling.ts`); a supplied-but-malformed value is a usage error and an
+ * absent declaration is reported as absent — never as "free".
+ *
+ * @param {Record<string, unknown>} flags
+ * @returns {{ ok: true, ceiling: import('../src/core/agentRuntime/spendCeiling').SpendCeiling | null, accountSideHardStopRef: string | null } | { ok: false, code: string, detail: string }}
+ */
+function parseSpendDeclaration(flags) {
+  /**
+   * @param {unknown} value
+   * @param {string} name
+   * @returns {{ ok: true, value: number | null } | { ok: false, code: string, detail: string }}
+   */
+  const decimal = (value, name) => {
+    if (value === undefined) return { ok: true, value: null };
+    const parsed = typeof value === 'number' ? value : Number(String(value));
+    if (!Number.isFinite(parsed) || parsed <= 0) return { ok: false, code: 'SPEND_DECLARATION_MALFORMED', detail: `--${name} must be a finite number greater than zero` };
+    return { ok: true, value: parsed };
+  };
+  const ceilingRaw = flags['spend-ceiling-usd'];
+  const inputRaw = flags['spend-input-usd-per-mt'];
+  const outputRaw = flags['spend-output-usd-per-mt'];
+  const tokensRaw = flags['spend-max-output-tokens'];
+  const providerRaw = flags['spend-provider'];
+  const modelRaw = flags['spend-model'];
+  const hardStopRaw = flags['account-side-hard-stop'];
+  const supplied = [ceilingRaw, inputRaw, outputRaw, tokensRaw, providerRaw, modelRaw, hardStopRaw].some((entry) => entry !== undefined);
+  const accountSideHardStopRef = hardStopRaw === undefined ? null : String(hardStopRaw).trim();
+  if (!supplied) return { ok: true, ceiling: null, accountSideHardStopRef: null };
+  for (const [value, name] of [
+    [ceilingRaw, 'spend-ceiling-usd'],
+    [inputRaw, 'spend-input-usd-per-mt'],
+    [outputRaw, 'spend-output-usd-per-mt'],
+    [tokensRaw, 'spend-max-output-tokens'],
+    [providerRaw, 'spend-provider'],
+    [modelRaw, 'spend-model'],
+  ]) {
+    if (value === undefined) return { ok: false, code: 'SPEND_DECLARATION_MALFORMED', detail: `--${name} is required whenever a spend declaration is supplied` };
+  }
+  const ceiling = decimal(ceilingRaw, 'spend-ceiling-usd');
+  const input = decimal(inputRaw, 'spend-input-usd-per-mt');
+  const output = decimal(outputRaw, 'spend-output-usd-per-mt');
+  if (ceiling.ok !== true) return ceiling;
+  if (input.ok !== true) return input;
+  if (output.ok !== true) return output;
+  const tokens = Number(tokensRaw);
+  if (!Number.isInteger(tokens) || tokens <= 0) return { ok: false, code: 'SPEND_DECLARATION_MALFORMED', detail: '--spend-max-output-tokens must be a positive integer' };
+  const provider = String(providerRaw).trim();
+  const model = String(modelRaw).trim();
+  if (provider === '' || model === '') return { ok: false, code: 'SPEND_DECLARATION_MALFORMED', detail: '--spend-provider and --spend-model must be non-empty labels' };
+  return {
+    ok: true,
+    accountSideHardStopRef: accountSideHardStopRef === '' ? null : accountSideHardStopRef,
+    ceiling: {
+      schemaVersion: 'nightwatch.spend-ceiling.v1',
+      maxSpendUsd: /** @type {number} */ (ceiling.value),
+      rateCard: {
+        inputUsdPerMillionTokens: /** @type {number} */ (input.value),
+        outputUsdPerMillionTokens: /** @type {number} */ (output.value),
+      },
+      // (the required-field check above guarantees each parsed value is set)
+      maxOutputTokensPerCall: tokens,
+      // Conservative fixed bounds, never operator-widened: 1 token per request
+      // byte is tokenizer-impossible, and 32 bytes per generated token covers
+      // the widest realistic byte token.
+      maxBytesPerToken: 32,
+      worstCaseTokensPerByte: 1,
+      provider,
+      model,
+    },
+  };
+}
+
+/**
+ * D-183: the fail-closed metered admission for a launcher. Returns the
+ * validated declaration when the run may proceed and a refusal (exit 3, zero
+ * provider calls) otherwise. The metered class is the resolved adapter
+ * identity (the repository's own provider print adapter), never a label.
+ *
+ * @param {{ admitMeteredRunSpendCeiling: (input: { ceiling: unknown, provider: string | null | undefined, model: string | null | undefined, accountSideHardStop: string | null | undefined }) => { ok: boolean, code?: string, detail?: string, projectedUsd?: number } }} spendMod
+ * @param {boolean} metered
+ * @param {{ ok: true, ceiling: import('../src/core/agentRuntime/spendCeiling').SpendCeiling | null, accountSideHardStopRef: string | null } | { ok: false, code: string, detail: string }} declaration
+ * @param {{ provider: string | null, model: string | null }} identity
+ * @returns {{ ok: true, ceiling: import('../src/core/agentRuntime/spendCeiling').SpendCeiling | null, accountSideHardStopRef: string | null } | { ok: false, code: string, detail: string }}
+ */
+function admitLaunchSpend(spendMod, metered, declaration, identity) {
+  if (declaration.ok !== true) return declaration;
+  if (!metered) return declaration;
+  const admission = /** @type {{ ok: true, code?: undefined, detail?: undefined } | { ok: false, code: string, detail: string }} */ (
+    spendMod.admitMeteredRunSpendCeiling({
+      ceiling: declaration.ceiling,
+      provider: identity.provider,
+      model: identity.model,
+      accountSideHardStop: declaration.accountSideHardStopRef,
+    })
+  );
+  if (admission.ok !== true) return { ok: false, code: admission.code, detail: admission.detail };
+  return declaration;
+}
 
 /** @type {ReadonlyMap<string, import('../src/core/agentProtocol/runtime').AgentBudgetCeilingName>} */
 const DURATIONS = new Map([
@@ -541,8 +652,8 @@ if (strayPositional) {
       ) {
         fail(2, 'campaign run --wall-clock-minutes must be an integer 1..1440 (it narrows the selected ceiling)');
       } else {
-        const [mod, contextMod, reasonerMod] = loadTypeScriptModules(
-          ['src/core/agentRuntime/localCampaign.ts', 'src/core/localInvestigation/ownerLocal.ts', 'src/core/config/reasonerExecutable.ts'],
+        const [mod, contextMod, reasonerMod, spendMod] = loadTypeScriptModules(
+          ['src/core/agentRuntime/localCampaign.ts', 'src/core/localInvestigation/ownerLocal.ts', 'src/core/config/reasonerExecutable.ts', 'src/core/agentRuntime/spendCeiling.ts'],
           { root },
         );
         const extraArgs = [];
@@ -583,6 +694,26 @@ if (strayPositional) {
             provider: reasonerIdentity.provider ?? null,
             model: reasonerIdentity.model ?? null,
           };
+          // D-183: the owner-declared monetary ceiling, parsed from the launch
+          // flags. A malformed declaration is a usage error before any effect.
+          const spendDeclaration = parseSpendDeclaration(flags);
+          if (spendDeclaration.ok !== true) {
+            throw new Error(`${spendDeclaration.code}: ${spendDeclaration.detail}`);
+          }
+          // D-183: the fail-closed metered admission BEFORE the campaign
+          // exists — a real provider campaign without a valid, identity-bound,
+          // metered-rate ceiling (and the account-side hard stop) refuses here
+          // with zero provider calls.
+          const admittedSpend = admitLaunchSpend(/** @type {Parameters<typeof admitLaunchSpend>[0]} */ (spendMod), mod.isMeteredProviderRoute(reasonerIdentity), spendDeclaration, {
+            provider: reasonerIdentity.provider ?? providerLabel,
+            model: reasonerIdentity.model ?? modelLabel,
+          });
+          if (admittedSpend.ok !== true) {
+            throw new Error(`SPEND_ENFORCEMENT_REFUSED: ${admittedSpend.code}: ${admittedSpend.detail}`);
+          }
+          const runSpend = admittedSpend.ok === true && admittedSpend.ceiling !== null
+            ? { spendCeiling: admittedSpend.ceiling, accountSideHardStopRef: admittedSpend.accountSideHardStopRef }
+            : {};
           const result = await mod.runLocalCliCampaign({
             pauseSignal: pause.signal,
             campaignId: typeof flags.id === 'string' && flags.id.length > 0 ? flags.id : `local-${Date.now()}`,
@@ -594,6 +725,7 @@ if (strayPositional) {
             model: modelLabel,
             maxTurns,
             ...(expectedInvestigations === undefined ? {} : { expectedInvestigations }),
+            ...runSpend,
             wallClockCeilingOverrideMs:
               wallClockMinutes === undefined ? undefined : wallClockMinutes * 60_000,
             investigationScope: repositoryIds,
@@ -635,7 +767,14 @@ if (strayPositional) {
             },
           });
         } catch (error) {
-          fail(2, error instanceof Error ? error.message : 'LOCAL_CAMPAIGN_FAILED');
+          {
+            const message = error instanceof Error ? error.message : 'LOCAL_CAMPAIGN_FAILED';
+            // D-183: a spend-enforcement refusal is a fail-closed refusal
+            // (exit 3), never a usage error — the campaign layer's own
+            // admission keeps the same contract as the launcher's.
+            const spendRefusal = message.includes('SPEND_ENFORCEMENT_REFUSED');
+            fail(spendRefusal ? 3 : 2, message);
+          }
         } finally {
           pause.dispose();
         }
@@ -739,8 +878,8 @@ if (strayPositional) {
         fail(3, error instanceof Error ? error.message : 'ENVIRONMENT_VALUE_MALFORMED');
         resumeStartupOk = false;
       }
-      const [mod, contextMod, reasonerMod] = loadTypeScriptModules(
-        ['src/core/agentRuntime/localCampaign.ts', 'src/core/localInvestigation/ownerLocal.ts', 'src/core/config/reasonerExecutable.ts'],
+      const [mod, contextMod, reasonerMod, spendMod] = loadTypeScriptModules(
+        ['src/core/agentRuntime/localCampaign.ts', 'src/core/localInvestigation/ownerLocal.ts', 'src/core/config/reasonerExecutable.ts', 'src/core/agentRuntime/spendCeiling.ts'],
         { root },
       );
       const extraArgs = [];
@@ -777,6 +916,25 @@ if (strayPositional) {
           provider: reasonerIdentity.provider ?? null,
           model: reasonerIdentity.model ?? null,
         };
+        // D-183: the owner-declared monetary ceiling, parsed from the launch
+        // flags. A malformed declaration is a usage error before any effect.
+        const spendDeclaration = parseSpendDeclaration(flags);
+        if (spendDeclaration.ok !== true) {
+          throw new Error(`${spendDeclaration.code}: ${spendDeclaration.detail}`);
+        }
+        // D-183: the fail-closed metered admission BEFORE the resume exists.
+        // The campaign layer additionally holds the resume to the PERSISTED
+        // ceiling (absent/widened/substituted declarations are refused there).
+        const admittedSpend = admitLaunchSpend(/** @type {Parameters<typeof admitLaunchSpend>[0]} */ (spendMod), mod.isMeteredProviderRoute(reasonerIdentity), spendDeclaration, {
+          provider: reasonerIdentity.provider ?? providerLabel,
+          model: reasonerIdentity.model ?? modelLabel,
+        });
+        if (admittedSpend.ok !== true) {
+          throw new Error(`SPEND_ENFORCEMENT_REFUSED: ${admittedSpend.code}: ${admittedSpend.detail}`);
+        }
+        const resumeSpend = admittedSpend.ok === true && admittedSpend.ceiling !== null
+          ? { spendCeiling: admittedSpend.ceiling, accountSideHardStopRef: admittedSpend.accountSideHardStopRef }
+          : {};
         // M7 (8.1): the resume reads the same validated merge.
         // ceilingName is required input but resume runs under the checkpoint's
         // own stored budget policy; the multi-investigation progress (next
@@ -791,6 +949,7 @@ if (strayPositional) {
           args: extraArgs,
           provider: providerLabel,
           model: modelLabel,
+          ...resumeSpend,
           maxTurns: Number.isInteger(maxTurns) ? maxTurns : 8,
           investigationScope: repositoryIds,
           investigationContext: contextMod.createOwnerLocalInvestigationContext(
@@ -825,7 +984,12 @@ if (strayPositional) {
           },
         });
       } catch (error) {
-        fail(2, error instanceof Error ? error.message : 'LOCAL_CAMPAIGN_RESUME_FAILED');
+        {
+          const message = error instanceof Error ? error.message : 'LOCAL_CAMPAIGN_RESUME_FAILED';
+          // D-183: a spend-enforcement refusal keeps the fail-closed exit code.
+          const spendRefusal = message.includes('SPEND_ENFORCEMENT_REFUSED');
+          fail(spendRefusal ? 3 : 2, message);
+        }
       } finally {
         pause.dispose();
       }
