@@ -64,6 +64,17 @@ import {
   admitLocalFinding,
   type AdmitLocalFindingResult,
 } from '../localInvestigation/admission';
+import {
+  MAX_CAMPAIGN_INVESTIGATIONS,
+  MIN_CAMPAIGN_INVESTIGATIONS,
+  evaluateCampaignCompletion,
+  type CampaignCompletionVerdict,
+} from './campaignCompletion';
+import {
+  classifyInvestigation,
+  summarizeTerminationCauses,
+  type InvestigationDiagnostic,
+} from './campaignDiagnostics';
 import { AgentFindingStore, AgentFindingStoreError, agentFindingRecordFileName } from '../localInvestigation/agentFindingStore';
 import type { AgentFindingRecord } from '../localInvestigation/agentFindingRecord';
 import { createUnavailableLocalInvestigationContext } from '../localInvestigation/ownerLocal';
@@ -167,6 +178,17 @@ export interface LocalCampaignInput {
   readonly provider?: string;
   readonly model?: string;
   readonly maxTurns?: number;
+  /**
+   * R6-01: the campaign's DECLARED investigation plan — how many investigations
+   * this campaign intends to run. It is declared by the operator BEFORE the run
+   * (never derived from what happened) and it is what makes campaign-level
+   * completion a finite, objective fact rather than a guess: the campaign is
+   * finished when exactly this many investigations have run to their own
+   * declared end. Absent means NO declared plan, in which case the campaign can
+   * only end by budget, cancellation, a safety block or stagnation and is never
+   * reported as successfully completed (see `evaluateCampaignCompletion`).
+   */
+  readonly expectedInvestigations?: number;
   /**
    * M5 (6.7/C-16): bounded-backoff transport for transient provider failures.
    * Absent means real bounded timers; tests inject a recorder.
@@ -276,6 +298,20 @@ export interface LocalCampaignResult {
    */
   readonly yieldMetrics: CampaignYieldMetrics;
   /**
+   * R6-01: the declared investigation plan this campaign was given, and the
+   * host-computed completion verdict at the moment it ended. `null` plan means
+   * no plan existed, which is why such a campaign can never be "finished".
+   */
+  readonly expectedInvestigations: number | null;
+  readonly completionVerdict: CampaignCompletionVerdict;
+  /**
+   * R6-02: per-investigation stopping causes and their tally. These survive a
+   * NO_PROGRESS exit, which deletes the checkpoint, so the turn-limit versus
+   * repeated-action distinction is never lost again.
+   */
+  readonly investigationDiagnostics: readonly InvestigationDiagnostic[];
+  readonly terminationCauseCounts: Readonly<Record<string, number>>;
+  /**
    * M5 (C-01): whether this run's admitted findings reached the durable
    * owner-local store. `NONE` means the run admitted nothing; `NOT_PERSISTED`
    * means at least one write failed and the run is not clean.
@@ -350,6 +386,12 @@ interface CampaignProgress {
    * one its prefix was counted under. Absent on pre-M5 checkpoints.
    */
   readonly maxTurns: number | null;
+  /**
+   * R6-01: the declared investigation plan, persisted so a resume can never
+   * infer a different plan from what happened and a completed campaign states
+   * the plan it was held to. Absent on pre-R6 envelopes (no declared plan).
+   */
+  readonly expectedInvestigations: number | null;
   /**
    * M5 (6.6): the derived provider attribution at the moment the checkpoint
    * was written, so a stored campaign states its provider outcome explicitly
@@ -604,6 +646,20 @@ function parseCampaignProgress(value: unknown, campaignId: string): CampaignProg
     reasonerIdentity,
     pausedInvestigation,
     maxTurns,
+    // R6-01: fail closed on a malformed declared plan rather than silently
+    // resuming with no plan (which would make the campaign uncompletable).
+    expectedInvestigations: (() => {
+      if (value.expectedInvestigations === undefined || value.expectedInvestigations === null) return null;
+      if (
+        typeof value.expectedInvestigations !== 'number' ||
+        !Number.isInteger(value.expectedInvestigations) ||
+        value.expectedInvestigations < MIN_CAMPAIGN_INVESTIGATIONS ||
+        value.expectedInvestigations > MAX_CAMPAIGN_INVESTIGATIONS
+      ) {
+        throw new AgentCheckpointError('CORRUPT', 'campaignProgress.expectedInvestigations is invalid');
+      }
+      return value.expectedInvestigations;
+    })(),
     providerAttribution,
   };
 }
@@ -702,6 +758,21 @@ function driverAndPolicy(input: LocalCampaignInput) {
   }
   if (input.maxTurns !== undefined && (!Number.isInteger(input.maxTurns) || input.maxTurns < 1 || input.maxTurns > 50)) {
     throw new LocalCampaignError('MALFORMED_MAX_TURNS', 'maxTurns must be an integer 1..50');
+  }
+  // R6-01: a declared plan is the ONLY thing that can make a campaign
+  // "finished". It must be an explicit bounded integer, never a caller guess
+  // and never inferred from what happened, and it may not be so small that the
+  // campaign is really a single investigation.
+  if (
+    input.expectedInvestigations !== undefined &&
+    (!Number.isInteger(input.expectedInvestigations) ||
+      input.expectedInvestigations < MIN_CAMPAIGN_INVESTIGATIONS ||
+      input.expectedInvestigations > MAX_CAMPAIGN_INVESTIGATIONS)
+  ) {
+    throw new LocalCampaignError(
+      'MALFORMED_EXPECTED_INVESTIGATIONS',
+      `expectedInvestigations must be an integer ${MIN_CAMPAIGN_INVESTIGATIONS}..${MAX_CAMPAIGN_INVESTIGATIONS}`,
+    );
   }
   const enginePolicy = defaultAgentBudgetPolicy(input.ceilingName);
   if (input.wallClockCeilingOverrideMs !== undefined) {
@@ -860,6 +931,23 @@ interface CampaignAccumulators {
   lastPhase: AgentPhase;
   nextIndex: number;
   stagnant: number;
+  /**
+   * R6-01: true when the loop is terminating because the stagnation guard
+   * tripped. A stagnation exit is a giving-up outcome and must never be
+   * presented as completion, so the completion decision reads this flag rather
+   * than inferring intent from the counters.
+   */
+  terminatedOnStagnation: boolean;
+  /** R6-02: per-investigation stopping causes, captured before any checkpoint deletion. */
+  investigationDiagnostics: InvestigationDiagnostic[];
+  /**
+   * R6-04: true when a SUSPENDED investigation had itself already recorded a
+   * provider failure. The `PAUSED` placeholder for that slot is retired when the
+   * investigation finishes, so without this the failure would disappear from the
+   * population tally and a degraded campaign could look clean. Once set it is
+   * sticky: a lost provider failure is never un-learned.
+   */
+  suspendedProviderFailure: boolean;
   terminationCounts: CampaignTerminationCounts;
   investigationsStarted: number;
   investigationsCompleted: number;
@@ -894,6 +982,9 @@ function freshAccumulators(campaignId: string): CampaignAccumulators {
     lastPhase: 'PLAN',
     nextIndex: 0,
     stagnant: 0,
+    terminatedOnStagnation: false,
+    investigationDiagnostics: [],
+    suspendedProviderFailure: false,
     terminationCounts: zeroTerminationCounts(),
     investigationsStarted: 0,
     investigationsCompleted: 0,
@@ -945,8 +1036,18 @@ function absorbInvestigation(engine: CampaignEngine, ran: AgentRunResult, countS
     runAttribution.terminationClass === 'PROVIDER_BLOCKED_BEFORE_SOURCE_ACTION'
       ? 'REASONER_FAILURE'
       : ran.terminationReason;
-  acc.terminationCounts[countedReason] += 1;
-  const usage = ran.state.budget.usage;
+  if (countStart) {
+    acc.terminationCounts[countedReason] += 1;
+  } else {
+    // R6-04: this run FINISHED an investigation that was previously SUSPENDED.
+    // The suspension already counted `PAUSED` against this slot at pause time
+    // (`absorbPausedInvestigationPrefix`). Count the finished reason and retire
+    // that one placeholder, otherwise the campaign carries a phantom PAUSED
+    // case forever and can never satisfy completion — a defect that made every
+    // resumed campaign unqualifiable. The net population count is unchanged.
+    acc.terminationCounts[countedReason] += 1;
+    if (acc.terminationCounts.PAUSED > 0) acc.terminationCounts.PAUSED -= 1;
+  }  const usage = ran.state.budget.usage;
   acc.reasonerCalls += usage.reasonerCalls;
   acc.inputBytes += usage.inputBytes;
   acc.outputBytes += usage.outputBytes;
@@ -1036,6 +1137,9 @@ function absorbInvestigation(engine: CampaignEngine, ran: AgentRunResult, countS
 function absorbPausedInvestigationPrefix(engine: CampaignEngine, ran: AgentRunResult): void {
   engine.acc.terminationCounts[ran.terminationReason] += 1;
   engine.acc.investigationsStarted += 1;
+  // R6-04: remember that this slot's suspension ALREADY carried a provider
+  // failure, so retiring the PAUSED placeholder later cannot hide it.
+  if (ran.state.budget.usage.providerFailures > 0) engine.acc.suspendedProviderFailure = true;
   engine.acc.lastPhase = ran.state.phase;
 }
 
@@ -1113,6 +1217,7 @@ function buildCampaignCheckpoint(
     reasonerIdentity: engine.input.reasonerIdentity ?? null,
     pausedInvestigation,
     maxTurns: engine.input.maxTurns ?? AGENT_RUNTIME_DEFAULT_MAX_TURNS,
+    expectedInvestigations: engine.input.expectedInvestigations ?? null,
     providerAttribution: attributionForCheckpoint(
       attributeProviderFailures({
         actionLog: acc.actionLog,
@@ -1212,6 +1317,19 @@ function resultOf(
       actionLog: state.actionLog,
       surface: state.reproductionSurface ?? [],
     }),
+    expectedInvestigations: engine.input.expectedInvestigations ?? null,
+    completionVerdict: evaluateCampaignCompletion({
+      expectedInvestigations: engine.input.expectedInvestigations ?? null,
+      investigationsStarted: engine.acc.investigationsStarted,
+      investigationsCompleted: engine.acc.investigationsCompleted,
+      terminationCounts: engine.acc.terminationCounts,
+      providerTerminationClass: providerAttribution.terminationClass,
+      sourceActions: countCampaignToolActions(engine.acc.actionLog),
+      terminatedOnStagnation: engine.acc.terminatedOnStagnation,
+      suspendedProviderFailure: engine.acc.suspendedProviderFailure,
+    }),
+    investigationDiagnostics: Object.freeze([...engine.acc.investigationDiagnostics]),
+    terminationCauseCounts: summarizeTerminationCauses(engine.acc.investigationDiagnostics),
     admissionPersistence: 'NONE',
     persistedFindings: [],
     admissionPersistenceFailures: [],
@@ -1359,6 +1477,18 @@ async function runOneInvestigation(engine: CampaignEngine, investigationId: stri
     }
   }
   engine.acc.histories.push(session.snapshot());
+  // R6-02: classify this investigation's stopping cause from its OWN log while
+  // the log is still in hand. A NO_PROGRESS exit deletes the checkpoint, so
+  // this is the only point at which the turn-limit versus repeated-action
+  // distinction can still be captured.
+  engine.acc.investigationDiagnostics.push(
+    classifyInvestigation({
+      investigationId,
+      terminationReason: ran.terminationReason,
+      turnLimit: engine.input.maxTurns ?? AGENT_RUNTIME_DEFAULT_MAX_TURNS,
+      actionLog: ran.state.actionLog,
+    }),
+  );
   return ran;
 }
 
@@ -1450,10 +1580,52 @@ async function runCampaignLoop(engine: CampaignEngine, firstInvestigationId?: st
       engine.acc.stagnant = 0;
     }
     if (engine.acc.stagnant >= CAMPAIGN_STAGNATION_LIMIT) {
+      // R6-01: this is the GIVING-UP exit. It is recorded as such so the
+      // completion decision can never read a stagnation termination as success.
+      engine.acc.terminatedOnStagnation = true;
       const result = persistAdmissions(engine, resultOf(engine, 'NO_PROGRESS', null));
       if (result.admissionPersistence === 'NOT_PERSISTED') return result;
       deleteStoredCheckpoint(engine.directory, engine.input.campaignId);
       return result;
+    }
+    // R6-01: the SUCCESS exit. Only reached when the declared investigation plan
+    // is exhausted by investigations that each ran to their own declared end.
+    // Every criterion is host-computed over the whole population; a single
+    // completed investigation is never sufficient, and any NO_PROGRESS,
+    // BUDGET_EXHAUSTED, PAUSED, CANCELLED, SAFETY_BLOCKED or REASONER_FAILURE
+    // case anywhere in the campaign refuses completion outright.
+    if (
+      engine.input.expectedInvestigations !== undefined &&
+      engine.acc.nextIndex >= engine.input.expectedInvestigations
+    ) {
+      const verdict = evaluateCampaignCompletion({
+        expectedInvestigations: engine.input.expectedInvestigations,
+        investigationsStarted: engine.acc.investigationsStarted,
+        investigationsCompleted: engine.acc.investigationsCompleted,
+        terminationCounts: engine.acc.terminationCounts,
+        providerTerminationClass: attributeProviderFailures({
+          actionLog: engine.acc.actionLog,
+          reasonerCalls: engine.acc.reasonerCalls,
+          providerFailures: engine.acc.providerFailures,
+        }).terminationClass,
+        sourceActions: countCampaignToolActions(engine.acc.actionLog),
+        terminatedOnStagnation: engine.acc.terminatedOnStagnation,
+        suspendedProviderFailure: engine.acc.suspendedProviderFailure,
+      });
+      if (verdict.complete && verdict.terminationReason !== null) {
+        // A completed campaign keeps its checkpoint: unlike the failure exits,
+        // a finished run is durable evidence, not something to clean up.
+        const document = buildCampaignCheckpoint(engine, 'TERMINATED', verdict.terminationReason, null);
+        const file = persistCampaignFile(engine.directory, engine.input.campaignId, document);
+        return persistAdmissions(engine, resultOf(engine, verdict.terminationReason, file));
+      }
+      // A declared plan that ran to the end WITHOUT meeting every completion
+      // criterion is refused, never relabelled. The campaign is genuinely
+      // finished and did not qualify, so it is reported as NO_PROGRESS (with a
+      // checkpoint, so the owner can inspect the refused population).
+      const document = buildCampaignCheckpoint(engine, 'TERMINATED', 'NO_PROGRESS', null);
+      const file = persistCampaignFile(engine.directory, engine.input.campaignId, document);
+      return persistAdmissions(engine, resultOf(engine, 'NO_PROGRESS', file));
     }
   }
 }
@@ -1667,8 +1839,22 @@ export async function resumeLocalCliCampaign(input: LocalCampaignInput): Promise
   // caller's, so a resumed investigation keeps the budget its prefix was
   // counted under and a `--max-turns` passed at resume time cannot silently
   // widen (or shrink) it.
-  const effectiveInput: LocalCampaignInput =
-    progress !== null && progress.maxTurns !== null ? { ...input, maxTurns: progress.maxTurns } : input;
+  const effectiveInput: LocalCampaignInput = (() => {
+    let effective = input;
+    if (progress !== null && progress.maxTurns !== null) effective = { ...effective, maxTurns: progress.maxTurns };
+    // R6-01: the declared plan is checkpoint state, not a resume-time choice. A
+    // resume may NEVER introduce, change or widen the plan: a campaign that had
+    // none stays uncompletable, and one that had a plan keeps exactly it.
+    if (progress !== null) {
+      if (progress.expectedInvestigations !== null) {
+        effective = { ...effective, expectedInvestigations: progress.expectedInvestigations };
+      } else {
+        const { expectedInvestigations: _discarded, ...rest } = effective;
+        effective = rest as LocalCampaignInput;
+      }
+    }
+    return effective;
+  })();
 
   if (checkpoint.state.status === 'TERMINATED') {
     // Idempotent resume: the campaign already finished. Report the stored

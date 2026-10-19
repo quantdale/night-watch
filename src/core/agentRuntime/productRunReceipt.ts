@@ -141,6 +141,14 @@ export interface ProductRunReceipt {
   readonly reasonerIdentity?: ProductRunReasonerIdentity | null;
   /** R3-06: per-reason termination counts, so a campaign's cases are named. */
   readonly caseTerminationCounts?: Readonly<Record<string, number>>;
+  /**
+   * R6-02: preserved run diagnostics. Purely additive and optional: an older
+   * receipt without it stays readable, and its absence never makes a receipt
+   * qualify. It carries launch parameters, usage accounting and per-investigation
+   * stopping causes so a finished run is auditable after the fact — the gap that
+   * made the first real provider campaign unexplainable.
+   */
+  readonly diagnostics?: Readonly<Record<string, unknown>>;
 }
 
 export interface ProductRunReceiptInput {
@@ -168,6 +176,8 @@ export interface ProductRunReceiptInput {
   readonly campaignKind?: CampaignKind;
   /** R3-06: the resolved reasoner identity (from the runtime, not the env). */
   readonly reasonerIdentity?: ProductRunReasonerIdentity | null;
+  /** R6-02: preserved run diagnostics (see `ProductRunReceipt.diagnostics`). */
+  readonly diagnostics?: Readonly<Record<string, unknown>>;
 }
 
 export interface EmittedProductRunReceipt {
@@ -226,6 +236,8 @@ export function buildProductRunReceipt(input: {
   readonly nightwatchIdentity?: ProductRunNightwatchIdentity;
   readonly campaignKind?: CampaignKind;
   readonly reasonerIdentity?: ProductRunReasonerIdentity | null;
+  /** R6-02: preserved run diagnostics (see `ProductRunReceipt.diagnostics`). */
+  readonly diagnostics?: Readonly<Record<string, unknown>>;
 }): ProductRunReceipt {
   const before = input.before.map(identityOf);
   const after = input.after.map(identityOf);
@@ -264,6 +276,7 @@ export function buildProductRunReceipt(input: {
           .sort(([left], [right]) => left.localeCompare(right)),
       ),
     ),
+    ...(input.diagnostics === undefined ? {} : { diagnostics: input.diagnostics }),
   });
 }
 
@@ -608,6 +621,7 @@ export async function emitProductRunReceipt(input: ProductRunReceiptInput): Prom
     ...(input.nightwatchIdentity === undefined ? {} : { nightwatchIdentity: input.nightwatchIdentity }),
     ...(input.campaignKind === undefined ? {} : { campaignKind: input.campaignKind }),
     ...(input.reasonerIdentity === undefined ? {} : { reasonerIdentity: input.reasonerIdentity }),
+    ...(input.diagnostics === undefined ? {} : { diagnostics: input.diagnostics }),
   });
   const validation = validateProductRunReceipt(receipt);
   if (!validation.ok) {

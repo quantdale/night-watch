@@ -172,8 +172,14 @@ test('paused campaign writes a checkpoint that status lists and resume can finis
   expect(resumed.terminationReason).toBe('NO_PROGRESS');
   expect(resumed.investigationsStarted).toBe(CAMPAIGN_STAGNATION_LIMIT);
   expect(resumed.investigationsCompleted).toBe(CAMPAIGN_STAGNATION_LIMIT);
-  expect(resumed.terminationCounts.PAUSED).toBe(1);
+  // R6-04: the PAUSED placeholder counted at suspension time is RETIRED when
+  // that investigation finishes, so the tally reconciles with the population.
+  // (It previously left a phantom PAUSED case, which made every resumed
+  // campaign structurally unable to satisfy completion.)
+  expect(resumed.terminationCounts.PAUSED).toBe(0);
   expect(resumed.terminationCounts.COMPLETE_NO_FINDING).toBe(CAMPAIGN_STAGNATION_LIMIT);
+  const totalTerminations = Object.values(resumed.terminationCounts).reduce((sum, count) => sum + count, 0);
+  expect(totalTerminations).toBe(resumed.investigationsCompleted);
   expect(resumed.checkpointFile).toBeNull();
   // The terminal campaign leaves no stale checkpoint behind for status.
   expect(listLocalCampaigns(dir)).toEqual([]);

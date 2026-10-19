@@ -381,6 +381,12 @@
       "class": "PARALLEL_SAFE",
       "signals": []
     },
+    "tests/unit/campaignCompletionSuccess.test.ts": {
+      "class": "PARALLEL_SAFE",
+      "signals": [
+        "isolated-scratch"
+      ]
+    },
     "tests/unit/campaignEndurance.test.ts": {
       "class": "PARALLEL_SAFE",
       "signals": [

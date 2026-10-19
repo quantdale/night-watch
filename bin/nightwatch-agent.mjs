@@ -65,6 +65,13 @@ const cliStopped = cli.ok !== true || cli.stop === true;
 // R5-07: only `campaign` takes a positional; `status extra` / `help run` are usage errors (exit 2).
 const strayPositional = !cliStopped && command !== 'campaign' && cli.positionals.length > 0;
 
+/**
+ * R6-02: the turn limit the engine applies when the operator supplies none. It
+ * mirrors `AGENT_RUNTIME_DEFAULT_MAX_TURNS` so recorded launch diagnostics state
+ * the value actually used rather than an absent one.
+ */
+const DEFAULT_CAMPAIGN_MAX_TURNS = 50;
+
 /** @type {ReadonlyMap<string, import('../src/core/agentProtocol/runtime').AgentBudgetCeilingName>} */
 const DURATIONS = new Map([
   ['1h', 'HOUR_1'],
@@ -99,17 +106,80 @@ const DURATIONS = new Map([
  * @property {import('../src/core/agentRuntime/productRunReceipt').ProductRunNightwatchIdentity | null} [nightwatchIdentity]
  * @property {import('../src/core/agentRuntime/productRunReceipt').CampaignKind} campaignKind
  * @property {import('../src/core/agentRuntime/productRunReceipt').ProductRunReasonerIdentity | null} reasonerIdentity
+ * @property {CampaignLaunchDiagnostics | null} [launch] R6-02 launch/usage diagnostics
+ */
+/**
+ * R6-02: the launch parameters the process actually resolved, recorded so a run
+ * is reproducible without the operator's shell history.
+ * @typedef {object} CampaignLaunchDiagnostics
+ * @property {string} ceilingName
+ * @property {number} maxTurns
+ * @property {number} wallClockCeilingMs
+ * @property {number | null} expectedInvestigations
+ * @property {readonly string[] | null} investigationScope
+ * @property {readonly string[]} observedScope
  */
 /**
  * @param {CampaignReceiptInput} input
  */
-async function emitCampaignReceipt({ root, receiptMod, campaignId, result, repositoryIds, before, nightwatchIdentity, campaignKind, reasonerIdentity = null }) {
+/**
+ * R6-02: assemble the bounded, redacted diagnostics block that makes a finished
+ * run auditable. It carries only launch parameters the process actually
+ * resolved, the campaign's own usage accounting, and per-investigation stopping
+ * causes — never prompts, raw provider text, arguments or credentials.
+ */
+/**
+ * @param {{ result: import('../src/core/agentRuntime/localCampaign').LocalCampaignResult, launch: CampaignLaunchDiagnostics }} input
+ */
+function campaignDiagnosticsOf({ result, launch }) {
+  return {
+    schemaVersion: 'nightwatch.campaign-diagnostics.v1',
+    launch: {
+      ceilingName: launch.ceilingName,
+      maxTurns: launch.maxTurns,
+      wallClockCeilingMs: launch.wallClockCeilingMs,
+      expectedInvestigations: launch.expectedInvestigations,
+      investigationScope: launch.investigationScope ?? null,
+      observedScope: launch.observedScope ?? null,
+    },
+    usage: {
+      reasonerCalls: result.reasonerCalls,
+      providerFailures: result.providerFailures,
+      wallTimeMs: result.wallTimeMs,
+      investigationsStarted: result.investigationsStarted,
+      investigationsCompleted: result.investigationsCompleted,
+      byteLedger: result.byteLedger,
+    },
+    completion: result.completionVerdict,
+    terminationCauseCounts: result.terminationCauseCounts,
+    investigations: (result.investigationDiagnostics ?? []).map((entry) => ({
+      investigationId: entry.investigationId,
+      terminationReason: entry.terminationReason,
+      terminationCause: entry.terminationCause,
+      turnsUsed: entry.turnsUsed,
+      turnLimit: entry.turnLimit,
+      hitTurnLimit: entry.hitTurnLimit,
+      stoppedOnRepeatedAction: entry.stoppedOnRepeatedAction,
+      providerFailures: entry.providerFailures,
+      providerFailureClasses: entry.providerFailureClasses,
+      toolActions: entry.toolActions,
+      reasonerCalls: entry.reasonerCalls,
+    })),
+  };
+}
+
+/**
+ * @param {CampaignReceiptInput} input
+ */
+async function emitCampaignReceipt(input) {
+  const { root, receiptMod, campaignId, result, repositoryIds, before, nightwatchIdentity, campaignKind, reasonerIdentity = null, launch = null } = input;
   try {
     const emitted = await receiptMod.emitProductRunReceipt({
       root,
       campaignId,
       result,
       repositoryIds,
+      ...(launch === null ? {} : { diagnostics: campaignDiagnosticsOf({ result, launch }) }),
       before,
       ...(nightwatchIdentity === null ? {} : { nightwatchIdentity }),
       campaignKind,
@@ -403,6 +473,16 @@ if (strayPositional) {
     return eq === -1 ? [item.slice(2), 'true'] : [item.slice(2, eq), item.slice(eq + 1)];
   }));
   const repositoryIds = flags.repository === undefined ? undefined : [flags.repository];
+  // R6-03: the SIBLING OBSERVATION scope is deliberately SEPARATE from the
+  // investigation scope. Before this, both were derived from `--repository`,
+  // so omitting it made the receipt observe nothing while the investigation
+  // silently widened to the whole approved universe. `--observe-repository`
+  // names what the run must observe WITHOUT narrowing or widening what it
+  // investigates; it defaults to `--repository` for backward compatibility and
+  // is independent of it when both are given.
+  const observationRepositoryIds = flags['observe-repository'] === undefined
+    ? repositoryIds
+    : [flags['observe-repository']];
   const modelLabel = resolveModelLabel(flags);
   /**
    * M7 (8.1/NW-AUD-012): the validated process+.env merge, resolved once and
@@ -440,10 +520,21 @@ if (strayPositional) {
       // second ceiling tier.
       const wallClockRaw = flags['wall-clock-minutes'];
       const wallClockMinutes = wallClockRaw === undefined ? undefined : Number(wallClockRaw);
+      // R6-01: the DECLARED investigation plan. Supplying it is what makes
+      // campaign-level successful completion reachable at all; omitting it means
+      // the campaign can only end by budget, cancellation, safety or stagnation
+      // and is never reported as completed.
+      const expectedRaw = flags['expected-investigations'];
+      const expectedInvestigations = expectedRaw === undefined ? undefined : Number(expectedRaw);
       if (!startupOk) {
         // Refused before any child process is created.
       } else if (maxTurns !== undefined && (!Number.isInteger(maxTurns) || maxTurns < 1 || maxTurns > 50)) {
         fail(2, 'campaign run --max-turns must be an integer 1..50');
+      } else if (
+        expectedInvestigations !== undefined &&
+        (!Number.isInteger(expectedInvestigations) || expectedInvestigations < 2 || expectedInvestigations > 64)
+      ) {
+        fail(2, 'campaign run --expected-investigations must be an integer 2..64 (it is the campaign plan); a campaign of one investigation is never a campaign');
       } else if (
         wallClockMinutes !== undefined &&
         (!Number.isInteger(wallClockMinutes) || wallClockMinutes < 1 || wallClockMinutes > 24 * 60)
@@ -467,8 +558,10 @@ if (strayPositional) {
         // it went through the provider print adapter (a yield campaign) or a
         // custom reasoner script (the smoke/test path).
         const nightwatchIdentityBefore = readNightwatchIdentity();
-        const approvedRepositories = repositoryIds ?? [];
-        const siblingsBefore = await receiptMod.observeSiblings(approvedRepositories);
+        // R6-03: observe what the run was asked to OBSERVE; investigate what it
+        // was asked to INVESTIGATE. They are independent scopes.
+        const observedRepositories = observationRepositoryIds ?? [];
+        const siblingsBefore = await receiptMod.observeSiblings(observedRepositories);
         try {
           const providerLabel = campaignEnvironment().NIGHTWATCH_REASONER_PROVIDER ?? 'configured';
           const { executable, reasonerIdentity } = resolveReasonerIdentity(reasonerMod, campaignEnvironment().NIGHTWATCH_REASONER_CLI, {
@@ -500,6 +593,7 @@ if (strayPositional) {
             provider: providerLabel,
             model: modelLabel,
             maxTurns,
+            ...(expectedInvestigations === undefined ? {} : { expectedInvestigations }),
             wallClockCeilingOverrideMs:
               wallClockMinutes === undefined ? undefined : wallClockMinutes * 60_000,
             investigationScope: repositoryIds,
@@ -524,13 +618,21 @@ if (strayPositional) {
             receiptMod,
             campaignId: result.campaignId,
             result,
-            repositoryIds: approvedRepositories,
+            repositoryIds: observedRepositories,
             before: siblingsBefore,
             // A run is bound only when HEAD did not move and the tree was clean
             // at BOTH ends; a moved HEAD keeps the start SHA but is not clean.
             nightwatchIdentity: bindRunIdentity(nightwatchIdentityBefore, readNightwatchIdentity()),
             campaignKind,
             reasonerIdentity: recordedReasonerIdentity,
+            launch: {
+              ceilingName: DURATIONS.get(flags.duration) ?? 'HOUR_1',
+              maxTurns: maxTurns ?? DEFAULT_CAMPAIGN_MAX_TURNS,
+              wallClockCeilingMs: (wallClockMinutes ?? 0) * 60_000,
+              expectedInvestigations: expectedInvestigations ?? null,
+              investigationScope: repositoryIds ?? null,
+              observedScope: observedRepositories,
+            },
           });
         } catch (error) {
           fail(2, error instanceof Error ? error.message : 'LOCAL_CAMPAIGN_FAILED');
@@ -652,8 +754,9 @@ if (strayPositional) {
       const maxTurns = maxTurnsRaw === undefined ? undefined : Number(maxTurnsRaw);
       const pause = installCampaignPauseChannel();
       const [receiptMod] = loadTypeScriptModules(['src/core/agentRuntime/productRunReceipt.ts'], { root });
-      const approvedRepositories = repositoryIds ?? [];
-      const siblingsBefore = await receiptMod.observeSiblings(approvedRepositories);
+      // R6-03: a resume observes the same separate scope as a fresh run.
+      const observedRepositories = observationRepositoryIds ?? [];
+      const siblingsBefore = await receiptMod.observeSiblings(observedRepositories);
       try {
         if (!resumeStartupOk) throw new Error('ENVIRONMENT_VALUE_MALFORMED');
         const providerLabel = campaignEnvironment().NIGHTWATCH_REASONER_PROVIDER ?? 'configured';
@@ -708,10 +811,18 @@ if (strayPositional) {
           receiptMod,
           campaignId: result.campaignId,
           result,
-          repositoryIds: approvedRepositories,
+          repositoryIds: observedRepositories,
           before: siblingsBefore,
           campaignKind,
           reasonerIdentity: recordedReasonerIdentity,
+          launch: {
+            ceilingName: 'HOUR_1',
+            maxTurns: Number.isInteger(maxTurns) && maxTurns !== undefined ? maxTurns : DEFAULT_CAMPAIGN_MAX_TURNS,
+            wallClockCeilingMs: 0,
+            expectedInvestigations: result.expectedInvestigations ?? null,
+            investigationScope: repositoryIds ?? null,
+            observedScope: observedRepositories,
+          },
         });
       } catch (error) {
         fail(2, error instanceof Error ? error.message : 'LOCAL_CAMPAIGN_RESUME_FAILED');
@@ -722,7 +833,7 @@ if (strayPositional) {
   } else {
     fail(
       2,
-      'usage: nightwatch-agent campaign run --reasoner=cli --duration=1h|4h|8h|overnight [--wall-clock-minutes=<n>] [--max-turns=<n>] [--model=<label>] [--repository=<approved-org/repo>]',
+      'usage: nightwatch-agent campaign run --reasoner=cli --duration=1h|4h|8h|overnight [--wall-clock-minutes=<n>] [--max-turns=<n>] [--model=<label>] [--repository=<approved-org/repo>] [--observe-repository=<approved-org/repo>] [--expected-investigations=<n>]',
     );
   }
 } else if (cliStopped) {

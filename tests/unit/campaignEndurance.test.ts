@@ -317,9 +317,13 @@ test('resume does not re-run completed investigations or duplicate side effects'
   expect(resumed.terminationReason).toBe('NO_PROGRESS');
   expect(resumed.investigationsStarted).toBe(5);
   expect(resumed.investigationsCompleted).toBe(5);
-  expect(resumed.terminationCounts.PAUSED).toBe(1);
+  // R6-04: the suspension placeholder is retired when its investigation
+  // finishes, so termination counts reconcile with the completed population.
+  expect(resumed.terminationCounts.PAUSED).toBe(0);
   expect(resumed.terminationCounts.COMPLETE_NO_FINDING).toBe(4);
   expect(resumed.terminationCounts.COMPLETE_WITH_FINDING).toBe(1);
+  const totalTerminations = Object.values(resumed.terminationCounts).reduce((sum, count) => sum + count, 0);
+  expect(totalTerminations).toBe(resumed.investigationsCompleted);
   // Evidence and candidates carried across the resume boundary, honestly
   // reported (proposed, refused without reproduction — never fabricated).
   expect(resumed.candidateIds).toEqual(['c-resumed']);
