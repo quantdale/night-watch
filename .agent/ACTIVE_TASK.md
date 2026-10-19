@@ -1,92 +1,84 @@
 # Active Task
 
-Task ID: nightwatch-release-success-contract-v1
-Phase: RELEASE_SUCCESS_CONTRACT_V1
-Title: Release success contract (R6) and the governed C-00 claim recovery
-Status: COMPLETE
+Task ID: nightwatch-d181-cli-spend-enforcement-v1
+Phase: D181_CLI_SPEND_ENFORCEMENT_V1
+Title: D-181 CLI monetary-enforcement closure
+Status: IN_PROGRESS
 TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1
-TASK_GROUPS_COMPLETE: 1,2,3
-TASK_GROUP_NEXT: NONE
-TASK_NEXT_ID: NONE
-Task directory: .agent/tasks/nightwatch-release-success-contract-v1
-Starting SHA: ac0cc600473a6a133636d07eecc36ed535c4fcca
-Last validated implementation SHA: d78e6c55b5c79ccb97e958e777a9c54e0dbcb742
-Current milestone: COMPLETE — the governed engineering path is closed at S6
-`d78e6c55b5c79ccb97e958e777a9c54e0dbcb742` with its green exact-head run
-(39254273491) and 15/16 effective MET; the release success contract (R6), the
-D-180 C-00 recovery and the D-181 spend admission are implemented, validated
-and certified there.
-Last checkpoint: 2026-10-19 — S6 certified: 25 checkpoint-bound receipts
-re-earned and verified offline (25/25), canonical and independent fresh-clone
-evaluators in exact per-condition agreement (15/16; `autonomous-yield-proof`
-UNMET by design until a qualifying provider run).
-Next action: STOP — task complete. Any further provider proof belongs to a new
-task under a separate fresh owner authorization (parent-12.5 with its monetary
-cap); nothing here is open.
-Authorization class: RELEASE_SUCCESS_CONTRACT_V1
+TASK_GROUPS_COMPLETE: 1
+TASK_GROUP_NEXT: 2
+TASK_NEXT_ID: 2.1
+Task directory: .agent/tasks/nightwatch-d181-cli-spend-enforcement-v1
+Starting SHA: 27223764d42fe23a9f407c062b2e0c4774a34f3d
+Last validated implementation SHA: 27223764d42fe23a9f407c062b2e0c4774a34f3d
+Current milestone: M2 — campaign-layer enforcement and pause/resume
+persistence (task group 2): the pure admissions first, then the metered
+determination, the envelope persistence and the resume equality rule.
+Last checkpoint: 2026-10-19 — task opened at the verified HEAD `27223764` on
+top of certified S6 `d78e6c55`; the defect trace is complete and confirms the
+reported production gap exactly.
+Next action: task 2.1 — implement the identity-bound ceiling and the
+metered-run, identity and resume-equality admissions in
+`src/core/agentRuntime/spendCeiling.ts`, with focused tests.
+Authorization class: LOCAL_SOURCE_ENFORCEMENT
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
-STARTING_SHA: ac0cc600473a6a133636d07eecc36ed535c4fcca
-LAST_VALIDATED_IMPLEMENTATION_SHA: d78e6c55b5c79ccb97e958e777a9c54e0dbcb742
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: d78e6c55b5c79ccb97e958e777a9c54e0dbcb742
+STARTING_SHA: 27223764d42fe23a9f407c062b2e0c4774a34f3d
+LAST_VALIDATED_IMPLEMENTATION_SHA: 27223764d42fe23a9f407c062b2e0c4774a34f3d
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: 27223764d42fe23a9f407c062b2e0c4774a34f3d
 LIVE_HEAD_AUTHORITY: GIT
-PHASE_RELEASE_SUCCESS_CONTRACT_V1_STATUS: COMPLETE
+PHASE_D181_CLI_SPEND_ENFORCEMENT_V1_STATUS: IN_PROGRESS
 
 ## Mission
 
-Close the release-success-contract gap (R6) so a qualifying provider campaign
-is genuinely reachable, keep every certification requirement intact, and finish
-the governed engineering path of the terminal product-completion programme:
-C-00 recovery, validated fast-forward integration, exact-head CI, the S6
-substantive checkpoint with re-earned evidence, and a fully prepared (but
-unexecuted) parent-12.5 provider proof. The release status advances only under
-D-129: all sixteen conditions MET at the certified checkpoint with exact-head
-CI green. Condition #3 (autonomous-yield-proof) stays UNMET until a genuinely
-qualifying provider campaign runs under a fresh owner authorization.
+Close the D-181 production integration gap completely: every metered provider
+campaign is bound to a validated, owner-declared monetary ceiling BEFORE any
+provider call; the ceiling is wired CLI → local campaign → AgentRuntime →
+admitProviderCall → provider dispatch; it survives pause/resume without
+widening; fixtures are distinguished mechanically from real provider
+campaigns; and a user-supplied "free" label never bypasses enforcement. The
+work finishes with the governed integration, the next substantive checkpoint
+and its re-earned evidence at 15/16 with condition #3 UNMET.
 
 ## Read order
 
-1. `.agent/tasks/nightwatch-release-success-contract-v1/{SPEC,PLAN,STATE,REPORT}.md`
-2. `AGENTS.md`, `docs/CURRENT_STATE.md`, `docs/SAFETY_MODEL.md`, `docs/DECISIONS.md`
-   (especially D-129, D-174 through D-182)
-3. `docs/RELEASE-ADVANCE-CONDITIONS.md`, `config/release-certification.v1.json`
-4. Current ledgers and the cited live evidence
+1. `.agent/tasks/nightwatch-d181-cli-spend-enforcement-v1/{SPEC,PLAN,STATE}.md`
+2. `AGENTS.md`, `docs/SAFETY_MODEL.md`, `docs/DECISIONS.md` (D-174..D-182)
+3. `src/core/agentRuntime/spendCeiling.ts`, `bin/nightwatch-agent.mjs`
+   campaign run/resume paths, `src/core/agentRuntime/localCampaign.ts`
 
 ## Routing and safety
 
 ```text
-CAMPAIGN: nightwatch-release-success-contract-v1
+CAMPAIGN: nightwatch-d181-cli-spend-enforcement-v1
 CHILD TASK: NONE
-SESSION WORKTREE: NONE
+SESSION WORKTREE: session/nightwatch-d181-cli-spend-enforc-292bc10a
 
 CURRENT STATUS:
-  COMPLETE — the governed engineering path is closed at S6
-  `d78e6c55b5c79ccb97e958e777a9c54e0dbcb742`: exact-head CI green (run
-  39254273491), 25 checkpoint-bound receipts re-earned and verified, and the
-  canonical and independent fresh-clone evaluators agree per-condition
-  exactly (15/16 effective MET; condition #3 UNMET by design). The twelve
-  MANUAL_OWNER harnesses remain UNAVAILABLE_CAPABILITY with the approved
-  revisit date 2026-11-14. Repository visibility stays PUBLIC. The one
-  remaining step — a single qualifying provider campaign — requires the fresh
-  parent-12.5 owner approval with its monetary cap and is a future task.
+  IN_PROGRESS — M2. The defect trace is complete and confirms the reported
+  gap exactly. The enforcement implementation is authorized Nightwatch-local
+  engineering work. No paid provider execution, no Pi inference, no provider
+  credit consumption and no GRANTED parent-12.5 are authorized here; the
+  spent parent-12.4 evidence is preserved untouched.
 
-AUTHORIZATION HISTORY (owner instructions 2026-10-15 / 2026-10-18 /
-2026-10-19):
-  The terminal programme's engineering, governance repair (D-180), spend
-  enforcement (D-181), certification re-earning (D-182) and provider-readiness
-  preparation were authorized and are complete. NOT authorized and NOT done:
-  paid provider execution without the fresh parent-12.5 approval and an
-  enforced monetary ceiling; reuse of the spent parent-12.4 approval;
-  unexecuted manual harnesses or DEV authentication; repository visibility
-  changes; Alphaus contact; sibling-repository mutations; campaign archive;
-  force pushes; history rewriting; deleting another live session's work;
-  fabricating certification evidence.
+IMPLEMENTATION AUTHORIZED (owner instruction 2026-10-19):
+  The D-181 CLI enforcement closure: validated owner-declared monetary
+  ceilings on the metered campaign path, fail-closed admission before any
+  provider call, CLI/local-campaign/AgentRuntime wiring, pause/resume
+  ceiling preservation, mechanical fixture/provider distinction, the
+  account-side hard-stop requirement where the harness cannot cap output
+  tokens, real-CLI stub-provider integration tests, focused regression,
+  hardening, mutants, prepush, milestone gates, governed C-00 integration,
+  exact-head CI, the next substantive checkpoint and its re-earned evidence.
+  NOT authorized: provider inference, spend, grant-record changes, reuse of
+  parent-12.4, unexecuted manual harnesses, repository visibility changes,
+  Alphaus contact, sibling-repository mutation, force push, history rewrite,
+  deleting another live session's work, or fabricated evidence.
 
-EXTERNAL CONTACT PERFORMED:
-  GitHub Actions read/observe; validated fast-forward Nightwatch pushes;
-  one read-only sibling-scope preflight observation (no inference, no
-  mutation). No provider call, no spend, no credential disclosure.
+EXTERNAL CONTACT AUTHORIZED:
+  GitHub Actions read/observe; validated fast-forward Nightwatch pushes.
+  No provider call of any kind.
 
 ALPHAUS DEV / NEXT / PRODUCTION CONTACT:   NOT AUTHORIZED
 AUTHENTICATED ALPHAUS RUNTIME:             NOT AUTHORIZED
@@ -98,6 +90,6 @@ FORCE PUSH / HISTORY REWRITE:              NOT AUTHORIZED
 LOCAL READ-ONLY COMMANDS AND TESTS:        AUTHORIZED
 ```
 
-Live HEAD and ownership are discovered from Git and the session status tooling.
-The terminal record is closed; the successor provider campaign opens only
-after the owner's parent-12.5 approval and its monetary cap.
+Live HEAD and ownership are discovered from Git and the session status
+tooling. Do not claim release completion, run paid proof or spend without the
+required owner approvals and verified evidence.

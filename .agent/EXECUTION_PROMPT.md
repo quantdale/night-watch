@@ -1,12 +1,12 @@
-# EXECUTION PROMPT — Release success contract (R6) and governed completion path
+# EXECUTION PROMPT — D-181 CLI monetary-enforcement closure
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: COMPLETE
-Campaign ID: nightwatch-release-success-contract-v1
-OpenSpec: openspec/changes/nightwatch-release-success-contract-v1/
-Planned-From: ac0cc600473a6a133636d07eecc36ed535c4fcca
+Status: IN_PROGRESS
+Campaign ID: nightwatch-d181-cli-spend-enforcement-v1
+OpenSpec: openspec/changes/nightwatch-d181-cli-spend-enforcement-v1/
+Planned-From: 27223764d42fe23a9f407c062b2e0c4774a34f3d
 Target Branch: main
-Predecessor Task ID: nightwatch-successor-campaign-engine-v1
+Predecessor Task ID: nightwatch-release-success-contract-v1
 Predecessor Status: COMPLETE
 
 ## Mission
