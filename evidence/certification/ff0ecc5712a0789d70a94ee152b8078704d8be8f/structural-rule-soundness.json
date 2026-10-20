@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "nightwatch.certification-evidence-receipt.v1",
+  "subject": "structural-rule-soundness",
+  "subjects": [
+    "structural-rule-soundness"
+  ],
+  "sourceHead": "ff0ecc5712a0789d70a94ee152b8078704d8be8f",
+  "observedAtHead": "dbdfb10b6d2bdfade992c908f7a0d2213d22f53d",
+  "sourceRootCleanAtEmit": true,
+  "checkId": "structural-rule-registry",
+  "checkState": "MET",
+  "result": "PASS",
+  "producer": "PROJECT_CHECK",
+  "environmentClass": "HOST_LOCAL",
+  "receiptDigest": "receipt:sha256:9b42efda572cdc7ed645253b"
+}
