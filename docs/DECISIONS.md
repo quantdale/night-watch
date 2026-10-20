@@ -7581,3 +7581,71 @@ enforced ceiling plus the declared output bound; and the prepared stale-copy
 removal. The twelve unexecuted manual harnesses remain
 `UNAVAILABLE_CAPABILITY` with the approved revisit date 2026-11-14, and the
 repository stays PUBLIC.
+
+## D-183 — the metered campaign path is ceiling-bound before dispatch (2026-10-19)
+
+Source: owner instruction "NIGHTWATCH — FINAL D-181 CLI ENFORCEMENT CLOSURE"
+(2026-10-19), under the active campaign
+`nightwatch-d181-cli-spend-enforcement-v1`. D-181 built the pre-request
+monetary admission; this decision closes its production integration gap and
+records what the enforcement now guarantees.
+
+**The defect, confirmed by trace.** `bin/nightwatch-agent.mjs` `campaign run`
+and `campaign resume` never passed `spendCeiling` to `runLocalCliCampaign` /
+`resumeLocalCliCampaign`, and `admitRunSpendCeiling` had no production
+caller. `AgentRuntime` consults the admission only when the optional
+parameter is defined, so the one route that can spend dispatched provider
+calls with no monetary ceiling at all. A second, independent defect surfaced
+in the same trace: `--expected-investigations` and `--observe-repository`
+were consumed by the runner and documented in its usage line but never
+DECLARED in the operator-CLI metadata, so the strict parser refused them —
+the R6 declared plan, the very input the completion contract needs, was
+unreachable in production.
+
+**The enforcement now in force.** The metered class is mechanical — the
+resolved adapter identity (the repository's own provider print adapter), the
+same boundary that decides what can qualify a provider proof — and no user
+label, zero-rate card or environment flag moves a run across it. A metered
+launch refuses BEFORE any provider call when the ceiling is missing or
+malformed, the rate card is not genuinely metered (a zero-rate "free"
+declaration is refused), the provider/model identity disagrees with the
+resolved run identity, the per-call output bound is unenforceable (no
+account-side hard stop), or the projected worst-case spend exceeds the
+approval. The chain is wired end to end (CLI → local campaign → AgentRuntime
+→ admitProviderCall → dispatch), and the ceiling is persisted in the campaign
+progress envelope under the secret-scanner-safe projection
+`nightwatch.spend-ceiling-envelope.v1` (the checkpoint scanner's
+credential-shaped-key rule is never weakened; the scanner is what forced the
+projection). A resume is held to the persisted declaration: absent, widened
+and identity-substituted resumes are refused with distinct codes; an identical
+or purely tightened one resumes.
+
+**The output bound (honest limits).** `pi --help` (235 lines) exposes no
+max-output-token option and the request body is composed inside the harness,
+so the per-call output bound is not wire-enforceable on the real path. Per the
+instruction's second route, metered runs therefore REQUIRE the account-side
+hard stop with its evidence reference, recorded with the run; the D-181
+worst-case admission remains the enforced in-process bound and the account
+stop backstops the residual.
+
+**Validation.** `tests/unit/cliSpendEnforcement.test.ts` (8 cases) launches
+the REAL campaign CLI with a stub provider behind the real print adapter:
+missing ceiling, malformed/zero-rate/partial declarations, provider/model
+substitution and a missing hard stop all refuse with ZERO provider calls; an
+authorized launch dispatches under the declared budget; an exhausted budget
+refuses before dispatch (zero reasoner calls, per-investigation
+BUDGET_EXHAUSTED causes, verdict refusing completion); a real pause/resume
+cycle refuses widened, absent and substituted declarations and resumes on the
+identical one; and the fixture (custom-reasoner-script) route is
+distinguished mechanically. `tests/unit/spendCeiling.test.ts` covers the pure
+metered-run, identity and resume admissions (10 cases). Focused regression
+138/138; prepush and the milestone gate green (6276/6276); 274/274 hardening
+probes and 126/126 behavioural mutants detected. The R5-07 flag-parity pin
+now asserts the full sixteen-flag surface the runner consumes, which is what
+would have caught the undeclared R6 flags.
+
+**What this decision is not.** No provider was contacted (the integration
+tests use a stub provider), no credit was consumed, no grant record changed,
+the spent parent-12.4 evidence is preserved untouched, and no account-side
+state is claimed as verified: the hard-stop evidence reference is the owner's
+recorded confirmation, not a machine read.
