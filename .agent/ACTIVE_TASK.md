@@ -10,7 +10,7 @@ TASK_GROUP_NEXT: 6
 TASK_NEXT_ID: 6.1
 Task directory: .agent/tasks/nightwatch-d181-cli-spend-enforcement-v1
 Starting SHA: 27223764d42fe23a9f407c062b2e0c4774a34f3d
-Last validated implementation SHA: 27223764d42fe23a9f407c062b2e0c4774a34f3d
+Last validated implementation SHA: ff0ecc5712a0789d70a94ee152b8078704d8be8f
 Current milestone: M5 — gates, integration and certification (task group 6):
 the enforcement is implemented and proven end to end through the real CLI;
 the full gate set, the governed integration and the checkpoint certification
@@ -26,8 +26,8 @@ PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
 
 STARTING_SHA: 27223764d42fe23a9f407c062b2e0c4774a34f3d
-LAST_VALIDATED_IMPLEMENTATION_SHA: 27223764d42fe23a9f407c062b2e0c4774a34f3d
-LAST_SUBSTANTIVE_CHECKPOINT_SHA: 27223764d42fe23a9f407c062b2e0c4774a34f3d
+LAST_VALIDATED_IMPLEMENTATION_SHA: ff0ecc5712a0789d70a94ee152b8078704d8be8f
+LAST_SUBSTANTIVE_CHECKPOINT_SHA: ff0ecc5712a0789d70a94ee152b8078704d8be8f
 LIVE_HEAD_AUTHORITY: GIT
 PHASE_D181_CLI_SPEND_ENFORCEMENT_V1_STATUS: IN_PROGRESS
 

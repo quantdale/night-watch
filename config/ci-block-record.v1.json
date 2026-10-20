@@ -2,9 +2,9 @@
   "schemaVersion": "nightwatch.ci-block-record.v1",
   "definitionName": "Nightwatch exact-head CI block record (F-02)",
   "note": "The block is RETIRED: GitHub Actions executes the hardening workflow on every push, and the record's top level is the latest observed executed run (D-03 / R2-61). The block-record judgements stay load-bearing as the single CI authority shared by agent:check, project:check and gate:topology; the revisit date keeps the record from going stale. Candidate routes remain recorded with their trade-offs, and the materialised owner route is the restored GitHub-hosted execution.",
-  "runId": "39254273491",
-  "jobId": "118065505236",
-  "observedSha": "d78e6c55b5c79ccb97e958e777a9c54e0dbcb742",
+  "runId": "39312575211",
+  "jobId": "118265697191",
+  "observedSha": "ff0ecc5712a0789d70a94ee152b8078704d8be8f",
   "blockClass": "EXECUTED_PASS",
   "observedDate": "2026-10-19",
   "ownerAction": "None required while the hardening workflow executes on every push; re-observe the next exact-head run and refresh this record before the revisit date.",
@@ -483,6 +483,15 @@
       "classification": "EXECUTED_PASS",
       "detail": "Exact-head execution at the S6 release-success-contract checkpoint (R6 campaign completion, C-00 retarget-task recovery, D-181 spend admission): all 15 groups PASS.",
       "runCreatedAt": "2026-10-19T12:43:24Z"
+    },
+    {
+      "runId": "39312575211",
+      "jobId": "118265697191",
+      "observedSha": "ff0ecc5712a0789d70a94ee152b8078704d8be8f",
+      "observedDate": "2026-10-19",
+      "classification": "EXECUTED_PASS",
+      "detail": "Exact-head execution at the S7 D-181 CLI enforcement checkpoint (metered campaigns ceiling-bound before dispatch, resume-held, identity-bound): all 15 groups PASS.",
+      "runCreatedAt": "2026-10-19T19:37:47Z"
     }
   ],
   "routeSelection": {
