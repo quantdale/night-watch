@@ -7649,3 +7649,144 @@ tests use a stub provider), no credit was consumed, no grant record changed,
 the spent parent-12.4 evidence is preserved untouched, and no account-side
 state is claimed as verified: the hard-stop evidence reference is the owner's
 recorded confirmation, not a machine read.
+
+## D-184 — parent-12.5 stops at two RE-REFUTED gates: the exposed credential is STILL LIVE and no account-side hard stop exists (2026-10-20)
+
+Source: the owner instruction "NIGHTWATCH — FINAL PROVIDER PROOF AND PROJECT
+COMPLETION / PARENT-12.5" of 2026-10-20, which authorizes one
+`PRINT_CLI_PROVIDER` campaign of ≤ US$0.09 existing OpenDesign credits under a
+fresh `parent-12.5` grant. This record is the §4/§5 preflight outcome. It
+re-verifies its own facts and it OVERTURNS two of D-182's current-state claims,
+because D-182 described the account-side conditions as unverified owner
+confirmations while the instruction requires them to be TRUE before any paid
+inference. No provider call, no credit consumption, no grant change and no
+checkpoint advance occurred.
+
+**Baseline re-verified (read-only).** HEAD = `origin/main` =
+`929a4ae7dc92e1d3b1271f1cf4f0fda2dc12629d`, tree clean, canonical checkout, 0
+live session worktrees (one STALE session worktree,
+`nightwatch-final-product-complet-ded25ab6`, awaiting owner adopt/release).
+Exact-S7 CI run `39312575211` and final-head run `39374414554` both report
+`conclusion: success` at their recorded SHAs. `certify-evidence verify` reports
+**25/25 valid, 0 invalid** at sourceHead `ff0ecc57`. The authoritative
+evaluator reports **15/16 MET** with `autonomous-yield-proof` the only UNMET
+condition — exactly the certified baseline, no drift.
+
+**Identity re-verified.** `~/.pi/agent/bin/pi` recomputed to
+`sha256:da0c6a49fe94aadc9765cc7afc6ba6b17e553eed0247d0385c160bc188f5cfbb`
+(1467 bytes) — equal to the declared digest. Version 1.3.0. `pi --help`
+confirms the restricted argument contract used by
+`bin/nightwatch-reasoner-print.mjs` (`-p`, `--no-session`, `--no-tools`,
+`--no-extensions`, `--no-mcp`, `--no-skills`, `--no-context-files`,
+`--provider`, `--model`, `--thinking off`) and again exposes **no
+max-output-token option**, so D-183's conclusion stands: the per-call output
+bound is not wire-enforceable and the account-side hard stop is therefore
+REQUIRED, not optional.
+
+**BLOCKER 1 — the exposed credential was NOT revoked; it still authorizes
+requests.** D-179 recorded the `auth.json` `open-design` entry rotating
+`14ed75b6deb1` → `70292c027159`, and Pi's own resolution agrees: under the
+print adapter's stripped environment `pi auth check --provider open-design
+--model deepseek-v4.1-flash --json --no-refresh` answers
+`{"status":"ready"}`, and `pi auth print-api-key --provider open-design`
+fingerprints to `70292c027159`. But the OLD value is still LIVE
+account-side. Two independent metadata probes (`GET /v1/models`, a read-only
+model list that performs **no inference and consumes no credit**) returned
+**HTTP 200** with the exposed key and **HTTP 401 `invalid_api_key`** for both a
+synthetic bogus key and no header — so the 200 is genuine authorization, not a
+permissive endpoint. Rotation changed the local selection; it did NOT revoke
+the predecessor. **The exposed key must be treated as live.** The instruction's
+own precondition ("Do not proceed to paid inference while the exposed key's
+revocation remains unconfirmed") is therefore unsatisfied, and its §4.D is
+answered negatively rather than invented.
+
+**BLOCKER 2 — no genuine provider account-side hard stop is establishable, and
+none may be fabricated.** The model plane authenticates with `sk-amr-…` and
+exposes no spend surface at all (`/v1/usage`, `/v1/credits`, `/v1/account`,
+`/v1/limits`, `/v1/me`, `/v1/spend`, `/v1/balance` each 404). The control plane
+`amr-api.open-design.ai` is the documented home of plan, wallet balance, the
+allowance windows, auto-top-up policy and any per-key spend limit, and it
+requires a `vela_ctrl_…` control-plane credential — **none exists anywhere on
+this host** (exhaustive scan of the config/state surfaces, including
+`~/.nightwatch/secrets` and `~/.pi/agent/auth.json`: zero occurrences; the only
+`vela_ctrl_` strings in the workspace are the four session transcripts that
+name the literal as a discussion topic). `/api/v1/me` on that plane answers 401
+unauthenticated, and no `vela`/`magpie` CLI or `~/.vela`/`~/.amr` state is
+installed (the npm `vela` package is an unrelated SvelteKit tool). So
+`--account-side-hard-stop <ref>` — which D-183 correctly implements as a
+**declaration that is checked for presence, not a verified account state** —
+cannot be satisfied with a genuine reference. Passing `confirmed`/`verified`/a
+wallet balance/a local byte budget would be exactly the fabrication the
+instruction forbids, and it would silently convert the owner's only real
+financial backstop into a string.
+
+**Why this is a STOP and not a documentation task.** The owner's gate is
+conjunctive and each prong is externally administered: a live exposed
+credential must be revoked by the account owner, and a real spending limit must
+be configured account-side. Neither is reachable from this session, and
+neither may be manufactured. Executing now would spend the owner's credits on
+a credential the owner has been told to treat as compromised AND attach that
+credential's identity to the certificate intended to close the project.
+`parent-12.4` is already SPENT; `parent-12.5` is therefore **NOT GRANTED** and
+`config/yield-run-authorization.v1.json` is untouched.
+
+**§6 verified independently (no provider contact).** The end-to-end monetary
+guard was re-proved with deterministic stubs only:
+`tests/unit/spendCeiling.test.ts` + `tests/unit/cliSpendEnforcement.test.ts` =
+**18/18 PASS**, covering the missing-ceiling refusal, non-metered (zero-rate)
+rate card refusal, provider/model substitution refusal, a missing hard stop,
+refusal of a request projected beyond the cap (zero provider calls), the
+exhausted-budget pre-dispatch refusal, mechanical fixture/metered
+classification, and pause/resume refusing absent/widened/substituted
+declarations while accepting an identical one. The guard is sound; it is the
+external inputs it demands that are unavailable.
+
+**Credential hygiene per §4.E–H.** The five stale copies D-182 listed are
+ALREADY GONE: `~/.pi/agent/auth.json.bak` and `~/.pi/agent/models.json.bak` do
+not exist, `models.json` `providers['open-design']` has no `apiKey` key at all
+(only `name`/`baseUrl`/`api`/`compat`/`models`), and the `amr` entry D-182
+recorded in `auth.json` is absent. An exhaustive scan of the config/state
+surfaces finds the ACTIVE value in exactly one place (`auth.json`
+`open-design`) and the EXPOSED value in **zero** config surfaces — its only
+remaining local home is one Pi session transcript
+(`2026-10-18T14-38-06-…`), which is where the original disclosure occurred and
+which is not a credential store. No plaintext key value was printed, committed
+or written to any task/evidence file; every check above compared
+`sha256[0:12]` fingerprints only, and the one temporary file used for the
+revocation probe was `0600` under `/tmp` and deleted immediately. The
+repository itself is clean of both values in the working tree AND across all
+of `git log --all -p` (0 occurrences) — because the repository is PUBLIC, that
+scan is the privacy evidence that matters.
+
+**Consequence.** Condition #3 stays UNMET, the project stays
+`OPERATIONALLY_ACCEPTED` at 15/16, D-129's advance is not taken, and no
+checkpoint advance is created (this is a documentation-only descendant). The
+remaining work is two exact owner/account actions, both external and
+non-delegable, stated in the consolidated request below.
+
+**Exact owner-action request (both required; any order).**
+1. **Revoke the exposed key account-side.** In the OpenDesign/AMR console
+   (control plane `amr-api.open-design.ai`, reachable at
+   `https://open-design.ai/amr/dashboard`), delete the API key whose
+   fingerprint is `sha256[0:12] = 14ed75b6deb1` and whose plaintext exists only
+   in that one 2026-10-18 transcript. Acceptance evidence: the SAME read-only
+   `GET https://amr-link.open-design.ai/v1/models` with that key returns
+   **HTTP 401 `invalid_api_key`** (as the synthetic bogus key already does),
+   while the active key `70292c027159` keeps returning 200. This is a
+   metadata probe, not inference, and costs nothing.
+2. **Establish one genuine account-side spending hard stop ≤ US$0.09**, and
+   give its evidence reference. Either (a) issue a `vela_ctrl_…` control-plane
+   credential and configure a spend limit / disabled auto-top-up that the
+   agent can read back, or (b) configure the per-key limit in the console and
+   paste the console reference (URL + the limit + the auto-top-up state) for
+   `--account-side-hard-stop`. A wallet balance, an estimate, or the engine's
+   own byte ceiling is NOT a valid substitute.
+3. Then, and only then, state the `parent-12.5` approval explicitly for this
+   run and its ≤ US$0.09 cap. It is currently **NOT GRANTED**.
+
+With 1+2+3 satisfied the D-177/D-178/D-179 sequence resumes unchanged: apply
+`parent-12.5` as the sole substantive change of S8 → S8 gates → C-00 integrate
+→ exact-S8 CI → re-earn the checkpoint-bound evidence at S8 → the single
+campaign at clean S8 → bind condition #3 → 16/16 → D-129. The twelve
+unexecuted owner-manual harnesses remain `UNAVAILABLE_CAPABILITY` with revisit
+date 2026-11-14, and the repository stays PUBLIC.
