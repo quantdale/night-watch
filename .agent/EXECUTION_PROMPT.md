@@ -1,7 +1,7 @@
 # EXECUTION PROMPT — D-181 CLI monetary-enforcement closure
 
 HANDOFF_PROTOCOL_VERSION: nightwatch.planner-executor-handoff.v1
-Status: IN_PROGRESS
+Status: COMPLETE
 Campaign ID: nightwatch-d181-cli-spend-enforcement-v1
 OpenSpec: openspec/changes/nightwatch-d181-cli-spend-enforcement-v1/
 Planned-From: 27223764d42fe23a9f407c062b2e0c4774a34f3d

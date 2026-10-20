@@ -26,5 +26,5 @@
 
 ## 6. Gates and certification
 
-- [ ] 6.1 Full regression, hardening, mutants, prepush and milestone gates
-- [ ] 6.2 Governed C-00 integration, exact-head CI and checkpoint evidence at 15/16
+- [x] 6.1 Full regression, hardening, mutants, prepush and milestone gates
+- [x] 6.2 Governed C-00 integration, exact-head CI and checkpoint evidence at 15/16

@@ -55,30 +55,30 @@ customer value in any record; no spend.
 - **Status:** COMPLETE
 
 ### M1 — the pure admissions (spendCeiling.ts)
-- [ ] Identity-bound ceiling (provider/model) and the validated declaration.
-- [ ] Metered-run admission, identity agreement and resume-equality admissions.
+- [x] Identity-bound ceiling (provider/model) and the validated declaration.
+- [x] Metered-run admission, identity agreement and resume-equality admissions.
 - **Status:** COMPLETE
 
 ### M2 — campaign-layer enforcement and pause/resume persistence
-- [ ] Mechanical metered determination and fail-closed campaign admission.
-- [ ] The ceiling persisted in the progress envelope; resume held to it.
+- [x] Mechanical metered determination and fail-closed campaign admission.
+- [x] The ceiling persisted in the progress envelope; resume held to it.
 - **Status:** COMPLETE
 
 ### M3 — CLI enforcement and wiring
-- [ ] Owner-declared ceiling flags on run/resume with fail-closed validation.
-- [ ] The wired chain CLI → local campaign → AgentRuntime → admitProviderCall.
+- [x] Owner-declared ceiling flags on run/resume with fail-closed validation.
+- [x] The wired chain CLI → local campaign → AgentRuntime → admitProviderCall.
 - **Status:** COMPLETE
 
 ### M4 — integration tests and registries
-- [ ] Real-CLI stub-provider tests for every required case (item 10).
-- [ ] Validation-universe/execution-class registration; focused regression.
+- [x] Real-CLI stub-provider tests for every required case (item 10).
+- [x] Validation-universe/execution-class registration; focused regression.
 - **Status:** COMPLETE
 
 ### M5 — gates, integration and certification
-- [ ] Full gates, governed C-00 integration, exact-head CI.
-- [ ] The next substantive checkpoint and re-earned evidence at it (15/16).
+- [x] Full gates, governed C-00 integration, exact-head CI (run 39312575211 green at S7).
+- [x] The next substantive checkpoint and re-earned evidence at it (S7, 15/16).
 
-- **Status:** IN_PROGRESS
+- **Status:** COMPLETE
 
 ## Validation Strategy
 

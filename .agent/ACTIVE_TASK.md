@@ -3,24 +3,25 @@
 Task ID: nightwatch-d181-cli-spend-enforcement-v1
 Phase: D181_CLI_SPEND_ENFORCEMENT_V1
 Title: D-181 CLI monetary-enforcement closure
-Status: IN_PROGRESS
+Status: COMPLETE
 TASK_GROUP_LEDGER: nightwatch.task-group-ledger.v1
-TASK_GROUPS_COMPLETE: 1,2,3,4,5
-TASK_GROUP_NEXT: 6
-TASK_NEXT_ID: 6.1
+TASK_GROUPS_COMPLETE: 1,2,3,4,5,6
+TASK_GROUP_NEXT: NONE
+TASK_NEXT_ID: NONE
 Task directory: .agent/tasks/nightwatch-d181-cli-spend-enforcement-v1
 Starting SHA: 27223764d42fe23a9f407c062b2e0c4774a34f3d
 Last validated implementation SHA: ff0ecc5712a0789d70a94ee152b8078704d8be8f
-Current milestone: M5 — gates, integration and certification (task group 6):
-the enforcement is implemented and proven end to end through the real CLI;
-the full gate set, the governed integration and the checkpoint certification
-remain.
+Current milestone: COMPLETE — the D-181 CLI enforcement closure is finished
+at S7 `ff0ecc5712a0789d70a94ee152b8078704d8be8f`: every metered campaign is
+ceiling-bound before dispatch, resume-held and identity-bound, with green
+exact-head CI (run 39312575211) and the full evidence set re-earned at 15/16
+effective MET.
 Last checkpoint: 2026-10-19 — task opened at the verified HEAD `27223764` on
 top of certified S6 `d78e6c55`; the defect trace is complete and confirms the
 reported production gap exactly.
-Next action: task 6.1 — run the full regression, hardening and mutant gates,
-`npm run prepush` and `npm run gate:milestone`, then integrate through C-00
-and observe exact-head CI.
+Next action: STOP — task complete. Any provider proof belongs to a new task
+under a separate fresh owner authorization (parent-12.5 with its monetary cap
+and the account-side hard stop); nothing here is open.
 Authorization class: LOCAL_SOURCE_ENFORCEMENT
 PROJECT_VERDICT_EFFECT: PRESERVE
 CONTINUITY_PROTOCOL_VERSION: nightwatch.agent-continuity.v2
@@ -29,7 +30,7 @@ STARTING_SHA: 27223764d42fe23a9f407c062b2e0c4774a34f3d
 LAST_VALIDATED_IMPLEMENTATION_SHA: ff0ecc5712a0789d70a94ee152b8078704d8be8f
 LAST_SUBSTANTIVE_CHECKPOINT_SHA: ff0ecc5712a0789d70a94ee152b8078704d8be8f
 LIVE_HEAD_AUTHORITY: GIT
-PHASE_D181_CLI_SPEND_ENFORCEMENT_V1_STATUS: IN_PROGRESS
+PHASE_D181_CLI_SPEND_ENFORCEMENT_V1_STATUS: COMPLETE
 
 ## Mission
 
@@ -54,14 +55,16 @@ and its re-earned evidence at 15/16 with condition #3 UNMET.
 ```text
 CAMPAIGN: nightwatch-d181-cli-spend-enforcement-v1
 CHILD TASK: NONE
-SESSION WORKTREE: session/nightwatch-d181-cli-spend-enforc-292bc10a
+SESSION WORKTREE: NONE
 
 CURRENT STATUS:
-  IN_PROGRESS — M2. The defect trace is complete and confirms the reported
-  gap exactly. The enforcement implementation is authorized Nightwatch-local
-  engineering work. No paid provider execution, no Pi inference, no provider
-  credit consumption and no GRANTED parent-12.5 are authorized here; the
-  spent parent-12.4 evidence is preserved untouched.
+  COMPLETE — the D-181 CLI enforcement closure is finished at S7
+  `ff0ecc5712a0789d70a94ee152b8078704d8be8f`: green exact-head CI (run
+  39312575211), 25/25 checkpoint-bound receipts verified, and exact
+  canonical/fresh-clone per-condition agreement (15/16 effective MET;
+  condition #3 UNMET by design). No paid provider execution, no Pi
+  inference, no provider credit consumption and no GRANTED parent-12.5
+  occurred here; the spent parent-12.4 evidence is preserved untouched.
 
 IMPLEMENTATION AUTHORIZED (owner instruction 2026-10-19):
   The D-181 CLI enforcement closure: validated owner-declared monetary
