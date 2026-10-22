@@ -511,3 +511,9 @@ When complete, run all acceptance checks, update plan statuses, fill the state
 completion snapshot and `REPORT.md`, update project docs when appropriate, set
 `ACTIVE_TASK.md` to `COMPLETE` or `NONE`, commit within Nightwatch, and leave a
 clean tree unless an exception is explicitly recorded.
+
+## Cross-project UX, DX, and AX principles
+
+Cut taglines, helper text and secondary labels. If a screen needs them to make sense, fix the layout.
+
+Make the best decision that will elevate all three: the user experience (UX), developer experience (DX), and agent experience (AX) always, without breaking anything.
